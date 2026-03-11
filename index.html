@@ -1,390 +1,280 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search, QrCode, LayoutDashboard, Info, ChevronRight, X, Settings, Wrench, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตรวจสอบข้อมูลครุภัณฑ์คอมพิวเตอร์ - โรงพยาบาลอุดรธานี</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Sarabun -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@100;300;400;700;800&display=swap" rel="stylesheet">
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-const App = () => {
-  const [view, setView] = useState('dashboard');
-  const [allAssets, setAllAssets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAsset, setSelectedAsset] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        
+        // Mocking Lucide Icons for standalone usage
+        const Icon = ({ name, size = 24, className = "", strokeWidth = 2 }) => {
+            const [iconSvg, setIconSvg] = useState("");
+            useEffect(() => {
+                if (window.lucide) {
+                    const svg = window.lucide.createIcons();
+                }
+            }, [name]);
+            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
+        };
 
-  // URL สำหรับรูปภาพ Logo จาก GitHub (สมมติ path ตามที่แจ้งมา)
-  const LOGO_URL = "https://raw.githubusercontent.com/itudh/asset/main/logo.png";
-  const API_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
+        const App = () => {
+            const [view, setView] = useState('dashboard');
+            const [allAssets, setAllAssets] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedAsset, setSelectedAsset] = useState(null);
+            const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    if (id) {
-      handleViewDetail(id);
-    }
-  }, []);
+            const LOGO_URL = "https://raw.githubusercontent.com/itudh/asset/main/logo.png";
+            const API_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const resp = await fetch(`${API_URL}?action=getAllAssets`);
-      const data = await resp.json();
-      setAllAssets(data.assets || []);
-    } catch (err) {
-      console.error("Fetch Error:", err);
-    } finally {
-      setTimeout(() => setLoading(false), 500); 
-    }
-  };
+            useEffect(() => {
+                fetchData();
+                const params = new URLSearchParams(window.location.search);
+                const id = params.get('id');
+                if (id) handleViewDetail(id);
+                
+                // Initialize Lucide icons
+                setTimeout(() => window.lucide.createIcons(), 500);
+            }, []);
 
-  const handleViewDetail = async (noid) => {
-    setLoading(true);
-    try {
-      const resp = await fetch(`${API_URL}?action=getAsset&noid=${noid}`);
-      const data = await resp.json();
-      if (data.success) {
-        setSelectedAsset(data);
-        setModalOpen(true);
-      } else {
-        alert("ไม่พบข้อมูล NOID: " + noid);
-      }
-    } catch (err) {
-      alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
-    } finally {
-      setLoading(false);
-    }
-  };
+            useEffect(() => {
+                window.lucide.createIcons();
+            }, [view, modalOpen, loading, searchTerm]);
 
-  const filteredAssets = useMemo(() => {
-    if (!searchTerm) return [];
-    return allAssets.filter(asset => 
-      (asset.AssetID || "").toString().toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, allAssets]);
+            const fetchData = async () => {
+                setLoading(true);
+                try {
+                    const resp = await fetch(`${API_URL}?action=getAllAssets`);
+                    const data = await resp.json();
+                    setAllAssets(data.assets || []);
+                } catch (err) {
+                    console.error("Fetch Error:", err);
+                } finally {
+                    setTimeout(() => setLoading(false), 500); 
+                }
+            };
 
-  const highlightText = (text, highlight) => {
-    if (!highlight.trim()) return text;
-    const parts = text.toString().split(new RegExp(`(${highlight})`, 'gi'));
-    return (
-      <span>
-        {parts.map((part, i) => 
-          part.toLowerCase() === highlight.toLowerCase() ? 
-          <span key={i} className="bg-pink-200 text-pink-700 font-bold px-0.5 rounded">{part}</span> : part
-        )}
-      </span>
-    );
-  };
+            const handleViewDetail = async (noid) => {
+                setLoading(true);
+                try {
+                    const resp = await fetch(`${API_URL}?action=getAsset&noid=${noid}`);
+                    const data = await resp.json();
+                    if (data.success) {
+                        setSelectedAsset(data);
+                        setModalOpen(true);
+                    } else {
+                        alert("ไม่พบข้อมูล NOID: " + noid);
+                    }
+                } catch (err) {
+                    alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
+                } finally {
+                    setLoading(false);
+                }
+            };
 
-  const stats = useMemo(() => {
-    const normal = allAssets.filter(a => a.maStatus === 'ปกติ' || a.maStatus === 'ใช้งานได้').length;
-    const repair = allAssets.filter(a => ['ชำรุด', 'รอซ่อม', 'แจ้งซ่อม'].includes(a.maStatus)).length;
-    return { normal, repair, total: allAssets.length };
-  }, [allAssets]);
+            const filteredAssets = useMemo(() => {
+                if (!searchTerm) return [];
+                return allAssets.filter(asset => 
+                    (asset.AssetID || "").toString().toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            }, [searchTerm, allAssets]);
 
-  return (
-    <div className="min-h-screen bg-[#FFF5F7] pb-32 font-['Sarabun'] text-slate-700">
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="fixed inset-0 bg-white/60 backdrop-blur-md z-[9999] flex flex-col items-center justify-center animate-in fade-in duration-300">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-pink-100 border-t-pink-500 rounded-full animate-spin"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 bg-pink-500 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-          <p className="mt-6 text-pink-600 font-bold tracking-wide animate-bounce">กำลังประมวลผล...</p>
-        </div>
-      )}
+            const stats = useMemo(() => {
+                const normal = allAssets.filter(a => a.maStatus === 'ปกติ' || a.maStatus === 'ใช้งานได้').length;
+                const repair = allAssets.filter(a => ['ชำรุด', 'รอซ่อม', 'แจ้งซ่อม'].includes(a.maStatus)).length;
+                return { normal, repair, total: allAssets.length };
+            }, [allAssets]);
 
-      {/* New Header Design */}
-      <header className="bg-gradient-to-br from-pink-500 to-rose-400 text-white pt-6 pb-14 px-6 shadow-xl shadow-pink-100 rounded-b-[3.5rem] sticky top-0 z-40 border-b-4 border-white/30">
-        <div className="max-w-4xl mx-auto flex flex-col gap-4">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
-              {/* Logo from GitHub */}
-              <div className="bg-white p-1.5 rounded-2xl shadow-lg border-2 border-pink-200 w-16 h-16 flex items-center justify-center overflow-hidden">
-                <img 
-                  src={LOGO_URL} 
-                  alt="UDH Logo" 
-                  className="w-full h-full object-contain"
-                  onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=UDH"; }}
-                />
-              </div>
-              <div className="flex flex-col">
-                <h1 className="text-xl font-black tracking-tight leading-none">โรงพยาบาลอุดรธานี</h1>
-                <p className="text-[10px] font-bold text-pink-100 opacity-90 mt-1 uppercase tracking-widest">UDONTHANI HOSPITAL</p>
-              </div>
-            </div>
-            <div className="bg-white/20 p-2 rounded-2xl backdrop-blur-md border border-white/30">
-              <Settings size={20} className="text-white" />
-            </div>
-          </div>
-          
-          <div className="mt-2 pl-2 border-l-4 border-white/40">
-            <h2 className="text-lg font-black leading-tight">ระบบตรวจสอบข้อมูลครุภัณฑ์คอมพิวเตอร์</h2>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-              <p className="text-pink-50 text-[11px] font-medium flex items-center gap-1">
-                <Info size={12} /> กลุ่มงาน : เทคโนโลยีสารสนเทศทางการแพทย์
-              </p>
-              <p className="text-pink-50 text-[11px] font-bold flex items-center gap-1">
-                <Wrench size={12} /> ทีมช่าง IT UDH
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="p-5 -mt-10 max-w-4xl mx-auto space-y-6 relative z-10">
-        {view === 'dashboard' && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-6 duration-500">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-5 rounded-[2.5rem] shadow-sm border-2 border-pink-50 flex flex-col items-center justify-center transition-transform active:scale-95">
-                <div className="bg-green-50 text-green-500 p-2.5 rounded-2xl mb-2">
-                  <CheckCircle size={22} />
-                </div>
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">ใช้งานปกติ</p>
-                <h3 className="text-3xl font-black text-slate-800 mt-1">{stats.normal}</h3>
-              </div>
-              <div className="bg-white p-5 rounded-[2.5rem] shadow-sm border-2 border-pink-50 flex flex-col items-center justify-center transition-transform active:scale-95">
-                <div className="bg-rose-50 text-rose-500 p-2.5 rounded-2xl mb-2">
-                  <AlertCircle size={22} />
-                </div>
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">แจ้งซ่อม/ชำรุด</p>
-                <h3 className="text-3xl font-black text-rose-500 mt-1">{stats.repair}</h3>
-              </div>
-            </div>
-
-            {/* Main Action Card */}
-            <div 
-              onClick={() => setView('search')}
-              className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-pink-200/20 border-2 border-white flex items-center justify-between group active:scale-95 transition-all cursor-pointer ring-4 ring-pink-50/50"
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-pink-500 text-white p-4 rounded-3xl shadow-lg shadow-pink-200 group-hover:rotate-12 transition-transform border-2 border-white/20">
-                  <Search size={24} />
-                </div>
-                <div>
-                  <h4 className="font-black text-slate-800">ค้นหาครุภัณฑ์</h4>
-                  <p className="text-slate-400 text-xs">ระบุ AssetID เพื่อตรวจสอบ</p>
-                </div>
-              </div>
-              <ChevronRight className="text-pink-300" />
-            </div>
-
-            {/* Recent Section */}
-            <div className="pt-2">
-              <div className="flex justify-between items-center mb-4 px-3">
-                <h5 className="font-black text-slate-800 flex items-center gap-2">
-                  <Clock size={18} className="text-pink-500" /> รายการล่าสุด
-                </h5>
-                <button className="text-pink-500 text-xs font-bold px-3 py-1 bg-pink-50 rounded-full border border-pink-100">ดูทั้งหมด</button>
-              </div>
-              <div className="space-y-3">
-                {allAssets.slice(0, 3).map((asset, i) => (
-                  <div key={i} className="bg-white/70 p-4 rounded-3xl border-2 border-white shadow-sm flex items-center gap-3">
-                    <div className="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-500 font-bold border border-pink-200">
-                      {asset.AssetID?.slice(-2)}
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="text-sm font-bold text-slate-700 truncate">{asset.itemName}</p>
-                      <p className="text-[10px] text-slate-400 font-mono">{asset.AssetID}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${asset.maStatus === 'ปกติ' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
-                      {asset.maStatus || 'ปกติ'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {view === 'search' && (
-          <div className="space-y-5 animate-in fade-in duration-500">
-            <div className="relative group">
-              <input
-                type="text"
-                placeholder="ระบุหมายเลขครุภัณฑ์ (AssetID)..."
-                className="w-full p-5 pl-14 rounded-[2.5rem] bg-white border-2 border-transparent shadow-xl shadow-pink-200/20 focus:border-pink-300 focus:ring-0 outline-none transition-all placeholder:text-slate-300 font-bold"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-pink-400 group-focus-within:scale-110 transition-transform" size={20} />
-              {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 hover:text-rose-500 transition-colors">
-                  <X size={20} />
-                </button>
-              )}
-            </div>
-
-            {searchTerm && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-[2.5rem] shadow-2xl shadow-pink-200/20 overflow-hidden border-2 border-white animate-in zoom-in-95">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="bg-pink-50 text-pink-600 border-b border-pink-100">
-                        <th className="p-5 font-black uppercase tracking-wider text-[11px]">AssetID</th>
-                        <th className="p-5 font-black uppercase tracking-wider text-[11px]">รายการ</th>
-                        <th className="p-5 font-black uppercase tracking-wider text-[11px] text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-pink-50">
-                      {filteredAssets.length > 0 ? (
-                        filteredAssets.map((asset, idx) => (
-                          <tr key={idx} className="hover:bg-pink-50/50 transition-colors group">
-                            <td className="p-5 whitespace-nowrap font-mono font-bold text-slate-600">
-                              {highlightText(asset.AssetID, searchTerm)}
-                            </td>
-                            <td className="p-5 min-w-[140px]">
-                              <p className="font-bold text-slate-700 group-hover:text-pink-600 transition-colors">{asset.itemName}</p>
-                              <p className="text-[10px] text-slate-400 truncate max-w-[120px] font-medium">{asset.spec}</p>
-                            </td>
-                            <td className="p-5 text-center">
-                              <button 
-                                onClick={() => handleViewDetail(asset.NOID)}
-                                className="bg-pink-500 text-white w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-pink-200 mx-auto active:scale-90 transition-transform border-2 border-white/20 hover:bg-pink-600"
-                              >
-                                <ChevronRight size={18} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="3" className="p-16 text-center">
-                            <div className="flex flex-col items-center text-slate-300">
-                              <div className="bg-pink-50 p-6 rounded-full mb-4">
-                                <Search size={40} className="opacity-40 text-pink-300" />
-                              </div>
-                              <p className="font-black text-slate-400">ไม่พบข้อมูลครุภัณฑ์นี้</p>
-                              <p className="text-xs mt-1">กรุณาตรวจสอบหมายเลขใหม่อีกครั้ง</p>
+            return (
+                <div className="min-h-screen bg-[#FFF5F7] pb-32 text-slate-700">
+                    {/* Loading Overlay */}
+                    {loading && (
+                        <div className="fixed inset-0 bg-white/60 backdrop-blur-md z-[9999] flex flex-col items-center justify-center">
+                            <div className="relative">
+                                <div className="w-16 h-16 border-4 border-pink-100 border-t-pink-500 rounded-full animate-spin"></div>
                             </div>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                            <p className="mt-6 text-pink-600 font-bold animate-bounce">กำลังประมวลผล...</p>
+                        </div>
+                    )}
+
+                    {/* Header */}
+                    <header className="bg-gradient-to-br from-pink-500 to-rose-400 text-white pt-6 pb-14 px-6 shadow-xl shadow-pink-100 rounded-b-[3.5rem] sticky top-0 z-40 border-b-4 border-white/30">
+                        <div className="max-w-4xl mx-auto flex flex-col gap-4">
+                            <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-white p-1.5 rounded-2xl shadow-lg border-2 border-pink-200 w-16 h-16 flex items-center justify-center overflow-hidden">
+                                        <img src={LOGO_URL} alt="UDH Logo" className="w-full h-full object-contain" onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=UDH"; }} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <h1 className="text-xl font-black tracking-tight leading-none">โรงพยาบาลอุดรธานี</h1>
+                                        <p className="text-[10px] font-bold text-pink-100 opacity-90 mt-1 uppercase tracking-widest">UDONTHANI HOSPITAL</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white/20 p-2 rounded-2xl backdrop-blur-md border border-white/30">
+                                    <i data-lucide="settings" className="w-5 h-5"></i>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-2 pl-2 border-l-4 border-white/40">
+                                <h2 className="text-lg font-black leading-tight">ระบบตรวจสอบข้อมูลครุภัณฑ์คอมพิวเตอร์</h2>
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                                    <p className="text-pink-50 text-[11px] font-medium flex items-center gap-1">
+                                        <i data-lucide="info" className="w-3 h-3"></i> กลุ่มงาน : เทคโนโลยีสารสนเทศทางการแพทย์
+                                    </p>
+                                    <p className="text-pink-50 text-[11px] font-bold flex items-center gap-1">
+                                        <i data-lucide="wrench" className="w-3 h-3"></i> ทีมช่าง IT UDH
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="p-5 -mt-10 max-w-4xl mx-auto space-y-6 relative z-10">
+                        {view === 'dashboard' ? (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-white p-5 rounded-[2.5rem] shadow-sm border-2 border-pink-50 flex flex-col items-center justify-center">
+                                        <div className="bg-green-50 text-green-500 p-2.5 rounded-2xl mb-2"><i data-lucide="check-circle"></i></div>
+                                        <p className="text-slate-400 text-[10px] font-bold uppercase">ใช้งานปกติ</p>
+                                        <h3 className="text-3xl font-black text-slate-800 mt-1">{stats.normal}</h3>
+                                    </div>
+                                    <div className="bg-white p-5 rounded-[2.5rem] shadow-sm border-2 border-pink-50 flex flex-col items-center justify-center">
+                                        <div className="bg-rose-50 text-rose-500 p-2.5 rounded-2xl mb-2"><i data-lucide="alert-circle"></i></div>
+                                        <p className="text-slate-400 text-[10px] font-bold uppercase">แจ้งซ่อม/ชำรุด</p>
+                                        <h3 className="text-3xl font-black text-rose-500 mt-1">{stats.repair}</h3>
+                                    </div>
+                                </div>
+
+                                <div onClick={() => setView('search')} className="bg-white p-6 rounded-[2.5rem] shadow-xl border-2 border-white flex items-center justify-between cursor-pointer active:scale-95 transition-all">
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-pink-500 text-white p-4 rounded-3xl shadow-lg border-2 border-white/20"><i data-lucide="search"></i></div>
+                                        <div>
+                                            <h4 className="font-black text-slate-800">ค้นหาครุภัณฑ์</h4>
+                                            <p className="text-slate-400 text-xs">ระบุ AssetID เพื่อตรวจสอบ</p>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="chevron-right" className="text-pink-300"></i>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-5">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="ระบุหมายเลขครุภัณฑ์ (AssetID)..."
+                                        className="w-full p-5 pl-14 rounded-[2.5rem] bg-white border-2 border-transparent shadow-xl focus:border-pink-300 outline-none font-bold"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    <i data-lucide="search" className="absolute left-6 top-1/2 -translate-y-1/2 text-pink-400"></i>
+                                </div>
+                                
+                                {searchTerm && (
+                                    <div className="bg-white/90 rounded-[2.5rem] shadow-2xl overflow-hidden border-2 border-white">
+                                        <table className="w-full text-left text-sm">
+                                            <thead className="bg-pink-50 text-pink-600">
+                                                <tr>
+                                                    <th className="p-5 font-black text-[11px]">AssetID</th>
+                                                    <th className="p-5 font-black text-[11px]">รายการ</th>
+                                                    <th className="p-5 font-black text-[11px] text-center">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-pink-50">
+                                                {filteredAssets.length > 0 ? filteredAssets.map((asset, idx) => (
+                                                    <tr key={idx} className="hover:bg-pink-50/50 transition-colors">
+                                                        <td className="p-5 font-mono font-bold text-slate-600">{asset.AssetID}</td>
+                                                        <td className="p-5">
+                                                            <p className="font-bold text-slate-700">{asset.itemName}</p>
+                                                            <p className="text-[10px] text-slate-400 truncate max-w-[120px]">{asset.spec}</p>
+                                                        </td>
+                                                        <td className="p-5 text-center">
+                                                            <button onClick={() => handleViewDetail(asset.NOID)} className="bg-pink-500 text-white w-10 h-10 rounded-2xl flex items-center justify-center mx-auto active:scale-90">
+                                                                <i data-lucide="chevron-right" className="w-5 h-5"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                )) : (
+                                                    <tr><td colSpan="3" className="p-16 text-center text-slate-400 font-bold">ไม่พบข้อมูล</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Modal */}
+                    {modalOpen && selectedAsset && (
+                        <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-sm">
+                            <div className="bg-white w-full max-w-lg rounded-t-[3.5rem] sm:rounded-[3.5rem] p-8 max-h-[95vh] overflow-y-auto border-t-8 border-pink-500 sm:border-t-0">
+                                <div className="flex justify-between items-center mb-8">
+                                    <h3 className="text-xl font-black text-slate-800">รายละเอียดครุภัณฑ์</h3>
+                                    <button onClick={() => setModalOpen(false)} className="bg-slate-100 p-2 rounded-2xl"><i data-lucide="x"></i></button>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="aspect-[4/3] bg-pink-50 rounded-[3rem] overflow-hidden border-4 border-white shadow-xl">
+                                        <img src={selectedAsset.imgUrl || "https://via.placeholder.com/600x450"} className="w-full h-full object-cover" />
+                                    </div>
+                                    <h2 className="text-2xl font-black text-slate-800 leading-tight">{selectedAsset.itemName}</h2>
+                                    <p className="bg-pink-50 text-pink-600 px-4 py-2 rounded-2xl inline-block font-mono font-bold">ID: {selectedAsset.AssetID}</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-pink-50/50 p-4 rounded-3xl border-2 border-pink-100">
+                                            <p className="text-[10px] font-black text-pink-400 uppercase">สถานะบำรุงรักษา</p>
+                                            <p className="font-bold">{selectedAsset.maStatus || "-"}</p>
+                                        </div>
+                                        <div className="bg-pink-50/50 p-4 rounded-3xl border-2 border-pink-100">
+                                            <p className="text-[10px] font-black text-pink-400 uppercase">สถานะคอมฯ</p>
+                                            <p className="font-bold">{selectedAsset.coStatus || "-"}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setModalOpen(false)} className="w-full bg-pink-500 text-white py-5 rounded-[2.5rem] font-black shadow-lg">ปิดหน้าต่าง</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Navigation */}
+                    <nav className="fixed bottom-6 left-6 right-6 bg-white border-2 border-white shadow-2xl flex justify-around items-center p-4 rounded-[3rem] z-50">
+                        <button onClick={() => setView('dashboard')} className={`flex flex-col items-center ${view === 'dashboard' ? 'text-pink-500' : 'text-slate-300'}`}>
+                            <i data-lucide="layout-dashboard"></i>
+                        </button>
+                        <div className="relative -top-12">
+                            <button className="bg-gradient-to-tr from-pink-500 to-rose-400 p-5 rounded-[2.5rem] text-white shadow-2xl border-4 border-white active:scale-90">
+                                <i data-lucide="qr-code" className="w-8 h-8"></i>
+                            </button>
+                        </div>
+                        <button onClick={() => setView('search')} className={`flex flex-col items-center ${view === 'search' ? 'text-pink-500' : 'text-slate-300'}`}>
+                            <i data-lucide="search"></i>
+                        </button>
+                    </nav>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
+            );
+        };
 
-      {/* Detail Modal */}
-      {modalOpen && selectedAsset && (
-        <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-t-[3.5rem] sm:rounded-[3.5rem] p-8 max-h-[95vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-12 duration-500 border-t-8 border-pink-500 sm:border-t-0">
-            <div className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-3">
-                <div className="w-2.5 h-10 bg-pink-500 rounded-full shadow-sm shadow-pink-200"></div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-800">รายละเอียดครุภัณฑ์</h3>
-                  <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Asset Information</p>
-                </div>
-              </div>
-              <button onClick={() => setModalOpen(false)} className="bg-slate-100 p-2.5 rounded-2xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all active:scale-90">
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-8">
-              <div className="relative group">
-                <div className="aspect-[4/3] bg-pink-50 rounded-[3rem] overflow-hidden border-4 border-white shadow-xl ring-1 ring-pink-100">
-                  <img 
-                    src={selectedAsset.imgUrl || "https://via.placeholder.com/600x450?text=No+Image"} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                    alt="Asset"
-                    onError={(e) => e.target.src = "https://via.placeholder.com/600x450?text=Image+Not+Found"}
-                  />
-                </div>
-                <div className="absolute top-5 right-5 bg-white/90 backdrop-blur px-4 py-2 rounded-2xl shadow-lg border border-white flex items-center gap-2">
-                   <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
-                   <p className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">NOID: {selectedAsset.NOID}</p>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="text-2xl font-black text-slate-800 leading-tight mb-3">{selectedAsset.itemName}</h2>
-                <div className="inline-flex items-center gap-2 bg-pink-50 text-pink-600 px-4 py-2 rounded-2xl text-sm font-black border-2 border-pink-100 shadow-sm shadow-pink-100/50 font-mono">
-                  <QrCode size={16} /> {selectedAsset.AssetID}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gradient-to-br from-white to-pink-50/40 p-5 rounded-[2rem] border-2 border-pink-100 shadow-sm relative overflow-hidden group">
-                  <div className="absolute -right-2 -top-2 text-pink-100 group-hover:scale-125 transition-transform"><CheckCircle size={40} /></div>
-                  <p className="text-[10px] text-pink-400 uppercase font-black mb-1 tracking-wider relative z-10">สถานะบำรุงรักษา</p>
-                  <p className="text-sm font-black text-slate-700 relative z-10">{selectedAsset.maStatus || "-"}</p>
-                </div>
-                <div className="bg-gradient-to-br from-white to-pink-50/40 p-5 rounded-[2rem] border-2 border-pink-100 shadow-sm relative overflow-hidden group">
-                  <div className="absolute -right-2 -top-2 text-pink-100 group-hover:scale-125 transition-transform"><Wrench size={40} /></div>
-                  <p className="text-[10px] text-pink-400 uppercase font-black mb-1 tracking-wider relative z-10">สถานะคอมฯ</p>
-                  <p className="text-sm font-black text-slate-700 relative z-10">{selectedAsset.coStatus || "-"}</p>
-                </div>
-              </div>
-
-              <div className="space-y-6 bg-white p-7 rounded-[3rem] border-2 border-pink-50 shadow-sm ring-4 ring-pink-50/30">
-                <div className="flex items-start gap-4">
-                  <div className="bg-pink-100 p-3 rounded-2xl text-pink-500 mt-1 shadow-sm"><Info size={20} /></div>
-                  <div>
-                    <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest">สเปคและรายละเอียด</p>
-                    <p className="text-sm text-slate-600 leading-relaxed font-bold mt-1">{selectedAsset.spec || "ไม่มีข้อมูลสเปค"}</p>
-                  </div>
-                </div>
-                <div className="h-px bg-pink-100/50 w-full"></div>
-                <div className="grid grid-cols-2 gap-6">
-                   <div>
-                      <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1"><Settings size={10}/> หน่วยงาน</p>
-                      <p className="text-sm text-slate-700 font-black mt-1">{selectedAsset.location || "-"}</p>
-                   </div>
-                   <div>
-                      <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1"><Clock size={10}/> อายุใช้งาน</p>
-                      <p className="text-sm text-slate-700 font-black mt-1">{selectedAsset.age || "-"}</p>
-                   </div>
-                </div>
-              </div>
-
-              <button 
-                className="w-full bg-pink-500 text-white py-5 rounded-[2.5rem] font-black shadow-xl shadow-pink-200 hover:bg-pink-600 active:scale-95 transition-all tracking-wider text-lg border-b-4 border-pink-700"
-                onClick={() => setModalOpen(false)}
-              >
-                ปิดหน้าต่างรายละเอียด
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modern Navigation Bar */}
-      <nav className="fixed bottom-6 left-6 right-6 bg-white/90 backdrop-blur-2xl border-2 border-white shadow-[0_20px_50px_rgba(255,182,193,0.4)] flex justify-around items-center p-4 rounded-[3rem] z-50">
-        <button 
-          onClick={() => setView('dashboard')}
-          className={`flex flex-col items-center gap-1 transition-all duration-300 ${view === 'dashboard' ? 'text-pink-500 scale-110' : 'text-slate-300 hover:text-pink-300'}`}
-        >
-          <div className={`${view === 'dashboard' ? 'bg-pink-50 p-2 rounded-xl shadow-inner' : ''}`}>
-            <LayoutDashboard size={26} strokeWidth={view === 'dashboard' ? 3 : 2} />
-          </div>
-          <span className={`text-[10px] font-black uppercase tracking-tighter ${view === 'dashboard' ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>Dashboard</span>
-        </button>
-
-        <div className="relative -top-12">
-          <button className="bg-gradient-to-tr from-pink-500 to-rose-400 p-5 rounded-[2.5rem] text-white shadow-2xl shadow-pink-300 border-4 border-white active:scale-90 transition-transform ring-8 ring-pink-50/50">
-            <QrCode size={34} strokeWidth={2.5} />
-          </button>
-        </div>
-
-        <button 
-          onClick={() => setView('search')}
-          className={`flex flex-col items-center gap-1 transition-all duration-300 ${view === 'search' ? 'text-pink-500 scale-110' : 'text-slate-300 hover:text-pink-300'}`}
-        >
-          <div className={`${view === 'search' ? 'bg-pink-50 p-2 rounded-xl shadow-inner' : ''}`}>
-            <Search size={26} strokeWidth={view === 'search' ? 3 : 2} />
-          </div>
-          <span className={`text-[10px] font-black uppercase tracking-tighter ${view === 'search' ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>Search</span>
-        </button>
-      </nav>
-    </div>
-  );
-};
-
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
