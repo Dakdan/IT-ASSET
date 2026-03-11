@@ -21,7 +21,7 @@
                         hospital: {
                             lightPink: '#fdf2f8', // pink-50
                             softPink: '#fbcfe8',  // pink-200
-                            primary: '#ec4899',   // pink-500
+                            primary: '#e91e63',   // new primary color
                             accent: '#db2777',    // pink-600
                         }
                     }
@@ -39,14 +39,14 @@
     <!-- QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Sarabun', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #fff9fb; }
+        body { font-family: 'Sarabun', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #fff9fb; position: relative; min-height: 100vh; }
         .animate-spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .icon-container { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; }
         
-        /* Soft Pink Gradient Header */
+        /* New Header Gradient: #e91e63 from top-left diagonally */
         .header-soft-gradient {
-            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            background: linear-gradient(135deg, #e91e63 0%, #f06292 100%);
         }
         
         .glass-nav {
@@ -56,12 +56,12 @@
         }
         
         .search-shadow {
-            box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.15);
+            box-shadow: 0 10px 25px -5px rgba(233, 30, 99, 0.15);
         }
 
         .active-tab {
             background-color: #fdf2f8;
-            color: #ec4899;
+            color: #e91e63;
             transform: scale(1.1);
         }
 
@@ -73,10 +73,40 @@
             border-radius: 4px;
             font-weight: 800;
         }
+
+        /* Watermark Background */
+        .watermark-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            opacity: 0.03;
+            user-select: none;
+        }
+        .watermark-item {
+            font-size: 24px;
+            font-weight: 800;
+            transform: rotate(-30deg);
+            padding: 50px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body class="text-slate-700">
-    <div id="root"></div>
+    <!-- ลายน้ำพื้นหลัง -->
+    <div class="watermark-container">
+        {[...Array(15)].map((_, i) => (
+            <div key={i} className="watermark-item">ช่างคอม ทีม</div>
+        ))}
+    </div>
+
+    <div id="root" style="position: relative; z-index: 1;"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
@@ -95,7 +125,6 @@
             return <span ref={iconRef} className="icon-container"></span>;
         };
 
-        // คอมโพเนนต์สำหรับไฮไลท์คำค้นหา
         const HighlightText = ({ text, highlight }) => {
             if (!highlight || !highlight.trim()) return <span>{text}</span>;
             const regex = new RegExp(`(${highlight})`, 'gi');
@@ -131,11 +160,10 @@
                 try {
                     const resp = await fetch(`${API_URL}?action=getAllAssets`);
                     const data = await resp.json();
-                    // ตั้งค่าข้อมูลจาก API เท่านั้น ไม่ใช้ข้อมูลจำลอง
                     setAllAssets(data.assets || []);
                 } catch (err) { 
                     console.error("Fetch Error:", err); 
-                    setAllAssets([]); // กรณี Error ให้เป็นอาเรย์ว่าง
+                    setAllAssets([]);
                 }
                 finally { setLoading(false); }
             };
@@ -211,8 +239,8 @@
                         </div>
                     )}
 
-                    {/* Header: สีชมพูอ่อนสดใสไล่ระดับ */}
-                    <header className="header-soft-gradient pt-10 pb-20 px-6 rounded-b-[4rem] shadow-sm">
+                    {/* Header: ไล่เฉดสีทแยงมุมด้วย #e91e63 */}
+                    <header className="header-soft-gradient pt-10 pb-20 px-6 rounded-b-[4rem] shadow-lg">
                         <div className="max-w-4xl mx-auto">
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-4">
@@ -220,17 +248,17 @@
                                         <img src={LOGO_URL} className="w-full h-full object-contain" alt="Logo" />
                                     </div>
                                     <div>
-                                        <h1 className="text-xl font-black text-pink-600 leading-none">โรงพยาบาลอุดรธานี</h1>
-                                        <p className="text-[9px] font-bold text-pink-400 uppercase tracking-widest mt-1">UDONTHANI HOSPITAL</p>
+                                        <h1 className="text-xl font-black text-white leading-none">โรงพยาบาลอุดรธานี</h1>
+                                        <p className="text-[9px] font-bold text-pink-100 uppercase tracking-widest mt-1">UDONTHANI HOSPITAL</p>
                                     </div>
                                 </div>
-                                <button className="bg-white/50 p-2.5 rounded-2xl text-pink-500 shadow-sm">
+                                <button className="bg-white/20 p-2.5 rounded-2xl text-white shadow-sm backdrop-blur-sm">
                                     <Icon name="settings" size={20} />
                                 </button>
                             </div>
-                            <div className="mt-8 pl-4 border-l-4 border-pink-400">
-                                <h2 className="text-lg font-black text-slate-800">ระบบตรวจสอบข้อมูลครุภัณฑ์</h2>
-                                <p className="text-[10px] font-bold text-pink-500/80 mt-1 uppercase">กลุ่มงาน: เทคโนโลยีสารสนเทศทางการแพทย์</p>
+                            <div className="mt-8 pl-4 border-l-4 border-white">
+                                <h2 className="text-lg font-black text-white">ระบบตรวจสอบข้อมูลครุภัณฑ์</h2>
+                                <p className="text-[10px] font-bold text-pink-100 mt-1 uppercase">Medical IT Department</p>
                             </div>
                         </div>
                     </header>
@@ -250,7 +278,7 @@
                                 </div>
                                 <div onClick={() => setView('search')} className="col-span-2 bg-white p-6 rounded-[2.5rem] shadow-xl shadow-pink-100/50 flex items-center justify-between cursor-pointer border border-pink-50">
                                     <div className="flex items-center gap-4">
-                                        <div className="bg-pink-500 text-white p-4 rounded-3xl shadow-lg shadow-pink-200"><Icon name="search" size={24} /></div>
+                                        <div className="bg-[#e91e63] text-white p-4 rounded-3xl shadow-lg shadow-pink-200"><Icon name="search" size={24} /></div>
                                         <div>
                                             <h4 className="font-black text-slate-800 text-lg">ค้นหาข้อมูล</h4>
                                             <p className="text-slate-400 text-[10px] font-bold uppercase">Search by Asset ID</p>
@@ -264,18 +292,18 @@
                                 <div className="relative search-shadow">
                                     <input
                                         type="text"
-                                        placeholder="ระบุรหัสครุภัณฑ์ หรือ พิมพ์ตัวเลขท้าย ..."
-                                        className="w-full p-5 pl-14 rounded-full bg-white border-2 border-transparent shadow-xl focus:border-pink-300 outline-none font-bold text-slate-600"
+                                        placeholder="ระบุรหัสครุภัณฑ์..."
+                                        className="w-full p-5 pl-14 rounded-full bg-white border-2 border-transparent shadow-xl focus:border-[#e91e63] outline-none font-bold text-slate-600"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
-                                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-pink-400"><Icon name="search" size={20} /></span>
+                                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-[#e91e63]"><Icon name="search" size={20} /></span>
                                 </div>
                                 
                                 <div className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-pink-50">
                                     <div className="bg-pink-50/50 px-6 py-4 flex justify-between">
-                                        <span className="text-[10px] font-black text-pink-400 uppercase tracking-widest">AssetID</span>
-                                        <span className="text-[10px] font-black text-pink-400 uppercase tracking-widest">Action</span>
+                                        <span className="text-[10px] font-black text-[#e91e63] uppercase tracking-widest">AssetID</span>
+                                        <span className="text-[10px] font-black text-[#e91e63] uppercase tracking-widest">Action</span>
                                     </div>
                                     <div className="divide-y divide-pink-50">
                                         {filteredAssets.length > 0 ? filteredAssets.map((asset, idx) => (
@@ -286,7 +314,7 @@
                                                     </p>
                                                     <p className="text-sm font-bold text-slate-800 line-clamp-1">{asset.itemName}</p>
                                                 </div>
-                                                <button onClick={() => handleViewDetail(asset.NOID)} className="bg-pink-500 text-white w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+                                                <button onClick={() => handleViewDetail(asset.NOID)} className="bg-[#e91e63] text-white w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition-transform">
                                                     <Icon name="chevron-right" size={20} />
                                                 </button>
                                             </div>
@@ -311,7 +339,7 @@
                         <div className="absolute left-1/2 -translate-x-1/2 -top-10">
                             <button 
                                 onClick={startScanner}
-                                className="bg-gradient-to-tr from-pink-500 to-rose-400 p-6 rounded-[2.2rem] text-white shadow-2xl shadow-pink-200 border-4 border-white active:scale-90 transition-transform"
+                                className="bg-gradient-to-tr from-[#e91e63] to-rose-400 p-6 rounded-[2.2rem] text-white shadow-2xl shadow-pink-200 border-4 border-white active:scale-90 transition-transform"
                             >
                                 <Icon name="qr-code" size={32} />
                             </button>
@@ -342,7 +370,7 @@
                                     <div>
                                         <h2 className="text-2xl font-black text-slate-800 leading-tight">{selectedAsset.itemName}</h2>
                                         <div className="flex gap-2 mt-3">
-                                            <span className="bg-pink-100 text-pink-600 px-3 py-1 rounded-lg text-xs font-black italic">ID: {selectedAsset.AssetID}</span>
+                                            <span className="bg-pink-100 text-[#e91e63] px-3 py-1 rounded-lg text-xs font-black italic">ID: {selectedAsset.AssetID}</span>
                                             <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase ${selectedAsset.maStatus === 'ปกติ' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
                                                 {selectedAsset.maStatus}
                                             </span>
@@ -352,7 +380,7 @@
                                         <p className="text-[10px] font-black text-pink-400 uppercase mb-2 tracking-widest">Specification</p>
                                         <p className="text-sm text-slate-600 leading-relaxed font-bold">{selectedAsset.spec || "ไม่มีข้อมูล"}</p>
                                     </div>
-                                    <button onClick={() => setModalOpen(false)} className="w-full bg-pink-500 text-white py-5 rounded-full font-black shadow-lg shadow-pink-100 active:scale-95 transition-transform">ตกลง</button>
+                                    <button onClick={() => setModalOpen(false)} className="w-full bg-[#e91e63] text-white py-5 rounded-full font-black shadow-lg shadow-pink-100 active:scale-95 transition-transform">ตกลง</button>
                                 </div>
                             </div>
                         </div>
