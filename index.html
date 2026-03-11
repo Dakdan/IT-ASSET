@@ -11,7 +11,6 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
-            /* ปรับสีชมพูให้สดใสขึ้น */
             --primary: #ff4081;
             --primary-light: #ff80ab;
             --primary-dark: #f50057;
@@ -19,7 +18,6 @@
             --text-dark: #37474f;
             --text-muted: #78909c;
             --white: #ffffff;
-            /* ปรับ Gradient ให้ดูสดใสและมีมิติ */
             --bg-gradient: linear-gradient(135deg, #ff80ab 0%, #fff0f6 50%, #fce4ec 100%);
             --shadow: 0 8px 20px rgba(255, 64, 129, 0.15);
             --radius: 18px;
@@ -42,7 +40,6 @@
             overflow-x: hidden;
         }
 
-        /* เพิ่มลายน้ำพื้นหลัง */
         body::before {
             content: "IT MAINTENANCE TEAM";
             position: fixed;
@@ -64,7 +61,6 @@
             white-space: nowrap;
         }
 
-        /* Loading Overlay */
         #loading-overlay {
             position: fixed;
             top: 0;
@@ -90,7 +86,6 @@
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Layout Structure */
         .page {
             display: none;
             padding: 20px 20px 100px 20px;
@@ -118,7 +113,6 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
         }
 
-        /* Dashboard Cards */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -163,7 +157,6 @@
             font-weight: 500;
         }
 
-        /* Search Box */
         .search-container {
             position: sticky;
             top: 10px;
@@ -197,7 +190,6 @@
             font-size: 28px;
         }
 
-        /* Asset List Card */
         .asset-card {
             background: rgba(255, 255, 255, 0.85);
             margin-bottom: 15px;
@@ -228,7 +220,6 @@
 
         .highlight { background: #fffde7; font-weight: bold; color: var(--primary-dark); padding: 0 2px; border-radius: 4px; }
 
-        /* QR Scanner */
         #reader {
             width: 100%;
             border-radius: var(--radius);
@@ -238,7 +229,6 @@
             border: 4px solid var(--white);
         }
 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -314,7 +304,6 @@
             color: white; 
             box-shadow: 0 4px 15px rgba(255, 64, 129, 0.3);
         }
-        .btn-primary:active { transform: scale(0.95); }
 
         .btn-outline { 
             background: var(--white); 
@@ -322,7 +311,6 @@
             color: var(--primary-dark); 
         }
 
-        /* Bottom Nav */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -332,7 +320,7 @@
             backdrop-filter: blur(15px);
             display: flex;
             justify-content: space-around;
-            padding: 12px 0 25px 0; /* เพิ่ม padding ล่างสำหรับมือถือที่มีแถบโฮม */
+            padding: 12px 0 25px 0;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
             z-index: 1000;
             border-radius: 25px 25px 0 0;
@@ -351,7 +339,7 @@
             transition: 0.3s;
         }
 
-        .nav-item.active { color: var(--primary-dark); transform: translateY(-2px); }
+        .nav-item.active { color: var(--primary-dark); }
         .nav-item .material-icons-round { font-size: 28px; margin-bottom: 4px; }
 
         .scan-fab {
@@ -365,22 +353,18 @@
             box-shadow: 0 8px 20px rgba(255, 64, 129, 0.4);
             border: 4px solid var(--white);
         }
-
-        .scan-fab .material-icons-round { font-size: 32px; margin: 0; }
     </style>
 </head>
 <body>
 
-    <!-- Loading -->
     <div id="loading-overlay">
         <div class="spinner"></div>
         <p style="margin-top: 15px; color: var(--primary-dark); font-weight: 600;">IT MAINTENANCE TEAM</p>
-        <p style="font-size: 12px; color: var(--text-muted);">กำลังเข้าสู่ระบบจัดการครุภัณฑ์...</p>
     </div>
 
-    <!-- 1 Dashboard Page -->
+    <!-- Dashboard -->
     <div id="dashboard" class="page active">
-        <h2><span class="material-icons-round">analytics</span> Dashboard สรุปงาน</h2>
+        <h2><span class="material-icons-round">analytics</span> Dashboard</h2>
         <div class="dashboard-grid">
             <div class="stat-card">
                 <span class="material-icons-round icon">inventory_2</span>
@@ -392,67 +376,27 @@
                 <span id="todayRepairs" class="number">0</span>
                 <span class="label">งานซ่อมวันนี้</span>
             </div>
-            <div class="stat-card">
-                <span class="material-icons-round icon" style="color:#03a9f4">pending_actions</span>
-                <span id="pendingRepairs" class="number">0</span>
-                <span class="label">กำลังดำเนินการ</span>
-            </div>
-            <div class="stat-card">
-                <span class="material-icons-round icon" style="color:#66bb6a">task_alt</span>
-                <span id="finishedRepairs" class="number">0</span>
-                <span class="label">ซ่อมเสร็จสิ้น</span>
-            </div>
         </div>
     </div>
 
-    <!-- 2 Search Page -->
+    <!-- Search -->
     <div id="search" class="page">
-        <h2><span class="material-icons-round">manage_search</span> ค้นหารายการ</h2>
+        <h2><span class="material-icons-round">manage_search</span> ค้นหา</h2>
         <div class="search-container">
-            <input type="text" id="searchInput" class="search-input" placeholder="ค้นหา รหัส NOID, ชื่ออุปกรณ์...">
-            <span class="material-icons-round search-icon">manage_search</span>
+            <input type="text" id="searchInput" class="search-input" placeholder="ค้นหา NOID หรือ ชื่อ...">
+            <span class="material-icons-round search-icon">search</span>
         </div>
-        <div id="assetList">
-            <!-- Asset Items will be rendered here -->
-        </div>
+        <div id="assetList"></div>
     </div>
 
-    <!-- 3 Scan QR Page -->
+    <!-- Scan -->
     <div id="scan" class="page">
-        <h2><span class="material-icons-round">qr_code_scanner</span> สแกนรหัสครุภัณฑ์</h2>
+        <h2><span class="material-icons-round">qr_code_scanner</span> สแกน</h2>
         <div id="reader"></div>
-        <div class="stat-card" style="margin-top:25px; border-left: 5px solid var(--primary);">
-            <p id="scanStatus" style="font-weight: 600; color: var(--primary-dark);">พร้อมสแกน... กรุณาจัด QR Code ให้อยู่ในกรอบ</p>
-        </div>
+        <p id="scanStatus" style="text-align:center; margin-top:20px; color:var(--primary-dark);">พร้อมสแกน...</p>
     </div>
 
-    <!-- 4 Repair History Page -->
-    <div id="repair" class="page">
-        <h2><span class="material-icons-round">assignment_turned_in</span> ประวัติงานซ่อม</h2>
-        <div id="historyTimeline" class="stat-card">
-            <span class="material-icons-round" style="font-size: 48px; color: var(--secondary); margin-bottom: 10px;">folder_open</span>
-            <p style="color:var(--text-muted)">ขณะนี้ยังไม่มีประวัติการซ่อมในระบบ</p>
-        </div>
-    </div>
-
-    <!-- 5 Profile Page -->
-    <div id="profile" class="page">
-        <div class="stat-card" style="margin-top: 40px;">
-            <div style="width: 100px; height: 100px; background: linear-gradient(45deg, var(--primary-light), var(--primary)); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(255, 64, 129, 0.3);">
-                <span class="material-icons-round" style="font-size: 60px; color: white;">engineering</span>
-            </div>
-            <h3 style="margin-bottom: 5px; color: var(--text-dark);">Maintenance Team</h3>
-            <p style="color: var(--primary); font-weight: 600; margin-top: 0;">IT SUPPORT STAFF</p>
-            <div style="height: 1px; background: #eee; margin: 20px 0;"></div>
-            <p style="font-size: 14px; color: var(--text-muted); text-align: left; padding: 0 10px;">
-                <span class="material-icons-round" style="font-size: 16px; vertical-align: middle;">verified_user</span> รหัสพนักงาน: IT-67001<br>
-                <span class="material-icons-round" style="font-size: 16px; vertical-align: middle;">location_on</span> แผนก: ศูนย์คอมพิวเตอร์
-            </p>
-            <button class="btn btn-outline" style="width: 100%; margin-top: 25px;">ออกจากระบบ</button>
-        </div>
-    </div>
-
-    <!-- Bottom Navigation -->
+    <!-- Bottom Nav -->
     <nav class="bottom-nav">
         <div class="nav-item active" onclick="navTo('dashboard')">
             <span class="material-icons-round">dashboard</span>
@@ -465,81 +409,34 @@
         <div class="nav-item scan-fab" onclick="navTo('scan')">
             <span class="material-icons-round">qr_code_scanner</span>
         </div>
-        <div class="nav-item" onclick="navTo('repair')">
-            <span class="material-icons-round">history</span>
-            <span>ประวัติ</span>
-        </div>
-        <div class="nav-item" onclick="navTo('profile')">
-            <span class="material-icons-round">person</span>
-            <span>ฉัน</span>
-        </div>
     </nav>
 
-    <!-- Modal Dialog (Asset Detail) -->
+    <!-- Modal -->
     <div id="assetModal" class="modal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 id="modalTitle" style="margin:0; color:var(--primary-dark);">ข้อมูลครุภัณฑ์</h3>
                 <span class="material-icons-round" onclick="closeModal()" style="cursor:pointer; color:var(--text-muted); font-size: 30px;">cancel</span>
             </div>
-            
             <div style="margin-top: 20px;">
-                <img id="assetImg" src="https://via.placeholder.com/400x220?text=กำลังโหลดรูปภาพ..." alt="Asset" class="detail-img">
-                
-                <div id="assetDetails">
-                    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <h4 id="assetName" style="margin: 0 0 5px; font-size: 20px; color: var(--text-dark);">-</h4>
-                            <p id="assetId" style="font-size: 14px; color: var(--primary); font-weight: 700; margin: 0;">NOID: -</p>
-                        </div>
-                        <span class="status-badge" id="assetStatus">ปกติ</span>
-                    </div>
-                    
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; background: var(--secondary); padding: 15px; border-radius: 15px;">
-                        <div><b style="color:var(--text-muted)">ยี่ห้อ:</b><br><span id="assetBrand" style="color:var(--text-dark)">-</span></div>
-                        <div><b style="color:var(--text-muted)">สถานที่:</b><br><span id="assetLoc" style="color:var(--text-dark)">-</span></div>
-                        <div><b style="color:var(--text-muted)">วันที่รับ:</b><br><span id="assetDate" style="color:var(--text-dark)">-</span></div>
-                        <div><b style="color:var(--text-muted)">อายุการใช้:</b><br><span id="assetAge" style="color:var(--text-dark)">-</span></div>
-                    </div>
-                    
-                    <div style="margin-top: 20px;">
-                        <b style="color:var(--text-muted); font-size: 14px;">รายละเอียดคุณลักษณะ:</b>
-                        <p id="assetDesc" style="font-size: 14px; color: var(--text-dark); line-height: 1.6; margin-top: 5px;">-</p>
-                    </div>
-                </div>
-
-                <div class="btn-group">
-                    <button class="btn btn-outline" onclick="navTo('repair'); closeModal();">
-                        <span class="material-icons-round">history</span> ประวัติซ่อม
-                    </button>
-                    <button class="btn btn-primary" onclick="alert('ระบบแจ้งซ่อมกำลังอยู่ระหว่างการพัฒนา'); closeModal();">
-                        <span class="material-icons-round">build</span> ส่งแจ้งซ่อม
-                    </button>
+                <img id="assetImg" src="" alt="Asset" class="detail-img" onerror="this.src='https://via.placeholder.com/400x220?text=ไม่มีรูปภาพ'">
+                <h4 id="assetName" style="margin: 0 0 5px; font-size: 20px;">-</h4>
+                <p id="assetId" style="font-size: 14px; color: var(--primary); font-weight: 700; margin: 0;">NOID: -</p>
+                <div style="margin-top:15px; background:var(--secondary); padding:15px; border-radius:15px; font-size:14px;">
+                    <p><b>ยี่ห้อ:</b> <span id="assetBrand">-</span></p>
+                    <p><b>สถานที่:</b> <span id="assetLoc">-</span></p>
+                    <p><b>สถานะ:</b> <span id="assetStatus">-</span></p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // API Configuration
+        // *** ตรวจสอบ URL นี้ให้ถูกต้องตามที่คุณ Deploy ใน Google Apps Script ***
         const API_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
         
         let allAssets = [];
         let html5QrCode = null;
-
-        async function fetchWithRetry(url, options = {}, retries = 5, backoff = 1000) {
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) throw new Error("HTTP Error " + response.status);
-                return await response.json();
-            } catch (error) {
-                if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, backoff));
-                    return fetchWithRetry(url, options, retries - 1, backoff * 2);
-                }
-                throw error;
-            }
-        }
 
         function showLoading(show) {
             document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
@@ -550,28 +447,28 @@
             document.getElementById(pageId).classList.add('active');
             
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            const pages = ['dashboard', 'search', 'scan', 'repair', 'profile'];
-            const index = pages.indexOf(pageId);
-            if(index !== -1) document.querySelectorAll('.nav-item')[index].classList.add('active');
-
-            if (pageId === 'scan') startScanner(); else stopScanner();
-            if (pageId === 'search') renderAssets(allAssets);
-            if (pageId === 'dashboard') loadDashboardData();
+            if(pageId === 'dashboard') document.querySelectorAll('.nav-item')[0].classList.add('active');
+            if(pageId === 'search') document.querySelectorAll('.nav-item')[1].classList.add('active');
+            if(pageId === 'scan') startScanner(); else stopScanner();
         }
 
-        async function loadDashboardData() {
+        async function loadData() {
             showLoading(true);
             try {
-                const data = await fetchWithRetry(`${API_URL}?action=getAllAssets`);
-                if (data && data.assets) {
-                    allAssets = data.assets;
-                    document.getElementById('totalAssets').innerText = data.totalAssets || allAssets.length;
-                    document.getElementById('pendingRepairs').innerText = data.pendingRepairs || 0;
-                    document.getElementById('finishedRepairs').innerText = data.finishedRepairs || 0;
-                    document.getElementById('todayRepairs').innerText = data.todayRepairs || 0;
+                const response = await fetch(`${API_URL}?action=getAllAssets`);
+                const data = await response.json();
+                allAssets = data.assets || [];
+                document.getElementById('totalAssets').innerText = allAssets.length;
+                renderAssets(allAssets);
+                
+                // ตรวจสอบ Parameter จาก URL หลังโหลดข้อมูลเสร็จ
+                const urlParams = new URLSearchParams(window.location.search);
+                const id = urlParams.get('id');
+                if (id) {
+                    showAssetDetail(id);
                 }
-            } catch (err) {
-                console.error("Dashboard load failed", err);
+            } catch (e) {
+                console.error("Fetch error", e);
             } finally {
                 showLoading(false);
             }
@@ -580,132 +477,39 @@
         function renderAssets(data, keyword = '') {
             const list = document.getElementById('assetList');
             list.innerHTML = '';
-            
-            if (data.length === 0) {
-                list.innerHTML = `<div class="stat-card"><p style="color:var(--text-muted)">ไม่พบข้อมูลครุภัณฑ์</p></div>`;
-                return;
-            }
-
             data.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'asset-card';
-                
-                const noid = item.id || item.NOID;
-                // ปรับ Link id ให้ใช้ชื่อ url ตามด้วย NOID
-                card.onclick = () => {
-                    updateUrlWithId(noid);
-                    showAssetDetail(noid);
-                };
-
-                let name = item.name || item.itemName || "ไม่ระบุชื่อ";
-                let idText = (noid || "N/A").toString();
-                let loc = item.loc || item.location || "";
-
-                if (keyword) {
-                    const reg = new RegExp(`(${keyword})`, 'gi');
-                    name = name.replace(reg, '<span class="highlight">$1</span>');
-                    idText = idText.replace(reg, '<span class="highlight">$1</span>');
-                }
-
+                const noid = item.NOID || item.id;
+                card.onclick = () => showAssetDetail(noid);
                 card.innerHTML = `
-                    <img src="https://via.placeholder.com/100?text=IT" class="asset-img-thumb">
                     <div class="asset-info">
-                        <h4>${name}</h4>
-                        <p>NOID: ${idText} | ${loc}</p>
-                        <span class="status-badge" style="${item.status === 'ชำรุด' ? 'background:#ffebee;color:#c62828;' : ''}">${item.status || 'ปกติ'}</span>
+                        <h4>${item.itemName || item.name}</h4>
+                        <p>NOID: ${noid} | ${item.location || item.loc}</p>
                     </div>
                 `;
                 list.appendChild(card);
             });
         }
 
-        // ฟังก์ชันช่วยอัปเดต URL เมื่อมีการคลิกดูครุภัณฑ์
-        function updateUrlWithId(id) {
-            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?id=' + id;
-            window.history.pushState({ path: newUrl }, '', newUrl);
-        }
-
-        document.getElementById('searchInput').oninput = (e) => {
-            const val = e.target.value.toLowerCase();
-            const filtered = allAssets.filter(a => {
-                const name = (a.name || a.itemName || "").toLowerCase();
-                const id = (a.id || a.NOID || "").toString().toLowerCase();
-                const loc = (a.loc || a.location || "").toLowerCase();
-                return name.includes(val) || id.includes(val) || loc.includes(val);
-            });
-            renderAssets(filtered, val);
-        };
-
-        function startScanner() {
-            html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 15, qrbox: { width: 250, height: 250 } };
-            
-            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-                let noid = decodedText;
-                try {
-                    // ตรวจสอบว่าเป็น URL หรือไม่ ถ้าใช่ให้ดึงค่า id ออกมา
-                    if (decodedText.includes('id=')) {
-                        noid = new URL(decodedText).searchParams.get('id');
-                    } else if (decodedText.includes('/')) {
-                        // กรณีสแกน URL ตรงๆ จาก Browser
-                        noid = decodedText.split('id=').pop().split('&')[0];
-                    }
-                } catch(e) { noid = decodedText; }
-                
-                stopScanner();
-                document.getElementById('scanStatus').innerText = "พบข้อมูลรหัส: " + noid;
-                
-                // อัปเดต URL และแสดงรายละเอียด
-                updateUrlWithId(noid);
-                showAssetDetail(noid);
-            }).catch(err => {
-                document.getElementById('scanStatus').innerText = "ไม่สามารถเข้าถึงกล้องได้";
-            });
-        }
-
-        function stopScanner() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => html5QrCode.clear()).catch(err => console.error(err));
-            }
-        }
-
         async function showAssetDetail(noid) {
             showLoading(true);
             try {
-                const asset = await fetchWithRetry(`${API_URL}?action=getAsset&noid=${noid}`);
-                
+                const response = await fetch(`${API_URL}?action=getAsset&noid=${noid}`);
+                const asset = await response.json();
                 if (asset && !asset.error) {
-                    document.getElementById('assetName').innerText = asset.itemName || "ไม่ระบุชื่อ";
+                    document.getElementById('assetName').innerText = asset.itemName || "-";
                     document.getElementById('assetId').innerText = "NOID: " + asset.NOID;
                     document.getElementById('assetBrand').innerText = asset.brand || "-";
                     document.getElementById('assetLoc').innerText = asset.location || "-";
-                    document.getElementById('assetStatus').innerText = asset.status || "ปกติ";
-                    document.getElementById('assetDate').innerText = asset.receiveDate || "-";
-                    document.getElementById('assetAge').innerText = asset.age || "-";
-                    document.getElementById('assetDesc').innerText = asset.description || "-";
-                    
-                    const badge = document.getElementById('assetStatus');
-                    if (asset.status === 'ชำรุด' || asset.status === 'รอซ่อม') {
-                        badge.style.background = '#ffebee'; badge.style.color = '#c62828';
-                    } else {
-                        badge.style.background = '#e8f5e9'; badge.style.color = '#2e7d32';
-                    }
-
-                    if(asset.imgUrl) {
-                        document.getElementById('assetImg').src = asset.imgUrl;
-                    } else {
-                        document.getElementById('assetImg').src = "https://via.placeholder.com/400x220?text=ไม่มีรูปภาพประกอบ";
-                    }
-
+                    document.getElementById('assetStatus').innerText = asset.status || "-";
+                    document.getElementById('assetImg').src = asset.imgUrl || "";
                     document.getElementById('assetModal').classList.add('active');
                 } else {
-                    alert("ไม่พบข้อมูลครุภัณฑ์รหัส: " + noid);
-                    // ถ้าไม่พบ ให้ล้างค่า id ใน URL ออก
-                    window.history.pushState({}, '', window.location.pathname);
-                    navTo('search');
+                    alert("ไม่พบข้อมูล NOID: " + noid);
                 }
-            } catch (err) {
-                alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์ กรุณาลองใหม่");
+            } catch (e) {
+                alert("การเชื่อมต่อมีปัญหา");
             } finally {
                 showLoading(false);
             }
@@ -713,20 +517,33 @@
 
         function closeModal() {
             document.getElementById('assetModal').classList.remove('active');
-            // เมื่อปิด Modal ให้ล้างค่า id ใน URL (Optional) หรือจะคงไว้ก็ได้
-            // window.history.pushState({}, '', window.location.pathname);
         }
 
-        window.onload = () => {
-            // ตรวจสอบว่าใน URL มีพารามิเตอร์ id หรือไม่ (Deep Linking)
-            const urlParams = new URLSearchParams(window.location.search);
-            const initialId = urlParams.get('id');
-            
-            loadDashboardData().then(() => {
-                if (initialId) {
-                    showAssetDetail(initialId);
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+                (text) => {
+                    stopScanner();
+                    showAssetDetail(text);
                 }
-            });
+            );
+        }
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => html5QrCode.clear());
+            }
+        }
+
+        window.onload = loadData;
+
+        document.getElementById('searchInput').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allAssets.filter(a => 
+                (a.NOID || "").toString().toLowerCase().includes(val) || 
+                (a.itemName || "").toLowerCase().includes(val)
+            );
+            renderAssets(filtered, val);
         };
     </script>
 </body>
