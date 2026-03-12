@@ -218,7 +218,6 @@
 
             const handleScanClick = () => {
                 setIsScanning(true);
-                // จำลองการสแกน 3 วินาทีแล้วแจ้งเตือน
                 setTimeout(() => {
                     setIsScanning(false);
                     showDevAlert('ไม่สามารถเข้าถึงกล้องได้ในขณะนี้ กรุณาตรวจสอบสิทธิ์การเข้าถึง');
@@ -492,7 +491,7 @@
                                     </button>
                                 </div>
                                 
-                                <div className="p-7 overflow-y-auto space-y-7 pb-10">
+                                <div className="p-7 overflow-y-auto space-y-6 pb-10">
                                     <div className="aspect-video bg-slate-100 rounded-[36px] overflow-hidden border-2 border-slate-50 flex items-center justify-center relative flex-shrink-0 shadow-inner group">
                                         {selectedAsset.imgUrl ? (
                                             <img src={selectedAsset.imgUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="asset" />
@@ -514,7 +513,21 @@
                                         <DetailRow label="คุณลักษณะ/สเปค" value={selectedAsset.spec} icon="cpu" />
                                         <DetailRow label="หน่วยงานที่รับผิดชอบ" value={selectedAsset.location} icon="map-pin" />
                                         
-                                        <div className="grid grid-cols-2 gap-5 mt-2">
+                                        <div className="grid grid-cols-2 gap-4 mt-2">
+                                            <DetailRow label="วันที่รับเข้า" value={selectedAsset.receiveDate} icon="calendar" />
+                                            <DetailRow label="ราคา (บาท)" value={selectedAsset.price ? Number(selectedAsset.price).toLocaleString() : "-"} icon="banknote" />
+                                        </div>
+
+                                        <DetailRow label="แหล่งเงินที่ใช้จัดซื้อ" value={selectedAsset.budgetSource} icon="wallet" />
+                                        
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <DetailRow label="สถานะการบำรุงรักษา" value={selectedAsset.maStatus} icon="shield-check" />
+                                            <DetailRow label="สถานะการใช้งาน" value={selectedAsset.coStatus} icon="activity" />
+                                        </div>
+
+                                        <DetailRow label="GPS (Note2)" value={selectedAsset.note2} icon="navigation" />
+
+                                        <div className="grid grid-cols-2 gap-5 mt-4">
                                             <div className="bg-slate-50/50 p-4 rounded-3xl border border-slate-100">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase mb-1">อายุการใช้งาน</p>
                                                 <p className="text-sm font-black text-slate-700">{selectedAsset.age} ปี</p>
