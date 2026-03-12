@@ -27,14 +27,12 @@
     <style>
         body { 
             font-family: 'Sarabun', sans-serif; 
-            /* พื้นหลังไล่ระดับ ล่างขึ้นบน: ดำ 5% (#f2f2f2) -> ชมพู (#fdf2f8) -> ขาว (#ffffff) */
             background: linear-gradient(0deg, #f2f2f2 0%, #fdf2f8 50%, #ffffff 100%); 
             min-height: 100vh; 
             margin: 0; 
             background-attachment: fixed;
         }
         
-        /* Header: ชมพูเข้ม-ชมพูสว่าง */
         .header-pink-vibrant { 
             background: linear-gradient(180deg, #ad1457 0%, #d81b60 30%, #f472b6 100%); 
             border-bottom-left-radius: 28px;
@@ -43,14 +41,8 @@
             border-bottom: 5px solid #880e4f;
         }
 
-        .header-title {
-            color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        .header-subtitle {
-            color: #ffe4e6;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
+        .header-title { color: #ffffff; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
+        .header-subtitle { color: #ffe4e6; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
 
         .glass-card { 
             background: rgba(255, 255, 255, 0.95); 
@@ -173,6 +165,28 @@
             100% { top: 0; }
         }
 
+        /* Modern Modal Action Buttons */
+        .modal-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 8px;
+            border-radius: 20px;
+            transition: all 0.2s;
+            flex: 1;
+            height: 64px;
+        }
+        .modal-action-btn:active { transform: scale(0.95); }
+
+        .modal-footer {
+            background: white;
+            padding: 16px 24px 32px 24px;
+            border-top: 2px solid #f1f5f9;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
+        }
+
         @media (min-width: 1024px) {
             .asset-grid {
                 display: grid;
@@ -230,11 +244,8 @@
                     const dash = await dashResp.json();
                     setAllAssets(Array.isArray(assets) ? assets : (assets.assets || []));
                     setDashData(dash || []);
-                } catch (err) { 
-                    console.error(err); 
-                } finally { 
-                    setLoading(false); 
-                }
+                } catch (err) { console.error(err); } 
+                finally { setLoading(false); }
             };
 
             const handleViewDetail = async (noid) => {
@@ -246,11 +257,8 @@
                         setSelectedAsset(data);
                         setModalOpen(true);
                     }
-                } catch (err) { 
-                    console.error("Fetch error:", err); 
-                } finally { 
-                    setLoading(false); 
-                }
+                } catch (err) { console.error("Fetch error:", err); } 
+                finally { setLoading(false); }
             };
 
             const showDevAlert = (msg = 'ระบบอยู่ในขั้นตอนพัฒนา จะสามารถใช้งานได้เร็วๆ นี้') => {
@@ -269,8 +277,7 @@
             const filteredAssets = useMemo(() => {
                 const term = searchTerm.trim().toLowerCase();
                 if (!term) return [];
-                const filtered = allAssets.filter(asset => String(asset.AssetID || "").toLowerCase().includes(term));
-                return filtered.slice(0, 50); 
+                return allAssets.filter(asset => String(asset.AssetID || "").toLowerCase().includes(term)).slice(0, 50); 
             }, [searchTerm, allAssets]);
 
             const highlightText = (text, target) => {
@@ -290,9 +297,11 @@
                         {icon && <Icon name={icon} size={12} className="text-pink-400" />}
                         <p className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">{label}</p>
                     </div>
-                    <p className={`text-[13px] font-bold ${highlight ? 'text-hospital-primary' : 'text-slate-700'} pl-5`}>
-                        {value || "-"}
-                    </p>
+                    <div className="pl-5">
+                        <p className={`text-[13px] font-bold ${highlight ? 'text-hospital-primary' : 'text-slate-700'}`}>
+                            {value || "-"}
+                        </p>
+                    </div>
                 </div>
             );
 
@@ -301,8 +310,8 @@
                     {loading && (
                         <div className="fixed inset-0 bg-white/80 backdrop-blur-md z-[9999] flex items-center justify-center">
                             <div className="flex flex-col items-center gap-4">
-                                <div className="w-14 h-14 border-4 border-pink-100 border-t-pink-500 rounded-full animate-spin shadow-inner"></div>
-                                <p className="text-pink-500 font-bold text-sm animate-pulse tracking-wide text-center">กำลังเชื่อมต่อระบบฐานข้อมูล...</p>
+                                <div className="w-14 h-14 border-4 border-pink-100 border-t-pink-500 rounded-full animate-spin"></div>
+                                <p className="text-pink-500 font-bold text-sm text-center">กำลังเชื่อมต่อฐานข้อมูล...</p>
                             </div>
                         </div>
                     )}
@@ -311,35 +320,32 @@
                         <div className="scan-overlay animate-in fade-in duration-300">
                             <div className="mb-10 text-center">
                                 <Icon name="qr-code" size={48} className="text-pink-400 mb-4" />
-                                <h2 className="text-xl font-black tracking-tight">สแกน QR Code ครุภัณฑ์</h2>
-                                <p className="text-xs text-slate-400 font-bold mt-1">วางรหัส QR Code ให้อยู่ในกรอบ</p>
+                                <h2 className="text-xl font-black">สแกน QR Code ครุภัณฑ์</h2>
                             </div>
-                            <div className="scan-frame shadow-[0_0_50px_rgba(244,114,182,0.3)]">
+                            <div className="scan-frame">
                                 <div className="scan-line"></div>
                                 <div className="w-full h-full flex items-center justify-center bg-slate-800">
                                      <Icon name="camera" size={40} className="text-slate-600 animate-pulse" />
                                 </div>
                             </div>
-                            <button onClick={() => setIsScanning(false)} className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold text-sm border-2 border-white/20 backdrop-blur transition-all">
-                                ยกเลิกการสแกน
-                            </button>
+                            <button onClick={() => setIsScanning(false)} className="mt-12 bg-white/10 px-8 py-3 rounded-full font-bold text-sm border-2 border-white/20">ยกเลิก</button>
                         </div>
                     )}
 
                     <header className="header-pink-vibrant px-5 py-8 text-white sticky top-0 z-50">
                         <div className="max-w-6xl mx-auto flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white rounded-2xl p-1.5 shadow-lg flex-shrink-0 flex items-center justify-center border-2 border-white/50 overflow-hidden">
+                                <div className="w-14 h-14 bg-white rounded-2xl p-1.5 shadow-lg flex items-center justify-center border-2 border-white/50 overflow-hidden">
                                     <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" className="w-full h-full object-contain" />
                                 </div>
                                 <div className="overflow-hidden">
-                                    <h1 className="text-lg font-black leading-tight header-title truncate">โรงพยาบาลอุดรธานี</h1>
-                                    <p className="text-[10px] font-black tracking-wider uppercase header-subtitle truncate flex items-center gap-1">
-                                        <Icon name="activity" size={10} /> IT ASSET MANAGEMENT SYSTEM
+                                    <h1 className="text-lg font-black header-title truncate">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+                                    <p className="text-[10px] font-black uppercase header-subtitle truncate flex items-center gap-1">
+                                        <Icon name="activity" size={10} /> กลุ่มงาน IT โรงพยาบาลอุดรธานี
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={fetchInitialData} className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all border-2 border-white/40 shadow-sm">
+                            <button onClick={fetchInitialData} className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center border-2 border-white/40">
                                 <Icon name="rotate-cw" size={20} className="text-white" />
                             </button>
                         </div>
@@ -349,27 +355,22 @@
                         {view === 'dashboard' ? (
                             <div className="space-y-8 animate-in fade-in duration-500">
                                 <div className="flex items-center justify-between px-1">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white shadow-sm rounded-xl flex items-center justify-center border-2 border-pink-200">
-                                            <Icon name="pie-chart" size={20} className="text-pink-500" />
-                                        </div>
-                                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">สถิติภาพรวม</h2>
-                                    </div>
-                                    <div className="bg-slate-800 text-pink-400 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg border-2 border-pink-500">Overview</div>
+                                    <h2 className="text-2xl font-black text-slate-800">สถิติภาพรวม</h2>
+                                    <div className="bg-slate-800 text-pink-400 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-2 border-pink-500">Overview</div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {[
-                                        { label: "ครุภัณฑ์ทั้งหมด", val: allAssets.length.toLocaleString(), unit: "รายการ", icon: "monitor", color: "blue", border: "border-blue-500" },
-                                        { label: "ความพร้อมใช้", val: "100", unit: "%", icon: "zap", color: "pink", border: "border-pink-500" },
-                                        { label: "สถานะการทำงาน", val: "ปกติ", unit: "", icon: "shield-check", color: "green", border: "border-green-500" }
+                                        { label: "ครุภัณฑ์ทั้งหมด", val: allAssets.length.toLocaleString(), unit: "รายการ", icon: "monitor", border: "border-blue-500", bg: "bg-blue-50", text: "text-blue-600" },
+                                        { label: "ความพร้อมใช้", val: "100", unit: "%", icon: "zap", border: "border-pink-500", bg: "bg-pink-50", text: "text-pink-600" },
+                                        { label: "สถานะระบบ", val: "ปกติ", unit: "", icon: "shield-check", border: "border-green-500", bg: "bg-green-50", text: "text-green-600" }
                                     ].map((stat, i) => (
-                                        <div key={i} className={`bg-white p-6 rounded-[32px] shadow-sm flex items-center gap-5 border-2 ${stat.border} hover:translate-y-[-4px] transition-transform`}>
-                                            <div className={`w-14 h-14 bg-${stat.color}-50 text-${stat.color}-600 rounded-[22px] flex items-center justify-center flex-shrink-0 border-2 border-${stat.color}-100`}>
+                                        <div key={i} className={`bg-white p-6 rounded-[32px] shadow-sm flex items-center gap-5 border-2 ${stat.border}`}>
+                                            <div className={`w-14 h-14 ${stat.bg} ${stat.text} rounded-[22px] flex items-center justify-center flex-shrink-0`}>
                                                 <Icon name={stat.icon} size={28} />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-0.5">{stat.label}</p>
                                                 <p className="text-2xl font-black text-slate-800">{stat.val} <span className="text-sm font-bold text-slate-300 ml-1">{stat.unit}</span></p>
                                             </div>
                                         </div>
@@ -377,38 +378,28 @@
                                 </div>
 
                                 <div className="bg-white rounded-[36px] shadow-xl border-4 border-slate-800 overflow-hidden">
-                                    <div className="p-5 bg-slate-800 flex items-center justify-between">
-                                        <div className="flex items-center gap-3 text-white">
-                                            <Icon name="layers" size={18} className="text-pink-400" />
-                                            <span className="text-[11px] font-black tracking-widest uppercase">จำแนกตามประเภทและกลุ่มงาน</span>
-                                        </div>
+                                    <div className="p-5 bg-slate-800 flex items-center justify-between text-white">
+                                        <span className="text-[11px] font-black uppercase tracking-widest">จำแนกตามประเภทและกลุ่มงาน</span>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="dash-table w-full border-collapse">
                                             <thead>
                                                 <tr>
-                                                    <th className="col-group border-r-4 border-slate-100 text-slate-700">กลุ่มลำดับ</th>
+                                                    <th className="col-group border-r-4 border-slate-100">กลุ่มลำดับ</th>
                                                     <th className="col-opd">OPD</th>
                                                     <th className="col-ipd">IPD</th>
                                                     <th className="col-backoffice">Back Office</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {dashData.length > 0 ? dashData.map((row, idx) => {
-                                                    const isTotal = row.PIORITY_NAME === 'รวม';
-                                                    return (
-                                                        <tr key={idx} className={isTotal ? 'bg-slate-100 font-black' : 'hover:bg-slate-50'}>
-                                                            <td className="col-group font-bold border-r-4 border-slate-100">{row.PIORITY_NAME}</td>
-                                                            <td className="bg-[#00ff88]/15 text-[#004d2c] border-r border-white">{row.OPD}</td>
-                                                            <td className="bg-[#00d4ff]/15 text-[#00404d] border-r border-white">{row.IPD}</td>
-                                                            <td className="bg-[#ffaa00]/15 text-[#4d3300]">{row['Back Office']}</td>
-                                                        </tr>
-                                                    );
-                                                }) : (
-                                                    <tr>
-                                                        <td colSpan="4" className="py-10 text-center text-slate-400 font-bold">ไม่พบข้อมูลสถิติ</td>
+                                                {dashData.map((row, idx) => (
+                                                    <tr key={idx} className={row.PIORITY_NAME === 'รวม' ? 'bg-slate-100 font-black' : ''}>
+                                                        <td className="col-group font-bold border-r-4 border-slate-100">{row.PIORITY_NAME}</td>
+                                                        <td className="bg-[#00ff88]/10">{row.OPD}</td>
+                                                        <td className="bg-[#00d4ff]/10">{row.IPD}</td>
+                                                        <td className="bg-[#ffaa00]/10">{row['Back Office']}</td>
                                                     </tr>
-                                                )}
+                                                ))}
                                             </tbody>
                                         </table>
                                     </div>
@@ -418,48 +409,26 @@
                             <div className="space-y-6 animate-in slide-in-from-right duration-300">
                                 <div className="sticky-search">
                                     <div className="relative glass-card rounded-[28px] shadow-2xl overflow-hidden border-4 border-pink-500">
-                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-pink-500">
-                                            <Icon name="search" size={24} />
-                                        </span>
+                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-pink-500"><Icon name="search" size={24} /></span>
                                         <input 
-                                            autoFocus
-                                            type="text" 
-                                            className="w-full py-7 pl-16 pr-14 outline-none font-bold text-slate-800 placeholder:text-slate-400 bg-transparent text-lg"
-                                            placeholder="กรอกเลขรหัสครุภัณฑ์เพื่อตรวจสอบ..."
+                                            autoFocus type="text" 
+                                            className="w-full py-7 pl-16 pr-14 outline-none font-bold text-slate-800 bg-transparent text-lg"
+                                            placeholder="กรอกเลขรหัสครุภัณฑ์..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                         />
                                     </div>
                                 </div>
-
-                                <div className="asset-grid space-y-4 lg:space-y-0 pb-16">
-                                    {filteredAssets.length > 0 ? (
-                                        filteredAssets.map((asset, idx) => (
-                                            <div key={idx} 
-                                                 onClick={() => handleViewDetail(asset.NOID)}
-                                                 className="asset-card p-6 rounded-[32px] flex items-center justify-between group cursor-pointer shadow-sm border-2 border-pink-300 hover:border-pink-500 hover:shadow-lg">
-                                                <div className="flex-1 pr-6 overflow-hidden">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <Icon name="cpu" size={14} className="text-pink-500" />
-                                                        <span className="text-[12px] font-black text-slate-500 font-mono tracking-wider">
-                                                            {highlightText(asset.AssetID, searchTerm)}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[15px] font-black text-slate-800 leading-snug">
-                                                        {asset.itemName}
-                                                    </p>
-                                                </div>
-                                                <div className="w-11 h-11 bg-pink-50 text-pink-500 rounded-2xl flex items-center justify-center border-2 border-pink-100 group-hover:bg-pink-500 group-hover:text-white transition-colors">
-                                                    <Icon name="arrow-right" size={20} />
-                                                </div>
+                                <div className="asset-grid pb-16">
+                                    {filteredAssets.map((asset, idx) => (
+                                        <div key={idx} onClick={() => handleViewDetail(asset.NOID)} className="asset-card p-6 rounded-[32px] flex items-center justify-between cursor-pointer shadow-sm border-2 border-pink-300">
+                                            <div className="flex-1 pr-4">
+                                                <p className="text-[12px] font-black text-pink-500 mb-1">{highlightText(asset.AssetID, searchTerm)}</p>
+                                                <p className="text-[15px] font-black text-slate-800">{asset.itemName}</p>
                                             </div>
-                                        ))
-                                    ) : (
-                                        searchTerm && <div className="text-center py-20 bg-white/50 rounded-[40px] border-2 border-dashed border-slate-300">
-                                            <Icon name="info" size={48} className="text-slate-300 mb-4" />
-                                            <p className="text-slate-400 font-bold">ไม่พบข้อมูลครุภัณฑ์ที่ค้นหา</p>
+                                            <Icon name="arrow-right" className="text-pink-500" />
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -467,93 +436,102 @@
 
                     <div className="nav-container">
                         <nav className="nav-bar flex items-center justify-around px-8 relative">
-                            <button onClick={() => setView('dashboard')} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'dashboard' ? 'active-nav scale-110' : 'inactive-nav'}`}>
-                                <Icon name="layout-grid" size={24} />
-                                <span className="text-[9px] font-black uppercase tracking-tighter">Summary</span>
+                            <button onClick={() => setView('dashboard')} className={`flex flex-col items-center gap-1.5 ${view === 'dashboard' ? 'active-nav' : 'inactive-nav'}`}>
+                                <Icon name="layout-grid" size={24} /><span className="text-[9px] font-black uppercase">Summary</span>
                             </button>
-                            
-                            <div className="scan-fab border-4 border-white" onClick={handleScanClick}>
-                                <Icon name="scan" size={32} />
-                            </div>
-
-                            <button onClick={() => setView('search')} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'search' ? 'active-nav scale-110' : 'inactive-nav'}`}>
-                                <Icon name="search-check" size={24} />
-                                <span className="text-[9px] font-black uppercase tracking-tighter">Verify</span>
+                            <div className="scan-fab border-4 border-white" onClick={handleScanClick}><Icon name="scan" size={32} /></div>
+                            <button onClick={() => setView('search')} className={`flex flex-col items-center gap-1.5 ${view === 'search' ? 'active-nav' : 'inactive-nav'}`}>
+                                <Icon name="search-check" size={24} /><span className="text-[9px] font-black uppercase">Verify</span>
                             </button>
                         </nav>
                     </div>
 
                     {modalOpen && selectedAsset && (
-                        <div className="fixed inset-0 z-[10000] bg-slate-900/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-                            <div className="bg-white w-full max-w-xl rounded-t-[48px] sm:rounded-[48px] overflow-hidden flex flex-col max-h-[94vh] shadow-2xl border-t-8 border-pink-500">
-                                <div className="p-8 flex justify-between items-center border-b-2 border-slate-50">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-2.5 h-10 bg-pink-500 rounded-full shadow-[0_0_10px_rgba(233,30,99,0.3)]"></div>
-                                        <div>
-                                            <h3 className="text-xl font-black text-slate-800">รายละเอียดครุภัณฑ์</h3>
-                                            <p className="text-[10px] text-pink-400 font-black uppercase mt-1 tracking-[0.2em]">Asset Specification Record</p>
-                                        </div>
+                        <div className="fixed inset-0 z-[10000] bg-slate-900/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+                            <div className="bg-white w-full max-w-xl rounded-t-[48px] sm:rounded-[48px] overflow-hidden flex flex-col max-h-[96vh] shadow-2xl border-t-8 border-pink-500 animate-in slide-in-from-bottom duration-300">
+                                
+                                <div className="p-8 pb-4 flex items-center gap-4 flex-shrink-0">
+                                    <div className="w-2.5 h-10 bg-pink-500 rounded-full shadow-[0_0_10px_rgba(233,30,99,0.3)]"></div>
+                                    <div>
+                                        <h3 className="text-xl font-black text-slate-800">รายละเอียดครุภัณฑ์</h3>
+                                        <p className="text-[10px] text-pink-400 font-black uppercase tracking-widest">Specification & History</p>
                                     </div>
-                                    <button onClick={() => setModalOpen(false)} className="w-12 h-12 flex items-center justify-center bg-slate-50 rounded-2xl border-2 border-slate-100 hover:bg-pink-50 hover:text-pink-500 transition-colors">
-                                        <Icon name="x" size={24} />
-                                    </button>
                                 </div>
                                 
-                                <div className="p-8 overflow-y-auto space-y-6 pb-12">
-                                    <div className="aspect-[16/10] bg-slate-50 rounded-[40px] overflow-hidden border-4 border-pink-100 shadow-inner flex items-center justify-center group">
-                                        {selectedAsset.imgUrl ? (
-                                            <img src={selectedAsset.imgUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="asset" />
-                                        ) : (
-                                            <Icon name="image-off" size={60} className="text-slate-200" />
-                                        )}
+                                <div className="p-8 pt-4 overflow-y-auto space-y-6 flex-1">
+                                    <div className="aspect-[16/10] bg-slate-100 rounded-[40px] overflow-hidden border-4 border-pink-100 flex items-center justify-center">
+                                        {selectedAsset.imgUrl ? <img src={selectedAsset.imgUrl} className="w-full h-full object-cover" /> : <Icon name="image-off" size={60} className="text-slate-300" />}
                                     </div>
 
                                     <div className="space-y-1 bg-slate-50/50 p-2 rounded-[40px] border-2 border-slate-100">
                                         <DetailRow label="เลขรหัสครุภัณฑ์" value={selectedAsset.AssetID} icon="key" highlight={true} />
                                         <DetailRow label="ชื่อรายการอุปกรณ์" value={selectedAsset.itemName} icon="cpu" highlight={true} />
                                         <DetailRow label="ยี่ห้อ/รุ่น/สเปค" value={selectedAsset.spec} icon="info" />
-                                        <DetailRow label="สถานที่ติดตั้ง/ใช้งาน" value={selectedAsset.location} icon="map-pin" />
+                                        <DetailRow label="วันที่รับเข้า" value={selectedAsset.receiveDate} icon="calendar" />
+                                        <DetailRow label="แหล่งเงิน" value={selectedAsset.budgetSource} icon="wallet" />
+                                        <DetailRow label="ราคา" value={`${selectedAsset.price ? Number(selectedAsset.price).toLocaleString() : "-"} บาท`} icon="banknote" />
+                                        <DetailRow label="สถานะครุภัณฑ์" value={selectedAsset.coStatus} icon="activity" />
+                                        <DetailRow label="การรับประกัน" value={selectedAsset.maStatus} icon="shield" />
+                                        <DetailRow label="สถานที่ติดตั้ง" value={selectedAsset.location} icon="map-pin" />
                                         <DetailRow label="อายุการใช้งาน" value={`${selectedAsset.age} ปี`} icon="history" />
                                         
                                         {selectedAsset.logData && (
-                                            <div className="mt-5 p-6 bg-white rounded-[32px] border-4 border-pink-400 shadow-sm relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-24 h-24 bg-pink-50 -mr-12 -mt-12 rounded-full opacity-50"></div>
-                                                <div className="flex items-center gap-2 mb-4 relative">
+                                            <div className="mt-5 p-6 bg-white rounded-[32px] border-4 border-pink-400 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-4">
                                                     <Icon name="activity" size={20} className="text-pink-500" />
-                                                    <p className="text-[12px] font-black text-pink-500 uppercase tracking-widest">สถานะปัจจุบัน (Log)</p>
+                                                    <p className="text-[12px] font-black text-pink-500 uppercase">สถานะปัจจุบัน (Log)</p>
                                                 </div>
-                                                <div className="space-y-4 relative">
+                                                <div className="space-y-4">
                                                     <div>
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">วัตถุประสงค์การใช้งาน</p>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">วัตถุประสงค์</p>
                                                         <p className="text-sm font-black text-slate-800 leading-relaxed">{selectedAsset.logData.g}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">เจ้าหน้าที่ผู้รับผิดชอบ</p>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">ผู้รับผิดชอบ</p>
                                                         <p className="text-sm font-black text-slate-800">{selectedAsset.logData.i}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button onClick={() => showDevAlert()} className="bg-white border-4 border-pink-500 text-pink-500 py-4 rounded-[20px] font-black text-sm flex items-center justify-center gap-2 hover:bg-pink-50 transition-colors">
-                                            <Icon name="edit" size={18} /> ปรับปรุงข้อมูล
+                                </div>
+
+                                {/* Modern Sticky Bottom Footer with 3 Action Buttons */}
+                                <div className="modal-footer flex-shrink-0">
+                                    <div className="flex gap-3">
+                                        <button 
+                                            onClick={() => setModalOpen(false)} 
+                                            className="modal-action-btn bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200"
+                                        >
+                                            <Icon name="x-circle" size={24} className="text-slate-400" />
+                                            <span className="text-[10px] font-black uppercase">ปิดหน้าจอ</span>
                                         </button>
-                                        <button onClick={() => showDevAlert()} className="bg-slate-800 text-white py-4 rounded-[20px] font-black text-sm flex items-center justify-center gap-2 border-4 border-slate-700 shadow-lg">
-                                            <Icon name="printer" size={18} /> ออกสติกเกอร์
+                                        
+                                        <button 
+                                            onClick={() => showDevAlert('กำลังเตรียมไฟล์สำหรับพิมพ์สติกเกอร์...')} 
+                                            className="modal-action-btn bg-white hover:bg-pink-50 text-hospital-primary border-2 border-pink-500"
+                                        >
+                                            <Icon name="printer" size={24} className="text-pink-500" />
+                                            <span className="text-[10px] font-black uppercase">พิมพ์/สแกน</span>
+                                        </button>
+
+                                        <button 
+                                            onClick={() => showDevAlert('กำลังเปิดโหมดแก้ไขข้อมูล...')} 
+                                            className="modal-action-btn bg-slate-800 hover:bg-slate-700 text-white shadow-lg"
+                                        >
+                                            <Icon name="edit-3" size={24} className="text-pink-400" />
+                                            <span className="text-[10px] font-black uppercase">แก้ไขข้อมูล</span>
                                         </button>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     )}
 
                     {alertMsg && (
-                        <div className="fixed top-32 left-1/2 -translate-x-1/2 z-[10001] bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl text-[13px] font-black animate-in zoom-in duration-200 flex items-center gap-3 border-b-4 border-pink-500">
-                            <div className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
-                                <Icon name="bell" size={14} className="text-white" />
-                            </div>
+                        <div className="fixed top-32 left-1/2 -translate-x-1/2 z-[10001] bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl text-[13px] font-black flex items-center gap-3 border-b-4 border-pink-500 animate-in zoom-in duration-200">
+                            <Icon name="bell" size={14} className="text-pink-500" />
                             {alertMsg}
                         </div>
                     )}
