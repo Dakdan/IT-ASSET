@@ -31,12 +31,19 @@
             min-height: 100vh; 
             margin: 0; 
         }
+        /* Header */
         .header-pink { 
-            background: linear-gradient(135deg, #ff4081 0%, #e91e63 50%, #c2185b 100%); 
+            background: linear-gradient(135deg, #d81b60 0%, #ad1457 50%, #880e4f 100%); 
             border-bottom-left-radius: 24px;
             border-bottom-right-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border-bottom: 4px solid #880e4f;
         }
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px); 
+            border: 2px solid #e91e63;
+        }
         
         .sticky-search {
             position: sticky;
@@ -63,8 +70,8 @@
             align-items: center; 
             justify-content: center; 
             border-radius: 50%; 
-            box-shadow: 0 8px 30px rgba(233, 30, 99, 0.4);
-            border: 5px solid white;
+            box-shadow: 0 10px 25px rgba(233, 30, 99, 0.5);
+            border: 4px solid #ffffff;
             position: absolute;
             top: -36px;
             left: 50%;
@@ -73,26 +80,52 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .scan-fab:active { transform: translateX(-50%) scale(0.9) rotate(-10deg); }
 
         .nav-container { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px; display: flex; justify-content: center; z-index: 1000; }
-        .nav-bar { width: 100%; max-width: 420px; height: 72px; border-radius: 32px; position: relative; border: 1px solid rgba(255, 255, 255, 0.3); }
+        .nav-bar { 
+            width: 100%; 
+            max-width: 420px; 
+            height: 72px; 
+            border-radius: 32px; 
+            position: relative; 
+            background: rgba(15, 23, 42, 0.98); 
+            border: 3px solid #334155;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
         
-        .active-nav { color: #e91e63; filter: drop-shadow(0 2px 4px rgba(233, 30, 99, 0.3)); }
+        .active-nav { color: #f472b6; filter: drop-shadow(0 0 8px rgba(244, 114, 182, 0.5)); }
         .inactive-nav { color: #94a3b8; }
 
-        .dash-table th { background-color: #fff1f2; color: #be185d; padding: 14px 8px; font-size: 0.7rem; border-bottom: 2px solid #fecdd3; }
-        .dash-table td { padding: 12px 8px; font-size: 0.75rem; border-bottom: 1px solid #f1f5f9; text-align: center; }
-        .dash-table td:first-child { text-align: left; color: #334155; font-weight: 700; }
+        /* Dashboard Table Colors - New Neon Styles */
+        .dash-table th { 
+            padding: 14px 8px; 
+            font-size: 0.75rem; 
+            font-weight: 900;
+            text-transform: uppercase;
+            border-bottom: 4px solid rgba(0,0,0,0.1);
+        }
+        
+        /* Column Specific Colors */
+        .col-opd { background-color: #00ff88; color: #004d2c; } /* Neon Green */
+        .col-ipd { background-color: #00d4ff; color: #00404d; } /* Neon Blue */
+        .col-backoffice { background-color: #ffaa00; color: #4d3300; } /* Neon Orange/Gold */
+        .col-group { background-color: #f8fafc; color: #475569; text-align: left !important; padding-left: 16px !important; }
 
+        .dash-table td { 
+            padding: 12px 8px; 
+            font-size: 0.85rem; 
+            font-weight: 700;
+            border-bottom: 2px solid #f1f5f9; 
+            border-right: 1px solid rgba(0,0,0,0.05);
+            text-align: center; 
+        }
+
+        /* Asset Card */
         .asset-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1.5px solid #fce7f3;
-        }
-        .asset-card:hover {
-            border-color: #f472b6;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(233, 30, 99, 0.15);
+            border: 2px solid #f472b6;
+            background: white;
         }
 
         /* Scan Overlay */
@@ -110,19 +143,19 @@
         .scan-frame {
             width: 260px;
             height: 260px;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 4px solid #e91e63;
             position: relative;
             border-radius: 24px;
             overflow: hidden;
         }
         .scan-line {
             width: 100%;
-            height: 2px;
-            background: #e91e63;
+            height: 3px;
+            background: #ff4081;
             position: absolute;
             top: 0;
             left: 0;
-            box-shadow: 0 0 15px #ff4081;
+            box-shadow: 0 0 20px #ff4081;
             animation: scanAnim 2s infinite linear;
         }
         @keyframes scanAnim {
@@ -227,21 +260,8 @@
             const filteredAssets = useMemo(() => {
                 const term = searchTerm.trim().toLowerCase();
                 if (!term) return [];
-                
-                const filtered = allAssets.filter(asset => {
-                    const assetID = String(asset.AssetID || "").toLowerCase();
-                    return assetID.includes(term);
-                });
-
-                return filtered.sort((a, b) => {
-                    const aID = String(a.AssetID).toLowerCase();
-                    const bID = String(b.AssetID).toLowerCase();
-                    const aEnds = aID.endsWith(term);
-                    const bEnds = bID.endsWith(term);
-                    if (aEnds && !bEnds) return -1;
-                    if (!aEnds && bEnds) return 1;
-                    return aID.localeCompare(bID, undefined, { numeric: true });
-                }).slice(0, 50); 
+                const filtered = allAssets.filter(asset => String(asset.AssetID || "").toLowerCase().includes(term));
+                return filtered.slice(0, 50); 
             }, [searchTerm, allAssets]);
 
             const highlightText = (text, target) => {
@@ -256,7 +276,7 @@
             };
 
             const DetailRow = ({ label, value, icon, highlight = false }) => (
-                <div className={`py-3.5 border-b border-slate-100 ${highlight ? 'bg-gradient-to-r from-pink-50 to-transparent px-4 rounded-2xl' : ''}`}>
+                <div className={`py-3.5 border-b-2 border-slate-100 ${highlight ? 'bg-gradient-to-r from-pink-50 to-transparent px-4 rounded-2xl border-l-4 border-l-pink-500' : ''}`}>
                     <div className="flex items-center gap-2 mb-1">
                         {icon && <Icon name={icon} size={12} className="text-pink-400" />}
                         <p className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">{label}</p>
@@ -287,31 +307,20 @@
                             </div>
                             <div className="scan-frame shadow-[0_0_50px_rgba(233,30,99,0.3)]">
                                 <div className="scan-line"></div>
-                                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-pink-500 rounded-tl-xl"></div>
-                                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-pink-500 rounded-tr-xl"></div>
-                                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-pink-500 rounded-bl-xl"></div>
-                                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-pink-500 rounded-br-xl"></div>
                                 <div className="w-full h-full flex items-center justify-center bg-slate-800">
                                      <Icon name="camera" size={40} className="text-slate-600 animate-pulse" />
                                 </div>
                             </div>
-                            <button onClick={() => setIsScanning(false)} className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold text-sm border border-white/20 backdrop-blur transition-all">
+                            <button onClick={() => setIsScanning(false)} className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold text-sm border-2 border-white/20 backdrop-blur transition-all">
                                 ยกเลิกการสแกน
                             </button>
                         </div>
                     )}
 
-                    {alertMsg && (
-                        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[10001] bg-slate-800 text-white px-6 py-3 rounded-2xl shadow-2xl text-xs font-bold animate-bounce flex items-center gap-2">
-                            <Icon name="info" size={16} className="text-pink-400" />
-                            {alertMsg}
-                        </div>
-                    )}
-
-                    <header className="header-pink px-5 py-6 text-white shadow-2xl sticky top-0 z-50">
+                    <header className="header-pink px-5 py-6 text-white sticky top-0 z-50">
                         <div className="max-w-6xl mx-auto flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white rounded-2xl p-1 shadow-lg flex-shrink-0 flex items-center justify-center">
+                                <div className="w-12 h-12 bg-white rounded-2xl p-1 shadow-lg flex-shrink-0 flex items-center justify-center border-2 border-pink-200">
                                     <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" className="w-full h-full object-contain" />
                                 </div>
                                 <div className="overflow-hidden">
@@ -319,10 +328,9 @@
                                     <p className="text-[10px] opacity-95 font-bold tracking-wider uppercase text-pink-100 truncate flex items-center gap-1">
                                         <Icon name="building-2" size={10} /> กลุ่มงาน : เทคโนโลยีสารสนเทศทางการแพทย์
                                     </p>
-                                    <p className="text-[9px] opacity-80 text-white italic truncate">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ v2.0</p>
                                 </div>
                             </div>
-                            <button onClick={fetchInitialData} className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all active:scale-90 border border-white/20" title="รีเฟรชข้อมูล">
+                            <button onClick={fetchInitialData} className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all border-2 border-white/30">
                                 <Icon name="rotate-cw" size={20} className="text-white" />
                             </button>
                         </div>
@@ -336,17 +344,17 @@
                                         <Icon name="bar-chart-3" size={20} className="text-pink-500" />
                                         <h2 className="text-xl font-black text-slate-800 tracking-tight">สรุปข้อมูลภาพรวม</h2>
                                     </div>
-                                    <div className="bg-white/50 border border-pink-200 text-pink-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Dashboard</div>
+                                    <div className="bg-white border-2 border-pink-400 text-pink-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Dashboard</div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                                     {[
-                                        { label: "รวมครุภัณฑ์", val: allAssets.length.toLocaleString(), unit: "ชิ้น", icon: "monitor", color: "blue" },
-                                        { label: "กำลังใช้งาน", val: "100", unit: "%", icon: "activity", color: "pink" },
-                                        { label: "สถานะปกติ", val: "98.5", unit: "%", icon: "check-circle", color: "green" }
+                                        { label: "รวมครุภัณฑ์", val: allAssets.length.toLocaleString(), unit: "ชิ้น", icon: "monitor", color: "blue", border: "border-blue-500" },
+                                        { label: "กำลังใช้งาน", val: "100", unit: "%", icon: "activity", color: "pink", border: "border-pink-500" },
+                                        { label: "สถานะปกติ", val: "98.5", unit: "%", icon: "check-circle", color: "green", border: "border-green-500" }
                                     ].map((stat, i) => (
-                                        <div key={i} className="bg-white p-6 rounded-[32px] shadow-sm flex items-center gap-5 border border-white hover:shadow-md transition-shadow">
-                                            <div className={`w-14 h-14 bg-${stat.color}-50 text-${stat.color}-500 rounded-[22px] flex items-center justify-center flex-shrink-0 shadow-inner`}>
+                                        <div key={i} className={`bg-white p-6 rounded-[32px] shadow-sm flex items-center gap-5 border-2 ${stat.border}`}>
+                                            <div className={`w-14 h-14 bg-${stat.color}-50 text-${stat.color}-500 rounded-[22px] flex items-center justify-center flex-shrink-0 border-2 border-${stat.color}-100`}>
                                                 <Icon name={stat.icon} size={28} />
                                             </div>
                                             <div>
@@ -357,33 +365,35 @@
                                     ))}
                                 </div>
 
-                                <div className="bg-white rounded-[36px] shadow-sm border border-slate-100 overflow-hidden">
-                                    <div className="p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Icon name="list-checks" size={18} className="text-pink-500" />
-                                            <span className="text-[11px] font-black text-slate-500 tracking-widest uppercase">สถิติจำแนกรายกลุ่ม</span>
+                                <div className="bg-white rounded-[36px] shadow-sm border-4 border-slate-800 overflow-hidden">
+                                    <div className="p-5 bg-slate-800 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-white">
+                                            <Icon name="list-checks" size={18} className="text-pink-400" />
+                                            <span className="text-[11px] font-black tracking-widest uppercase">สถิติจำแนกตามกลุ่มงานระดับสเปค</span>
                                         </div>
-                                        <Icon name="arrow-right" size={14} className="text-slate-300" />
                                     </div>
                                     <div className="overflow-x-auto">
-                                        <table className="dash-table w-full">
+                                        <table className="dash-table w-full border-collapse">
                                             <thead>
                                                 <tr>
-                                                    <th>กลุ่มลำดับ</th>
-                                                    <th>OPD</th>
-                                                    <th>IPD</th>
-                                                    <th>Back Office</th>
+                                                    <th className="col-group border-r-4 border-slate-200">กลุ่มลำดับ</th>
+                                                    <th className="col-opd">OPD</th>
+                                                    <th className="col-ipd">IPD</th>
+                                                    <th className="col-backoffice">Back Office</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {dashData.map((row, idx) => (
-                                                    <tr key={idx} className={row.PIORITY_NAME === 'รวม' ? 'bg-pink-50/70 font-black text-pink-700' : 'hover:bg-slate-50'}>
-                                                        <td className="font-bold">{row.PIORITY_NAME}</td>
-                                                        <td className="text-slate-600">{row.OPD}</td>
-                                                        <td className="text-slate-600">{row.IPD}</td>
-                                                        <td className="text-slate-600">{row['Back Office']}</td>
-                                                    </tr>
-                                                ))}
+                                                {dashData.map((row, idx) => {
+                                                    const isTotal = row.PIORITY_NAME === 'รวม';
+                                                    return (
+                                                        <tr key={idx} className={isTotal ? 'bg-slate-100 font-black' : 'hover:bg-slate-50'}>
+                                                            <td className="col-group font-bold border-r-4 border-slate-200">{row.PIORITY_NAME}</td>
+                                                            <td className="bg-[#00ff88]/10 text-[#004d2c] border-r border-white">{row.OPD}</td>
+                                                            <td className="bg-[#00d4ff]/10 text-[#00404d] border-r border-white">{row.IPD}</td>
+                                                            <td className="bg-[#ffaa00]/10 text-[#4d3300]">{row['Back Office']}</td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>
@@ -392,7 +402,7 @@
                         ) : (
                             <div className="space-y-4 animate-in slide-in-from-right duration-300">
                                 <div className="sticky-search">
-                                    <div className="relative glass-card rounded-[24px] shadow-2xl overflow-hidden border-2 border-white">
+                                    <div className="relative glass-card rounded-[24px] shadow-2xl overflow-hidden border-4 border-pink-600">
                                         <span className="absolute left-5 top-1/2 -translate-y-1/2 text-pink-500">
                                             <Icon name="search" size={22} />
                                         </span>
@@ -400,21 +410,10 @@
                                             autoFocus
                                             type="text" 
                                             className="w-full py-6 pl-14 pr-14 outline-none font-bold text-slate-800 placeholder:text-slate-400 bg-transparent text-base"
-                                            placeholder="ระบุเลขท้ายรหัสครุภัณฑ์..."
+                                            placeholder="ระบุเลขรหัสครุภัณฑ์..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                         />
-                                        {searchTerm && (
-                                            <button onClick={() => setSearchTerm('')} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-pink-500 transition-colors">
-                                                <Icon name="x-circle" size={22} />
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="mt-5 px-3 flex items-center justify-between">
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                            <Icon name="filter" size={12} className="text-pink-400" />
-                                            {searchTerm ? `พบข้อมูลแมตช์เลขท้าย ${filteredAssets.length} รายการ` : "พิมพ์ตัวเลขเพื่อเริ่มการค้นหา"}
-                                        </p>
                                     </div>
                                 </div>
 
@@ -423,52 +422,41 @@
                                         filteredAssets.map((asset, idx) => (
                                             <div key={idx} 
                                                  onClick={() => handleViewDetail(asset.NOID)}
-                                                 className="asset-card bg-white p-6 rounded-[30px] flex items-center justify-between group active:scale-[0.98] cursor-pointer shadow-sm">
+                                                 className="asset-card p-6 rounded-[30px] flex items-center justify-between group cursor-pointer shadow-sm border-2 border-pink-400">
                                                 <div className="flex-1 pr-6 overflow-hidden">
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <div className="w-2 h-2 rounded-full bg-pink-400"></div>
-                                                        <span className="text-[12px] font-black text-slate-400 font-mono tracking-wider">
+                                                        <div className="w-2.5 h-2.5 rounded-full bg-pink-500"></div>
+                                                        <span className="text-[12px] font-black text-slate-500 font-mono tracking-wider">
                                                             {highlightText(asset.AssetID, searchTerm)}
                                                         </span>
                                                     </div>
-                                                    <p className="text-[14px] font-black text-slate-800 leading-tight line-clamp-2">
+                                                    <p className="text-[14px] font-black text-slate-800 leading-tight">
                                                         {asset.itemName}
                                                     </p>
-                                                    <p className="text-[10px] font-bold text-slate-400 mt-1 flex items-center gap-1">
-                                                        <Icon name="shield-check" size={10} /> {asset.maStatus}
-                                                    </p>
                                                 </div>
-                                                <div className="w-12 h-12 bg-pink-50 text-pink-500 rounded-[20px] flex items-center justify-center group-hover:bg-pink-600 group-hover:text-white transition-all shadow-sm flex-shrink-0">
-                                                    <Icon name="chevron-right" size={22} />
+                                                <div className="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center border-2 border-pink-100">
+                                                    <Icon name="chevron-right" size={20} />
                                                 </div>
                                             </div>
                                         ))
-                                    ) : searchTerm && (
-                                        <div className="py-24 text-center col-span-full">
-                                            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-slate-50">
-                                                <Icon name="search-x" size={40} className="text-slate-200" />
-                                            </div>
-                                            <p className="text-lg font-black text-slate-800 mb-1">ไม่พบข้อมูลที่ระบุ</p>
-                                            <p className="text-xs font-bold text-slate-400">กรุณาลองระบุตัวเลขอื่นที่ใกล้เคียง</p>
-                                        </div>
-                                    )}
+                                    ) : null}
                                 </div>
                             </div>
                         )}
                     </main>
 
                     <div className="nav-container">
-                        <nav className="glass-card nav-bar shadow-2xl flex items-center justify-around px-8 relative">
-                            <button onClick={() => setView('dashboard')} className={`flex flex-col items-center gap-1.5 z-10 transition-all ${view === 'dashboard' ? 'active-nav scale-110' : 'inactive-nav hover:text-slate-500'}`}>
+                        <nav className="nav-bar flex items-center justify-around px-8 relative">
+                            <button onClick={() => setView('dashboard')} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'dashboard' ? 'active-nav scale-110' : 'inactive-nav'}`}>
                                 <Icon name="layout-dashboard" size={24} />
                                 <span className="text-[9px] font-black uppercase tracking-tighter">Summary</span>
                             </button>
                             
-                            <div className="scan-fab" title="สแกน QR Code" onClick={handleScanClick}>
+                            <div className="scan-fab border-4 border-white" onClick={handleScanClick}>
                                 <Icon name="qr-code" size={32} />
                             </div>
 
-                            <button onClick={() => setView('search')} className={`flex flex-col items-center gap-1.5 z-10 transition-all ${view === 'search' ? 'active-nav scale-110' : 'inactive-nav hover:text-slate-500'}`}>
+                            <button onClick={() => setView('search')} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'search' ? 'active-nav scale-110' : 'inactive-nav'}`}>
                                 <Icon name="zoom-in" size={24} />
                                 <span className="text-[9px] font-black uppercase tracking-tighter">Verify</span>
                             </button>
@@ -477,105 +465,67 @@
 
                     {modalOpen && selectedAsset && (
                         <div className="fixed inset-0 z-[10000] bg-slate-900/70 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-                            <div className="bg-white w-full max-w-xl rounded-t-[48px] sm:rounded-[48px] overflow-hidden flex flex-col max-h-[92vh] shadow-2xl animate-in slide-in-from-bottom duration-500">
-                                <div className="p-7 flex justify-between items-center border-b border-slate-100 flex-shrink-0">
+                            <div className="bg-white w-full max-w-xl rounded-t-[48px] sm:rounded-[48px] overflow-hidden flex flex-col max-h-[92vh] shadow-2xl border-t-8 border-pink-600">
+                                <div className="p-7 flex justify-between items-center border-b-2 border-slate-100">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-2 h-8 bg-pink-500 rounded-full shadow-sm"></div>
+                                        <div className="w-2 h-8 bg-pink-500 rounded-full"></div>
                                         <div>
-                                            <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none">ข้อมูลครุภัณฑ์แบบละเอียด</h3>
+                                            <h3 className="text-lg font-black text-slate-800">ข้อมูลครุภัณฑ์แบบละเอียด</h3>
                                             <p className="text-[10px] text-slate-400 font-black uppercase mt-1 tracking-widest">Digital Asset Specification</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => setModalOpen(false)} className="w-12 h-12 flex items-center justify-center bg-slate-50 rounded-2xl text-slate-400 hover:bg-pink-100 hover:text-pink-600 transition-all active:rotate-90">
-                                        <Icon name="x" size={24} />
+                                    <button onClick={() => setModalOpen(false)} className="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-xl border-2 border-slate-100">
+                                        <Icon name="x" size={20} />
                                     </button>
                                 </div>
                                 
                                 <div className="p-7 overflow-y-auto space-y-6 pb-10">
-                                    <div className="aspect-video bg-slate-100 rounded-[36px] overflow-hidden border-2 border-slate-50 flex items-center justify-center relative flex-shrink-0 shadow-inner group">
+                                    <div className="aspect-video bg-slate-100 rounded-[36px] overflow-hidden border-4 border-pink-200 shadow-inner flex items-center justify-center">
                                         {selectedAsset.imgUrl ? (
-                                            <img src={selectedAsset.imgUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="asset" />
+                                            <img src={selectedAsset.imgUrl} className="w-full h-full object-cover" alt="asset" />
                                         ) : (
-                                            <div className="flex flex-col items-center gap-3 text-slate-300">
-                                                <Icon name="image-off" size={56} />
-                                                <p className="text-[11px] font-black uppercase tracking-widest">Image Unavailable</p>
-                                            </div>
+                                            <Icon name="image-off" size={48} className="text-slate-300" />
                                         )}
-                                        <div className="absolute top-5 right-5 bg-white/95 backdrop-blur px-4 py-2 rounded-2xl shadow-lg border border-pink-100 flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                            <p className="text-[11px] font-black text-pink-600 uppercase">ประกัน: {selectedAsset.maStatus}</p>
-                                        </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 gap-1">
-                                        <DetailRow label="รหัสครุภัณฑ์ (Asset ID)" value={selectedAsset.AssetID} icon="hash" highlight={true} />
-                                        <DetailRow label="ชื่อรายการครุภัณฑ์" value={selectedAsset.itemName} icon="monitor" highlight={true} />
-                                        <DetailRow label="คุณลักษณะ/สเปค" value={selectedAsset.spec} icon="cpu" />
-                                        <DetailRow label="หน่วยงานที่รับผิดชอบ" value={selectedAsset.location} icon="map-pin" />
+                                    <div className="space-y-1 bg-slate-50 p-4 rounded-[32px] border-2 border-slate-200">
+                                        <DetailRow label="รหัสครุภัณฑ์" value={selectedAsset.AssetID} icon="hash" highlight={true} />
+                                        <DetailRow label="ชื่อรายการ" value={selectedAsset.itemName} icon="monitor" highlight={true} />
+                                        <DetailRow label="สเปค/ยี่ห้อ" value={selectedAsset.spec} icon="cpu" />
+                                        <DetailRow label="สถานที่อยู่" value={selectedAsset.location} icon="map-pin" />
+                                        <DetailRow label="อายุการใช้งาน" value={`${selectedAsset.age} ปี`} icon="clock" />
                                         
-                                        <div className="grid grid-cols-2 gap-4 mt-2">
-                                            <DetailRow label="วันที่รับเข้า" value={selectedAsset.receiveDate} icon="calendar" />
-                                            <DetailRow label="ราคา (บาท)" value={selectedAsset.price ? Number(selectedAsset.price).toLocaleString() : "-"} icon="banknote" />
-                                        </div>
-
-                                        <DetailRow label="แหล่งเงินที่ใช้จัดซื้อ" value={selectedAsset.budgetSource} icon="wallet" />
-                                        
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <DetailRow label="สถานะการบำรุงรักษา" value={selectedAsset.maStatus} icon="shield-check" />
-                                            <DetailRow label="สถานะการใช้งาน" value={selectedAsset.coStatus} icon="activity" />
-                                        </div>
-
-                                        <DetailRow label="GPS (Note2)" value={selectedAsset.note2} icon="navigation" />
-
-                                        <div className="grid grid-cols-2 gap-5 mt-4">
-                                            <div className="bg-slate-50/50 p-4 rounded-3xl border border-slate-100">
-                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1">อายุการใช้งาน</p>
-                                                <p className="text-sm font-black text-slate-700">{selectedAsset.age} ปี</p>
-                                            </div>
-                                            <div className="bg-slate-50/50 p-4 rounded-3xl border border-slate-100">
-                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1">ปีที่ได้รับ</p>
-                                                <p className="text-sm font-black text-slate-700">{selectedAsset.receiveYear || "-"}</p>
-                                            </div>
-                                        </div>
-
                                         {selectedAsset.logData && (
-                                            <div className="mt-6 p-6 bg-gradient-to-br from-pink-50 to-white rounded-[32px] border border-pink-100 shadow-sm">
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <Icon name="clipboard-check" size={20} className="text-pink-500" />
-                                                    <p className="text-[11px] font-black text-pink-500 uppercase tracking-widest">ข้อมูลระบบสารสนเทศ (Log)</p>
+                                            <div className="mt-4 p-5 bg-white rounded-3xl border-2 border-pink-400 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <Icon name="clipboard-check" size={18} className="text-pink-500" />
+                                                    <p className="text-[11px] font-black text-pink-500 uppercase tracking-widest">ข้อมูลการใช้งาน (Log)</p>
                                                 </div>
-                                                <div className="grid grid-cols-1 gap-4">
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-pink-300 uppercase leading-none mb-1.5">วัตถุประสงค์การใช้งาน</p>
-                                                        <p className="text-sm font-bold text-slate-700">{selectedAsset.logData.g}</p>
-                                                    </div>
-                                                    <div className="h-px bg-pink-100/50 w-full"></div>
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-pink-300 uppercase leading-none mb-1.5">เจ้าหน้าที่ผู้รับผิดชอบ</p>
-                                                        <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                                            <Icon name="user" size={14} className="text-slate-400" />
-                                                            {selectedAsset.logData.i}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-tighter">วัตถุประสงค์:</p>
+                                                <p className="text-sm font-black text-slate-800 mb-3">{selectedAsset.logData.g}</p>
+                                                <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-tighter">ผู้ดูแล:</p>
+                                                <p className="text-sm font-black text-slate-800">{selectedAsset.logData.i}</p>
                                             </div>
                                         )}
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-4 mt-4">
-                                        <button onClick={() => showDevAlert()} className="flex-1 bg-white border-2 border-pink-500 text-pink-500 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-pink-50 transition-colors">
-                                            <Icon name="edit-3" size={18} /> แก้ไขข้อมูล
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button onClick={() => showDevAlert()} className="bg-white border-4 border-pink-500 text-pink-500 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2">
+                                            <Icon name="edit-3" size={18} /> แก้ไข
                                         </button>
-                                        <button onClick={() => showDevAlert()} className="flex-1 bg-slate-800 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-900 shadow-lg shadow-slate-200 transition-colors">
-                                            <Icon name="printer" size={18} /> พิมพ์สติ๊กเกอร์
+                                        <button onClick={() => showDevAlert()} className="bg-slate-800 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-4 border-slate-700">
+                                            <Icon name="printer" size={18} /> พิมพ์ QR
                                         </button>
                                     </div>
-                                    
-                                    <button onClick={() => setModalOpen(false)} className="w-full text-slate-400 py-2 font-bold text-xs uppercase tracking-widest mt-2 hover:text-pink-500 transition-colors">
-                                        ปิดหน้านี้
-                                    </button>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {alertMsg && (
+                        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[10001] bg-slate-800 text-white px-6 py-3 rounded-2xl shadow-2xl text-xs font-bold animate-bounce flex items-center gap-2 border-2 border-pink-500">
+                            <Icon name="info" size={16} className="text-pink-400" />
+                            {alertMsg}
                         </div>
                     )}
                 </div>
