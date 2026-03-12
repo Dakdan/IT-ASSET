@@ -24,6 +24,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { 
             font-family: 'Sarabun', sans-serif; 
@@ -101,6 +102,7 @@
             justify-content: center;
             margin-top: -30px;
             box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4);
+            cursor: pointer;
         }
 
         .dash-table { width: 100%; border-collapse: separate; border-spacing: 0; }
@@ -126,6 +128,12 @@
             transition: all 0.2s;
         }
         .back-button-modal:active { transform: scale(0.95); background: #e2e8f0; }
+
+        #reader {
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -156,10 +164,12 @@
             const [searchTerm, setSearchTerm] = useState('');
             const [selectedAsset, setSelectedAsset] = useState(null);
             const [modalOpen, setModalOpen] = useState(false);
+            const [scannerOpen, setScannerOpen] = useState(false);
             const [alertMsg, setAlertMsg] = useState('');
-            const [showSearch, setShowSearch] = useState(false); // ควบคุมการแสดงผล Search Bar
+            const [showSearch, setShowSearch] = useState(false);
             
             const API_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
+            const scannerRef = useRef(null);
 
             useEffect(() => {
                 fetchInitialData();
@@ -188,9 +198,87 @@
                     if (data && data.success) {
                         setSelectedAsset(data);
                         setModalOpen(true);
+                    } else {
+                        setAlertMsg('ไม่พบข้อมูลครุภัณฑ์นี้');
                     }
                 } catch (err) { console.error(err); } 
                 finally { setLoading(false); }
+            };
+
+            const startScanner = () => {
+                setScannerOpen(true);
+                setTimeout(() => {
+                    const html5QrCode = new Html5Qrcode("reader");
+                    scannerRef.current = html5QrCode;
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        { fps: 15, qrbox: { width: 250, height: 250 } },
+                        (decodedText) => {
+                            stopScanner();
+                            
+                            // --- การจัดการรหัสที่หลากหลาย (ปรับปรุงล่าสุด) ---
+                            let rawId = decodedText.trim();
+                            let targetId = rawId;
+                            
+                            // 1. ตรวจสอบและดึงรหัสจาก URL ของ NextGov หรือ URL อื่นๆ
+                            if (rawId.startsWith('http')) {
+                                try {
+                                    // สำหรับ NextGov: .../IcmAssetDetail/2-08-001-020-67-005/false
+                                    if (rawId.includes('/IcmAssetDetail/')) {
+                                        const partAfter = rawId.split('/IcmAssetDetail/')[1];
+                                        targetId = partAfter.split('/')[0]; // ดึงรหัสที่อยู่ก่อนหน้า / ถัดไป
+                                    } else {
+                                        // URL รูปแบบอื่น: ดึงส่วนท้ายสุด
+                                        const urlParts = rawId.split('/');
+                                        targetId = urlParts.pop() || urlParts.pop(); 
+                                    }
+                                } catch(e) { 
+                                    console.error("URL Parse error", e);
+                                    targetId = rawId;
+                                }
+                            }
+
+                            // 2. ค้นหาใน allAssets โดยเปรียบเทียบทั้ง AssetID, NOID และแบบมี/ไม่มีขีด
+                            const found = allAssets.find(a => {
+                                const assetId = String(a.AssetID || "").trim();
+                                const noid = String(a.NOID || "").trim();
+                                
+                                // เช็คแบบตรงตัว
+                                if (assetId === targetId || noid === targetId) return true;
+                                
+                                // เช็คแบบบางส่วน (เผื่อรหัสในระบบมีขีดหรือไม่มีขีดต่างกัน)
+                                if (targetId.length > 5 && assetId.includes(targetId)) return true;
+                                if (assetId.length > 5 && targetId.includes(assetId)) return true;
+                                
+                                return false;
+                            });
+
+                            if (found) {
+                                handleViewDetail(found.NOID);
+                            } else {
+                                setAlertMsg(`ไม่พบข้อมูลรหัส: ${targetId}`);
+                            }
+                        },
+                        (errorMessage) => {}
+                    ).catch(err => {
+                        console.error(err);
+                        setAlertMsg('ไม่สามารถเข้าถึงกล้องได้');
+                        setScannerOpen(false);
+                    });
+                }, 300);
+            };
+
+            const stopScanner = () => {
+                if (scannerRef.current) {
+                    scannerRef.current.stop().then(() => {
+                        setScannerOpen(false);
+                    }).catch(err => {
+                        console.error(err);
+                        setScannerOpen(false);
+                    });
+                } else {
+                    setScannerOpen(false);
+                }
             };
 
             const filteredAssets = useMemo(() => {
@@ -203,7 +291,7 @@
             }, [searchTerm, allAssets]);
 
             return (
-                <div className="flex flex-col min-h-screen max-w-md mx-auto bg-white shadow-2xl overflow-x-hidden">
+                <div className="flex flex-col min-h-screen max-w-md mx-auto bg-white shadow-2xl overflow-x-hidden relative">
                     {loading && (
                         <div className="fixed inset-0 bg-white/70 backdrop-blur-sm z-[9999] flex items-center justify-center">
                             <div className="text-pink-500 flex flex-col items-center gap-2">
@@ -230,7 +318,6 @@
                         </div>
                     </header>
 
-                    {/* แสดง Search Bar เฉพาะเมื่อ showSearch เป็น true */}
                     {showSearch && (
                         <div className="sticky-search-container animate-in slide-in-from-top duration-300">
                             <div className="glass-search-card flex items-center px-4 py-3 gap-3">
@@ -325,7 +412,7 @@
                                 <Icon name="home" size={20} />
                                 <span className="text-[8px] font-black uppercase">Dashboard</span>
                             </button>
-                            <div className="scan-fab" onClick={() => setAlertMsg('กำลังพัฒนาส่วนงานสแกน QR')}>
+                            <div className="scan-fab" onClick={startScanner}>
                                 <Icon name="scan" size={24} className="text-white" />
                             </div>
                             <button onClick={() => {
@@ -337,6 +424,24 @@
                             </button>
                         </nav>
                     </div>
+
+                    {scannerOpen && (
+                        <div className="fixed inset-0 z-[6000] bg-black flex flex-col items-center justify-center p-6">
+                            <div className="w-full max-w-sm space-y-6">
+                                <div className="text-center text-white">
+                                    <h2 className="text-xl font-black">สแกนรหัสครุภัณฑ์</h2>
+                                    <p className="text-xs text-slate-400">วาง QR Code ให้อยู่ในกรอบ</p>
+                                </div>
+                                <div id="reader"></div>
+                                <button 
+                                    onClick={stopScanner}
+                                    className="w-full py-4 bg-white/10 text-white rounded-2xl font-bold border border-white/20 active:bg-white/20"
+                                >
+                                    ยกเลิก
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {modalOpen && selectedAsset && (
                         <div className="fixed inset-0 z-[5000] bg-slate-900/80 backdrop-blur-md flex items-end justify-center p-0">
