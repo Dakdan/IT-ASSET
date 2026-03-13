@@ -327,7 +327,7 @@
                                 <h1 className="header-title text-lg sm:text-xl font-black truncate sm:whitespace-normal">
                                     ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์
                                 </h1>
-                                <p className="text-[10px] text-pink-100 font-bold opacity-90">กลุ่มงาน IT โรงพยาบาลอุดรธานี</p>
+                                <p className="text-[10px] text-pink-100 font-bold opacity-90">กลุ่มงาน เทคโนโลยีสารสนเทศทางการแพทย์</p>
                             </div>
                             <button onClick={fetchInitialData} className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
                                 <Icon name="rotate-cw" size={18} />
@@ -342,7 +342,7 @@
                                 <input 
                                     type="text" 
                                     className="flex-1 bg-transparent outline-none font-bold text-slate-700 placeholder:text-slate-300"
-                                    placeholder="ระบุรหัสครุภัณฑ์เพื่อตรวจสอบ..."
+                                    placeholder="ระบุรหัสหรือเลขท้ายครุภัณฑ์เพื่อตรวจสอบ..."
                                     autoFocus
                                     value={searchTerm}
                                     onChange={(e) => {
@@ -378,7 +378,7 @@
 
                                 <div className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden">
                                     <div className="p-4 bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest">
-                                        สถิติจำแนกกลุ่มงาน
+                                        สถิติจำแนกตาม ระบบงานและความสำคัญ
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="dash-table">
@@ -420,7 +420,7 @@
                                     </div>
                                 )) : (
                                     <div className="text-center py-20 text-slate-300 font-bold italic">
-                                        {searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'กรุณาระบุรหัสครุภัณฑ์ในช่องค้นหา'}
+                                        {searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'กรุณาระบุรหัสครุภัณฑ์หรือเลขท้ายในช่องค้นหา'}
                                     </div>
                                 )}
                             </div>
@@ -497,7 +497,7 @@
                                             { label: "ยี่ห้อ/รุ่น/สเปค", val: selectedAsset.spec, icon: "cpu" },
                                             { label: "สถานที่ใช้งาน", val: selectedAsset.location, hl: true, icon: "map-pin" },
                                             { label: "วันที่รับเข้า", val: selectedAsset.receiveDate, icon: "calendar" },
-                                            { label: "อายุการใช้งาน", val: `${selectedAsset.age} ปี`, icon: "history" },
+                                            { label: "อายุการใช้งาน", val: `${selectedAsset.age} `, icon: "history" },
                                             { label: "สถานะ MA", val: selectedAsset.maStatus, icon: "settings" }
                                         ].map((item, i) => (
                                             <div key={i} className={`p-3.5 rounded-2xl border ${item.hl ? 'bg-pink-50 border-pink-200' : 'bg-slate-50 border-slate-100'} flex items-start gap-3`}>
