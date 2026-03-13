@@ -134,6 +134,16 @@
             border-radius: 20px;
             overflow: hidden;
         }
+
+        .search-highlight {
+            background-color: #f472b6;
+            color: #ffffff;
+            font-weight: 900;
+            padding: 0 4px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(233, 30, 99, 0.3);
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -216,19 +226,15 @@
                         (decodedText) => {
                             stopScanner();
                             
-                            // --- การจัดการรหัสที่หลากหลาย (ปรับปรุงล่าสุด) ---
                             let rawId = decodedText.trim();
                             let targetId = rawId;
                             
-                            // 1. ตรวจสอบและดึงรหัสจาก URL ของ NextGov หรือ URL อื่นๆ
                             if (rawId.startsWith('http')) {
                                 try {
-                                    // สำหรับ NextGov: .../IcmAssetDetail/2-08-001-020-67-005/false
                                     if (rawId.includes('/IcmAssetDetail/')) {
                                         const partAfter = rawId.split('/IcmAssetDetail/')[1];
-                                        targetId = partAfter.split('/')[0]; // ดึงรหัสที่อยู่ก่อนหน้า / ถัดไป
+                                        targetId = partAfter.split('/')[0];
                                     } else {
-                                        // URL รูปแบบอื่น: ดึงส่วนท้ายสุด
                                         const urlParts = rawId.split('/');
                                         targetId = urlParts.pop() || urlParts.pop(); 
                                     }
@@ -238,15 +244,11 @@
                                 }
                             }
 
-                            // 2. ค้นหาใน allAssets โดยเปรียบเทียบทั้ง AssetID, NOID และแบบมี/ไม่มีขีด
                             const found = allAssets.find(a => {
                                 const assetId = String(a.AssetID || "").trim();
                                 const noid = String(a.NOID || "").trim();
                                 
-                                // เช็คแบบตรงตัว
                                 if (assetId === targetId || noid === targetId) return true;
-                                
-                                // เช็คแบบบางส่วน (เผื่อรหัสในระบบมีขีดหรือไม่มีขีดต่างกัน)
                                 if (targetId.length > 5 && assetId.includes(targetId)) return true;
                                 if (assetId.length > 5 && targetId.includes(assetId)) return true;
                                 
@@ -290,6 +292,21 @@
                 ).slice(0, 30); 
             }, [searchTerm, allAssets]);
 
+            // ฟังก์ชันสำหรับไฮไลท์ข้อความ
+            const getHighlightedText = (text, highlight) => {
+                if (!highlight.trim()) return text;
+                const parts = String(text).split(new RegExp(`(${highlight})`, 'gi'));
+                return (
+                    <span>
+                        {parts.map((part, i) => 
+                            part.toLowerCase() === highlight.toLowerCase() 
+                            ? <span key={i} className="search-highlight">{part}</span> 
+                            : part
+                        )}
+                    </span>
+                );
+            };
+
             return (
                 <div className="flex flex-col min-h-screen max-w-md mx-auto bg-white shadow-2xl overflow-x-hidden relative">
                     {loading && (
@@ -310,7 +327,7 @@
                                 <h1 className="header-title text-lg sm:text-xl font-black truncate sm:whitespace-normal">
                                     ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์
                                 </h1>
-                                <p className="text-[10px] text-pink-100 font-bold opacity-90">กลุ่มงาน:เทคโนโลยีสารสนเทศทางการแพทย์</p>
+                                <p className="text-[10px] text-pink-100 font-bold opacity-90">กลุ่มงาน IT โรงพยาบาลอุดรธานี</p>
                             </div>
                             <button onClick={fetchInitialData} className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
                                 <Icon name="rotate-cw" size={18} />
@@ -325,7 +342,7 @@
                                 <input 
                                     type="text" 
                                     className="flex-1 bg-transparent outline-none font-bold text-slate-700 placeholder:text-slate-300"
-                                    placeholder="ระบุรหัสหรือเลขท้ายครุภัณฑ์เพื่อตรวจสอบ..."
+                                    placeholder="ระบุรหัสครุภัณฑ์เพื่อตรวจสอบ..."
                                     autoFocus
                                     value={searchTerm}
                                     onChange={(e) => {
@@ -333,6 +350,9 @@
                                         if(view !== 'search') setView('search');
                                     }}
                                 />
+                                {searchTerm && (
+                                    <Icon name="circle-x" size={18} className="text-slate-400 hover:text-pink-500" onClick={() => setSearchTerm('')} />
+                                )}
                                 <Icon name="x" size={18} className="text-slate-300" onClick={() => {
                                     setSearchTerm('');
                                     setShowSearch(false);
@@ -387,12 +407,16 @@
                         ) : (
                             <div className="space-y-3 animate-in slide-in-from-right duration-300">
                                 {filteredAssets.length > 0 ? filteredAssets.map((asset, idx) => (
-                                    <div key={idx} onClick={() => handleViewDetail(asset.NOID)} className="p-4 bg-white rounded-2xl border-2 border-pink-100 shadow-sm flex items-center justify-between active:scale-95 transition-transform">
-                                        <div className="min-w-0 pr-4">
-                                            <p className="text-[10px] font-bold text-pink-500 truncate uppercase">{asset.AssetID}</p>
-                                            <p className="font-bold text-slate-800 truncate">{asset.itemName}</p>
+                                    <div key={idx} onClick={() => handleViewDetail(asset.NOID)} className="p-5 bg-white rounded-3xl border-2 border-pink-100 shadow-sm flex items-center justify-between active:scale-95 transition-transform">
+                                        <div className="min-w-0 pr-4 flex-1">
+                                            <p className="text-[13px] font-extrabold text-pink-500 mb-1 tracking-tight">
+                                                {getHighlightedText(asset.AssetID, searchTerm)}
+                                            </p>
+                                            <p className="font-black text-slate-800 text-lg leading-tight truncate">
+                                                {getHighlightedText(asset.itemName, searchTerm)}
+                                            </p>
                                         </div>
-                                        <Icon name="chevron-right" size={18} className="text-pink-300 flex-shrink-0" />
+                                        <Icon name="chevron-right" size={24} className="text-pink-400 flex-shrink-0" />
                                     </div>
                                 )) : (
                                     <div className="text-center py-20 text-slate-300 font-bold italic">
