@@ -1019,7 +1019,7 @@
                                             { label: "ยี่ห้อ/รุ่น/สเปค", val: selectedAsset.spec, icon: "cpu" },
                                             { label: "สถานที่ใช้งาน", val: selectedAsset.location, hl: true, icon: "map-pin" },
                                             { label: "วันที่รับเข้า", val: selectedAsset.receiveDate, icon: "calendar" },
-                                            { label: "อายุการใช้งาน", val: `${selectedAsset.age} ปี`, icon: "history" },
+                                            { label: "อายุการใช้งาน", val: `${selectedAsset.age} `, icon: "history" },
                                             { label: "สถานะ MA", val: selectedAsset.maStatus, icon: "settings" }
                                         ].map((item, i) => (
                                             <div key={i} className={`p-3.5 rounded-2xl border ${item.hl ? 'bg-pink-50 border-pink-200' : 'bg-slate-50 border-slate-100'} flex items-start gap-3`}>
