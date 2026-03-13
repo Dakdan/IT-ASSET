@@ -135,14 +135,15 @@
             overflow: hidden;
         }
 
+        /* ไฮไลท์สีสดใสสำหรับส่วนที่ต้องดูความถูกต้อง */
         .search-highlight {
-            background-color: #f472b6;
+            background-color: #ff007f; /* สีชมพูสด */
             color: #ffffff;
             font-weight: 900;
-            padding: 0 4px;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(233, 30, 99, 0.3);
-            text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(255, 0, 127, 0.4);
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -192,9 +193,12 @@
                         fetch(`${API_URL}?action=getAllAssets`),
                         fetch(`${API_URL}?action=getDashboard`)
                     ]);
-                    const assets = await assetsResp.json();
+                    const assetsJson = await assetsResp.json();
                     const dash = await dashResp.json();
-                    setAllAssets(Array.isArray(assets) ? assets : (assets.assets || []));
+                    
+                    // รับค่าจาก getAllAssetsSummary ใน code.gs
+                    const assetsArray = assetsJson.assets || [];
+                    setAllAssets(assetsArray);
                     setDashData(dash || []);
                 } catch (err) { console.error(err); } 
                 finally { setLoading(false); }
@@ -239,7 +243,6 @@
                                         targetId = urlParts.pop() || urlParts.pop(); 
                                     }
                                 } catch(e) { 
-                                    console.error("URL Parse error", e);
                                     targetId = rawId;
                                 }
                             }
@@ -247,12 +250,7 @@
                             const found = allAssets.find(a => {
                                 const assetId = String(a.AssetID || "").trim();
                                 const noid = String(a.NOID || "").trim();
-                                
-                                if (assetId === targetId || noid === targetId) return true;
-                                if (targetId.length > 5 && assetId.includes(targetId)) return true;
-                                if (assetId.length > 5 && targetId.includes(assetId)) return true;
-                                
-                                return false;
+                                return assetId === targetId || noid === targetId;
                             });
 
                             if (found) {
@@ -275,7 +273,6 @@
                     scannerRef.current.stop().then(() => {
                         setScannerOpen(false);
                     }).catch(err => {
-                        console.error(err);
                         setScannerOpen(false);
                     });
                 } else {
@@ -291,6 +288,11 @@
                     String(asset.itemName || "").toLowerCase().includes(term)
                 ).slice(0, 30); 
             }, [searchTerm, allAssets]);
+
+            // คำนวณผลรวมที่ตรวจสอบแล้ว (เงื่อนไข note4 == 1 ตามที่กำหนดใน code.gs)
+            const verifiedCount = useMemo(() => {
+                return allAssets.filter(a => a.note4 == 1 || a.note4 == "1").length;
+            }, [allAssets]);
 
             // ฟังก์ชันสำหรับไฮไลท์ข้อความ
             const getHighlightedText = (text, highlight) => {
@@ -341,8 +343,8 @@
                                 <Icon name="search" size={20} className="text-pink-500" />
                                 <input 
                                     type="text" 
-                                    className="flex-1 bg-transparent outline-none font-bold text-slate-700 placeholder:text-slate-300"
-                                    placeholder="ระบุรหัสหรือเลขท้ายครุภัณฑ์เพื่อตรวจสอบ..."
+                                    className="flex-1 bg-transparent outline-none font-black text-slate-700 placeholder:text-slate-300"
+                                    placeholder="ระบุรหัสครุภัณฑ์เพื่อตรวจสอบ..."
                                     autoFocus
                                     value={searchTerm}
                                     onChange={(e) => {
@@ -370,15 +372,15 @@
                                         <p className="text-[10px] font-black text-pink-400 uppercase mb-1">จำนวนครุภัณฑ์</p>
                                         <p className="text-2xl font-black text-slate-800">{allAssets.length}</p>
                                     </div>
-                                    <div className="bg-blue-50 p-4 rounded-3xl border-2 border-blue-100">
-                                        <p className="text-[10px] font-black text-blue-400 uppercase mb-1">ความพร้อมใช้</p>
-                                        <p className="text-2xl font-black text-slate-800">100%</p>
+                                    <div className="bg-emerald-50 p-4 rounded-3xl border-2 border-emerald-100">
+                                        <p className="text-[10px] font-black text-emerald-400 uppercase mb-1">จำนวนที่ตรวจสอบแล้ว 2569</p>
+                                        <p className="text-2xl font-black text-slate-800 tracking-wider">{verifiedCount}</p>
                                     </div>
                                 </div>
 
                                 <div className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden">
                                     <div className="p-4 bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest">
-                                        สถิติจำแนกตาม ระบบงานและความสำคัญ
+                                        สถิติจำแนกกลุ่มงาน
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="dash-table">
@@ -409,10 +411,10 @@
                                 {filteredAssets.length > 0 ? filteredAssets.map((asset, idx) => (
                                     <div key={idx} onClick={() => handleViewDetail(asset.NOID)} className="p-5 bg-white rounded-3xl border-2 border-pink-100 shadow-sm flex items-center justify-between active:scale-95 transition-transform">
                                         <div className="min-w-0 pr-4 flex-1">
-                                            <p className="text-[13px] font-extrabold text-pink-500 mb-1 tracking-tight">
+                                            <p className="text-[15px] font-extrabold text-pink-500 mb-1 tracking-tight">
                                                 {getHighlightedText(asset.AssetID, searchTerm)}
                                             </p>
-                                            <p className="font-black text-slate-800 text-lg leading-tight truncate">
+                                            <p className="font-black text-slate-800 text-xl leading-tight truncate">
                                                 {getHighlightedText(asset.itemName, searchTerm)}
                                             </p>
                                         </div>
@@ -420,7 +422,7 @@
                                     </div>
                                 )) : (
                                     <div className="text-center py-20 text-slate-300 font-bold italic">
-                                        {searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'กรุณาระบุรหัสครุภัณฑ์หรือเลขท้ายในช่องค้นหา'}
+                                        {searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'กรุณาระบุรหัสครุภัณฑ์ในช่องค้นหา'}
                                     </div>
                                 )}
                             </div>
@@ -497,7 +499,7 @@
                                             { label: "ยี่ห้อ/รุ่น/สเปค", val: selectedAsset.spec, icon: "cpu" },
                                             { label: "สถานที่ใช้งาน", val: selectedAsset.location, hl: true, icon: "map-pin" },
                                             { label: "วันที่รับเข้า", val: selectedAsset.receiveDate, icon: "calendar" },
-                                            { label: "อายุการใช้งาน", val: `${selectedAsset.age} `, icon: "history" },
+                                            { label: "อายุการใช้งาน", val: `${selectedAsset.age} ปี`, icon: "history" },
                                             { label: "สถานะ MA", val: selectedAsset.maStatus, icon: "settings" }
                                         ].map((item, i) => (
                                             <div key={i} className={`p-3.5 rounded-2xl border ${item.hl ? 'bg-pink-50 border-pink-200' : 'bg-slate-50 border-slate-100'} flex items-start gap-3`}>
