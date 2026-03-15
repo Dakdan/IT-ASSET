@@ -208,13 +208,16 @@
             const filteredAssets = useMemo(() => {
                 const term = searchTerm.trim().toLowerCase();
                 if (!term) return [];
-                return allAssets.filter(asset => 
-                    String(asset.AssetID || "").toLowerCase().includes(term) || 
-                    String(asset.itemName || "").toLowerCase().includes(term)
-                ).slice(0, 30); 
+                
+                return allAssets.filter(asset => {
+                    const assetId = String(asset.AssetID || "").toLowerCase();
+                    // ใช้ endsWith เพื่อค้นหาจากขวามาซ้าย (ตรงกับส่วนท้ายของรหัส)
+                    return assetId.endsWith(term);
+                }).slice(0, 30); 
             }, [searchTerm, allAssets]);
 
             const verifiedCount = useMemo(() => {
+                // คงเดิมไว้ตามโครงสร้างระบบของคุณ
                 return allAssets.filter(a => a.note4 == 1 || a.note4 == "1").length;
             }, [allAssets]);
 
