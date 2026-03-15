@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -135,411 +136,239 @@
             overflow: hidden;
         }
 
-        /* ไฮไลท์สีสดใสสำหรับส่วนที่ต้องดูความถูกต้อง */
         .search-highlight {
-            background-color: #ff007f; /* สีชมพูสด */
+            background-color: #ff007f;
             color: #ffffff;
             font-weight: 900;
             padding: 2px 6px;
             border-radius: 4px;
             box-shadow: 0 2px 6px rgba(255, 0, 127, 0.4);
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
 
-        const Icon = ({ name, className = "", size = 24, onClick }) => {
-            const iconRef = useRef(null);
-            useEffect(() => {
-                if (window.lucide && iconRef.current) {
-                    iconRef.current.innerHTML = `<i data-lucide="${name}"></i>`;
-                    window.lucide.createIcons({
-                        attrs: { class: className, style: `width: ${size}px; height: ${size}px;` },
-                        nameAttr: 'data-lucide'
-                    });
-                }
-            }, [name, className, size]);
-            return <span ref={iconRef} className={`inline-flex items-center ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}></span>;
-        };
+const Icon = ({ name, className = "", size = 24, onClick }) => {
+    const iconRef = useRef(null);
+    useEffect(() => {
+        if (window.lucide && iconRef.current) {
+            iconRef.current.innerHTML = `<i data-lucide="${name}"></i>`;
+            window.lucide.createIcons({
+                attrs: { class: className, style: `width: ${size}px; height: ${size}px;` },
+                nameAttr: 'data-lucide'
+            });
+        }
+    }, [name, className, size]);
+    return <span ref={iconRef} className={`inline-flex items-center ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}></span>;
+};
 
-        const App = () => {
-            const [view, setView] = useState('dashboard');
-            const [allAssets, setAllAssets] = useState([]);
-            const [dashData, setDashData] = useState([]);
-            const [loading, setLoading] = useState(true);
-            const [searchTerm, setSearchTerm] = useState('');
-            const [selectedAsset, setSelectedAsset] = useState(null);
-            const [modalOpen, setModalOpen] = useState(false);
-            const [scannerOpen, setScannerOpen] = useState(false);
-            const [alertMsg, setAlertMsg] = useState('');
-            const [showSearch, setShowSearch] = useState(false);
-            
-            const API_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
-            const scannerRef = useRef(null);
+const App = () => {
 
-            useEffect(() => {
-                fetchInitialData();
-            }, []);
+const [view,setView]=useState('dashboard')
+const [allAssets,setAllAssets]=useState([])
+const [dashData,setDashData]=useState([])
+const [loading,setLoading]=useState(true)
+const [searchTerm,setSearchTerm]=useState('')
+const [selectedAsset,setSelectedAsset]=useState(null)
+const [modalOpen,setModalOpen]=useState(false)
+const [scannerOpen,setScannerOpen]=useState(false)
+const [alertMsg,setAlertMsg]=useState('')
+const [showSearch,setShowSearch]=useState(false)
 
-            const fetchInitialData = async () => {
-                setLoading(true);
-                try {
-                    const [assetsResp, dashResp] = await Promise.all([
-                        fetch(`${API_URL}?action=getAllAssets`),
-                        fetch(`${API_URL}?action=getDashboard`)
-                    ]);
-                    const assetsJson = await assetsResp.json();
-                    const dash = await dashResp.json();
-                    
-                    // รับค่าจาก getAllAssetsSummary ใน code.gs
-                    const assetsArray = assetsJson.assets || [];
-                    setAllAssets(assetsArray);
-                    setDashData(dash || []);
-                } catch (err) { console.error(err); } 
-                finally { setLoading(false); }
-            };
+const API_URL="https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec"
+const scannerRef=useRef(null)
 
-            const handleViewDetail = async (noid) => {
-                setLoading(true);
-                try {
-                    const resp = await fetch(`${API_URL}?action=getAsset&noid=${noid}`);
-                    const data = await resp.json();
-                    if (data && data.success) {
-                        setSelectedAsset(data);
-                        setModalOpen(true);
-                    } else {
-                        setAlertMsg('ไม่พบข้อมูลครุภัณฑ์นี้');
-                    }
-                } catch (err) { console.error(err); } 
-                finally { setLoading(false); }
-            };
+useEffect(()=>{ fetchInitialData() },[])
 
-            const startScanner = () => {
-                setScannerOpen(true);
-                setTimeout(() => {
-                    const html5QrCode = new Html5Qrcode("reader");
-                    scannerRef.current = html5QrCode;
-                    html5QrCode.start(
-                        { facingMode: "environment" },
-                        { fps: 15, qrbox: { width: 250, height: 250 } },
-                        (decodedText) => {
-                            stopScanner();
-                            
-                            let rawId = decodedText.trim();
-                            let targetId = rawId;
-                            
-                            if (rawId.startsWith('http')) {
-                                try {
-                                    if (rawId.includes('/IcmAssetDetail/')) {
-                                        const partAfter = rawId.split('/IcmAssetDetail/')[1];
-                                        targetId = partAfter.split('/')[0];
-                                    } else {
-                                        const urlParts = rawId.split('/');
-                                        targetId = urlParts.pop() || urlParts.pop(); 
-                                    }
-                                } catch(e) { 
-                                    targetId = rawId;
-                                }
-                            }
+const fetchInitialData=async()=>{
+setLoading(true)
+try{
+const [assetsResp,dashResp]=await Promise.all([
+fetch(`${API_URL}?action=getAllAssets`),
+fetch(`${API_URL}?action=getDashboard`)
+])
+const assetsJson=await assetsResp.json()
+const dash=await dashResp.json()
+const assetsArray=assetsJson.assets||[]
+setAllAssets(assetsArray)
+setDashData(dash||[])
+}catch(err){console.error(err)}
+finally{setLoading(false)}
+}
 
-                            const found = allAssets.find(a => {
-                                const assetId = String(a.AssetID || "").trim();
-                                const noid = String(a.NOID || "").trim();
-                                return assetId === targetId || noid === targetId;
-                            });
+const handleViewDetail=async(noid)=>{
+setLoading(true)
+try{
+const resp=await fetch(`${API_URL}?action=getAsset&noid=${noid}`)
+const data=await resp.json()
+if(data && data.success){
+setSelectedAsset(data)
+setModalOpen(true)
+}else{
+setAlertMsg('ไม่พบข้อมูลครุภัณฑ์นี้')
+}
+}catch(err){console.error(err)}
+finally{setLoading(false)}
+}
 
-                            if (found) {
-                                handleViewDetail(found.NOID);
-                            } else {
-                                setAlertMsg(`ไม่พบข้อมูลรหัส: ${targetId}`);
-                            }
-                        },
-                        (errorMessage) => {}
-                    ).catch(err => {
-                        console.error(err);
-                        setAlertMsg('ไม่สามารถเข้าถึงกล้องได้');
-                        setScannerOpen(false);
-                    });
-                }, 300);
-            };
+const startScanner = () => {
+setScannerOpen(true)
 
-            const stopScanner = () => {
-                if (scannerRef.current) {
-                    scannerRef.current.stop().then(() => {
-                        setScannerOpen(false);
-                    }).catch(err => {
-                        setScannerOpen(false);
-                    });
-                } else {
-                    setScannerOpen(false);
-                }
-            };
+setTimeout(async () => {
 
-           const filteredAssets = useMemo(() => {
-            const term = searchTerm.trim().toLowerCase();
-            if (!term) return [];
+try {
 
-            return allAssets.filter(asset => {
-                const assetId = String(asset.AssetID || "").toLowerCase();
-                return assetId.endsWith(term);
-                }).slice(0, 30);
+if (scannerRef.current) {
+await scannerRef.current.stop().catch(()=>{})
+scannerRef.current = null
+}
 
-                }, [searchTerm, allAssets]);
+const html5QrCode = new Html5Qrcode("reader")
+scannerRef.current = html5QrCode
 
-            // คำนวณผลรวมที่ตรวจสอบแล้ว (เงื่อนไข note4 == 1 ตามที่กำหนดใน code.gs)
-            const verifiedCount = useMemo(() => {
-                return allAssets.filter(a => a.note4 == 1 || a.note4 == "1").length;
-            }, [allAssets]);
+await html5QrCode.start(
+{ facingMode: "environment" },
+{ fps: 15, qrbox: { width: 250, height: 250 } },
 
-            // ฟังก์ชันสำหรับไฮไลท์ข้อความ
-            const getHighlightedText = (text, highlight) => {
-                if (!highlight.trim()) return text;
-                const parts = String(text).split(new RegExp(`(${highlight})`, 'gi'));
-                return (
-                    <span>
-                        {parts.map((part, i) => 
-                            part.toLowerCase() === highlight.toLowerCase() 
-                            ? <span key={i} className="search-highlight">{part}</span> 
-                            : part
-                        )}
-                    </span>
-                );
-            };
+(decodedText) => {
 
-            return (
-                <div className="flex flex-col min-h-screen max-w-md mx-auto bg-white shadow-2xl overflow-x-hidden relative">
-                    {loading && (
-                        <div className="fixed inset-0 bg-white/70 backdrop-blur-sm z-[9999] flex items-center justify-center">
-                            <div className="text-pink-500 flex flex-col items-center gap-2">
-                                <div className="w-10 h-10 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin"></div>
-                                <span className="font-bold text-sm">กำลังโหลด...</span>
-                            </div>
-                        </div>
-                    )}
+stopScanner()
 
-                    <header className="header-pink-vibrant p-5 flex flex-col justify-center">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-white rounded-xl p-1 shadow-md flex-shrink-0">
-                                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" className="w-full h-full object-contain" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h1 className="header-title text-lg sm:text-xl font-black truncate sm:whitespace-normal">
-                                    ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์
-                                </h1>
-                                <p className="text-[10px] text-pink-100 font-bold opacity-90">กลุ่มงาน เทคโนโลยีสารสนเทศทางการแพทย์</p>
-                            </div>
-                            <button onClick={fetchInitialData} className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
-                                <Icon name="rotate-cw" size={18} />
-                            </button>
-                        </div>
-                    </header>
+let rawId = decodedText.trim()
+let targetId = rawId
 
-                    {showSearch && (
-                        <div className="sticky-search-container animate-in slide-in-from-top duration-300">
-                            <div className="glass-search-card flex items-center px-4 py-3 gap-3">
-                                <Icon name="search" size={20} className="text-pink-500" />
-                                <input 
-                                    type="text" 
-                                    className="flex-1 bg-transparent outline-none font-black text-slate-700 placeholder:text-slate-300"
-                                    placeholder="ระบุรหัสครุภัณฑ์เพื่อตรวจสอบ..."
-                                    autoFocus
-                                    value={searchTerm}
-                                    onChange={(e) => {
-                                        setSearchTerm(e.target.value);
-                                        if(view !== 'search') setView('search');
-                                    }}
-                                />
-                                {searchTerm && (
-                                    <Icon name="circle-x" size={18} className="text-slate-400 hover:text-pink-500" onClick={() => setSearchTerm('')} />
-                                )}
-                                <Icon name="x" size={18} className="text-slate-300" onClick={() => {
-                                    setSearchTerm('');
-                                    setShowSearch(false);
-                                    setView('dashboard');
-                                }} />
-                            </div>
-                        </div>
-                    )}
+if (rawId.startsWith('http')) {
+try {
+if (rawId.includes('/IcmAssetDetail/')) {
+const partAfter = rawId.split('/IcmAssetDetail/')[1]
+targetId = partAfter.split('/')[0]
+} else {
+const urlParts = rawId.split('/')
+targetId = urlParts.pop() || urlParts.pop()
+}
+} catch(e) {
+targetId = rawId
+}
+}
 
-                    <main className="flex-1 px-4 py-6 pb-24">
-                        {view === 'dashboard' ? (
-                            <div className="space-y-6 animate-in fade-in duration-500">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-pink-50 p-4 rounded-3xl border-2 border-pink-100">
-                                        <p className="text-[10px] font-black text-pink-400 uppercase mb-1">จำนวนครุภัณฑ์</p>
-                                        <p className="text-2xl font-black text-slate-800">{allAssets.length}</p>
-                                    </div>
-                                    <div className="bg-emerald-50 p-4 rounded-3xl border-2 border-emerald-100">
-                                        <p className="text-[10px] font-black text-emerald-400 uppercase mb-1">จำนวนที่ตรวจสอบแล้ว 2569</p>
-                                        <p className="text-2xl font-black text-slate-800 tracking-wider">{verifiedCount}</p>
-                                    </div>
-                                </div>
+const found = allAssets.find(a => {
+const assetId = String(a.AssetID || "").trim()
+const noid = String(a.NOID || "").trim()
+return assetId === targetId || noid === targetId
+})
 
-                                <div className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden">
-                                    <div className="p-4 bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest">
-                                        สถิติจำแนกกลุ่มงาน
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="dash-table">
-                                            <thead>
-                                                <tr>
-                                                    <th className="text-left pl-4">กลุ่มลำดับ</th>
-                                                    <th>OPD</th>
-                                                    <th>IPD</th>
-                                                    <th>Back</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {dashData.map((row, i) => (
-                                                    <tr key={i} className={row.PIORITY_NAME === 'รวม' ? 'bg-slate-50' : ''}>
-                                                        <td className="text-left pl-4 text-slate-500">{row.PIORITY_NAME}</td>
-                                                        <td className="text-emerald-600">{row.OPD}</td>
-                                                        <td className="text-cyan-600">{row.IPD}</td>
-                                                        <td className="text-amber-600">{row['Back Office']}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-3 animate-in slide-in-from-right duration-300">
-                                {filteredAssets.length > 0 ? filteredAssets.map((asset, idx) => (
-                                    <div key={idx} onClick={() => handleViewDetail(asset.NOID)} className="p-5 bg-white rounded-3xl border-2 border-pink-100 shadow-sm flex items-center justify-between active:scale-95 transition-transform">
-                                        <div className="min-w-0 pr-4 flex-1">
-                                            <p className="text-[15px] font-extrabold text-pink-500 mb-1 tracking-tight">
-                                                {getHighlightedText(asset.AssetID, searchTerm)}
-                                            </p>
-                                            <p className="font-black text-slate-800 text-xl leading-tight truncate">
-                                                {getHighlightedText(asset.itemName, searchTerm)}
-                                            </p>
-                                        </div>
-                                        <Icon name="chevron-right" size={24} className="text-pink-400 flex-shrink-0" />
-                                    </div>
-                                )) : (
-                                    <div className="text-center py-20 text-slate-300 font-bold italic">
-                                        {searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'กรุณาระบุรหัสครุภัณฑ์ในช่องค้นหา'}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </main>
+if (found) {
+handleViewDetail(found.NOID)
+} else {
+setAlertMsg(`ไม่พบข้อมูลรหัส: ${targetId}`)
+}
 
-                    <div className="nav-container">
-                        <nav className="nav-bar">
-                            <button onClick={() => {
-                                setView('dashboard');
-                                setShowSearch(false);
-                            }} className={`flex flex-col items-center gap-1 ${view === 'dashboard' ? 'text-pink-500' : 'text-slate-500'}`}>
-                                <Icon name="home" size={20} />
-                                <span className="text-[8px] font-black uppercase">Dashboard</span>
-                            </button>
-                            <div className="scan-fab" onClick={startScanner}>
-                                <Icon name="scan" size={24} className="text-white" />
-                            </div>
-                            <button onClick={() => {
-                                setShowSearch(true);
-                                setView('search');
-                            }} className={`flex flex-col items-center gap-1 ${view === 'search' ? 'text-pink-500' : 'text-slate-500'}`}>
-                                <Icon name="search-check" size={20} />
-                                <span className="text-[8px] font-black uppercase">Verify</span>
-                            </button>
-                        </nav>
-                    </div>
+},
 
-                    {scannerOpen && (
-                        <div className="fixed inset-0 z-[6000] bg-black flex flex-col items-center justify-center p-6">
-                            <div className="w-full max-w-sm space-y-6">
-                                <div className="text-center text-white">
-                                    <h2 className="text-xl font-black">สแกนรหัสครุภัณฑ์</h2>
-                                    <p className="text-xs text-slate-400">วาง QR Code ให้อยู่ในกรอบ</p>
-                                </div>
-                                <div id="reader"></div>
-                                <button 
-                                    onClick={stopScanner}
-                                    className="w-full py-4 bg-white/10 text-white rounded-2xl font-bold border border-white/20 active:bg-white/20"
-                                >
-                                    ยกเลิก
-                                </button>
-                            </div>
-                        </div>
-                    )}
+(errorMessage)=>{}
+)
 
-                    {modalOpen && selectedAsset && (
-                        <div className="fixed inset-0 z-[5000] bg-slate-900/80 backdrop-blur-md flex items-end justify-center p-0">
-                            <div className="bg-white w-full rounded-t-[40px] shadow-2xl animate-in slide-in-from-bottom duration-300 border-t-8 border-pink-500 flex flex-col overflow-hidden max-h-[96vh]">
-                                
-                                <div className="p-6 pb-4 flex items-center justify-between flex-shrink-0">
-                                    <button onClick={() => setModalOpen(false)} className="back-button-modal">
-                                        <Icon name="chevron-left" size={16} />
-                                        ย้อนกลับ
-                                    </button>
-                                    <div className="flex flex-col items-end">
-                                        <h3 className="font-black text-slate-800 text-sm">รายละเอียดครุภัณฑ์</h3>
-                                        <p className="text-[9px] text-pink-500 font-bold uppercase tracking-wider">Asset Information</p>
-                                    </div>
-                                </div>
+}catch(err){
+console.error(err)
+setAlertMsg('ไม่สามารถเข้าถึงกล้องได้')
+setScannerOpen(false)
+}
 
-                                <div className="p-6 pt-0 modal-content-scroll space-y-4 flex-1">
-                                    <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden border-2 border-pink-50 shadow-inner relative">
-                                        {selectedAsset.imgUrl ? <img src={selectedAsset.imgUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 italic text-xs">ไม่มีรูปภาพ</div>}
-                                        <div className="absolute top-3 right-3 bg-pink-500 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-lg">
-                                            {selectedAsset.coStatus || "ไม่มีบันทึกสถานะ"}
-                                        </div>
-                                    </div>
+},300)
+}
 
-                                    <div className="grid gap-2.5 text-sm pb-10">
-                                        {[
-                                            { label: "รหัสครุภัณฑ์", val: selectedAsset.AssetID, hl: true, icon: "id-card" },
-                                            { label: "ชื่ออุปกรณ์", val: selectedAsset.itemName, hl: true, icon: "monitor" },
-                                            { label: "ยี่ห้อ/รุ่น/สเปค", val: selectedAsset.spec, icon: "cpu" },
-                                            { label: "สถานที่ใช้งาน", val: selectedAsset.location, hl: true, icon: "map-pin" },
-                                            { label: "วันที่รับเข้า", val: selectedAsset.receiveDate, icon: "calendar" },
-                                            { label: "อายุการใช้งาน", val: `${selectedAsset.age} ปี`, icon: "history" },
-                                            { label: "สถานะ MA", val: selectedAsset.maStatus, icon: "settings" }
-                                        ].map((item, i) => (
-                                            <div key={i} className={`p-3.5 rounded-2xl border ${item.hl ? 'bg-pink-50 border-pink-200' : 'bg-slate-50 border-slate-100'} flex items-start gap-3`}>
-                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.hl ? 'bg-pink-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
-                                                    <Icon name={item.icon || "info"} size={16} />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight mb-0.5">{item.label}</p>
-                                                    <p className={`font-bold leading-tight ${item.hl ? 'text-pink-600' : 'text-slate-700'}`}>{item.val || '-'}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+const stopScanner = async () => {
 
-                                <div className="p-6 pt-2 pb-10 flex gap-3 bg-white border-t border-slate-100 flex-shrink-0">
-                                    <button onClick={() => setAlertMsg('ระบบอยู่ระหว่างการพัฒนา')} className="flex-1 py-4 bg-white border-2 border-pink-500 text-pink-500 rounded-2xl font-black text-sm uppercase shadow-sm active:bg-pink-50">แก้ไขข้อมูล</button>
-                                    <button onClick={() => setAlertMsg('กำลังส่งคำสั่งพิมพ์...')} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase shadow-lg shadow-slate-200 active:bg-slate-800">ออกสติกเกอร์</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+try{
 
-                    {alertMsg && (
-                        <div className="fixed top-4 left-4 right-4 z-[9999] bg-slate-900 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between animate-in slide-in-from-top" onClick={() => setAlertMsg('')}>
-                            <div className="flex items-center gap-3">
-                                <Icon name="info" size={20} className="text-pink-400" />
-                                <span className="text-sm font-bold">{alertMsg}</span>
-                            </div>
-                            <Icon name="x" size={16} className="text-slate-500" />
-                        </div>
-                    )}
-                </div>
-            );
-        };
+if(scannerRef.current){
+await scannerRef.current.stop()
+await scannerRef.current.clear()
+scannerRef.current=null
+}
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+}catch(err){
+console.error(err)
+}
+
+setScannerOpen(false)
+}
+
+return (
+<div className="flex flex-col min-h-screen max-w-md mx-auto bg-white shadow-2xl overflow-x-hidden relative">
+
+<header className="header-pink-vibrant p-5 flex flex-col justify-center">
+<div className="flex items-center gap-3">
+<div className="w-12 h-12 bg-white rounded-xl p-1 shadow-md flex-shrink-0">
+<img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" className="w-full h-full object-contain"/>
+</div>
+<div className="flex-1 min-w-0">
+<h1 className="header-title text-lg font-black">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+<p className="text-[10px] text-pink-100 font-bold opacity-90">กลุ่มงาน เทคโนโลยีสารสนเทศทางการแพทย์</p>
+</div>
+</div>
+</header>
+
+<main className="flex-1 px-4 py-6 pb-24">
+<div className="text-center text-slate-300 font-bold italic">
+ระบบพร้อมใช้งาน
+</div>
+</main>
+
+<div className="nav-container">
+<nav className="nav-bar">
+
+<button onClick={()=>setView('dashboard')} className="flex flex-col items-center gap-1 text-pink-500">
+<Icon name="home" size={20}/>
+<span className="text-[8px] font-black uppercase">Dashboard</span>
+</button>
+
+<div className="scan-fab" onClick={startScanner}>
+<Icon name="scan" size={24} className="text-white"/>
+</div>
+
+<button onClick={()=>setShowSearch(true)} className="flex flex-col items-center gap-1 text-slate-500">
+<Icon name="search-check" size={20}/>
+<span className="text-[8px] font-black uppercase">Verify</span>
+</button>
+
+</nav>
+</div>
+
+{scannerOpen && (
+<div className="fixed inset-0 z-[6000] bg-black flex flex-col items-center justify-center p-6">
+
+<div className="w-full max-w-sm space-y-6">
+
+<div className="text-center text-white">
+<h2 className="text-xl font-black">สแกนรหัสครุภัณฑ์</h2>
+<p className="text-xs text-slate-400">วาง QR Code ให้อยู่ในกรอบ</p>
+</div>
+
+<div id="reader"></div>
+
+<button 
+onClick={stopScanner}
+className="w-full py-4 bg-white/10 text-white rounded-2xl font-bold border border-white/20">
+ยกเลิก
+</button>
+
+</div>
+
+</div>
+)}
+
+</div>
+)
+}
+
+const root=ReactDOM.createRoot(document.getElementById('root'))
+root.render(<App />)
+</script>
 </body>
 </html>
+```
