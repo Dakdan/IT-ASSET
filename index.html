@@ -259,14 +259,16 @@ targetId = rawId
 }
 }
 
-            const filteredAssets = useMemo(() => {
-                const term = searchTerm.trim().toLowerCase();
-                if (!term) return [];
-                return allAssets.filter(asset => 
-                    String(asset.AssetID || "").toLowerCase().includes(term) || 
-                    String(asset.itemName || "").toLowerCase().includes(term)
-                ).slice(0, 30); 
-            }, [searchTerm, allAssets]);
+           const filteredAssets = useMemo(() => {
+            const term = searchTerm.trim().toLowerCase();
+            if (!term) return [];
+
+            return allAssets.filter(asset => {
+                const assetId = String(asset.AssetID || "").toLowerCase();
+                return assetId.endsWith(term);
+                }).slice(0, 30);
+
+                }, [searchTerm, allAssets]);
 
             // คำนวณผลรวมที่ตรวจสอบแล้ว (เงื่อนไข note4 == 1 ตามที่กำหนดใน code.gs)
             const verifiedCount = useMemo(() => {
