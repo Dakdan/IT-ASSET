@@ -220,65 +220,44 @@
             };
 
             const startScanner = () => {
-                setScannerOpen(true);
-                setTimeout(() => {
-                    const html5QrCode = new Html5Qrcode("reader");
-                    scannerRef.current = html5QrCode;
-                    html5QrCode.start(
-                        { facingMode: "environment" },
-                        { fps: 15, qrbox: { width: 250, height: 250 } },
-                        (decodedText) => {
-                            stopScanner();
-                            
-                            let rawId = decodedText.trim();
-                            let targetId = rawId;
-                            
-                            if (rawId.startsWith('http')) {
-                                try {
-                                    if (rawId.includes('/IcmAssetDetail/')) {
-                                        const partAfter = rawId.split('/IcmAssetDetail/')[1];
-                                        targetId = partAfter.split('/')[0];
-                                    } else {
-                                        const urlParts = rawId.split('/');
-                                        targetId = urlParts.pop() || urlParts.pop(); 
-                                    }
-                                } catch(e) { 
-                                    targetId = rawId;
-                                }
-                            }
+setScannerOpen(true)
 
-                            const found = allAssets.find(a => {
-                                const assetId = String(a.AssetID || "").trim();
-                                const noid = String(a.NOID || "").trim();
-                                return assetId === targetId || noid === targetId;
-                            });
+setTimeout(async () => {
 
-                            if (found) {
-                                handleViewDetail(found.NOID);
-                            } else {
-                                setAlertMsg(`ไม่พบข้อมูลรหัส: ${targetId}`);
-                            }
-                        },
-                        (errorMessage) => {}
-                    ).catch(err => {
-                        console.error(err);
-                        setAlertMsg('ไม่สามารถเข้าถึงกล้องได้');
-                        setScannerOpen(false);
-                    });
-                }, 300);
-            };
+try {
 
-            const stopScanner = () => {
-                if (scannerRef.current) {
-                    scannerRef.current.stop().then(() => {
-                        setScannerOpen(false);
-                    }).catch(err => {
-                        setScannerOpen(false);
-                    });
-                } else {
-                    setScannerOpen(false);
-                }
-            };
+if (scannerRef.current) {
+await scannerRef.current.stop().catch(()=>{})
+scannerRef.current = null
+}
+
+const html5QrCode = new Html5Qrcode("reader")
+scannerRef.current = html5QrCode
+
+await html5QrCode.start(
+{ facingMode: "environment" },
+{ fps: 15, qrbox: { width: 250, height: 250 } },
+
+(decodedText) => {
+
+stopScanner()
+
+let rawId = decodedText.trim()
+let targetId = rawId
+
+if (rawId.startsWith('http')) {
+try {
+if (rawId.includes('/IcmAssetDetail/')) {
+const partAfter = rawId.split('/IcmAssetDetail/')[1]
+targetId = partAfter.split('/')[0]
+} else {
+const urlParts = rawId.split('/')
+targetId = urlParts.pop() || urlParts.pop()
+}
+} catch(e) {
+targetId = rawId
+}
+}
 
             const filteredAssets = useMemo(() => {
                 const term = searchTerm.trim().toLowerCase();
