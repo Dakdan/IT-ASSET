@@ -248,16 +248,18 @@
                         </div>
                     )}
 
-                    <header className="header-pink-vibrant p-5 flex flex-col justify-center">
+                   <header className="header-pink-vibrant pt-3 pb-5 px-5 flex flex-col justify-start">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-white rounded-xl p-1 shadow-md flex-shrink-0">
                                 <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" className="w-full h-full object-contain" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h1 className="text-white text-lg font-black truncate">ระบบตรวจสอบครุภัณฑ์</h1>
-                                <p className="text-[10px] text-pink-100 font-bold opacity-90">โรงพยาบาลอุดรธานี</p>
-                            </div>
-                            <button onClick={fetchInitialData} className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white"><Icon name="rotate-cw" size={18} /></button>
+                                <h1 className="text-white text-lg font-black truncate leading-tight">ระบบตรวจสอบครุภัณฑ์</h1>
+                                <p className="text-[10px] text-pink-100 font-bold opacity-90 leading-none">โรงพยาบาลอุดรธานี</p>
+                           </div>
+                            <button onClick={fetchInitialData} className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
+                                <Icon name="rotate-cw" size={18} />
+                            </button>
                         </div>
                     </header>
 
