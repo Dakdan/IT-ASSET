@@ -4,187 +4,213 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IT Asset Survey - โรงพยาบาลอุดรธานี</title>
-    <link rel="icon" type="image/png" href="https://img2.pic.in.th/-227e4f6f84f29f020.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
     <style>
-        :root {
-            --primary: #d81b60;
-            --primary-gradient: linear-gradient(135deg, #ad1457 0%, #f06292 100%);
-            --bg-soft: #fff5f8;
-        }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--bg-soft); min-height: 100vh; }
-        .header-gradient {
-            background: linear-gradient(180deg, #ad1457 0%, #d81b60 70%, #f48fb1 100%);
-            border-bottom-left-radius: 40px; border-bottom-right-radius: 40px;
-            padding-bottom: 60px;
-        }
-        .card-dept {
-            background: white; border-radius: 20px;
-            border: 1px solid rgba(216, 27, 96, 0.08);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 1.5rem; height: 100%;
-        }
-        .card-dept:hover { 
-            transform: translateY(-5px); 
-            box-shadow: 0 12px 25px rgba(216, 27, 96, 0.1);
-            border-color: var(--primary);
-        }
-        .btn-pink { background: var(--primary-gradient); color: white; border-radius: 16px; }
+        :root { --primary: #d81b60; --primary-gradient: linear-gradient(135deg, #ad1457 0%, #f06292 100%); }
+        body { font-family: 'Kanit', sans-serif; background-color: #fff5f8; min-height: 100vh; }
+        .header-gradient { background: linear-gradient(180deg, #ad1457 0%, #d81b60 70%, #f48fb1 100%); border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; padding-bottom: 60px; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 32px; border: 1px solid white; box-shadow: 0 10px 40px rgba(216, 27, 96, 0.1); }
+        .card-selection { background: white; border-radius: 20px; transition: all 0.3s; cursor: pointer; border: 1px solid rgba(216, 27, 96, 0.1); }
+        .card-selection:hover { transform: translateY(-3px); border-color: var(--primary); box-shadow: 0 8px 20px rgba(216, 27, 96, 0.1); }
+        .btn-pink { background: var(--primary-gradient); color: white; border-radius: 14px; transition: opacity 0.2s; }
         [v-cloak] { display: none; }
     </style>
 </head>
 <body class="pb-10">
     <div id="app" v-cloak>
-        <!-- Header -->
-        <header class="header-gradient text-white pt-8 px-6 text-center no-print relative z-10">
+        <header class="header-gradient text-white pt-8 px-6 text-center relative z-10">
             <div class="flex justify-center mb-3">
-                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-14 h-14 bg-white p-1 rounded-full">
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-14 h-14 bg-white p-1 rounded-full shadow-lg">
             </div>
             <h1 class="text-xl font-bold tracking-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
             <p class="text-pink-100 text-[10px] uppercase tracking-widest font-light">โรงพยาบาลอุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศ</p>
         </header>
 
         <main class="max-w-6xl mx-auto px-4 -mt-10 relative z-20">
-            
-            <!-- STEP 1: DASHBOARD & GRID SELECTION -->
-            <div v-if="step === 'main'" class="space-y-8 animate-in fade-in duration-500">
-                <!-- Dashboard (ดึงข้อมูลจริงจาก stats) -->
-                <div class="bg-white/90 backdrop-blur-md rounded-[32px] p-8 shadow-xl border border-white">
-                    <h2 class="text-lg font-bold text-pink-800 flex items-center gap-2 mb-6">
-                        <i data-lucide="bar-chart-3" class="w-5 h-5 text-pink-600"></i> ภาพรวมการตรวจสอบปี 2567
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-pink-50 p-6 rounded-3xl border border-pink-100 flex flex-col items-center">
-                            <p class="text-[10px] text-pink-400 font-bold uppercase mb-1">เป้าหมายทั้งหมด</p>
-                            <p class="text-4xl font-black text-pink-600">{{ stats.total.toLocaleString() }} <span class="text-xs font-normal">เครื่อง</span></p>
+            <!-- Dashboard Section -->
+            <div v-if="step === 'main' || step === 'building'" class="glass-card p-8 mb-8 animate-in fade-in zoom-in duration-500">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-pink-800 flex items-center gap-2">
+                            <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                            {{ dashboard.activityName || 'กำลังโหลด...' }}
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">สรุปข้อมูลประจำปี {{ dashboard.year }}</p>
+                    </div>
+                </div>
+
+                <!-- Main Statistics - ปรับการจัดเรียงตามลำดับเลข 1,2,3,4,5 ในภาพ -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                    
+                    <!-- 1. เป้าหมายสำรวจ (ตำแหน่งเลข 1) -->
+                    <div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-100/50">
+                        <p class="text-[9px] text-blue-500 font-bold uppercase tracking-wider mb-1">เป้าหมายสำรวจ</p>
+                        <div class="flex items-end gap-1">
+                            <span class="text-2xl font-black text-blue-600 leading-none">{{ dashboard.target.toLocaleString() }}</span>
+                            <span class="text-blue-500 text-[10px] mb-0.5">รายการ</span>
                         </div>
-                        <div class="bg-green-50 p-6 rounded-3xl border border-green-100 flex flex-col items-center">
-                            <p class="text-[10px] text-green-400 font-bold uppercase mb-1">สำรวจแล้ว</p>
-                            <p class="text-4xl font-black text-green-600">{{ stats.done.toLocaleString() }} <span class="text-xs font-normal">เครื่อง</span></p>
+                    </div>
+
+                    <!-- 2. ในทะเบียน (ตำแหน่งเลข 2) -->
+                    <div class="bg-pink-50/50 p-4 rounded-3xl border border-pink-100/50">
+                        <p class="text-[9px] text-pink-400 font-bold uppercase tracking-wider mb-1">ในทะเบียน</p>
+                        <div class="flex items-end gap-1">
+                            <span class="text-2xl font-black text-pink-600 leading-none">{{ dashboard.done.toLocaleString() }}</span>
+                            <span class="text-pink-400 text-[10px] mb-0.5">รายการ</span>
                         </div>
-                        <div class="bg-amber-50 p-6 rounded-3xl border border-amber-100 flex flex-col items-center">
-                            <p class="text-[10px] text-amber-400 font-bold uppercase mb-1">ความคืบหน้า</p>
-                            <p class="text-4xl font-black text-amber-600">{{ stats.progress }}%</p>
+                    </div>
+
+                    <!-- 3. นอกทะเบียน (ตำแหน่งเลข 3) -->
+                    <div class="bg-purple-50/50 p-4 rounded-3xl border border-purple-100/50">
+                        <p class="text-[9px] text-purple-400 font-bold uppercase tracking-wider mb-1">นอกทะเบียน</p>
+                        <div class="flex items-end gap-1">
+                            <span class="text-2xl font-black text-purple-600 leading-none">{{ dashboard.outDatabase.toLocaleString() }}</span>
+                            <span class="text-purple-400 text-[10px] mb-0.5">รายการ</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. ผลรวมทั้งหมด (ตำแหน่งเลข 4) -->
+                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">ผลรวมทั้งหมด</p>
+                        <div class="flex items-end gap-1">
+                            <span class="text-2xl font-black text-slate-700 leading-none">{{ dashboard.total.toLocaleString() }}</span>
+                            <span class="text-slate-400 text-[10px] mb-0.5">รายการ</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. ความคืบหน้า (ตำแหน่งเลข 5) -->
+                    <div class="bg-emerald-50/50 p-4 rounded-3xl border border-emerald-100/50">
+                        <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-wider mb-1">ความคืบหน้า</p>
+                        <div class="flex items-end gap-0.5">
+                            <span class="text-2xl font-black text-emerald-600 leading-none">{{ dashboard.progress }}</span>
+                            <span class="text-emerald-500 font-bold text-sm mb-0.5">%</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Unit Selector Grid (อ้างอิงฟิลด์จากพรอมต์) -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 ml-2">
-                        <span class="text-xl">🏢</span>
-                        <label class="font-bold text-gray-700">เลือกตึก/อาคารที่ต้องการสำรวจ</label>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <button v-for="dept in departments" :key="dept.DEP_ID"
-                                @click="startSurvey(dept)"
-                                class="card-dept group">
-                            <div class="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-pink-600 group-hover:text-white transition-all overflow-hidden border border-pink-50">
-                                <img v-if="dept.DEPT_PHO" :src="dept.DEPT_PHO" class="w-full h-full object-cover">
-                                <i v-else data-lucide="building-2" class="w-6 h-6"></i>
-                            </div>
-                            <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1">{{ dept.DEP_NAME_LOC }}</h3>
-                            <p class="text-[10px] text-gray-400 font-medium">{{ dept.LOCATION_NAME }} / ชั้น {{ dept.FL }}</p>
-                            <p v-if="dept.Tell" class="text-[9px] text-pink-400 mt-1"><i data-lucide="phone" class="w-2 h-2 inline"></i> {{ dept.Tell }}</p>
-                        </button>
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden mb-2">
+                    <div class="bg-emerald-500 h-full transition-all duration-1000" :style="{ width: dashboard.progress + '%' }"></div>
+                </div>
+                <div class="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    <span>คำนวณจากหน่วยงานที่ต้องสำรวจ (คอลัมน์ R ใน Asset_DB)</span>
+                    <span class="text-emerald-600">สำเร็จแล้ว {{ dashboard.progress }}%</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: Building Selection -->
+            <div v-if="step === 'main'" class="space-y-4">
+                <div class="flex justify-between items-center px-2">
+                    <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-5 h-5 text-pink-500"></i> เลือกตึก/อาคารที่ต้องการสำรวจ
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div v-for="b in buildings" :key="b.name" @click="selectBuilding(b.name)" class="card-selection p-6 flex flex-col items-center justify-center text-center group">
+                        <div class="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-pink-600 group-hover:text-white transition-colors">
+                            <i data-lucide="building" class="w-8 h-8"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 tracking-tight">อาคาร: {{ b.name }}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- STEP 2: SURVEY FORM -->
-            <div v-if="step === 'form'" class="bg-white rounded-[32px] p-8 shadow-xl mt-10">
-                <div class="flex items-center gap-4 mb-8">
-                    <button @click="step = 'main'" class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600">
-                        <i data-lucide="chevron-left"></i>
-                    </button>
-                    <div>
-                        <h2 class="text-xl font-bold text-pink-800">{{ selectedDept.DEP_NAME_LOC }}</h2>
-                        <p class="text-[10px] text-gray-400 uppercase tracking-widest">สถานที่: {{ selectedDept.LOCATION_NAME }} ชั้น {{ selectedDept.FL }}</p>
-                    </div>
+            <!-- STEP 2: Department Selection -->
+            <div v-if="step === 'building'" class="space-y-6 animate-in slide-in-from-right duration-300">
+                <div class="flex items-center gap-3">
+                    <button @click="step = 'main'" class="p-2 hover:bg-white rounded-full text-pink-600 transition-colors"><i data-lucide="arrow-left"></i></button>
+                    <h3 class="font-bold text-xl text-gray-800">อาคาร: {{ selectedBuilding }}</h3>
                 </div>
                 
-                <!-- ส่วนเนื้อหาการสำรวจ (ซ่อนไว้รอข้อมูลจริง) -->
-                <div class="text-center py-20">
-                    <div class="inline-block p-6 bg-pink-50 rounded-full mb-4">
-                        <i data-lucide="file-edit" class="w-10 h-10 text-pink-400"></i>
+                <div v-for="floor in sortedFloors" :key="floor" class="space-y-3">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-pink-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">ชั้น {{ floor }}</span>
+                        <div class="h-[1px] flex-grow bg-gray-200"></div>
                     </div>
-                    <p class="text-gray-500 font-medium">กำลังเตรียมข้อมูลการสำรวจสำหรับหน่วยงานนี้...</p>
-                    <button @click="step='main'" class="mt-6 btn-pink px-8 py-3">กลับหน้าหลัก</button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div v-for="dept in deptsByFloor[floor]" :key="dept.DEP_ID" class="card-selection p-4 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
+                                <i data-lucide="home" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-bold text-gray-800 text-sm leading-tight">{{ dept.DEP_NAME_LOC }}</p>
+                                <p class="text-[10px] text-gray-400">ID: {{ dept.DEP_ID }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
         </main>
 
-        <!-- Loading -->
-        <div v-if="isLoading" class="fixed inset-0 bg-white/90 z-[9999] flex flex-col items-center justify-center">
+        <!-- Loading Screen -->
+        <div v-if="isLoading" class="fixed inset-0 bg-white/80 z-[9999] flex flex-col items-center justify-center backdrop-blur-sm">
             <div class="w-12 h-12 border-4 border-pink-600 border-t-transparent rounded-full animate-spin"></div>
-            <p class="mt-4 text-pink-600 font-bold">กำลังเชื่อมต่อข้อมูลโรงพยาบาล...</p>
+            <p class="mt-4 text-pink-600 font-bold">กำลังประมวลผลข้อมูล...</p>
         </div>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        const { createApp, ref, onMounted, nextTick } = Vue;
-        // ใช้ SCRIPT_URL จาก Google Apps Script ที่คุณ Deploy
+        const { createApp, ref, onMounted, computed, nextTick } = Vue;
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
 
         createApp({
             setup() {
                 const step = ref('main');
                 const isLoading = ref(false);
-                const departments = ref([]);
-                const selectedDept = ref({});
-                const stats = ref({ total: 0, done: 0, progress: 0 });
+                const dashboard = ref({ total: 0, done: 0, outDatabase: 0, target: 0, progress: 0, year: '', activityName: '' });
+                const buildings = ref([]);
+                const selectedBuilding = ref('');
+                const deptsInBuilding = ref([]);
 
-                const loadInitialData = async () => {
+                const init = async () => {
                     isLoading.value = true;
                     try {
-                        // 1. ดึงข้อมูล Dashboard จริง
-                        const statsRes = await fetch(`${SCRIPT_URL}?action=getDashboard`);
-                        const statsData = await statsRes.json();
-                        // ค้นหาแถวสรุปล่าสุดหรือคำนวณจาก Array
-                        if (statsData && statsData.length > 0) {
-                            const latest = statsData[statsData.length - 1];
-                            stats.value = {
-                                total: parseInt(latest.total_assets || 0),
-                                done: parseInt(latest.surveyed_assets || 0),
-                                progress: latest.progress_percent || 0
-                            };
-                        }
-
-                        // 2. ดึงข้อมูลหน่วยงานตามโครงสร้าง Department
-                        const deptRes = await fetch(`${SCRIPT_URL}?action=getDepartments`);
-                        const deptData = await deptRes.json();
-                        
-                        // กรองข้อมูลเฉพาะรายการที่มี DEP_NAME_LOC
-                        departments.value = deptData.filter(d => d.DEP_NAME_LOC);
-
-                    } catch (e) {
-                        console.error("Data Load Error:", e);
-                        Swal.fire('เชื่อมต่อล้มเหลว', 'ไม่สามารถดึงข้อมูลจากระบบได้', 'error');
+                        const [dashData, bldData] = await Promise.all([
+                            fetch(`${SCRIPT_URL}?action=getDashboard`).then(r => r.json()),
+                            fetch(`${SCRIPT_URL}?action=getBuildings`).then(r => r.json())
+                        ]);
+                        if (dashData) dashboard.value = dashData;
+                        if (bldData) buildings.value = bldData;
+                    } catch (e) { console.error(e); }
+                    finally { 
+                        isLoading.value = false;
+                        nextTick(() => lucide.createIcons());
                     }
-                    isLoading.value = false;
-                    nextTick(() => lucide.createIcons());
                 };
 
-                onMounted(loadInitialData);
-
-                const startSurvey = (dept) => {
-                    selectedDept.value = dept;
-                    step.value = 'form';
-                    nextTick(() => lucide.createIcons());
+                const selectBuilding = async (name) => {
+                    isLoading.value = true;
+                    selectedBuilding.value = name;
+                    try {
+                        const data = await fetch(`${SCRIPT_URL}?action=getDeptsInBuilding&building=${encodeURIComponent(name)}`).then(r => r.json());
+                        if (data) {
+                            deptsInBuilding.value = data;
+                            step.value = 'building';
+                        }
+                    } catch (e) { console.error(e); }
+                    finally {
+                        isLoading.value = false;
+                        nextTick(() => lucide.createIcons());
+                    }
                 };
 
-                return { step, isLoading, departments, selectedDept, stats, startSurvey }
+                const deptsByFloor = computed(() => {
+                    return deptsInBuilding.value.reduce((acc, d) => {
+                        const floor = d.FL || 'ไม่ระบุ';
+                        if (!acc[floor]) acc[floor] = [];
+                        acc[floor].push(d);
+                        return acc;
+                    }, {});
+                });
+
+                const sortedFloors = computed(() => Object.keys(deptsByFloor.value).sort((a,b) => (parseInt(a)||0) - (parseInt(b)||0)));
+
+                onMounted(init);
+                return { step, isLoading, dashboard, buildings, selectedBuilding, deptsInBuilding, deptsByFloor, sortedFloors, selectBuilding }
             }
         }).mount('#app');
     </script>
