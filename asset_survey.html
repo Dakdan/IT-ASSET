@@ -3,550 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT ASSET SURVEY - UDON HOSPITAL</title>
+    <title>IT Asset Survey - โรงพยาบาลอุดรธานี</title>
+    <link rel="icon" type="image/png" href="https://img2.pic.in.th/-227e4f6f84f29f020.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { kanit: ['Kanit', 'sans-serif'] },
-                    colors: {
-                        primary: '#9d174d',
-                        secondary: '#ec4899',
-                        accent: '#fdf2f8'
-                    }
-                }
-            }
-        }
-    </script>
-
     <style>
-        body { 
-            font-family: 'Kanit', sans-serif; 
-            background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
-            background-attachment: fixed;
-            position: relative;
+        :root {
+            --primary: #d81b60;
+            --primary-gradient: linear-gradient(135deg, #ad1457 0%, #f06292 100%);
+            --bg-soft: #fff5f8;
         }
-        body::before {
-            content: "IT UDON HOSP";
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 8rem; color: rgba(157, 23, 77, 0.03); font-weight: 800; pointer-events: none; z-index: -1;
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg-soft); min-height: 100vh; }
+        .header-gradient {
+            background: linear-gradient(180deg, #ad1457 0%, #d81b60 70%, #f48fb1 100%);
+            border-bottom-left-radius: 40px; border-bottom-right-radius: 40px;
+            padding-bottom: 60px;
         }
-        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border-radius: 1.5rem; border: 1px solid rgba(157, 23, 77, 0.1); box-shadow: 0 10px 30px rgba(157, 23, 77, 0.05); }
-        .btn-gradient { background: linear-gradient(135deg, #9d174d 0%, #ec4899 100%); color: white; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(157, 23, 77, 0.3); }
-        .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .sig-canvas { border: 2px dashed #f472b6; border-radius: 1rem; background: #fff; touch-action: none; width: 100%; height: 200px; }
-        
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white; }
-            .print-area { display: block !important; padding: 20px; }
-            @page { size: landscape; }
+        .card-dept {
+            background: white; border-radius: 20px;
+            border: 1px solid rgba(216, 27, 96, 0.08);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 1.5rem; height: 100%;
         }
+        .card-dept:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 12px 25px rgba(216, 27, 96, 0.1);
+            border-color: var(--primary);
+        }
+        .btn-pink { background: var(--primary-gradient); color: white; border-radius: 16px; }
+        [v-cloak] { display: none; }
     </style>
 </head>
-<body class="min-h-screen pb-10">
-
-    <!-- Header Section -->
-    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-pink-100 px-4 py-4 flex items-center justify-between no-print">
-        <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-pink-200">IT</div>
-            <div>
-                <h1 class="font-bold text-primary text-lg leading-tight uppercase">IT ASSET SURVEY</h1>
-                <p class="text-[10px] text-gray-500">รพ.อุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศ</p>
+<body class="pb-10">
+    <div id="app" v-cloak>
+        <!-- Header -->
+        <header class="header-gradient text-white pt-8 px-6 text-center no-print relative z-10">
+            <div class="flex justify-center mb-3">
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-14 h-14 bg-white p-1 rounded-full">
             </div>
-        </div>
-        <button onclick="location.reload()" class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-primary">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-        </button>
-    </header>
+            <h1 class="text-xl font-bold tracking-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+            <p class="text-pink-100 text-[10px] uppercase tracking-widest font-light">โรงพยาบาลอุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศ</p>
+        </header>
 
-    <main class="max-w-4xl mx-auto px-4 mt-6">
-
-        <!-- PAGE 1: asset_sevey_main.html -->
-        <section id="view-main" class="view-section active space-y-6">
-            <!-- Dashboard Section -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-2 glass-card p-6">
-                    <h2 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                        <span class="w-2 h-6 bg-primary rounded-full"></span> 
-                        ความคืบหน้าการสำรวจปีล่าสุด
+        <main class="max-w-6xl mx-auto px-4 -mt-10 relative z-20">
+            
+            <!-- STEP 1: DASHBOARD & GRID SELECTION -->
+            <div v-if="step === 'main'" class="space-y-8 animate-in fade-in duration-500">
+                <!-- Dashboard (ดึงข้อมูลจริงจาก stats) -->
+                <div class="bg-white/90 backdrop-blur-md rounded-[32px] p-8 shadow-xl border border-white">
+                    <h2 class="text-lg font-bold text-pink-800 flex items-center gap-2 mb-6">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 text-pink-600"></i> ภาพรวมการตรวจสอบปี 2567
                     </h2>
-                    <div class="h-[250px]"><canvas id="dashboardChart"></canvas></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-pink-50 p-6 rounded-3xl border border-pink-100 flex flex-col items-center">
+                            <p class="text-[10px] text-pink-400 font-bold uppercase mb-1">เป้าหมายทั้งหมด</p>
+                            <p class="text-4xl font-black text-pink-600">{{ stats.total.toLocaleString() }} <span class="text-xs font-normal">เครื่อง</span></p>
+                        </div>
+                        <div class="bg-green-50 p-6 rounded-3xl border border-green-100 flex flex-col items-center">
+                            <p class="text-[10px] text-green-400 font-bold uppercase mb-1">สำรวจแล้ว</p>
+                            <p class="text-4xl font-black text-green-600">{{ stats.done.toLocaleString() }} <span class="text-xs font-normal">เครื่อง</span></p>
+                        </div>
+                        <div class="bg-amber-50 p-6 rounded-3xl border border-amber-100 flex flex-col items-center">
+                            <p class="text-[10px] text-amber-400 font-bold uppercase mb-1">ความคืบหน้า</p>
+                            <p class="text-4xl font-black text-amber-600">{{ stats.progress }}%</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="glass-card p-6 flex flex-col justify-between bg-primary text-white">
+
+                <!-- Unit Selector Grid (อ้างอิงฟิลด์จากพรอมต์) -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 ml-2">
+                        <span class="text-xl">🏢</span>
+                        <label class="font-bold text-gray-700">เลือกตึก/อาคารที่ต้องการสำรวจ</label>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <button v-for="dept in departments" :key="dept.DEP_ID"
+                                @click="startSurvey(dept)"
+                                class="card-dept group">
+                            <div class="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-pink-600 group-hover:text-white transition-all overflow-hidden border border-pink-50">
+                                <img v-if="dept.DEPT_PHO" :src="dept.DEPT_PHO" class="w-full h-full object-cover">
+                                <i v-else data-lucide="building-2" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1">{{ dept.DEP_NAME_LOC }}</h3>
+                            <p class="text-[10px] text-gray-400 font-medium">{{ dept.LOCATION_NAME }} / ชั้น {{ dept.FL }}</p>
+                            <p v-if="dept.Tell" class="text-[9px] text-pink-400 mt-1"><i data-lucide="phone" class="w-2 h-2 inline"></i> {{ dept.Tell }}</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: SURVEY FORM -->
+            <div v-if="step === 'form'" class="bg-white rounded-[32px] p-8 shadow-xl mt-10">
+                <div class="flex items-center gap-4 mb-8">
+                    <button @click="step = 'main'" class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
                     <div>
-                        <p class="text-pink-200 text-sm">เป้าหมายทั้งหมด</p>
-                        <h3 class="text-4xl font-bold mt-1" id="total-target">0</h3>
+                        <h2 class="text-xl font-bold text-pink-800">{{ selectedDept.DEP_NAME_LOC }}</h2>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest">สถานที่: {{ selectedDept.LOCATION_NAME }} ชั้น {{ selectedDept.FL }}</p>
                     </div>
-                    <div class="mt-4">
-                        <p class="text-pink-200 text-sm">ตรวจสอบแล้ว</p>
-                        <h3 class="text-4xl font-bold mt-1" id="total-done">0</h3>
-                        <div class="w-full bg-white/20 h-2 rounded-full mt-2 overflow-hidden">
-                            <div id="progress-bar" class="bg-white h-full" style="width: 0%"></div>
-                        </div>
+                </div>
+                
+                <!-- ส่วนเนื้อหาการสำรวจ (ซ่อนไว้รอข้อมูลจริง) -->
+                <div class="text-center py-20">
+                    <div class="inline-block p-6 bg-pink-50 rounded-full mb-4">
+                        <i data-lucide="file-edit" class="w-10 h-10 text-pink-400"></i>
                     </div>
+                    <p class="text-gray-500 font-medium">กำลังเตรียมข้อมูลการสำรวจสำหรับหน่วยงานนี้...</p>
+                    <button @click="step='main'" class="mt-6 btn-pink px-8 py-3">กลับหน้าหลัก</button>
                 </div>
             </div>
 
-            <!-- Building Grouping -->
-            <div class="space-y-4">
-                <h2 class="font-bold text-gray-700 px-2">รายการหน่วยงานแยกตามตึก</h2>
-                <div id="building-container" class="space-y-4 text-center py-10 text-gray-400">
-                    กำลังโหลดข้อมูล...
-                </div>
-            </div>
-        </section>
+        </main>
 
-        <!-- PAGE 2: asset_sevey_form.html -->
-        <section id="view-form" class="view-section space-y-6">
-            <div class="flex items-center gap-2 mb-2 no-print">
-                <button onclick="changeView('main')" class="text-primary font-bold">❮ กลับหน้าหลัก</button>
-            </div>
-
-            <div class="glass-card p-6 space-y-6">
-                <div class="border-b border-pink-50 pb-4">
-                    <h2 class="text-2xl font-bold text-primary" id="form-dept-name">ชื่อหน่วยงาน</h2>
-                    <p class="text-sm text-gray-400" id="form-dept-detail">อาคาร: - | ชั้น: -</p>
-                </div>
-
-                <!-- Asset Search -->
-                <div class="space-y-4">
-                    <div class="bg-pink-50 p-4 rounded-2xl">
-                        <label class="block text-xs font-bold text-primary mb-2">ค้นหาครุภัณฑ์ในระบบ</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="asset-search-input" placeholder="ระบุเลข NOID หรือเลขครุภัณฑ์..." class="flex-1 px-4 py-3 rounded-xl border-none outline-none text-sm shadow-inner">
-                            <button onclick="handleAssetSearch()" class="btn-gradient px-6 rounded-xl font-bold">ค้นหา</button>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <h3 class="text-sm font-bold text-gray-600 flex justify-between items-center">
-                            รายการที่ตรวจสอบพบ
-                            <span id="system-count" class="bg-pink-100 text-primary text-[10px] px-2 py-1 rounded-full">0 รายการ</span>
-                        </h3>
-                        <div id="selected-assets-list" class="space-y-2 max-h-[300px] overflow-y-auto">
-                            <!-- Selected System Assets -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Manual Assets -->
-                <div class="space-y-4 pt-4 border-t border-dashed border-pink-100">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-gray-600">รายการนอกระบบ</h3>
-                        <button onclick="addManualAsset()" class="text-xs font-bold text-primary">+ เพิ่มใหม่</button>
-                    </div>
-                    <div id="manual-assets-list" class="space-y-2">
-                        <!-- Selected Manual Assets -->
-                    </div>
-                </div>
-
-                <div class="pt-6 flex gap-3 no-print">
-                    <button onclick="changeView('main')" class="flex-1 py-4 font-bold text-gray-400 bg-gray-100 rounded-2xl">ยกเลิก</button>
-                    <button onclick="proceedToDetail()" id="btn-save-form" disabled class="flex-2 btn-gradient px-10 py-4 font-bold rounded-2xl disabled:opacity-50">ถัดไป (ลงชื่อรับรอง)</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- PAGE 3: asset_servey_detail.html -->
-        <section id="view-detail" class="view-section space-y-6">
-            <div class="glass-card p-8 space-y-8" id="detail-print-area">
-                <div class="text-center space-y-2 border-b-2 border-primary pb-6">
-                    <h2 class="text-2xl font-bold text-primary">ใบรับรองการตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
-                    <p class="text-sm text-gray-500">ประจำปีงบประมาณ 2568</p>
-                    <div class="flex justify-between text-xs font-bold text-gray-700 mt-4">
-                        <span id="detail-dept">หน่วยงาน: -</span>
-                        <span id="detail-date">วันที่: -</span>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <h3 class="font-bold border-l-4 border-primary pl-2">รายการครุภัณฑ์ที่ตรวจสอบ</h3>
-                    <table class="w-full text-xs text-left border-collapse">
-                        <thead>
-                            <tr class="bg-pink-50 text-primary">
-                                <th class="p-2 border">ลำดับ</th>
-                                <th class="p-2 border">เลขครุภัณฑ์ / ID</th>
-                                <th class="p-2 border">รายการ</th>
-                                <th class="p-2 border">สถานะ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detail-table-body">
-                            <!-- Rows -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Certification Section -->
-                <div id="cert-input-section" class="bg-gray-50 p-6 rounded-2xl space-y-4 no-print">
-                    <h3 class="font-bold text-gray-700 text-center">ลงชื่อรับรองข้อมูล</h3>
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold">ชื่อ-นามสกุล (หัวหน้าหน่วยงาน/ผู้รับมอบหมาย)</label>
-                        <input type="text" id="signer-name" class="w-full p-3 rounded-xl border border-pink-200 outline-none" placeholder="ระบุชื่อจริง...">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold">ลายเซ็นดิจิทัล</label>
-                        <canvas id="sig-pad" class="sig-canvas"></canvas>
-                        <button onclick="sigPad.clear()" class="text-[10px] text-pink-400 underline">ล้างลายเซ็น</button>
-                    </div>
-                </div>
-
-                <div id="cert-done-section" class="hidden flex flex-col items-center space-y-4">
-                    <div class="text-center">
-                        <p class="text-xs text-gray-500">ลงชื่อโดย</p>
-                        <p class="font-bold text-lg" id="display-signer">-</p>
-                        <img id="display-sig" class="h-20 mx-auto mt-2" src="" alt="signature">
-                    </div>
-                    <div id="qrcode" class="p-2 bg-white border border-gray-100 rounded-lg"></div>
-                </div>
-
-                <div class="flex flex-wrap gap-2 no-print">
-                    <button onclick="changeView('form')" id="btn-back-edit" class="flex-1 py-3 bg-white border border-pink-200 text-pink-500 rounded-xl font-bold">แก้ไขข้อมูล</button>
-                    <button onclick="saveFinal()" id="btn-confirm-save" class="flex-1 py-3 btn-gradient rounded-xl font-bold">บันทึกยืนยันข้อมูล</button>
-                    <button onclick="window.print()" id="btn-print" class="hidden flex-1 py-3 bg-green-600 text-white rounded-xl font-bold">พิมพ์เอกสาร (PDF)</button>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Loading Overlay -->
-    <div id="overlay" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center flex-col gap-4">
-        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-primary font-bold animate-pulse">กำลังประมวลผล...</p>
+        <!-- Loading -->
+        <div v-if="isLoading" class="fixed inset-0 bg-white/90 z-[9999] flex flex-col items-center justify-center">
+            <div class="w-12 h-12 border-4 border-pink-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-pink-600 font-bold">กำลังเชื่อมต่อข้อมูลโรงพยาบาล...</p>
+        </div>
     </div>
 
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        let state = {
-            currentView: 'main',
-            units: [],
-            dashboard: [],
-            selectedUnit: null,
-            systemItems: [],
-            manualItems: [],
-            isSaved: false
-        };
+        const { createApp, ref, onMounted, nextTick } = Vue;
+        // ใช้ SCRIPT_URL จาก Google Apps Script ที่คุณ Deploy
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
 
-        let sigPad, chart, qr;
+        createApp({
+            setup() {
+                const step = ref('main');
+                const isLoading = ref(false);
+                const departments = ref([]);
+                const selectedDept = ref({});
+                const stats = ref({ total: 0, done: 0, progress: 0 });
 
-        window.onload = () => {
-            initSignature();
-            loadInitialData();
-        };
-
-        function initSignature() {
-            const canvas = document.getElementById('sig-pad');
-            sigPad = new SignaturePad(canvas);
-        }
-
-        function toggleOverlay(show) {
-            document.getElementById('overlay').classList.toggle('hidden', !show);
-        }
-
-        async function loadInitialData() {
-            toggleOverlay(true);
-            try {
-                // เรียกข้อมูลจาก Apps Script WebApp จริง
-                if (typeof google !== 'undefined') {
-                    // ดึงรายชื่อหน่วยงาน
-                    google.script.run.withSuccessHandler(deptRes => {
-                        state.units = deptRes;
-                        // ดึงข้อมูล Dashboard การสำรวจ
-                        google.script.run.withSuccessHandler(dashRes => {
-                            state.dashboard = processDashboard(dashRes);
-                            renderMainView();
-                            toggleOverlay(false);
-                        }).getSurveyDashboard();
-                    }).getDepartmentList();
-                } else {
-                    // หากไม่ได้รันบนสภาพแวดล้อม Apps Script (เช่น Local Dev)
-                    console.warn("ไม่ได้รันบน Apps Script สภาพแวดล้อมจริง");
-                    toggleOverlay(false);
-                    document.getElementById('building-container').innerHTML = `<div class="p-10 text-red-500">กรุณารันผ่าน Google Apps Script เพื่อดึงข้อมูลจริง</div>`;
-                }
-            } catch (err) {
-                console.error(err);
-                toggleOverlay(false);
-                Swal.fire("ผิดพลาด", "ไม่สามารถดึงข้อมูลจากระบบได้", "error");
-            }
-        }
-
-        function processDashboard(dashData) {
-            // คำนวณสรุปจากข้อมูลใน Asset_Activity
-            const total = dashData.reduce((acc, curr) => acc + (parseInt(curr.Sum) || 0), 0);
-            const done = dashData.reduce((acc, curr) => acc + (parseInt(curr.Asset_In_Databass) || 0), 0);
-            return { total, done };
-        }
-
-        function renderMainView() {
-            document.getElementById('total-target').innerText = state.dashboard.total || 0;
-            document.getElementById('total-done').innerText = state.dashboard.done || 0;
-            const percent = state.dashboard.total > 0 ? Math.round((state.dashboard.done / state.dashboard.total) * 100) : 0;
-            document.getElementById('progress-bar').style.width = percent + "%";
-
-            // Render Chart
-            const ctx = document.getElementById('dashboardChart').getContext('2d');
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['ตรวจสอบแล้ว', 'คงเหลือ'],
-                    datasets: [{
-                        data: [state.dashboard.done, (state.dashboard.total - state.dashboard.done) > 0 ? (state.dashboard.total - state.dashboard.done) : 0],
-                        backgroundColor: ['#9d174d', '#fdf2f8'],
-                        borderRadius: 10
-                    }]
-                },
-                options: { 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-
-            // Grouping Buildings โดยใช้ข้อมูลจริงจาก state.units
-            const listContainer = document.getElementById('building-container');
-            listContainer.innerHTML = '';
-            
-            if (!state.units || state.units.length === 0) {
-                listContainer.innerHTML = '<div class="text-gray-400 py-10">ไม่พบข้อมูลหน่วยงาน</div>';
-                return;
-            }
-
-            const buildings = [...new Set(state.units.map(u => u.building || "ไม่ระบุตึก"))].sort();
-            buildings.forEach(bld => {
-                const bldUnits = state.units.filter(u => (u.building || "ไม่ระบุตึก") === bld);
-                const card = document.createElement('div');
-                card.className = "glass-card p-4";
-                card.innerHTML = `
-                    <h3 class="font-bold text-primary mb-3 border-b border-pink-50 pb-2">🏢 ${bld}</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        ${bldUnits.map(u => `
-                            <div onclick="selectUnit('${u.deptId}')" class="flex justify-between items-center p-3 rounded-xl bg-white border border-pink-50 cursor-pointer hover:bg-pink-50 transition-all">
-                                <div>
-                                    <p class="text-xs font-bold text-gray-700">${u.deptName}</p>
-                                    <p class="text-[10px] text-gray-400">ชั้น: ${u.floor || '-'}</p>
-                                </div>
-                                <div class="text-right">
-                                    <button class="bg-primary text-white text-[10px] px-3 py-1 rounded-full hover:bg-pink-700 transition-colors">ตรวจสอบ</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                listContainer.appendChild(card);
-            });
-        }
-
-        function changeView(view) {
-            state.currentView = view;
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById(`view-${view}`).classList.add('active');
-            window.scrollTo(0,0);
-        }
-
-        function selectUnit(id) {
-            state.selectedUnit = state.units.find(u => u.deptId === id);
-            state.systemItems = [];
-            state.manualItems = [];
-            document.getElementById('form-dept-name').innerText = state.selectedUnit.deptName;
-            document.getElementById('form-dept-detail').innerText = `อาคาร: ${state.selectedUnit.building || '-'} | ชั้น: ${state.selectedUnit.floor || '-'}`;
-            updateAssetList();
-            changeView('form');
-        }
-
-        async function handleAssetSearch() {
-            const val = document.getElementById('asset-search-input').value.trim();
-            if(!val) return;
-            toggleOverlay(true);
-            
-            if (typeof google !== 'undefined') {
-                google.script.run.withSuccessHandler(res => {
-                    toggleOverlay(false);
-                    if(res && !res.error && res.success) {
-                        if(state.systemItems.find(i => i.NOID === res.NOID)) {
-                            Swal.fire("ซ้ำ", "รายการนี้ถูกเพิ่มไปแล้ว", "info");
-                        } else {
-                            state.systemItems.push(res);
-                            updateAssetList();
-                            document.getElementById('asset-search-input').value = '';
+                const loadInitialData = async () => {
+                    isLoading.value = true;
+                    try {
+                        // 1. ดึงข้อมูล Dashboard จริง
+                        const statsRes = await fetch(`${SCRIPT_URL}?action=getDashboard`);
+                        const statsData = await statsRes.json();
+                        // ค้นหาแถวสรุปล่าสุดหรือคำนวณจาก Array
+                        if (statsData && statsData.length > 0) {
+                            const latest = statsData[statsData.length - 1];
+                            stats.value = {
+                                total: parseInt(latest.total_assets || 0),
+                                done: parseInt(latest.surveyed_assets || 0),
+                                progress: latest.progress_percent || 0
+                            };
                         }
-                    } else {
-                        Swal.fire("ไม่พบข้อมูล", "ไม่พบครุภัณฑ์รหัสนี้ในระบบ Asset_DB", "warning");
+
+                        // 2. ดึงข้อมูลหน่วยงานตามโครงสร้าง Department
+                        const deptRes = await fetch(`${SCRIPT_URL}?action=getDepartments`);
+                        const deptData = await deptRes.json();
+                        
+                        // กรองข้อมูลเฉพาะรายการที่มี DEP_NAME_LOC
+                        departments.value = deptData.filter(d => d.DEP_NAME_LOC);
+
+                    } catch (e) {
+                        console.error("Data Load Error:", e);
+                        Swal.fire('เชื่อมต่อล้มเหลว', 'ไม่สามารถดึงข้อมูลจากระบบได้', 'error');
                     }
-                }).getAsset(val); // เรียกฟังก์ชันเดิมที่มีอยู่
-            } else {
-                Swal.fire("ผิดพลาด", "ไม่สามารถติดต่อ Server ได้", "error");
-                toggleOverlay(false);
+                    isLoading.value = false;
+                    nextTick(() => lucide.createIcons());
+                };
+
+                onMounted(loadInitialData);
+
+                const startSurvey = (dept) => {
+                    selectedDept.value = dept;
+                    step.value = 'form';
+                    nextTick(() => lucide.createIcons());
+                };
+
+                return { step, isLoading, departments, selectedDept, stats, startSurvey }
             }
-        }
-
-        function addManualAsset() {
-            Swal.fire({
-                title: 'เพิ่มครุภัณฑ์นอกระบบ',
-                html: `
-                    <div class="text-left space-y-3">
-                        <div>
-                            <label class="text-xs font-bold">Serial Number</label>
-                            <input id="sw-sn" class="swal2-input !mt-1" placeholder="ระบุเลข S/N">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold">ยี่ห้อ/รุ่น/รายละเอียด</label>
-                            <input id="sw-detail" class="swal2-input !mt-1" placeholder="ระบุรายละเอียด">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold">ประเภทครุภัณฑ์</label>
-                            <select id="sw-type" class="swal2-input !mt-1">
-                                <option value="Computer PC">Computer PC</option>
-                                <option value="Notebook">Notebook</option>
-                                <option value="Printer">Printer</option>
-                                <option value="Monitor">Monitor</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'เพิ่มรายการ',
-                showCancelButton: true,
-                cancelButtonText: 'ยกเลิก',
-                preConfirm: () => {
-                    const serial = document.getElementById('sw-sn').value;
-                    const detail = document.getElementById('sw-detail').value;
-                    const type = document.getElementById('sw-type').value;
-                    if(!detail) {
-                        Swal.showValidationMessage('กรุณาระบุรายละเอียดครุภัณฑ์');
-                        return false;
-                    }
-                    return { serial, detail, type, group: 'Manual' };
-                }
-            }).then(res => {
-                if(res.isConfirmed) {
-                    state.manualItems.push(res.value);
-                    updateAssetList();
-                }
-            });
-        }
-
-        function updateAssetList() {
-            const sysList = document.getElementById('selected-assets-list');
-            const manList = document.getElementById('manual-assets-list');
-            
-            sysList.innerHTML = state.systemItems.length === 0 ? '<p class="text-center text-gray-300 py-4 text-xs">ยังไม่มีรายการจากระบบ</p>' : 
-                state.systemItems.map((item, idx) => `
-                    <div class="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm border border-pink-50">
-                        <div>
-                            <p class="text-xs font-bold">${item.itemName}</p>
-                            <p class="text-[10px] text-gray-400">NOID: ${item.NOID} | AssetID: ${item.AssetID || '-'}</p>
-                        </div>
-                        <button onclick="state.systemItems.splice(${idx},1);updateAssetList();" class="text-red-300 p-2 hover:text-red-500">✕</button>
-                    </div>
-                `).join('');
-
-            manList.innerHTML = state.manualItems.length === 0 ? '<p class="text-center text-gray-300 py-4 text-xs">ยังไม่มีรายการนอกระบบ</p>' :
-                state.manualItems.map((item, idx) => `
-                    <div class="flex justify-between items-center p-3 bg-amber-50 rounded-xl shadow-sm border border-amber-100">
-                        <div>
-                            <p class="text-xs font-bold">${item.detail}</p>
-                            <p class="text-[10px] text-amber-600">Manual Entry | SN: ${item.serial || '-'}</p>
-                        </div>
-                        <button onclick="state.manualItems.splice(${idx},1);updateAssetList();" class="text-amber-400 p-2 hover:text-amber-600">✕</button>
-                    </div>
-                `).join('');
-
-            const total = state.systemItems.length + state.manualItems.length;
-            document.getElementById('system-count').innerText = `${total} รายการ`;
-            document.getElementById('btn-save-form').disabled = total === 0;
-        }
-
-        function proceedToDetail() {
-            document.getElementById('detail-dept').innerText = `หน่วยงาน: ${state.selectedUnit.deptName}`;
-            document.getElementById('detail-date').innerText = `วันที่: ${new Date().toLocaleDateString('th-TH')}`;
-            
-            const tbody = document.getElementById('detail-table-body');
-            tbody.innerHTML = '';
-            
-            let all = [...state.systemItems, ...state.manualItems.map(m => ({NOID: m.serial || 'N/A', itemName: m.detail}))];
-            all.forEach((item, idx) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-2 border text-center">${idx + 1}</td>
-                    <td class="p-2 border">${item.NOID || '-'}</td>
-                    <td class="p-2 border">${item.itemName || item.itemName}</td>
-                    <td class="p-2 border text-center text-green-500 font-bold">✓ ตรวจสอบแล้ว</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            changeView('detail');
-        }
-
-        async function saveFinal() {
-            const signerName = document.getElementById('signer-name').value.trim();
-            if(!signerName) {
-                Swal.fire("ไม่สำเร็จ", "กรุณาระบุชื่อผู้รับรอง", "error");
-                return;
-            }
-            if(sigPad.isEmpty()) {
-                Swal.fire("ไม่สำเร็จ", "กรุณาลงลายเซ็นดิจิทัล", "error");
-                return;
-            }
-
-            toggleOverlay(true);
-            const payload = {
-                deptId: state.selectedUnit.deptId,
-                deptName: state.selectedUnit.deptName,
-                systemItems: state.systemItems,
-                manualItems: state.manualItems,
-                signerName: signerName,
-                signature: sigPad.toDataURL()
-            };
-
-            if (typeof google !== 'undefined') {
-                google.script.run.withSuccessHandler(res => {
-                    toggleOverlay(false);
-                    if(res && res.success) {
-                        showSuccess(res.linkId, signerName);
-                    } else {
-                        Swal.fire("ล้มเหลว", "ไม่สามารถบันทึกข้อมูลได้", "error");
-                    }
-                }).saveSurveyData(payload);
-            } else {
-                toggleOverlay(false);
-                Swal.fire("จำลอง", "รันบน Local ไม่สามารถบันทึกจริงได้", "info");
-            }
-        }
-
-        function showSuccess(id, name) {
-            state.isSaved = true;
-            Swal.fire("บันทึกเรียบร้อย", "ข้อมูลการตรวจสอบพัสดุถูกจัดเก็บลงในระบบ Log แล้ว", "success");
-            
-            document.getElementById('cert-input-section').classList.add('hidden');
-            document.getElementById('cert-done-section').classList.remove('hidden');
-            document.getElementById('display-signer').innerText = name;
-            document.getElementById('display-sig').src = sigPad.toDataURL();
-            document.getElementById('btn-confirm-save').classList.add('hidden');
-            document.getElementById('btn-back-edit').classList.add('hidden');
-            document.getElementById('btn-print').classList.remove('hidden');
-
-            // Generate QR Code จริงที่ลิงก์ไปยังระบบตรวจสอบ (ถ้ามี)
-            document.getElementById('qrcode').innerHTML = '';
-            new QRCode(document.getElementById('qrcode'), {
-                text: "https://script.google.com/macros/s/..." + "?action=view&id=" + id, // ตัวอย่าง URL
-                width: 120,
-                height: 120,
-                colorDark : "#9d174d",
-                colorLight : "#ffffff"
-            });
-        }
+        }).mount('#app');
     </script>
 </body>
 </html>
