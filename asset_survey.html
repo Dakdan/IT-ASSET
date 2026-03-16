@@ -235,186 +235,236 @@ ${item.AssetID}
     </div>
 
     <script>
-
-const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
-
-let masterDepts = [];
-let selectedAssets = [];
-let currentActivityId = null;
-let sigPad = null;
-
-window.onload = () => {
-
-    lucide.createIcons();
-
-    const canvas = document.getElementById('sig-pad');
-    sigPad = new SignaturePad(canvas);
-
-    initApp();
-};
-
-function setLoading(s){
-    document.getElementById('loading').classList.toggle('hidden', !s);
-}
-
-function closeModal(id){
-    document.getElementById(id).classList.add('hidden');
-}
-
-function showModal(id){
-    document.getElementById(id).classList.remove('hidden');
-}
-
-async function initApp(){
-
-    setLoading(true);
-
-    try{
-
-        const dashRes = await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
-        const deptRes = await fetch(`${API}?action=getDepartments`);
-
-        const dash = await dashRes.json();
-        masterDepts = await deptRes.json();
-
-        updateDashboard(dash);
-        initFormSelects();
-
-    }catch(e){
-
-        Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
-
-    }
-
-    setLoading(false);
-
-}
-
-function navigateTo(pageId){
-
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    window.scrollTo(0,0);
-
-}
-
-function updateDashboard(data){
-
-    document.getElementById('dash-goal').innerText = data.goal || 0;
-    document.getElementById('dash-in').innerText = data.totalIn || 0;
-    document.getElementById('dash-out').innerText = data.totalOut || 0;
-    document.getElementById('dash-sum').innerText = data.totalSum || 0;
-
-    const pct = data.goal > 0 ? ((data.totalSum / data.goal) * 100).toFixed(1) : 0;
-
-    document.getElementById('dash-percent').innerText = pct + '%';
-
-    const container = document.getElementById('dept-list-container');
-
-    if(!data.details || data.details.length===0){
-
-        container.innerHTML = `<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูล</p>`;
-        return;
-
-    }
-
-    let html="";
-    let currentBldg="";
-
-    const sorted = data.details.sort((a,b)=>
-        (a.LOCATION_NAME||"").localeCompare(b.LOCATION_NAME||"")
-    );
-
-    sorted.forEach(item=>{
-
-        if(item.LOCATION_NAME!==currentBldg){
-
-            currentBldg=item.LOCATION_NAME;
-
-            html+=`
-            <div class="bg-gray-50 text-gray-400 px-4 py-2 font-bold text-[9px] uppercase border-b">
-            อาคาร: ${currentBldg || 'ทั่วไป'}
-            </div>
-            `;
-
-        }
-
-        html+=`
-        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer"
-        onclick="startSurveyFor('${item.DEPID}')">
-
-            <div>
-                <p class="text-[9px] text-pink-400 font-bold">ชั้น ${item.FL || '-'}</p>
-                <p class="font-medium text-gray-700">${item.DEP_NAME_LOC || item.DEPNAME}</p>
-            </div>
-
-            <div class="bg-white border text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
-                ${item.Sum || 0}
-            </div>
-
-        </div>
-        `;
-
-    });
-
-    container.innerHTML = html;
-
-}
-
-function initFormSelects(){
-
-    const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
-
-    const bSelect=document.getElementById('form-bldg');
-
-    bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
-
-    bldgSet.forEach(b=>{
-
-        bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
-
-    });
-
-}
-
-function onBuildingChange(){
-
-    const b=document.getElementById('form-bldg').value;
-    const dSelect=document.getElementById('form-dept');
-
-    dSelect.innerHTML='<option value="">-- เลือกหน่วยงาน --</option>';
-
-    masterDepts
-    .filter(d=>d.building===b)
-    .forEach(d=>{
-
-        dSelect.innerHTML+=`
-        <option value="${d.deptId}">
-        ${d.deptName}
-        </option>`;
-
-    });
-
-}
-
-function startSurveyFor(id){
-
-    const d=masterDepts.find(x=>x.deptId==id);
-
-    if(!d)return;
-
-    document.getElementById('form-bldg').value=d.building;
-
-    onBuildingChange();
-
-    document.getElementById('form-dept').value=d.deptId;
-
-    selectedAssets=[];
-    renderSelected();
-
-    navigateTo('page-form');
-
-}
+                            
+                            const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
+                            
+                            let masterDepts=[];
+                            let selectedAssets=[];
+                            let sigPad=null;
+                            
+                            window.onload=()=>{
+                            
+                            lucide.createIcons();
+                            
+                            const canvas=document.getElementById('sig-pad');
+                            sigPad=new SignaturePad(canvas);
+                            
+                            initApp();
+                            
+                            };
+                            
+                            function setLoading(s){
+                            document.getElementById('loading').classList.toggle('hidden',!s);
+                            }
+                            
+                            async function initApp(){
+                            
+                            setLoading(true);
+                            
+                            try{
+                            
+                            const dashRes=await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
+                            const deptRes=await fetch(`${API}?action=getDepartments`);
+                            
+                            const dash=await dashRes.json();
+                            masterDepts=await deptRes.json();
+                            
+                            updateDashboard(dash);
+                            initFormSelects();
+                            
+                            }catch(e){
+                            
+                            Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
+                            
+                            }
+                            
+                            setLoading(false);
+                            
+                            }
+                            
+                            function navigateTo(pageId){
+                            
+                            document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+                            document.getElementById(pageId).classList.add('active');
+                            
+                            }
+                            
+                            function updateDashboard(data){
+                            
+                            document.getElementById('dash-goal').innerText=data.goal||0;
+                            document.getElementById('dash-in').innerText=data.totalIn||0;
+                            document.getElementById('dash-out').innerText=data.totalOut||0;
+                            document.getElementById('dash-sum').innerText=data.totalSum||0;
+                            
+                            const container=document.getElementById('dept-list-container');
+                            
+                            let html="";
+                            
+                            data.details.forEach(item=>{
+                            
+                            html+=`
+                            <div class="flex justify-between items-center p-4 border-b cursor-pointer"
+                            onclick="startSurveyFor('${item.DEPID}')">
+                            
+                            <div>
+                            <p class="text-xs text-pink-400">ชั้น ${item.FL||'-'}</p>
+                            <p class="font-medium">${item.DEPNAME}</p>
+                            </div>
+                            
+                            <div class="text-sm font-bold">${item.Sum||0}</div>
+                            
+                            </div>
+                            `;
+                            
+                            });
+                            
+                            container.innerHTML=html;
+                            
+                            }
+                            
+                            function initFormSelects(){
+                            
+                            const bldgSet=[...new Set(masterDepts.map(d=>d.building))];
+                            
+                            const bSelect=document.getElementById('form-bldg');
+                            
+                            bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
+                            
+                            bldgSet.forEach(b=>{
+                            bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
+                            });
+                            
+                            }
+                            
+                            function onBuildingChange(){
+                            
+                            const b=document.getElementById('form-bldg').value;
+                            const dSelect=document.getElementById('form-dept');
+                            
+                            dSelect.innerHTML='<option value="">-- เลือกหน่วยงาน --</option>';
+                            
+                            masterDepts
+                            .filter(d=>d.building===b)
+                            .forEach(d=>{
+                            
+                            dSelect.innerHTML+=`
+                            <option value="${d.deptId}">
+                            ${d.deptName}
+                            </option>`;
+                            
+                            });
+                            
+                            }
+                            
+                            function startSurveyFor(id){
+                            
+                            const d=masterDepts.find(x=>x.deptId==id);
+                            
+                            if(!d)return;
+                            
+                            document.getElementById('form-bldg').value=d.building;
+                            
+                            onBuildingChange();
+                            
+                            document.getElementById('form-dept').value=d.deptId;
+                            
+                            selectedAssets=[];
+                            renderSelected();
+                            
+                            navigateTo('page-form');
+                            
+                            }
+                            
+                            async function handleSearch(){
+                            
+                            const q=document.getElementById('search-input').value;
+                            
+                            if(!q)return;
+                            
+                            setLoading(true);
+                            
+                            try{
+                            
+                            const res=await fetch(`${API}?action=searchAssets&query=${encodeURIComponent(q)}`);
+                            
+                            const data=await res.json();
+                            
+                            const container=document.getElementById('search-results');
+                            
+                            if(data.length==0){
+                            
+                            container.innerHTML=`<p class="text-center text-xs text-gray-400">ไม่พบข้อมูล</p>`;
+                            return;
+                            
+                            }
+                            
+                            container.innerHTML=data.map(item=>`
+                            
+                            <div class="p-3 bg-pink-50 border rounded-xl flex justify-between items-center"
+                            onclick='addAsset(${JSON.stringify(item)})'>
+                            
+                            <div class="text-sm font-bold">
+                            ${item.AssetID}
+                            </div>
+                            
+                            </div>
+                            
+                            `).join('');
+                            
+                            }catch(e){
+                            
+                            Swal.fire('Error','ค้นหาไม่สำเร็จ','error');
+                            
+                            }
+                            
+                            setLoading(false);
+                            
+                            }
+                            
+                            function addAsset(item){
+                            
+                            if(selectedAssets.find(x=>x.AssetID==item.AssetID))return;
+                            
+                            selectedAssets.push(item);
+                            
+                            renderSelected();
+                            
+                            }
+                            
+                            function renderSelected(){
+                            
+                            const container=document.getElementById('selected-list');
+                            
+                            if(selectedAssets.length==0){
+                            
+                            container.innerHTML=`<p class="text-center text-gray-300 text-xs">ยังไม่มีรายการ</p>`;
+                            return;
+                            
+                            }
+                            
+                            container.innerHTML=selectedAssets.map((a,i)=>`
+                            
+                            <div class="flex justify-between items-center bg-white p-3 border rounded-xl">
+                            
+                            <span>${a.AssetID}</span>
+                            
+                            <button onclick="removeAsset(${i})" class="text-red-400">ลบ</button>
+                            
+                            </div>
+                            
+                            `).join('');
+                            
+                            }
+                            
+                            function removeAsset(i){
+                            
+                            selectedAssets.splice(i,1);
+                            
+                            renderSelected();
+                            
+                            }
+                            
+                            </script>
 
 </script>
 </body>
