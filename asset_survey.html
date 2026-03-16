@@ -172,39 +172,49 @@
         async function fetchData() {
             document.getElementById('loader').classList.remove('hidden');
             try {
-                // เรียก action 'getMainDashboard' ตามที่มีใน code.gs
-                const res = await fetch(`${API_URL}?action=getMainDashboard&t=${Date.now()}`);
+                // แก้ไข Action ให้ตรงกับ code.gs (จาก getMainDashboard เป็น getDashboard)
+                const res = await fetch(`${API_URL}?action=getDashboard&t=${Date.now()}`);
                 const data = await res.json();
                 
-                if (data.status === "success") {
-                    updateDashboard(data.summary);
-                    renderTable(data.details);
+                // ตรวจสอบโครงสร้างข้อมูลที่ code.gs ส่งมา (dashBoard และ goal)
+                if (data.dashboard) {
+                    updateDashboard(data);
+                    renderTable(data.dashboard);
                 }
             } catch (err) {
                 console.error("Error fetching data:", err);
+                document.getElementById('survey-tbody').innerHTML = '<tr><td class="p-10 text-center text-red-400 text-xs">เกิดข้อผิดพลาดในการเชื่อมต่อ</td></tr>';
             } finally {
                 document.getElementById('loader').classList.add('hidden');
             }
         }
 
-        function updateDashboard(summary) {
-            const goal = summary.goal_r || 0;
-            const sum = summary.sum || 0;
-            const inDb = summary.asset_in || 0;
-            const outDb = summary.asset_out || 0;
-            const percent = goal > 0 ? ((sum / goal) * 100).toFixed(1) : 0;
+        function updateDashboard(data) {
+            const goal = data.goal || 0;
+            // คำนวณผลรวมจากรายการใน Dashboard (อ้างอิงชื่อคอลัมน์จาก Sheet Asset_Dash)
+            let totalIn = 0;
+            let totalOut = 0;
+            let totalSum = 0;
+
+            data.dashboard.forEach(item => {
+                totalIn += parseInt(item.Asset_On_In_Log || 0);
+                totalOut += parseInt(item.Asset_On_Out_Log || 0);
+                totalSum += parseInt(item.SUM || 0);
+            });
+
+            const percent = goal > 0 ? ((totalSum / goal) * 100).toFixed(1) : 0;
 
             document.getElementById('stat-goal').innerText = goal.toLocaleString();
-            document.getElementById('stat-in').innerText = inDb.toLocaleString();
-            document.getElementById('stat-out').innerText = outDb.toLocaleString();
-            document.getElementById('stat-sum').innerText = sum.toLocaleString();
+            document.getElementById('stat-in').innerText = totalIn.toLocaleString();
+            document.getElementById('stat-out').innerText = totalOut.toLocaleString();
+            document.getElementById('stat-sum').innerText = totalSum.toLocaleString();
             document.getElementById('stat-percent').innerText = `${percent}%`;
         }
 
         function renderTable(details) {
             const tbody = document.getElementById('survey-tbody');
             if (!details || details.length === 0) {
-                tbody.innerHTML = '<tr><td class="p-10 text-center text-gray-400 text-xs">ไม่พบข้อมูลการสำรวจ</td></tr>';
+                tbody.innerHTML = '<tr><td class="p-10 text-center text-gray-400 text-xs">ไม่พบข้อมูลในตาราง Asset_Dash</td></tr>';
                 return;
             }
 
@@ -212,9 +222,16 @@
             let currentBldg = "";
 
             details.forEach(item => {
+                // อ้างอิงชื่อ Property ตามหัวตารางใน Sheet Asset_Dash
+                const building = item.LOCATION_NAME || "ไม่ระบุตึก";
+                const floor = item.FL || "-";
+                const deptName = item.DEP_NAME_LOC || item.DEPNAME || "ไม่ระบุแผนก";
+                const sum = item.SUM || 0;
+                const deptId = item.DEPID;
+
                 // แยกกลุ่มตามอาคาร
-                if (item.building !== currentBldg) {
-                    currentBldg = item.building;
+                if (building !== currentBldg) {
+                    currentBldg = building;
                     html += `
                         <tr class="bldg-divider">
                             <td colspan="3" class="px-4 py-1.5 uppercase tracking-tighter italic">
@@ -226,15 +243,15 @@
 
                 html += `
                     <tr class="border-b border-gray-50 bg-white hover:bg-pink-50/30 transition-colors cursor-pointer" 
-                        onclick="location.href='asset_survey_form.html?deptId=${item.deptId}'">
+                        onclick="location.href='asset_survey_form.html?deptId=${deptId}'">
                         <td class="px-4 py-3">
-                            <p class="text-[8px] font-bold text-pink-500 uppercase">ชั้น ${item.floor}</p>
-                            <p class="text-xs font-semibold text-gray-700">${item.deptName}</p>
+                            <p class="text-[8px] font-bold text-pink-500 uppercase">ชั้น ${floor}</p>
+                            <p class="text-xs font-semibold text-gray-700">${deptName}</p>
                         </td>
                         <td class="px-2 py-3 text-center">
                             <div class="flex flex-col items-center">
                                 <span class="text-[10px] font-black bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full">
-                                    ${item.sum}
+                                    ${sum}
                                 </span>
                             </div>
                         </td>
