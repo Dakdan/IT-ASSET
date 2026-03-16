@@ -1,28 +1,9 @@
-  <!-- Chosen Palette: Soft Pink & White (Primary: #d81b60, Background: #fdf2f8) -->
-    <!-- Application Structure Plan: 
-         ออกแบบเป็น Single Page Application (SPA) แบ่งเป็น 4 มุมมอง (Views) หลักตามลำดับการทำงาน:
-         1. Dashboard (ภาพรวม & เลือกหน่วยงาน): แสดงสถิติด้วย Chart.js และให้ผู้ใช้เลือกตึก/ชั้น
-         2. Survey Form (บันทึกข้อมูล): ค้นหาครุภัณฑ์ในระบบและเพิ่มรายการที่สำรวจพบ
-         3. Verification (รับรองผล): หน้าจอสำหรับให้หัวหน้าหน่วยงานลงลายเซ็นรับรอง (Canvas)
-         4. Receipt (ใบเสร็จ): แสดง QR Code และสรุปข้อมูลเพื่อสั่งพิมพ์ 
-         โครงสร้างนี้ช่วยลดการเปลี่ยนหน้าเว็บ ทำให้กระบวนการสำรวจที่หน้างานรวดเร็วและต่อเนื่อง 
-    -->
-    <!-- Visualization & Content Choices: 
-         - Dashboard Stats -> แสดงสถานะความคืบหน้า -> Doughnut Chart (Chart.js/Canvas) -> กดเพื่อดูรายละเอียด -> นำเสนอข้อมูลภาพรวมที่เข้าใจง่าย (อ้างอิงคอลัมน์ Sum, Asset_In_Databass)
-         - Building List -> นำทางไปยังหน่วยงาน -> Accordion List (HTML/CSS) -> กดเพื่อขยายดูชั้นและหน่วยงาน -> จัดระเบียบข้อมูลตึกจำนวนมากให้ค้นหาง่าย
-         - Signature -> ยืนยันตัวตน -> Signature Pad (Canvas) -> วาดลายเซ็น -> เก็บหลักฐานการตรวจสอบตามระเบียบ
-         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. 
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
-
-    <!-- Tailwind CSS -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Asset Audit - Udon Hospital</title>
-    
+    <title>IT ASSET SURVEY - UDON HOSPITAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -38,8 +19,7 @@
                     colors: {
                         primary: '#9d174d',
                         secondary: '#ec4899',
-                        surface: '#fff5f7',
-                        success: '#059669'
+                        accent: '#fdf2f8'
                     }
                 }
             }
@@ -51,507 +31,522 @@
             font-family: 'Kanit', sans-serif; 
             background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
             background-attachment: fixed;
+            position: relative;
         }
         body::before {
             content: "IT UDON HOSP";
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 8vw;
-            color: rgba(157, 23, 77, 0.03);
-            z-index: -1;
-            pointer-events: none;
-            white-space: nowrap;
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 8rem; color: rgba(157, 23, 77, 0.03); font-weight: 800; pointer-events: none; z-index: -1;
         }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1.5rem; border: 1px solid rgba(157, 23, 77, 0.1); }
-        .btn-action { background: linear-gradient(135deg, #9d174d 0%, #ec4899 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: white; }
-        .btn-action:active { transform: scale(0.95); }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border-radius: 1.5rem; border: 1px solid rgba(157, 23, 77, 0.1); box-shadow: 0 10px 30px rgba(157, 23, 77, 0.05); }
+        .btn-gradient { background: linear-gradient(135deg, #9d174d 0%, #ec4899 100%); color: white; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(157, 23, 77, 0.3); }
         .view-section { display: none; }
-        .view-section.active { display: block; animation: slideUp 0.4s ease-out; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .sig-canvas { border: 2px dashed #f472b6; border-radius: 1rem; background: #fff; touch-action: none; width: 100%; height: 200px; }
         
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .print-area { display: block !important; padding: 20px; }
+            @page { size: landscape; }
         }
-
-        .sig-canvas { border: 2px dashed #f472b6; border-radius: 1rem; background: #ffffff; touch-action: none; }
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.8); z-index: 1000;
-            display: none; align-items: center; justify-content: center;
-        }
-        .dept-btn { transition: all 0.2s; border: 1px solid #fce7f3; }
-        .dept-btn:hover { background-color: #fdf2f8; border-color: #f472b6; }
     </style>
 </head>
 <body class="min-h-screen pb-10">
 
-    <!-- Loader -->
-    <div id="loader" class="loading-overlay flex-col gap-4">
-        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-sm font-bold text-primary">กำลังสื่อสารข้อมูล...</p>
-    </div>
-
-    <!-- Header -->
-    <header class="sticky top-0 z-50 px-4 py-3 bg-white/80 backdrop-blur-md border-b border-pink-100 flex justify-between items-center">
-        <div class="flex items-center gap-2">
-            <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl">IT</div>
+    <!-- Header Section -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-pink-100 px-4 py-4 flex items-center justify-between no-print">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-pink-200">IT</div>
             <div>
-                <h1 class="font-bold text-primary text-sm leading-none">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-                <p class="text-[10px] text-pink-400 font-normal">โรงพยาบาลอุดรธานี</p>
+                <h1 class="font-bold text-primary text-lg leading-tight uppercase">IT ASSET SURVEY</h1>
+                <p class="text-[10px] text-gray-500">รพ.อุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศ</p>
             </div>
         </div>
-        <div id="sync-status" class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">● ออนไลน์</div>
+        <button onclick="location.reload()" class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </button>
     </header>
 
-    <main class="max-w-md mx-auto p-4 space-y-6">
+    <main class="max-w-4xl mx-auto px-4 mt-6">
 
-        <!-- 1. DASHBOARD & BUILDING SELECTION -->
-        <section id="view-dashboard" class="view-section active space-y-4">
-            <div class="glass-card p-6 shadow-xl shadow-pink-100/50">
-                <h2 class="text-lg font-bold text-gray-800 mb-4">ข้อมูลการตรวจสอบประจำปี</h2>
-                <div class="h-[200px] mb-4">
-                    <canvas id="mainProgressChart"></canvas>
+        <!-- PAGE 1: asset_sevey_main.html -->
+        <section id="view-main" class="view-section active space-y-6">
+            <!-- Dashboard Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2 glass-card p-6">
+                    <h2 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <span class="w-2 h-6 bg-primary rounded-full"></span> 
+                        ความคืบหน้าการสำรวจปีล่าสุด
+                    </h2>
+                    <div class="h-[250px]"><canvas id="dashboardChart"></canvas></div>
                 </div>
-                <div class="grid grid-cols-2 gap-3 text-center">
-                    <div class="bg-pink-50 p-2 rounded-xl">
-                        <p class="text-[10px] text-gray-500 uppercase">ตรวจสอบแล้ว</p>
-                        <p class="text-lg font-bold text-primary" id="stat-done">0</p>
+                <div class="glass-card p-6 flex flex-col justify-between bg-primary text-white">
+                    <div>
+                        <p class="text-pink-200 text-sm">เป้าหมายทั้งหมด</p>
+                        <h3 class="text-4xl font-bold mt-1" id="total-target">0</h3>
                     </div>
-                    <div class="bg-gray-50 p-2 rounded-xl">
-                        <p class="text-[10px] text-gray-500 uppercase">ทั้งหมด</p>
-                        <p class="text-lg font-bold text-gray-700" id="stat-total">0</p>
+                    <div class="mt-4">
+                        <p class="text-pink-200 text-sm">ตรวจสอบแล้ว</p>
+                        <h3 class="text-4xl font-bold mt-1" id="total-done">0</h3>
+                        <div class="w-full bg-white/20 h-2 rounded-full mt-2 overflow-hidden">
+                            <div id="progress-bar" class="bg-white h-full" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Building Grouping -->
             <div class="space-y-4">
-                <div class="flex justify-between items-center px-1">
-                    <h3 class="font-bold text-gray-700">เลือกตึก/อาคาร</h3>
-                    <button onclick="loadInitialData()" class="text-xs text-primary underline">โหลดใหม่</button>
-                </div>
-                
-                <div id="building-list" class="space-y-3">
-                    <!-- Dynamic Building & Floor Hierarchy -->
-                    <div class="text-center py-10 text-gray-400 text-sm">กำลังโหลดโครงสร้างหน่วยงาน...</div>
+                <h2 class="font-bold text-gray-700 px-2">รายการหน่วยงานแยกตามตึก</h2>
+                <div id="building-container" class="space-y-4 text-center py-10 text-gray-400">
+                    กำลังโหลดข้อมูล...
                 </div>
             </div>
         </section>
 
-        <!-- 2. AUDIT FORM (ASSET SURVEY) -->
-        <section id="view-audit" class="view-section space-y-4">
-            <div class="flex items-center gap-3">
-                <button onclick="changeView('dashboard')" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-pink-100 text-primary">❮</button>
-                <div>
-                    <h2 class="font-bold text-lg text-gray-800" id="current-unit-name">หน่วยงาน</h2>
-                    <p class="text-[10px] text-pink-500 font-bold" id="current-unit-id">DEPT_ID</p>
-                </div>
+        <!-- PAGE 2: asset_sevey_form.html -->
+        <section id="view-form" class="view-section space-y-6">
+            <div class="flex items-center gap-2 mb-2 no-print">
+                <button onclick="changeView('main')" class="text-primary font-bold">❮ กลับหน้าหลัก</button>
             </div>
 
-            <div class="glass-card p-5 space-y-5">
-                <!-- Search Box -->
-                <div class="bg-pink-50 p-4 rounded-2xl border border-pink-100">
-                    <label class="block text-xs font-bold text-primary mb-2">ค้นหา/สแกนครุภัณฑ์</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="asset-search-input" placeholder="เลขพัสดุ หรือ S/N..." 
-                               class="flex-1 px-4 py-3 rounded-xl border-2 border-white focus:border-primary outline-none text-sm font-bold">
-                        <button onclick="handleAssetSearch()" class="btn-action w-12 h-12 rounded-xl flex items-center justify-center shadow-lg">🔍</button>
-                    </div>
-                </div>
-
-                <!-- Asset Lists -->
-                <div class="space-y-4">
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 px-1">รายการในระบบ (System)</h4>
-                        <div id="system-assets-list" class="space-y-2 max-h-[200px] overflow-y-auto">
-                            <!-- Items -->
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 px-1">รายการนอกระบบ (Non-Number)</h4>
-                        <div id="non-system-assets-list" class="space-y-2 max-h-[150px] overflow-y-auto">
-                            <!-- Items -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-4 border-t border-pink-50 flex gap-2">
-                    <button onclick="addManualItem()" class="flex-1 py-3 text-xs font-bold text-pink-600 border border-pink-200 rounded-xl">➕ เพิ่มพัสดุนอกระบบ</button>
-                    <button onclick="goToCertification()" id="btn-next-step" disabled class="flex-1 py-3 text-xs font-bold bg-gray-200 text-gray-400 rounded-xl transition-all">ถัดไป ❯</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. CERTIFICATION (SIGNATURE & ID CARD) -->
-        <section id="view-certify" class="view-section space-y-4">
             <div class="glass-card p-6 space-y-6">
-                <div class="text-center">
-                    <h2 class="text-xl font-bold text-gray-800">ลงชื่อยืนยันการสำรวจ</h2>
-                    <p class="text-xs text-gray-500">กรุณาตรวจสอบข้อมูลและบันทึกหลักฐาน</p>
+                <div class="border-b border-pink-50 pb-4">
+                    <h2 class="text-2xl font-bold text-primary" id="form-dept-name">ชื่อหน่วยงาน</h2>
+                    <p class="text-sm text-gray-400" id="form-dept-detail">อาคาร: - | ชั้น: -</p>
                 </div>
 
-                <div class="space-y-3">
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-gray-700">ชื่อ-นามสกุล ผู้รับรอง (หัวหน้าหน่วยงาน)</label>
-                        <input type="text" id="signer-name" placeholder="ระบุชื่อจริง-นามสกุล..." 
-                               class="w-full px-4 py-3 bg-white border border-pink-100 rounded-xl outline-none focus:ring-2 ring-primary/20">
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-gray-700">รูปบัตรเจ้าหน้าที่ (ถ้ามี)</label>
-                        <input type="file" id="id-card-file" accept="image/*" capture="camera"
-                               class="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-primary">
-                    </div>
-
-                    <div class="space-y-1">
-                        <div class="flex justify-between items-center">
-                            <label class="text-xs font-bold text-gray-700">ลายเซ็นอิเล็กทรอนิกส์</label>
-                            <button onclick="sigPad.clear()" class="text-[10px] text-pink-500 underline">ล้างลายเซ็น</button>
+                <!-- Asset Search -->
+                <div class="space-y-4">
+                    <div class="bg-pink-50 p-4 rounded-2xl">
+                        <label class="block text-xs font-bold text-primary mb-2">ค้นหาครุภัณฑ์ในระบบ</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="asset-search-input" placeholder="ระบุเลข NOID หรือเลขครุภัณฑ์..." class="flex-1 px-4 py-3 rounded-xl border-none outline-none text-sm shadow-inner">
+                            <button onclick="handleAssetSearch()" class="btn-gradient px-6 rounded-xl font-bold">ค้นหา</button>
                         </div>
-                        <canvas id="signature-canvas" class="sig-canvas w-full h-40"></canvas>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-sm font-bold text-gray-600 flex justify-between items-center">
+                            รายการที่ตรวจสอบพบ
+                            <span id="system-count" class="bg-pink-100 text-primary text-[10px] px-2 py-1 rounded-full">0 รายการ</span>
+                        </h3>
+                        <div id="selected-assets-list" class="space-y-2 max-h-[300px] overflow-y-auto">
+                            <!-- Selected System Assets -->
+                        </div>
                     </div>
                 </div>
 
-                <button onclick="handleFinalSubmit()" class="btn-action w-full py-4 text-white font-bold rounded-2xl shadow-xl">
-                    ✅ บันทึกและออกสลิปยืนยัน
-                </button>
+                <!-- Manual Assets -->
+                <div class="space-y-4 pt-4 border-t border-dashed border-pink-100">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-gray-600">รายการนอกระบบ</h3>
+                        <button onclick="addManualAsset()" class="text-xs font-bold text-primary">+ เพิ่มใหม่</button>
+                    </div>
+                    <div id="manual-assets-list" class="space-y-2">
+                        <!-- Selected Manual Assets -->
+                    </div>
+                </div>
+
+                <div class="pt-6 flex gap-3 no-print">
+                    <button onclick="changeView('main')" class="flex-1 py-4 font-bold text-gray-400 bg-gray-100 rounded-2xl">ยกเลิก</button>
+                    <button onclick="proceedToDetail()" id="btn-save-form" disabled class="flex-2 btn-gradient px-10 py-4 font-bold rounded-2xl disabled:opacity-50">ถัดไป (ลงชื่อรับรอง)</button>
+                </div>
             </div>
         </section>
 
-        <!-- 4. SUMMARY & SLIP (ASSET_SERVEY_DETAIL) -->
-        <section id="view-detail" class="view-section space-y-4">
-            <div class="glass-card p-6 text-center space-y-4">
-                <div class="inline-block p-4 bg-green-100 rounded-full text-3xl mb-2">✅</div>
-                <h2 class="text-xl font-bold text-gray-800">สำรวจเรียบร้อยแล้ว</h2>
-                <p class="text-xs text-gray-500">บันทึกข้อมูลเข้าสู่ชีต Asset_On_Log สำเร็จ</p>
-                
-                <div id="qrcode-container" class="flex justify-center p-4 bg-white rounded-2xl shadow-inner inline-block mx-auto"></div>
-                <p class="text-[10px] font-bold text-primary" id="activity-id-label">ACT-000000000</p>
+        <!-- PAGE 3: asset_servey_detail.html -->
+        <section id="view-detail" class="view-section space-y-6">
+            <div class="glass-card p-8 space-y-8" id="detail-print-area">
+                <div class="text-center space-y-2 border-b-2 border-primary pb-6">
+                    <h2 class="text-2xl font-bold text-primary">ใบรับรองการตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
+                    <p class="text-sm text-gray-500">ประจำปีงบประมาณ 2568</p>
+                    <div class="flex justify-between text-xs font-bold text-gray-700 mt-4">
+                        <span id="detail-dept">หน่วยงาน: -</span>
+                        <span id="detail-date">วันที่: -</span>
+                    </div>
+                </div>
 
-                <div class="flex gap-2 pt-4">
-                    <button onclick="window.print()" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs">🖨️ พิมพ์สลิป</button>
-                    <button onclick="location.reload()" class="flex-1 btn-action py-3 rounded-xl font-bold text-xs">กลับหน้าหลัก</button>
+                <div class="space-y-4">
+                    <h3 class="font-bold border-l-4 border-primary pl-2">รายการครุภัณฑ์ที่ตรวจสอบ</h3>
+                    <table class="w-full text-xs text-left border-collapse">
+                        <thead>
+                            <tr class="bg-pink-50 text-primary">
+                                <th class="p-2 border">ลำดับ</th>
+                                <th class="p-2 border">เลขครุภัณฑ์ / ID</th>
+                                <th class="p-2 border">รายการ</th>
+                                <th class="p-2 border">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detail-table-body">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Certification Section -->
+                <div id="cert-input-section" class="bg-gray-50 p-6 rounded-2xl space-y-4 no-print">
+                    <h3 class="font-bold text-gray-700 text-center">ลงชื่อรับรองข้อมูล</h3>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold">ชื่อ-นามสกุล (หัวหน้าหน่วยงาน/ผู้รับมอบหมาย)</label>
+                        <input type="text" id="signer-name" class="w-full p-3 rounded-xl border border-pink-200 outline-none" placeholder="ระบุชื่อจริง...">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold">ลายเซ็นดิจิทัล</label>
+                        <canvas id="sig-pad" class="sig-canvas"></canvas>
+                        <button onclick="sigPad.clear()" class="text-[10px] text-pink-400 underline">ล้างลายเซ็น</button>
+                    </div>
+                </div>
+
+                <div id="cert-done-section" class="hidden flex flex-col items-center space-y-4">
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500">ลงชื่อโดย</p>
+                        <p class="font-bold text-lg" id="display-signer">-</p>
+                        <img id="display-sig" class="h-20 mx-auto mt-2" src="" alt="signature">
+                    </div>
+                    <div id="qrcode" class="p-2 bg-white border border-gray-100 rounded-lg"></div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 no-print">
+                    <button onclick="changeView('form')" id="btn-back-edit" class="flex-1 py-3 bg-white border border-pink-200 text-pink-500 rounded-xl font-bold">แก้ไขข้อมูล</button>
+                    <button onclick="saveFinal()" id="btn-confirm-save" class="flex-1 py-3 btn-gradient rounded-xl font-bold">บันทึกยืนยันข้อมูล</button>
+                    <button onclick="window.print()" id="btn-print" class="hidden flex-1 py-3 bg-green-600 text-white rounded-xl font-bold">พิมพ์เอกสาร (PDF)</button>
                 </div>
             </div>
         </section>
 
     </main>
 
+    <!-- Loading Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center flex-col gap-4">
+        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-primary font-bold animate-pulse">กำลังประมวลผล...</p>
+    </div>
+
     <script>
-        // State Management
-        const state = {
-            hierarchy: {},
+        let state = {
+            currentView: 'main',
+            units: [],
             dashboard: [],
             selectedUnit: null,
-            assets: [],
-            nonNumberAssets: [],
-            currentActivityId: null
+            systemItems: [],
+            manualItems: [],
+            isSaved: false
         };
 
-        let sigPad = null;
-        let chart = null;
+        let sigPad, chart, qr;
 
-        // View Controller
-        function changeView(view) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById(`view-${view}`).classList.add('active');
-            window.scrollTo(0, 0);
-            if (view === 'certify') resizeCanvas();
+        window.onload = () => {
+            initSignature();
+            loadInitialData();
+        };
+
+        function initSignature() {
+            const canvas = document.getElementById('sig-pad');
+            sigPad = new SignaturePad(canvas);
         }
 
-        function toggleLoader(show) {
-            document.getElementById('loader').style.display = show ? 'flex' : 'none';
+        function toggleOverlay(show) {
+            document.getElementById('overlay').classList.toggle('hidden', !show);
         }
 
-        // 1. Initial Data Loading
-        function loadInitialData() {
-            toggleLoader(true);
-            if (typeof google !== 'undefined') {
-                // Load Dashboard
-                google.script.run.withSuccessHandler(data => {
-                    state.dashboard = data;
-                    renderDashboard();
-                }).getActivityDashboard();
-
-                // Load Building Hierarchy
-                google.script.run.withSuccessHandler(data => {
-                    state.hierarchy = data;
-                    renderBuildingHierarchy();
-                    toggleLoader(false);
-                }).getBuildingHierarchy();
-            } else {
-                // Mock Data for Preview
-                setTimeout(() => {
-                    state.hierarchy = {
-                        "อาคารอำนวยการ": {
-                            "ชั้น 1": [{ deptId: "D01", deptName: "งานสารบรรณ" }],
-                            "ชั้น 2": [{ deptId: "D02", deptName: "งาน IT" }]
-                        }
-                    };
-                    renderBuildingHierarchy();
-                    renderDashboard();
-                    toggleLoader(false);
-                }, 1000);
+        async function loadInitialData() {
+            toggleOverlay(true);
+            try {
+                // เรียกข้อมูลจาก Apps Script WebApp จริง
+                if (typeof google !== 'undefined') {
+                    // ดึงรายชื่อหน่วยงาน
+                    google.script.run.withSuccessHandler(deptRes => {
+                        state.units = deptRes;
+                        // ดึงข้อมูล Dashboard การสำรวจ
+                        google.script.run.withSuccessHandler(dashRes => {
+                            state.dashboard = processDashboard(dashRes);
+                            renderMainView();
+                            toggleOverlay(false);
+                        }).getSurveyDashboard();
+                    }).getDepartmentList();
+                } else {
+                    // หากไม่ได้รันบนสภาพแวดล้อม Apps Script (เช่น Local Dev)
+                    console.warn("ไม่ได้รันบน Apps Script สภาพแวดล้อมจริง");
+                    toggleOverlay(false);
+                    document.getElementById('building-container').innerHTML = `<div class="p-10 text-red-500">กรุณารันผ่าน Google Apps Script เพื่อดึงข้อมูลจริง</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                toggleOverlay(false);
+                Swal.fire("ผิดพลาด", "ไม่สามารถดึงข้อมูลจากระบบได้", "error");
             }
         }
 
-        function renderDashboard() {
-            const ctx = document.getElementById('mainProgressChart').getContext('2d');
-            const done = state.dashboard.reduce((acc, curr) => acc + (parseInt(curr.Sum) || 0), 0);
-            const total = 500; // Mock total or calculate from sum
+        function processDashboard(dashData) {
+            // คำนวณสรุปจากข้อมูลใน Asset_Activity
+            const total = dashData.reduce((acc, curr) => acc + (parseInt(curr.Sum) || 0), 0);
+            const done = dashData.reduce((acc, curr) => acc + (parseInt(curr.Asset_In_Databass) || 0), 0);
+            return { total, done };
+        }
 
-            document.getElementById('stat-done').innerText = done;
-            document.getElementById('stat-total').innerText = total;
+        function renderMainView() {
+            document.getElementById('total-target').innerText = state.dashboard.total || 0;
+            document.getElementById('total-done').innerText = state.dashboard.done || 0;
+            const percent = state.dashboard.total > 0 ? Math.round((state.dashboard.done / state.dashboard.total) * 100) : 0;
+            document.getElementById('progress-bar').style.width = percent + "%";
 
-            if (chart) chart.destroy();
+            // Render Chart
+            const ctx = document.getElementById('dashboardChart').getContext('2d');
+            if(chart) chart.destroy();
             chart = new Chart(ctx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
                     labels: ['ตรวจสอบแล้ว', 'คงเหลือ'],
                     datasets: [{
-                        data: [done, total - done],
-                        backgroundColor: ['#9d174d', '#fce7f3'],
-                        borderWidth: 0
+                        data: [state.dashboard.done, (state.dashboard.total - state.dashboard.done) > 0 ? (state.dashboard.total - state.dashboard.done) : 0],
+                        backgroundColor: ['#9d174d', '#fdf2f8'],
+                        borderRadius: 10
                     }]
                 },
-                options: { maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false } } }
-            });
-        }
-
-        function renderBuildingHierarchy() {
-            const list = document.getElementById('building-list');
-            list.innerHTML = "";
-            
-            Object.keys(state.hierarchy).forEach(bld => {
-                const bldCard = document.createElement('div');
-                bldCard.className = "bg-white p-4 rounded-2xl shadow-sm border border-pink-50 space-y-3";
-                bldCard.innerHTML = `<h4 class="font-bold text-primary flex items-center gap-2">🏢 ${bld}</h4>`;
-                
-                const floors = state.hierarchy[bld];
-                Object.keys(floors).forEach(floor => {
-                    const floorDiv = document.createElement('div');
-                    floorDiv.className = "pl-4 space-y-2";
-                    floorDiv.innerHTML = `<p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${floor}</p>`;
-                    
-                    const grid = document.createElement('div');
-                    grid.className = "grid grid-cols-1 gap-2";
-                    
-                    floors[floor].forEach(dept => {
-                        const btn = document.createElement('button');
-                        btn.className = "dept-btn w-full text-left p-3 rounded-xl bg-white text-xs font-bold text-gray-700 flex justify-between items-center";
-                        btn.innerHTML = `<span>${dept.deptName}</span><span class="text-pink-300">❯</span>`;
-                        btn.onclick = () => selectUnit(dept);
-                        grid.appendChild(btn);
-                    });
-                    
-                    floorDiv.appendChild(grid);
-                    bldCard.appendChild(floorDiv);
-                });
-                list.appendChild(bldCard);
-            });
-        }
-
-        // 2. Audit Logic
-        function selectUnit(dept) {
-            state.selectedUnit = dept;
-            state.assets = [];
-            state.nonNumberAssets = [];
-            document.getElementById('current-unit-name').innerText = dept.deptName;
-            document.getElementById('current-unit-id').innerText = dept.deptId;
-            updateAssetListDisplay();
-            changeView('audit');
-        }
-
-        function handleAssetSearch() {
-            const input = document.getElementById('asset-search-input');
-            const query = input.value.trim();
-            if (!query) return;
-
-            toggleLoader(true);
-            if (typeof google !== 'undefined') {
-                google.script.run.withSuccessHandler(res => {
-                    toggleLoader(false);
-                    if (res.success) {
-                        if (state.assets.some(a => a.AssetID === res.AssetID)) {
-                            Swal.fire('พัสดุซ้ำ', 'รายการนี้ถูกเพิ่มไปแล้ว', 'warning');
-                        } else {
-                            state.assets.unshift({
-                                NOID: res.NOID,
-                                AssetID: res.AssetID,
-                                itemName: res.itemName,
-                                Category: res.Category,
-                                Serial: res.Serial
-                            });
-                            updateAssetListDisplay();
-                        }
-                    } else {
-                        Swal.fire('ไม่พบข้อมูล', res.error, 'error');
-                    }
-                }).findAssetDetail(query);
-            } else {
-                // Mock search
-                setTimeout(() => {
-                    toggleLoader(false);
-                    state.assets.unshift({ NOID: "MOCK", AssetID: query, itemName: "เครื่องคอมพิวเตอร์ทดสอบ", Category: "PC", Serial: "SN-123" });
-                    updateAssetListDisplay();
-                }, 500);
-            }
-            input.value = "";
-        }
-
-        async function addManualItem() {
-            const { value: formValues } = await Swal.fire({
-                title: 'ครุภัณฑ์นอกระบบ',
-                html: `
-                    <input id="swal-name" class="swal2-input" placeholder="ชื่อรายการ/รายละเอียด">
-                    <input id="swal-sn" class="swal2-input" placeholder="Serial Number">
-                    <select id="swal-cat" class="swal2-input">
-                        <option value="PC">PC</option>
-                        <option value="Notebook">Notebook</option>
-                        <option value="Printer">Printer</option>
-                        <option value="Other">อื่นๆ</option>
-                    </select>
-                `,
-                confirmButtonColor: '#9d174d',
-                preConfirm: () => {
-                    return {
-                        itemName: document.getElementById('swal-name').value,
-                        Serial: document.getElementById('swal-sn').value,
-                        Category: document.getElementById('swal-cat').value
-                    }
+                options: { 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
 
-            if (formValues && formValues.itemName) {
-                state.nonNumberAssets.unshift(formValues);
-                updateAssetListDisplay();
-            }
-        }
-
-        function updateAssetListDisplay() {
-            const sysList = document.getElementById('system-assets-list');
-            const nonSysList = document.getElementById('non-system-assets-list');
-            const btnNext = document.getElementById('btn-next-step');
-
-            sysList.innerHTML = state.assets.length ? state.assets.map(a => `
-                <div class="bg-white p-3 rounded-xl border border-pink-50 flex justify-between items-center shadow-sm">
-                    <div class="text-xs">
-                        <p class="font-bold text-gray-800">${a.itemName}</p>
-                        <p class="text-[10px] text-pink-500">${a.AssetID} | SN: ${a.Serial}</p>
-                    </div>
-                    <span class="bg-green-100 text-green-700 text-[8px] font-bold px-2 py-1 rounded-full uppercase">System</span>
-                </div>
-            `).join('') : '<p class="text-[10px] text-gray-300 text-center py-4">ไม่มีข้อมูล</p>';
-
-            nonSysList.innerHTML = state.nonNumberAssets.length ? state.nonNumberAssets.map(a => `
-                <div class="bg-white p-3 rounded-xl border border-pink-50 flex justify-between items-center shadow-sm">
-                    <div class="text-xs">
-                        <p class="font-bold text-gray-800">${a.itemName}</p>
-                        <p class="text-[10px] text-amber-500">SN: ${a.Serial || 'N/A'}</p>
-                    </div>
-                    <span class="bg-amber-100 text-amber-700 text-[8px] font-bold px-2 py-1 rounded-full uppercase">Manual</span>
-                </div>
-            `).join('') : '<p class="text-[10px] text-gray-300 text-center py-4">ไม่มีข้อมูล</p>';
-
-            btnNext.disabled = (state.assets.length + state.nonNumberAssets.length) === 0;
-            btnNext.className = btnNext.disabled ? "flex-1 py-3 text-xs font-bold bg-gray-200 text-gray-400 rounded-xl" : "flex-1 py-3 text-xs font-bold btn-action rounded-xl shadow-lg";
-        }
-
-        // 3. Certification Logic
-        function goToCertification() {
-            changeView('certify');
-        }
-
-        async function handleFinalSubmit() {
-            const signer = document.getElementById('signer-name').value.trim();
-            const idCardFile = document.getElementById('id-card-file').files[0];
-
-            if (!signer || sigPad.isEmpty()) {
-                return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อและลงลายเซ็น', 'warning');
-            }
-
-            toggleLoader(true);
+            // Grouping Buildings โดยใช้ข้อมูลจริงจาก state.units
+            const listContainer = document.getElementById('building-container');
+            listContainer.innerHTML = '';
             
-            // 1. Prepare Base64 Data
-            const signatureData = sigPad.toDataURL();
-            let idCardData = "";
-            if (idCardFile) {
-                idCardData = await toBase64(idCardFile);
+            if (!state.units || state.units.length === 0) {
+                listContainer.innerHTML = '<div class="text-gray-400 py-10">ไม่พบข้อมูลหน่วยงาน</div>';
+                return;
             }
 
-            const payload = {
-                action: 'saveSurvey',
-                deptId: state.selectedUnit.deptId,
-                deptName: state.selectedUnit.deptName,
-                assets: state.assets,
-                nonNumberAssets: state.nonNumberAssets,
-                itUser: "it_admin@udonhosp.go.th" // ตัวอย่าง
-            };
+            const buildings = [...new Set(state.units.map(u => u.building || "ไม่ระบุตึก"))].sort();
+            buildings.forEach(bld => {
+                const bldUnits = state.units.filter(u => (u.building || "ไม่ระบุตึก") === bld);
+                const card = document.createElement('div');
+                card.className = "glass-card p-4";
+                card.innerHTML = `
+                    <h3 class="font-bold text-primary mb-3 border-b border-pink-50 pb-2">🏢 ${bld}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        ${bldUnits.map(u => `
+                            <div onclick="selectUnit('${u.deptId}')" class="flex justify-between items-center p-3 rounded-xl bg-white border border-pink-50 cursor-pointer hover:bg-pink-50 transition-all">
+                                <div>
+                                    <p class="text-xs font-bold text-gray-700">${u.deptName}</p>
+                                    <p class="text-[10px] text-gray-400">ชั้น: ${u.floor || '-'}</p>
+                                </div>
+                                <div class="text-right">
+                                    <button class="bg-primary text-white text-[10px] px-3 py-1 rounded-full hover:bg-pink-700 transition-colors">ตรวจสอบ</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
 
+        function changeView(view) {
+            state.currentView = view;
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${view}`).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        function selectUnit(id) {
+            state.selectedUnit = state.units.find(u => u.deptId === id);
+            state.systemItems = [];
+            state.manualItems = [];
+            document.getElementById('form-dept-name').innerText = state.selectedUnit.deptName;
+            document.getElementById('form-dept-detail').innerText = `อาคาร: ${state.selectedUnit.building || '-'} | ชั้น: ${state.selectedUnit.floor || '-'}`;
+            updateAssetList();
+            changeView('form');
+        }
+
+        async function handleAssetSearch() {
+            const val = document.getElementById('asset-search-input').value.trim();
+            if(!val) return;
+            toggleOverlay(true);
+            
             if (typeof google !== 'undefined') {
                 google.script.run.withSuccessHandler(res => {
-                    if (res.success) {
-                        state.currentActivityId = res.activityId;
-                        // 2. Save Verification Files
-                        google.script.run.withSuccessHandler(vRes => {
-                            toggleLoader(false);
-                            showSuccess(res.activityId);
-                        }).saveVerification({
-                            action: 'saveSignature',
-                            activityId: res.activityId,
-                            signature: signatureData,
-                            idCard: idCardData
-                        });
+                    toggleOverlay(false);
+                    if(res && !res.error && res.success) {
+                        if(state.systemItems.find(i => i.NOID === res.NOID)) {
+                            Swal.fire("ซ้ำ", "รายการนี้ถูกเพิ่มไปแล้ว", "info");
+                        } else {
+                            state.systemItems.push(res);
+                            updateAssetList();
+                            document.getElementById('asset-search-input').value = '';
+                        }
+                    } else {
+                        Swal.fire("ไม่พบข้อมูล", "ไม่พบครุภัณฑ์รหัสนี้ในระบบ Asset_DB", "warning");
                     }
-                }).processSurveySubmission(payload);
+                }).getAsset(val); // เรียกฟังก์ชันเดิมที่มีอยู่
             } else {
-                setTimeout(() => {
-                    toggleLoader(false);
-                    showSuccess("ACT-" + Date.now());
-                }, 1500);
+                Swal.fire("ผิดพลาด", "ไม่สามารถติดต่อ Server ได้", "error");
+                toggleOverlay(false);
             }
         }
 
-        function showSuccess(actId) {
-            document.getElementById('activity-id-label').innerText = actId;
-            const qrContainer = document.getElementById('qrcode-container');
-            qrContainer.innerHTML = "";
-            new QRCode(qrContainer, {
-                text: `https://it.udonhosp.go.th/audit/view?id=${actId}`,
-                width: 128,
-                height: 128,
-                colorDark: "#9d174d"
+        function addManualAsset() {
+            Swal.fire({
+                title: 'เพิ่มครุภัณฑ์นอกระบบ',
+                html: `
+                    <div class="text-left space-y-3">
+                        <div>
+                            <label class="text-xs font-bold">Serial Number</label>
+                            <input id="sw-sn" class="swal2-input !mt-1" placeholder="ระบุเลข S/N">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold">ยี่ห้อ/รุ่น/รายละเอียด</label>
+                            <input id="sw-detail" class="swal2-input !mt-1" placeholder="ระบุรายละเอียด">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold">ประเภทครุภัณฑ์</label>
+                            <select id="sw-type" class="swal2-input !mt-1">
+                                <option value="Computer PC">Computer PC</option>
+                                <option value="Notebook">Notebook</option>
+                                <option value="Printer">Printer</option>
+                                <option value="Monitor">Monitor</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'เพิ่มรายการ',
+                showCancelButton: true,
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    const serial = document.getElementById('sw-sn').value;
+                    const detail = document.getElementById('sw-detail').value;
+                    const type = document.getElementById('sw-type').value;
+                    if(!detail) {
+                        Swal.showValidationMessage('กรุณาระบุรายละเอียดครุภัณฑ์');
+                        return false;
+                    }
+                    return { serial, detail, type, group: 'Manual' };
+                }
+            }).then(res => {
+                if(res.isConfirmed) {
+                    state.manualItems.push(res.value);
+                    updateAssetList();
+                }
+            });
+        }
+
+        function updateAssetList() {
+            const sysList = document.getElementById('selected-assets-list');
+            const manList = document.getElementById('manual-assets-list');
+            
+            sysList.innerHTML = state.systemItems.length === 0 ? '<p class="text-center text-gray-300 py-4 text-xs">ยังไม่มีรายการจากระบบ</p>' : 
+                state.systemItems.map((item, idx) => `
+                    <div class="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm border border-pink-50">
+                        <div>
+                            <p class="text-xs font-bold">${item.itemName}</p>
+                            <p class="text-[10px] text-gray-400">NOID: ${item.NOID} | AssetID: ${item.AssetID || '-'}</p>
+                        </div>
+                        <button onclick="state.systemItems.splice(${idx},1);updateAssetList();" class="text-red-300 p-2 hover:text-red-500">✕</button>
+                    </div>
+                `).join('');
+
+            manList.innerHTML = state.manualItems.length === 0 ? '<p class="text-center text-gray-300 py-4 text-xs">ยังไม่มีรายการนอกระบบ</p>' :
+                state.manualItems.map((item, idx) => `
+                    <div class="flex justify-between items-center p-3 bg-amber-50 rounded-xl shadow-sm border border-amber-100">
+                        <div>
+                            <p class="text-xs font-bold">${item.detail}</p>
+                            <p class="text-[10px] text-amber-600">Manual Entry | SN: ${item.serial || '-'}</p>
+                        </div>
+                        <button onclick="state.manualItems.splice(${idx},1);updateAssetList();" class="text-amber-400 p-2 hover:text-amber-600">✕</button>
+                    </div>
+                `).join('');
+
+            const total = state.systemItems.length + state.manualItems.length;
+            document.getElementById('system-count').innerText = `${total} รายการ`;
+            document.getElementById('btn-save-form').disabled = total === 0;
+        }
+
+        function proceedToDetail() {
+            document.getElementById('detail-dept').innerText = `หน่วยงาน: ${state.selectedUnit.deptName}`;
+            document.getElementById('detail-date').innerText = `วันที่: ${new Date().toLocaleDateString('th-TH')}`;
+            
+            const tbody = document.getElementById('detail-table-body');
+            tbody.innerHTML = '';
+            
+            let all = [...state.systemItems, ...state.manualItems.map(m => ({NOID: m.serial || 'N/A', itemName: m.detail}))];
+            all.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 border text-center">${idx + 1}</td>
+                    <td class="p-2 border">${item.NOID || '-'}</td>
+                    <td class="p-2 border">${item.itemName || item.itemName}</td>
+                    <td class="p-2 border text-center text-green-500 font-bold">✓ ตรวจสอบแล้ว</td>
+                `;
+                tbody.appendChild(tr);
             });
             changeView('detail');
         }
 
-        // Helpers
-        function initSignature() {
-            const canvas = document.getElementById('signature-canvas');
-            sigPad = new SignaturePad(canvas, { penColor: '#9d174d' });
+        async function saveFinal() {
+            const signerName = document.getElementById('signer-name').value.trim();
+            if(!signerName) {
+                Swal.fire("ไม่สำเร็จ", "กรุณาระบุชื่อผู้รับรอง", "error");
+                return;
+            }
+            if(sigPad.isEmpty()) {
+                Swal.fire("ไม่สำเร็จ", "กรุณาลงลายเซ็นดิจิทัล", "error");
+                return;
+            }
+
+            toggleOverlay(true);
+            const payload = {
+                deptId: state.selectedUnit.deptId,
+                deptName: state.selectedUnit.deptName,
+                systemItems: state.systemItems,
+                manualItems: state.manualItems,
+                signerName: signerName,
+                signature: sigPad.toDataURL()
+            };
+
+            if (typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(res => {
+                    toggleOverlay(false);
+                    if(res && res.success) {
+                        showSuccess(res.linkId, signerName);
+                    } else {
+                        Swal.fire("ล้มเหลว", "ไม่สามารถบันทึกข้อมูลได้", "error");
+                    }
+                }).saveSurveyData(payload);
+            } else {
+                toggleOverlay(false);
+                Swal.fire("จำลอง", "รันบน Local ไม่สามารถบันทึกจริงได้", "info");
+            }
         }
 
-        function resizeCanvas() {
-            const canvas = document.getElementById('signature-canvas');
-            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            sigPad.clear();
+        function showSuccess(id, name) {
+            state.isSaved = true;
+            Swal.fire("บันทึกเรียบร้อย", "ข้อมูลการตรวจสอบพัสดุถูกจัดเก็บลงในระบบ Log แล้ว", "success");
+            
+            document.getElementById('cert-input-section').classList.add('hidden');
+            document.getElementById('cert-done-section').classList.remove('hidden');
+            document.getElementById('display-signer').innerText = name;
+            document.getElementById('display-sig').src = sigPad.toDataURL();
+            document.getElementById('btn-confirm-save').classList.add('hidden');
+            document.getElementById('btn-back-edit').classList.add('hidden');
+            document.getElementById('btn-print').classList.remove('hidden');
+
+            // Generate QR Code จริงที่ลิงก์ไปยังระบบตรวจสอบ (ถ้ามี)
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById('qrcode'), {
+                text: "https://script.google.com/macros/s/..." + "?action=view&id=" + id, // ตัวอย่าง URL
+                width: 120,
+                height: 120,
+                colorDark : "#9d174d",
+                colorLight : "#ffffff"
+            });
         }
-
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-
-        window.onload = () => {
-            loadInitialData();
-            initSignature();
-        };
     </script>
 </body>
 </html>
