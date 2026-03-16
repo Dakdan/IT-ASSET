@@ -33,7 +33,7 @@
 
     <!-- Header Common -->
     <header class="max-w-4xl mx-auto mb-8 flex items-center gap-4 no-print">
-        <img src="https://img5.pic.in.th/file/secure-sv1/logo19a19087a17ab587.png" class="w-16 h-16 object-contain" alt="Logo">
+        <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-16 h-16 object-contain" alt="Logo">
         <div>
             <h1 class="text-xl font-bold text-gray-800">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
             <p class="text-pink-500 text-sm">โรงพยาบาลอุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศ</p>
@@ -74,15 +74,14 @@
                 <table class="w-full text-left">
                     <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase">
                         <tr>
-                            <th class="p-4">อาคาร / ตึก</th>
-                            <th class="p-4">ชั้น</th>
-                            <th class="p-4">หน่วยงาน</th>
-                            <th class="p-4 text-center">จำนวน</th>
+                            <th class="p-4">รายชื่อตึก / อาคาร</th>
+                            <th class="p-4 text-center">จำนวนหน่วยงานที่สำรวจแล้ว</th>
+                            <th class="p-4 text-center">สถานะการสำรวจ</th>
                             <th class="p-4 text-center">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="table-main-list" class="text-sm">
-                        <tr><td colspan="5" class="p-8 text-center text-gray-400">กำลังโหลดข้อมูล...</td></tr>
+                        <tr><td colspan="4" class="p-8 text-center text-gray-400">กำลังโหลดข้อมูล...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -200,45 +199,103 @@
 
         async function loadDashboard() {
             toggleLoad(true);
-            const res = await fetch(`${API}?action=getDashboard`);
-            const data = await res.json();
-            
-            // Stats
-            const goal = data.goal_r || 0;
-            const act = data.activities[0] || {};
-            const sum = act.Sum || 0;
-            document.getElementById('dash-goal').innerText = goal;
-            document.getElementById('dash-in').innerText = act.Asset_In_Databass || 0;
-            document.getElementById('dash-out').innerText = act.Asset_Out_Databass || 0;
-            document.getElementById('dash-sum').innerText = sum;
-            document.getElementById('dash-perc').innerText = goal > 0 ? ((sum/goal)*100).toFixed(1) + '%' : '0%';
+            try {
+                const res = await fetch(`${API}?action=getDashboard`);
+                const data = await res.json();
+                
+                // Stats summary
+                const goal = data.goal_r || 0;
+                const act = data.activities && data.activities.length > 0 ? data.activities[0] : { Asset_In_Databass: 0, Asset_Out_Databass: 0, Sum: 0 };
+                
+                document.getElementById('dash-goal').innerText = goal;
+                document.getElementById('dash-in').innerText = act.Asset_In_Databass;
+                document.getElementById('dash-out').innerText = act.Asset_Out_Databass;
+                document.getElementById('dash-sum').innerText = act.Sum;
+                document.getElementById('dash-perc').innerText = goal > 0 ? ((act.Sum/goal)*100).toFixed(1) + '%' : '0%';
 
-            // Table
-            masterDepts = data.deptList;
-            const tbody = document.getElementById('table-main-list');
-            tbody.innerHTML = '';
-            
-            // จัดกลุ่มแสดงตัวอย่าง 10 รายการแรก
-            masterDepts.slice(0, 10).forEach(d => {
-                tbody.innerHTML += `
-                    <tr class="border-b border-pink-50 hover:bg-pink-50/30 transition cursor-pointer" onclick="startSurveyFor('${d.deptId}')">
-                        <td class="p-4 font-medium">${d.building}</td>
-                        <td class="p-4">${d.floor}</td>
-                        <td class="p-4">${d.deptName}</td>
-                        <td class="p-4 text-center">0</td>
-                        <td class="p-4 text-center"><span class="text-pink-400">→</span></td>
-                    </tr>
-                `;
-            });
+                masterDepts = data.deptList;
+                const assetLogs = data.assetLogs || []; 
+                const nonumberLogs = data.nonumberLogs || []; 
+                
+                // 1. สร้าง Set ของ deptId จาก masterDepts เพื่อใช้ตรวจสอบความถูกต้อง (Reference check)
+                const validDeptIds = new Set(masterDepts.map(d => String(d.deptId)));
 
-            // Populate Form Building Select
-            const bSelect = document.getElementById('f-building');
-            bSelect.innerHTML = '<option value="">-- เลือกอาคาร --</option>';
-            [...new Set(masterDepts.map(d => d.building))].sort().forEach(b => {
-                bSelect.innerHTML += `<option value="${b}">${b}</option>`;
-            });
+                // 2. รวบรวม DEP_ID ที่มีการสำรวจแล้ว และต้องมีค่าตรงกับที่มีอยู่ในตาราง Department เท่านั้น
+                const loggedDeptIds = new Set();
+                
+                assetLogs.forEach(log => {
+                    const id = String(log.DEP_ID);
+                    if (validDeptIds.has(id)) loggedDeptIds.add(id);
+                });
+                
+                nonumberLogs.forEach(log => {
+                    const id = String(log.DEP_ID);
+                    if (validDeptIds.has(id)) loggedDeptIds.add(id);
+                });
 
+                // 3. สร้างแผนผัง (Mapping) เพื่อดูว่าตึกไหนมีหน่วยงานใดบ้าง และหน่วยงานไหนที่สำรวจแล้วและมีค่าตรงกับ Department
+                const buildingSummary = {};
+
+                masterDepts.forEach(d => {
+                    const bName = d.building || "ไม่ระบุอาคาร";
+                    if (!buildingSummary[bName]) {
+                        buildingSummary[bName] = {
+                            name: bName,
+                            totalDepts: 0,
+                            surveyedDeptsCount: 0,
+                            isLogged: false
+                        };
+                    }
+                    buildingSummary[bName].totalDepts++;
+                    
+                    // ตรวจสอบว่าหน่วยงานนี้มีการสำรวจแล้วหรือไม่ (และเป็นหน่วยงานที่ถูกต้อง)
+                    if (loggedDeptIds.has(String(d.deptId))) {
+                        buildingSummary[bName].surveyedDeptsCount++;
+                        buildingSummary[bName].isLogged = true; 
+                    }
+                });
+
+                const tbody = document.getElementById('table-main-list');
+                tbody.innerHTML = '';
+                
+                // 4. กรองและแสดงผลเฉพาะ "ตึก" ที่มีหน่วยงานที่สำรวจสำเร็จ (ค่าตรงกัน)
+                const buildingsWithLogs = Object.values(buildingSummary).filter(b => b.isLogged);
+
+                if (buildingsWithLogs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">ยังไม่พบข้อมูลการสำรวจที่ตรงกับรายชื่อหน่วยงานในอาคารใดๆ</td></tr>';
+                } else {
+                    buildingsWithLogs.sort((a, b) => a.name.localeCompare(b.name)).forEach(b => {
+                        tbody.innerHTML += `
+                            <tr class="border-b border-pink-50 hover:bg-pink-50/30 transition cursor-pointer" onclick="openBuildingFilter('${b.name}')">
+                                <td class="p-4 font-bold text-gray-700">🏢 ${b.name}</td>
+                                <td class="p-4 text-center">${b.surveyedDeptsCount} / ${b.totalDepts} หน่วยงาน</td>
+                                <td class="p-4 text-center">
+                                    <span class="px-3 py-1 bg-pink-100 text-pink-600 rounded-full text-[10px] font-bold">ดำเนินการแล้ว</span>
+                                </td>
+                                <td class="p-4 text-center"><span class="text-pink-400 font-bold">ดูรายละเอียด →</span></td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Populate Building Select in Form
+                const bSelect = document.getElementById('f-building');
+                bSelect.innerHTML = '<option value="">-- เลือกอาคาร --</option>';
+                [...new Set(masterDepts.map(d => d.building))].sort().forEach(b => {
+                    bSelect.innerHTML += `<option value="${b}">${b}</option>`;
+                });
+
+            } catch (error) {
+                console.error("Dashboard error:", error);
+                document.getElementById('table-main-list').innerHTML = '<tr><td colspan="4" class="p-8 text-center text-red-400">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            }
             toggleLoad(false);
+        }
+
+        function openBuildingFilter(buildingName) {
+            navigate('view-form');
+            document.getElementById('f-building').value = buildingName;
+            filterDepts();
         }
 
         function toggleLoad(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
@@ -248,10 +305,12 @@
         function startSurveyFor(deptId) {
             navigate('view-form');
             const d = masterDepts.find(x => x.deptId == deptId);
-            document.getElementById('f-building').value = d.building;
-            filterDepts();
-            document.getElementById('f-dept').value = d.deptId;
-            setDeptInfo();
+            if(d) {
+                document.getElementById('f-building').value = d.building;
+                filterDepts();
+                document.getElementById('f-dept').value = d.deptId;
+                setDeptInfo();
+            }
         }
 
         function filterDepts() {
@@ -277,18 +336,20 @@
             const q = document.getElementById('f-search').value;
             if(!q) return;
             toggleLoad(true);
-            const res = await fetch(`${API}?action=searchAssets&query=${q}`);
-            const data = await res.json();
-            const resDiv = document.getElementById('f-search-results');
-            resDiv.innerHTML = '';
-            data.forEach(item => {
-                resDiv.innerHTML += `
-                    <div class="p-3 bg-white border border-pink-50 rounded-xl flex justify-between items-center cursor-pointer hover:border-pink-300" onclick='addAsset("${item.NOID}","${item.itemName}","${item.AssetID}","${item.category}")'>
-                        <div class="text-xs"><b>${item.itemName}</b><br><span class="text-gray-400">${item.AssetID}</span></div>
-                        <span class="text-pink-400 text-xl">+</span>
-                    </div>
-                `;
-            });
+            try {
+                const res = await fetch(`${API}?action=searchAssets&query=${q}`);
+                const data = await res.json();
+                const resDiv = document.getElementById('f-search-results');
+                resDiv.innerHTML = '';
+                data.forEach(item => {
+                    resDiv.innerHTML += `
+                        <div class="p-3 bg-white border border-pink-50 rounded-xl flex justify-between items-center cursor-pointer hover:border-pink-300" onclick='addAsset("${item.NOID}","${item.itemName}","${item.AssetID}","${item.category}")'>
+                            <div class="text-xs"><b>${item.itemName}</b><br><span class="text-gray-400">${item.AssetID}</span></div>
+                            <span class="text-pink-400 text-xl">+</span>
+                        </div>
+                    `;
+                });
+            } catch (e) {}
             toggleLoad(false);
         }
 
@@ -306,6 +367,7 @@
             renderSelected();
             closeModal('modal-new');
             document.getElementById('n-name').value = '';
+            document.getElementById('n-serial').value = '';
         }
 
         function renderSelected() {
@@ -313,69 +375,83 @@
             if(selectedAssets.length === 0 && newAssets.length === 0) { div.innerHTML = 'ยังไม่มีรายการ'; return; }
             div.innerHTML = '';
             selectedAssets.forEach((a, i) => {
-                div.innerHTML += `<div class="flex justify-between p-2 bg-emerald-50 rounded-lg"><span>${a.itemName}</span><button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-400">✕</button></div>`;
+                div.innerHTML += `<div class="flex justify-between p-2 bg-emerald-50 rounded-lg"><span>${a.itemName}</span><button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-400 font-bold">✕</button></div>`;
             });
             newAssets.forEach((a, i) => {
-                div.innerHTML += `<div class="flex justify-between p-2 bg-amber-50 rounded-lg"><span>${a.itemName} (นอกระบบ)</span><button onclick="newAssets.splice(${i},1);renderSelected()" class="text-red-400">✕</button></div>`;
+                div.innerHTML += `<div class="flex justify-between p-2 bg-amber-50 rounded-lg"><span>${a.itemName} (นอกระบบ)</span><button onclick="newAssets.splice(${i},1);renderSelected()" class="text-red-400 font-bold">✕</button></div>`;
             });
         }
 
         async function saveSurvey() {
             const dId = document.getElementById('f-dept').value;
-            if(!dId || (selectedAssets.length === 0 && newAssets.length === 0)) return Swal.fire('ข้อมูลไม่ครบ','เลือกหน่วยงานและครุภัณฑ์','warning');
+            if(!dId || (selectedAssets.length === 0 && newAssets.length === 0)) return Swal.fire('ข้อมูลไม่ครบ','เลือกหน่วยงานและครุภัณฑ์อย่างน้อย 1 รายการ','warning');
             
             toggleLoad(true);
-            const payload = { action:'saveSurvey', deptId:dId, deptName:masterDepts.find(x=>x.deptId==dId).deptName, assets:selectedAssets, newAssets:newAssets };
-            const res = await fetch(API, { method:'POST', body:JSON.stringify(payload) });
-            const result = await res.json();
-            toggleLoad(false);
-
-            if(result.success) {
-                loadDetail(result.activityId);
-                navigate('view-detail');
-                Swal.fire('บันทึกสำเร็จ','กรุณาให้หัวหน้าหน่วยงานลงชื่อ','success');
+            try {
+                const payload = { 
+                    action:'saveSurvey', 
+                    deptId:dId, 
+                    deptName:masterDepts.find(x=>x.deptId==dId).deptName, 
+                    assets:selectedAssets, 
+                    newAssets:newAssets 
+                };
+                const res = await fetch(API, { method:'POST', body:JSON.stringify(payload) });
+                const result = await res.json();
+                if(result.success) {
+                    loadDetail(result.activityId);
+                    navigate('view-detail');
+                    Swal.fire('บันทึกสำเร็จ','กรุณาให้หัวหน้าหน่วยงานลงชื่อรับรอง','success');
+                    selectedAssets = [];
+                    newAssets = [];
+                    renderSelected();
+                }
+            } catch (e) {
+                Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
             }
+            toggleLoad(false);
         }
 
         async function loadDetail(aid) {
             toggleLoad(true);
-            const res = await fetch(`${API}?action=getSurveyDetail&activityId=${aid}`);
-            const d = await res.json();
-            document.getElementById('d-dept').innerText = d.deptName;
-            document.getElementById('d-date').innerText = new Date(d.date).toLocaleDateString('th-TH');
-            const list = document.getElementById('d-items-list');
-            list.innerHTML = '<h4 class="font-bold text-xs text-pink-600 mb-2">ครุภัณฑ์ที่สำรวจพบ</h4>';
-            d.assets.forEach(a => list.innerHTML += `<div class="flex justify-between text-xs py-1 border-b border-gray-50"><span>${a.itemName}</span><span class="text-gray-400">${a.AssetID}</span></div>`);
-            d.newAssets.forEach(a => list.innerHTML += `<div class="flex justify-between text-xs py-1 border-b border-gray-50 text-amber-600"><span>${a.itemName} (นอก)</span><span>${a.serial}</span></div>`);
-            
-            document.getElementById('d-qrcode').innerHTML = '';
-            new QRCode(document.getElementById("d-qrcode"), { text: `https://survey-it.udonhosp.go.th/id=${aid}`, width: 80, height: 80, colorDark : "#ff85a2" });
-            
-            // Reset Detail View State
-            document.getElementById('d-signature-zone').classList.add('hidden');
-            document.getElementById('btn-sign-trigger').classList.remove('hidden');
-            window.currentActivityId = aid;
+            try {
+                const res = await fetch(`${API}?action=getSurveyDetail&activityId=${aid}`);
+                const d = await res.json();
+                document.getElementById('d-dept').innerText = d.deptName;
+                document.getElementById('d-date').innerText = new Date(d.date).toLocaleDateString('th-TH');
+                const list = document.getElementById('d-items-list');
+                list.innerHTML = '<h4 class="font-bold text-xs text-pink-600 mb-2 border-b pb-1">ครุภัณฑ์ที่สำรวจพบ</h4>';
+                d.assets.forEach(a => list.innerHTML += `<div class="flex justify-between text-xs py-2 border-b border-gray-50"><span>${a.itemName}</span><span class="text-gray-400">${a.AssetID}</span></div>`);
+                d.newAssets.forEach(a => list.innerHTML += `<div class="flex justify-between text-xs py-2 border-b border-gray-50 text-amber-600"><span>${a.itemName} (นอกระบบ)</span><span>${a.serial}</span></div>`);
+                
+                document.getElementById('d-qrcode').innerHTML = '';
+                new QRCode(document.getElementById("d-qrcode"), { text: `SURVEY-ID:${aid}`, width: 80, height: 80, colorDark : "#ff85a2" });
+                
+                document.getElementById('d-signature-zone').classList.add('hidden');
+                document.getElementById('btn-sign-trigger').classList.remove('hidden');
+                window.currentActivityId = aid;
+            } catch (e) {}
             toggleLoad(false);
         }
 
         async function confirmSignature() {
             const name = document.getElementById('s-name').value;
-            if(!name || signPad.isEmpty()) return Swal.fire('แจ้งเตือน','กรุณาระบุชื่อและลายเซ็น','warning');
+            if(!name || signPad.isEmpty()) return Swal.fire('ข้อมูลไม่ครบ','กรุณาระบุชื่อและลงลายเซ็น','warning');
             
             toggleLoad(true);
-            const base64 = signPad.toDataURL();
-            const res = await fetch(API, { method:'POST', body:JSON.stringify({ action:'confirmSurvey', activityId:window.currentActivityId, signer:name, signature:base64 }) });
-            const result = await res.json();
+            try {
+                const base64 = signPad.toDataURL();
+                const res = await fetch(API, { method:'POST', body:JSON.stringify({ action:'confirmSurvey', activityId:window.currentActivityId, signer:name, signature:base64 }) });
+                const result = await res.json();
+                if(result.success) {
+                    document.getElementById('d-signed-img').src = base64;
+                    document.getElementById('d-signer-name').innerText = `( ${name} )`;
+                    document.getElementById('d-signature-zone').classList.remove('hidden');
+                    document.getElementById('btn-sign-trigger').classList.add('hidden');
+                    closeModal('modal-sign');
+                    Swal.fire('รับรองสำเร็จ','ข้อมูลถูกบันทึกเข้าระบบเรียบร้อยแล้ว','success');
+                }
+            } catch (e) {}
             toggleLoad(false);
-
-            if(result.success) {
-                document.getElementById('d-signed-img').src = base64;
-                document.getElementById('d-signer-name').innerText = `( ${name} )`;
-                document.getElementById('d-signature-zone').classList.remove('hidden');
-                document.getElementById('btn-sign-trigger').classList.add('hidden');
-                closeModal('modal-sign');
-                Swal.fire('สำเร็จ','ระบบบันทึกการรับรองแล้ว','success');
-            }
         }
     </script>
 </body>
