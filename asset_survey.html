@@ -1,474 +1,212 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Asset Survey - All in One</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f8f9fa; }
-        .pink-gradient-header {
-            background: linear-gradient(180deg, #b0124c 0%, #e91e63 50%, #f48fb1 100%);
-            border-bottom-left-radius: 40px;
-            border-bottom-right-radius: 40px;
-        }
-        .stat-card { background: white; border-radius: 20px; padding: 12px 6px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); border-bottom: 4px solid transparent; }
-        .page { display: none; transition: all 0.3s ease; }
-        .page.active { display: block; }
-        .card { background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .btn-pink { background: #e91e63; color: white; }
-        .btn-pink:disabled { background: #f48fb1; cursor: not-allowed; }
-        canvas { border: 2px dashed #ffcad8; background: #fff9fa; border-radius: 15px; cursor: crosshair; width: 100%; height: 200px; }
-        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        @media print { .no-print { display: none !important; } .print-only { display: block !important; } body { background: white; } .card { box-shadow: none; border: 1px solid #eee; } }
-    </style>
+<meta charset="UTF-8">
+<title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+font-family:'Kanit',sans-serif;
+background:linear-gradient(135deg,#ffd6e7,#ffffff);
+margin:0;
+}
+
+header{
+padding:20px;
+background:#fff;
+box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+
+.container{
+padding:20px;
+}
+
+.card{
+background:#fff;
+border-radius:12px;
+padding:20px;
+margin-bottom:15px;
+box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+button{
+background:#ff7fb0;
+border:none;
+padding:10px 18px;
+color:#fff;
+border-radius:8px;
+cursor:pointer;
+}
+
+input{
+padding:10px;
+border-radius:8px;
+border:1px solid #ddd;
+width:100%;
+}
+
+.progress{
+background:#eee;
+border-radius:10px;
+overflow:hidden;
+}
+
+.progress-bar{
+height:14px;
+background:#ff7fb0;
+}
+
+</style>
 </head>
-<body class="flex justify-center">
 
-    <!-- Loading Screen -->
-    <div id="loading" class="loading-overlay hidden">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mb-4"></div>
-        <p class="text-pink-600 font-bold">กำลังดำเนินการ...</p>
-    </div>
+<body>
 
-    <div class="w-full max-w-md bg-[#f8f9fa] min-h-screen relative flex flex-col shadow-2xl overflow-x-hidden">
-        
-        <!-- HEADER -->
-        <header class="pink-gradient-header pt-10 pb-12 px-6 text-center text-white shrink-0 relative z-10 no-print">
-            <div class="flex justify-center mb-3" onclick="location.reload()">
-                <div class="bg-white p-2 rounded-2xl shadow-lg">
-                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-10 h-10 object-contain">
-                </div>
-            </div>
-            <h1 class="text-lg font-bold">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-            <p class="text-[9px] font-light opacity-90 uppercase tracking-widest">โรงพยาบาลอุดรธานี : IT MEDICAL GROUP</p>
-        </header>
+<header>
+<h2>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
+โรงพยาบาลอุดรธานี
+</header>
 
-        <!-- PAGE 1: DASHBOARD -->
-        <div id="page-dashboard" class="page active px-4 -mt-8 relative z-20 pb-24 no-print">
-            <div class="grid grid-cols-3 gap-2 mb-2">
-                <div class="stat-card border-blue-400">
-                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1">เป้าหมาย (R)</p>
-                    <h2 id="dash-goal" class="text-base font-black text-gray-800">0</h2>
-                </div>
-                <div class="stat-card border-emerald-400">
-                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-tight">Asset In</p>
-                    <h2 id="dash-in" class="text-base font-black text-gray-800">0</h2>
-                </div>
-                <div class="stat-card border-amber-400">
-                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-tight">Asset Out</p>
-                    <h2 id="dash-out" class="text-base font-black text-gray-800">0</h2>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-2 mb-4">
-                <div class="stat-card border-pink-400">
-                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1">รวมสำรวจ (Sum)</p>
-                    <h2 id="dash-sum" class="text-base font-black text-gray-800">0</h2>
-                </div>
-                <div class="stat-card border-purple-500">
-                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1">ความสำเร็จ</p>
-                    <h2 id="dash-percent" class="text-base font-black text-purple-600">0%</h2>
-                </div>
-            </div>
+<div class="container">
 
-            <div class="bg-white rounded-[28px] shadow-sm overflow-hidden border border-gray-100">
-                <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-                    <h3 class="font-bold text-xs text-gray-600 flex items-center gap-2">
-                        <i data-lucide="list-checks" class="w-4 h-4 text-pink-500"></i> รายชื่อหน่วยงาน
-                    </h3>
-                    <button onclick="initApp()" class="text-[10px] text-pink-500 font-bold">รีเฟรช</button>
-                </div>
-                <div id="dept-list-container" class="max-h-[380px] overflow-y-auto text-sm">
-                    <!-- Table Rows Injection -->
-                </div>
-            </div>
+<div class="card">
+<h3>Dashboard</h3>
 
-            <!-- Floating Action Button -->
-            <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-                <button onclick="navigateTo('page-form')" class="bg-pink-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center border-4 border-white active:scale-95 transition-transform">
-                    <i data-lucide="plus" class="w-8 h-8"></i>
-                </button>
-            </div>
-        </div>
+Target : <span id="target"></span><br>
+Asset In : <span id="in"></span><br>
+Asset Out : <span id="out"></span><br>
+Sum : <span id="sum"></span><br>
 
-        <!-- PAGE 2: SURVEY FORM -->
-        <div id="page-form" class="page px-4 -mt-8 relative z-20 pb-10 no-print">
-            <div class="card p-5 mb-4">
-                <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                    <i data-lucide="building" class="w-4 h-4 text-pink-500"></i> ข้อมูลหน่วยงาน
-                </h3>
-                <div class="space-y-3">
-                    <select id="form-bldg" onchange="onBuildingChange()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-pink-300">
-                        <option value="">-- เลือกอาคาร --</option>
-                    </select>
-                    <select id="form-dept" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-pink-300">
-                        <option value="">-- เลือกหน่วยงาน --</option>
-                    </select>
-                </div>
-            </div>
+<div class="progress">
+<div id="bar" class="progress-bar"></div>
+</div>
 
-            <div class="card p-5 mb-6">
-                <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                    <i data-lucide="search" class="w-4 h-4 text-pink-500"></i> ตรวจสอบครุภัณฑ์
-                </h3>
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="search-input" placeholder="ค้นหารหัส/ชื่อ..." class="flex-1 p-3 bg-gray-50 rounded-xl text-sm outline-none border focus:border-pink-300">
-                    <button onclick="handleSearch()" class="btn-pink px-4 rounded-xl active:scale-95"><i data-lucide="search" class="w-5 h-5"></i></button>
-                </div>
-                <div id="search-results" class="space-y-2 mb-4 max-h-48 overflow-y-auto"></div>
+<span id="progress"></span>
 
-                <div class="border-t pt-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold text-gray-500 uppercase">รายการที่สำรวจพบ</span>
-                        <button onclick="showNewAssetModal()" class="text-[10px] text-blue-500 font-bold">+ เพิ่มนอกระบบ</button>
-                    </div>
-                    <div id="selected-list" class="space-y-2">
-                        <p class="text-center text-gray-300 text-[10px] py-4">ยังไม่มีรายการที่เลือก</p>
-                    </div>
-                </div>
-            </div>
+</div>
 
-            <div class="flex gap-3">
-                <button onclick="navigateTo('page-dashboard')" class="flex-1 py-4 bg-white text-gray-400 rounded-xl font-bold text-sm shadow-sm">ยกเลิก</button>
-                <button onclick="submitSurvey()" class="flex-[2] py-4 btn-pink rounded-xl font-bold text-sm shadow-lg active:scale-95">บันทึกสำรวจ</button>
-            </div>
-        </div>
+<div class="card">
 
-        <!-- PAGE 3: SUMMARY & SLIP -->
-        <div id="page-detail" class="page px-4 -mt-8 relative z-20 pb-10">
-            <div id="print-content" class="card p-8 mb-4">
-                <div class="text-center mb-6">
-                    <div id="detail-qr" class="flex justify-center mb-4"></div>
-                    <h2 class="font-bold text-base uppercase text-pink-600">ใบยืนยันการสำรวจครุภัณฑ์</h2>
-                    <p class="text-[10px] text-gray-400">Activity ID: <span id="detail-act-id"></span></p>
-                </div>
+<h3>เลือกหน่วยงาน</h3>
 
-                <div class="grid grid-cols-2 gap-4 text-[11px] mb-6 border-y py-4 border-gray-100">
-                    <div>
-                        <p class="text-gray-400 uppercase font-bold text-[9px]">หน่วยงาน</p>
-                        <p id="detail-dept" class="font-bold text-gray-800 text-xs">-</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-gray-400 uppercase font-bold text-[9px]">วันที่สำรวจ</p>
-                        <p id="detail-date" class="font-bold text-gray-800 text-xs">-</p>
-                    </div>
-                </div>
+<select id="dept"></select>
 
-                <div class="mb-6">
-                    <p class="text-[10px] font-bold text-pink-400 uppercase mb-2">รายการที่สำรวจพบ</p>
-                    <div id="detail-list" class="space-y-1 text-[11px]"></div>
-                </div>
+</div>
 
-                <!-- Signature Section -->
-                <div id="detail-sign-box" class="mt-8 text-center pt-6 border-t border-gray-100 hidden">
-                    <img id="detail-sign-img" class="mx-auto max-h-20 mb-1" src="" alt="Sign">
-                    <p id="detail-signer-name" class="font-bold text-sm border-t inline-block px-4 mt-2"></p>
-                    <p class="text-[9px] text-gray-400 mt-1">( ผู้รับรองข้อมูล )</p>
-                </div>
-            </div>
+<div class="card">
 
-            <div class="space-y-3 no-print">
-                <button id="btn-open-sign" onclick="showSignModal()" class="w-full py-4 btn-pink rounded-2xl font-bold shadow-lg active:scale-95">ลงชื่อรับรองข้อมูล</button>
-                <div class="flex gap-2">
-                    <button onclick="window.print()" class="flex-1 py-3 bg-white text-gray-600 border border-gray-200 rounded-xl font-bold text-xs shadow-sm">พิมพ์เอกสาร</button>
-                    <button onclick="location.reload()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold text-xs">กลับหน้าหลัก</button>
-                </div>
-            </div>
-        </div>
+<h3>ค้นหาครุภัณฑ์</h3>
 
-    </div>
+<input id="search" placeholder="ค้นหา AssetID">
 
-    <!-- MODAL: SIGNATURE -->
-    <div id="modal-sign" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
-            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                <i data-lucide="pen-tool" class="w-5 h-5 text-pink-500"></i> ลงชื่อรับรองข้อมูล
-            </h3>
-            <input type="text" id="input-signer" placeholder="ระบุชื่อ-นามสกุล..." class="w-full p-4 bg-gray-50 rounded-2xl mb-4 outline-none border focus:border-pink-300">
-            <canvas id="sig-pad"></canvas>
-            <div class="flex justify-between mt-2">
-                <button onclick="sigPad.clear()" class="text-[11px] text-gray-400 underline">ล้างลายเซ็น</button>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeModal('modal-sign')" class="flex-1 py-4 text-gray-400 font-bold">ปิด</button>
-                <button onclick="handleConfirmSign()" class="flex-[2] py-4 btn-pink rounded-2xl font-bold">ยืนยันลายเซ็น</button>
-            </div>
-        </div>
-    </div>
+<div id="result"></div>
 
-    <!-- MODAL: NEW ASSET -->
-    <div id="modal-new-asset" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
-            <h3 class="font-bold text-gray-700 mb-5 flex items-center gap-2">
-                <i data-lucide="plus-square" class="w-5 h-5 text-pink-500"></i> เพิ่มรายการนอกระบบ
-            </h3>
-            <div class="space-y-4">
-                <input type="text" id="new-name" placeholder="ชื่อรายการ (เช่น PC, Monitor)..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
-                <input type="text" id="new-sn" placeholder="Serial Number / Tag ID..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
-                <select id="new-cat" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
-                    <option value="PC">Computer PC</option>
-                    <option value="Notebook">Notebook</option>
-                    <option value="Printer">Printer</option>
-                    <option value="Network">Network Device</option>
-                    <option value="Other">อื่นๆ</option>
-                </select>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeModal('modal-new-asset')" class="flex-1 py-4 text-gray-400 font-bold text-sm">ยกเลิก</button>
-                <button onclick="addNewAsset()" class="flex-[2] py-4 btn-pink rounded-2xl font-bold text-sm">เพิ่มรายการ</button>
-            </div>
-        </div>
-    </div>
+</div>
 
-    <script>
-        const API = "https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
-        let masterDepts = [];
-        let selectedAssets = [];
-        let currentActivityId = null;
-        let sigPad = null;
+<div class="card">
 
-        window.onload = () => {
-            lucide.createIcons();
-            const canvas = document.getElementById('sig-pad');
-            sigPad = new SignaturePad(canvas);
-            initApp();
-        };
+<h3>รายการที่เลือก</h3>
 
-        function setLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
+<ul id="selected"></ul>
 
-        async function initApp() {
-            setLoading(true);
-            try {
-                const [dashRes, deptRes] = await Promise.all([
-                    fetch(`${API}?action=getDashboard&t=${Date.now()}`),
-                    fetch(`${API}?action=getDepartments`)
-                ]);
-                const dash = await dashRes.json();
-                masterDepts = await deptRes.json();
-                updateDashboard(dash);
-                initFormSelects();
-            } catch (e) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้', 'error');
-            }
-            setLoading(false);
-        }
+<button onclick="save()">บันทึก</button>
 
-        function navigateTo(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            window.scrollTo(0, 0);
-        }
+</div>
 
-        // --- DASHBOARD ---
-        function updateDashboard(data) {
-            document.getElementById('dash-goal').innerText = data.goal.toLocaleString();
-            document.getElementById('dash-in').innerText = data.totalIn.toLocaleString();
-            document.getElementById('dash-out').innerText = data.totalOut.toLocaleString();
-            document.getElementById('dash-sum').innerText = data.totalSum.toLocaleString();
-            const pct = data.goal > 0 ? ((data.totalSum / data.goal) * 100).toFixed(1) : 0;
-            document.getElementById('dash-percent').innerText = pct + '%';
+</div>
 
-            const container = document.getElementById('dept-list-container');
-            let html = "";
-            let currentBldg = "";
-            const sorted = data.details.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
-            
-            if (sorted.length === 0) {
-                container.innerHTML = '<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูลการสำรวจ</p>';
-                return;
-            }
+<script>
 
-            sorted.forEach(item => {
-                if (item.LOCATION_NAME !== currentBldg) {
-                    currentBldg = item.LOCATION_NAME;
-                    html += `<div class="bg-gray-50 text-gray-400 px-4 py-2 font-bold text-[9px] uppercase border-b">อาคาร: ${currentBldg || 'ทั่วไป'}</div>`;
-                }
-                html += `
-                    <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer transition-colors" onclick="startSurveyFor('${item.DEPID}')">
-                        <div>
-                            <p class="text-[9px] text-pink-400 font-bold">ชั้น ${item.FL || '-'}</p>
-                            <p class="font-medium text-gray-700">${item.DEP_NAME_LOC || item.DEPNAME}</p>
-                        </div>
-                        <div class="bg-white border text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">${item.Sum}</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
+const API="PASTE_WEBAPP_URL";
 
-        // --- FORM ---
-        function initFormSelects() {
-            const bldgSet = [...new Set(masterDepts.map(d => d.building).filter(Boolean))].sort();
-            const bSelect = document.getElementById('form-bldg');
-            bSelect.innerHTML = '<option value="">-- เลือกอาคาร --</option>';
-            bldgSet.forEach(b => { bSelect.innerHTML += `<option value="${b}">${b}</option>`; });
-        }
+let selected=[];
 
-        function onBuildingChange() {
-            const b = document.getElementById('form-bldg').value;
-            const dSelect = document.getElementById('form-dept');
-            dSelect.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
-            masterDepts.filter(d => d.building === b).forEach(d => {
-                dSelect.innerHTML += `<option value="${d.deptId}">${d.deptName}</option>`;
-            });
-        }
+async function loadDashboard(){
 
-        function startSurveyFor(id) {
-            const d = masterDepts.find(x => x.deptId == id);
-            if (d) {
-                document.getElementById('form-bldg').value = d.building;
-                onBuildingChange();
-                document.getElementById('form-dept').value = d.deptId;
-                selectedAssets = [];
-                renderSelected();
-                navigateTo('page-form');
-            }
-        }
+const r=await fetch(API+"?action=dashboard");
+const d=await r.json();
 
-        async function handleSearch() {
-            const q = document.getElementById('search-input').value;
-            if (!q) return;
-            setLoading(true);
-            try {
-                const res = await fetch(`${API}?action=searchAssets&query=${encodeURIComponent(q)}`);
-                const data = await res.json();
-                const container = document.getElementById('search-results');
-                if (data.length === 0) {
-                    container.innerHTML = '<p class="text-center text-xs text-gray-400 py-4 italic">ไม่พบข้อมูลครุภัณฑ์</p>';
-                } else {
-                    container.innerHTML = data.map(item => `
-                        <div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center active:bg-pink-100 transition-colors" onclick='addAsset(${JSON.stringify(item)})'>
-                            <div class="text-[11px]"><p class="font-bold text-gray-700">${item.itemName}</p><p class="text-gray-400">ID: ${item.AssetID}</p></div>
-                            <i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
-                        </div>
-                    `).join('');
-                    lucide.createIcons();
-                }
-            } catch (e) {}
-            setLoading(false);
-        }
+target.innerText=d.target;
+in.innerText=d.assetIn;
+out.innerText=d.assetOut;
+sum.innerText=d.sum;
 
-        function addAsset(item) {
-            if (selectedAssets.find(x => x.AssetID === item.AssetID)) return;
-            selectedAssets.push({ ...item, isNew: false });
-            renderSelected();
-        }
+progress.innerText=d.progress+"%";
 
-        function showNewAssetModal() { showModal('modal-new-asset'); }
-        
-        function addNewAsset() {
-            const name = document.getElementById('new-name').value;
-            const sn = document.getElementById('new-sn').value;
-            if (!name) return;
-            selectedAssets.push({ itemName: name, serial: sn, category: document.getElementById('new-cat').value, isNew: true, AssetID: 'NEW-' + Date.now() });
-            renderSelected();
-            closeModal('modal-new-asset');
-            document.getElementById('new-name').value = '';
-            document.getElementById('new-sn').value = '';
-        }
+bar.style.width=d.progress+"%";
 
-        function renderSelected() {
-            const container = document.getElementById('selected-list');
-            if (selectedAssets.length === 0) { container.innerHTML = '<p class="text-center text-gray-300 text-[10px] py-4 italic">ยังไม่มีรายการที่เลือก</p>'; return; }
-            container.innerHTML = selectedAssets.map((item, i) => `
-                <div class="flex justify-between items-center bg-white p-4 rounded-2xl border-l-4 ${item.isNew ? 'border-amber-400' : 'border-emerald-400'} shadow-sm">
-                    <div class="text-[11px] font-medium">
-                        ${item.itemName} <span class="text-[9px] opacity-50 block">${item.isNew ? ('SN: ' + (item.serial || 'ไม่ระบุ')) : item.AssetID}</span>
-                    </div>
-                    <button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-300 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
+}
 
-        async function submitSurvey() {
-            const deptId = document.getElementById('form-dept').value;
-            if (!deptId || selectedAssets.length === 0) return Swal.fire('เตือน', 'กรุณาเลือกหน่วยงานและรายการครุภัณฑ์ที่พบ', 'warning');
-            
-            setLoading(true);
-            const payload = {
-                action: 'saveSurvey',
-                deptId: deptId,
-                deptName: masterDepts.find(x => x.deptId == deptId).deptName,
-                assets: selectedAssets.filter(x => !x.isNew),
-                newAssets: selectedAssets.filter(x => x.isNew)
-            };
-            
-            try {
-                const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
-                if (result.success) {
-                    currentActivityId = result.activityId;
-                    showDetail(currentActivityId);
-                    navigateTo('page-detail');
-                }
-            } catch (e) {
-                Swal.fire('ล้มเหลว', 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
-            }
-            setLoading(false);
-        }
+async function loadDepartments(){
 
-        // --- DETAIL & SLIP ---
-        async function showDetail(id) {
-            setLoading(true);
-            try {
-                const res = await fetch(`${API}?action=getSurveyDetail&activityId=${id}`);
-                const data = await res.json();
-                
-                document.getElementById('detail-act-id').innerText = id;
-                document.getElementById('detail-dept').innerText = data.deptName;
-                document.getElementById('detail-date').innerText = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: 'long', year: 'numeric' });
-                
-                const list = document.getElementById('detail-list');
-                const combined = [
-                    ...data.assets.map(a => `<div class="flex justify-between border-b border-gray-50 py-2"><span>${a.AssetID}</span><span class="text-gray-400 text-right">${a.itemName}</span></div>`),
-                    ...data.newAssets.map(a => `<div class="flex justify-between border-b border-gray-50 py-2 text-amber-600 italic"><span>${a.serial || 'N/A'}</span><span class="text-right">${a.itemName} (นอกระบบ)</span></div>`)
-                ];
-                list.innerHTML = combined.join('');
+const r=await fetch(API+"?action=departments");
+const data=await r.json();
 
-                document.getElementById('detail-qr').innerHTML = "";
-                new QRCode(document.getElementById("detail-qr"), { text: id, width: 80, height: 80, colorDark: "#e91e63" });
+data.forEach(d=>{
+const o=document.createElement("option");
+o.value=d.deptId;
+o.textContent=d.deptName;
+dept.appendChild(o);
+});
 
-                document.getElementById('detail-sign-box').classList.add('hidden');
-                document.getElementById('btn-open-sign').classList.remove('hidden');
-            } catch (e) {}
-            setLoading(false);
-        }
+}
 
-        function showSignModal() { showModal('modal-sign'); }
+search.onkeyup=async ()=>{
 
-        async function handleConfirmSign() {
-            const name = document.getElementById('input-signer').value;
-            if (!name || sigPad.isEmpty()) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อและเซ็นชื่อรับรอง', 'warning');
+const q=search.value;
 
-            setLoading(true);
-            const base64 = sigPad.toDataURL();
-            try {
-                const res = await fetch(API, { method: 'POST', body: JSON.stringify({
-                    action: 'confirmSurvey',
-                    activityId: currentActivityId,
-                    signer: name,
-                    signature: base64
-                })});
-                const result = await res.json();
-                if (result.success) {
-                    document.getElementById('detail-sign-img').src = base64;
-                    document.getElementById('detail-signer-name').innerText = name;
-                    document.getElementById('detail-sign-box').classList.remove('hidden');
-                    document.getElementById('btn-open-sign').classList.add('hidden');
-                    closeModal('modal-sign');
-                    Swal.fire('สำเร็จ', 'รับรองข้อมูลเรียบร้อยแล้ว', 'success');
-                }
-            } catch (e) {}
-            setLoading(false);
-        }
-    </script>
+if(q.length<2)return;
+
+const r=await fetch(API+"?action=searchAsset&q="+encodeURIComponent(q));
+const data=await r.json();
+
+result.innerHTML="";
+
+data.forEach(a=>{
+
+const div=document.createElement("div");
+div.textContent=a.assetId;
+
+div.onclick=()=>{
+selected.push(a);
+renderSelected();
+}
+
+result.appendChild(div);
+
+});
+
+}
+
+function renderSelected(){
+
+selectedList=selected.map(a=>"<li>"+a.assetId+"</li>").join("");
+
+selected.innerHTML=selectedList;
+
+}
+
+async function save(){
+
+const payload={
+deptId:dept.value,
+deptName:dept.options[dept.selectedIndex].text,
+assets:selected,
+activityId:""
+};
+
+await fetch(API+"?action=saveSurvey&data="+encodeURIComponent(JSON.stringify(payload)));
+
+alert("บันทึกแล้ว");
+
+}
+
+loadDashboard();
+loadDepartments();
+
+</script>
+
 </body>
 </html>
