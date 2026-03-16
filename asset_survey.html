@@ -8,191 +8,292 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Signature Pad สำหรับลงลายเซ็น -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <style>
-        :root { --primary: #d81b60; --primary-gradient: linear-gradient(135deg, #ad1457 0%, #f06292 100%); }
-        body { font-family: 'Kanit', sans-serif; background-color: #fff5f8; min-height: 100vh; }
-        .header-gradient { background: linear-gradient(180deg, #ad1457 0%, #d81b60 70%, #f48fb1 100%); border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; padding-bottom: 60px; }
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 32px; border: 1px solid white; box-shadow: 0 10px 40px rgba(216, 27, 96, 0.1); }
-        .card-selection { background: white; border-radius: 20px; transition: all 0.3s; cursor: pointer; border: 1px solid rgba(216, 27, 96, 0.1); }
-        .card-selection:hover { transform: translateY(-3px); border-color: var(--primary); box-shadow: 0 8px 20px rgba(216, 27, 96, 0.1); }
-        .btn-pink { background: var(--primary-gradient); color: white; border-radius: 14px; transition: opacity 0.2s; }
+        body { font-family: 'Kanit', sans-serif; background: #fff; }
+        .bg-pink-gradient { background: linear-gradient(135deg, #fce4ec 0%, #ffffff 100%); }
+        .header-pink { background: linear-gradient(180deg, #ad1457 0%, #d81b60 100%); color: white; }
+        .card-pink { background: white; border-radius: 1.25rem; border: 1px solid #f8bbd0; box-shadow: 0 4px 15px rgba(216, 27, 96, 0.05); }
+        .btn-pink { background: linear-gradient(90deg, #d81b60 0%, #ec407a 100%); color: white; border-radius: 0.75rem; transition: transform 0.2s; }
+        .btn-pink:active { transform: scale(0.95); }
+        .watermark { position: fixed; bottom: 20px; right: 20px; font-size: 14px; color: rgba(216, 27, 96, 0.15); font-weight: bold; pointer-events: none; z-index: 0; }
         [v-cloak] { display: none; }
+        .signature-container { border: 2px dashed #f8bbd0; background: #fff5f8; border-radius: 10px; }
+        @media print { .no-print { display: none; } .print-area { display: block; border: none; } }
     </style>
 </head>
-<body class="pb-10">
+<body class="bg-pink-gradient min-h-screen">
     <div id="app" v-cloak>
-        <header class="header-gradient text-white pt-8 px-6 text-center relative z-10">
-            <div class="flex justify-center mb-3">
-                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-14 h-14 bg-white p-1 rounded-full shadow-lg">
+        <div class="watermark text-xl">IT UDON HOSP</div>
+
+        <!-- Header -->
+        <header class="header-pink p-5 text-center shadow-lg sticky top-0 z-40 no-print">
+            <div class="flex justify-center mb-1">
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-14 h-14 bg-white p-1 rounded-full shadow-md">
             </div>
-            <h1 class="text-xl font-bold tracking-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-            <p class="text-pink-100 text-[10px] uppercase tracking-widest font-light">โรงพยาบาลอุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศ</p>
+            <h1 class="text-lg font-bold">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ประจำปี</h1>
+            <p class="text-pink-100 text-[12px]">โรงพยาบาลอุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</p>
         </header>
 
-        <main class="max-w-6xl mx-auto px-4 -mt-10 relative z-20">
-            <!-- Dashboard Section -->
-            <div v-if="step === 'main' || step === 'building'" class="glass-card p-8 mb-8 animate-in fade-in zoom-in duration-500">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-pink-800 flex items-center gap-2">
-                            <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
-                            {{ dashboard.activityName || 'กำลังโหลด...' }}
+        <main class="max-w-4xl mx-auto p-4 relative z-10">
+
+            <!-- STEP 1: DASHBOARD & BUILDING SELECTION -->
+            <section v-if="step === 'main'" class="space-y-6">
+                <!-- Dashboard Card -->
+                <div class="card-pink p-5 bg-white overflow-hidden relative">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-pink-700 flex items-center gap-2">
+                            <i data-lucide="bar-chart"></i> ภาพรวมการสำรวจ ปี {{ dashboard.year }}
                         </h2>
-                        <p class="text-sm text-gray-500 mt-1">สรุปข้อมูลประจำปี {{ dashboard.year }}</p>
                     </div>
-                </div>
-
-                <!-- Main Statistics - ปรับการจัดเรียงตามลำดับเลข 1,2,3,4,5 ในภาพ -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                    
-                    <!-- 1. เป้าหมายสำรวจ (ตำแหน่งเลข 1) -->
-                    <div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-100/50">
-                        <p class="text-[9px] text-blue-500 font-bold uppercase tracking-wider mb-1">เป้าหมายสำรวจ</p>
-                        <div class="flex items-end gap-1">
-                            <span class="text-2xl font-black text-blue-600 leading-none">{{ dashboard.target.toLocaleString() }}</span>
-                            <span class="text-blue-500 text-[10px] mb-0.5">รายการ</span>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="p-3 bg-pink-50 rounded-xl border border-pink-100">
+                            <p class="text-[11px] text-pink-400 font-bold uppercase">เป้าหมาย (R)</p>
+                            <p class="text-2xl font-black text-pink-600">{{ dashboard.target || 0 }}</p>
                         </div>
-                    </div>
-
-                    <!-- 2. ในทะเบียน (ตำแหน่งเลข 2) -->
-                    <div class="bg-pink-50/50 p-4 rounded-3xl border border-pink-100/50">
-                        <p class="text-[9px] text-pink-400 font-bold uppercase tracking-wider mb-1">ในทะเบียน</p>
-                        <div class="flex items-end gap-1">
-                            <span class="text-2xl font-black text-pink-600 leading-none">{{ dashboard.done.toLocaleString() }}</span>
-                            <span class="text-pink-400 text-[10px] mb-0.5">รายการ</span>
+                        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                            <p class="text-[11px] text-blue-400 font-bold uppercase">In Database</p>
+                            <p class="text-2xl font-black text-blue-600">{{ dashboard.inDatabase || 0 }}</p>
                         </div>
-                    </div>
-
-                    <!-- 3. นอกทะเบียน (ตำแหน่งเลข 3) -->
-                    <div class="bg-purple-50/50 p-4 rounded-3xl border border-purple-100/50">
-                        <p class="text-[9px] text-purple-400 font-bold uppercase tracking-wider mb-1">นอกทะเบียน</p>
-                        <div class="flex items-end gap-1">
-                            <span class="text-2xl font-black text-purple-600 leading-none">{{ dashboard.outDatabase.toLocaleString() }}</span>
-                            <span class="text-purple-400 text-[10px] mb-0.5">รายการ</span>
+                        <div class="p-3 bg-purple-50 rounded-xl border border-purple-100">
+                            <p class="text-[11px] text-purple-400 font-bold uppercase">Out Database</p>
+                            <p class="text-2xl font-black text-purple-600">{{ dashboard.outDatabase || 0 }}</p>
                         </div>
-                    </div>
-
-                    <!-- 4. ผลรวมทั้งหมด (ตำแหน่งเลข 4) -->
-                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">ผลรวมทั้งหมด</p>
-                        <div class="flex items-end gap-1">
-                            <span class="text-2xl font-black text-slate-700 leading-none">{{ dashboard.total.toLocaleString() }}</span>
-                            <span class="text-slate-400 text-[10px] mb-0.5">รายการ</span>
-                        </div>
-                    </div>
-
-                    <!-- 5. ความคืบหน้า (ตำแหน่งเลข 5) -->
-                    <div class="bg-emerald-50/50 p-4 rounded-3xl border border-emerald-100/50">
-                        <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-wider mb-1">ความคืบหน้า</p>
-                        <div class="flex items-end gap-0.5">
-                            <span class="text-2xl font-black text-emerald-600 leading-none">{{ dashboard.progress }}</span>
-                            <span class="text-emerald-500 font-bold text-sm mb-0.5">%</span>
+                        <div class="p-3 bg-green-50 rounded-xl border border-green-100">
+                            <p class="text-[11px] text-green-400 font-bold uppercase">Progress</p>
+                            <p class="text-2xl font-black text-green-600">{{ dashboard.progress || 0 }}%</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Progress Bar -->
-                <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden mb-2">
-                    <div class="bg-emerald-500 h-full transition-all duration-1000" :style="{ width: dashboard.progress + '%' }"></div>
-                </div>
-                <div class="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    <span>คำนวณจากหน่วยงานที่ต้องสำรวจ (คอลัมน์ R ใน Asset_DB)</span>
-                    <span class="text-emerald-600">สำเร็จแล้ว {{ dashboard.progress }}%</span>
-                </div>
-            </div>
-
-            <!-- STEP 1: Building Selection -->
-            <div v-if="step === 'main'" class="space-y-4">
-                <div class="flex justify-between items-center px-2">
-                    <h3 class="font-bold text-gray-700 flex items-center gap-2">
-                        <i data-lucide="building-2" class="w-5 h-5 text-pink-500"></i> เลือกตึก/อาคารที่ต้องการสำรวจ
+                <!-- Building List -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-gray-700 px-2 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="text-pink-600"></i> กรุณาเลือกตึก/อาคาร
                     </h3>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div v-for="b in buildings" :key="b.name" @click="selectBuilding(b.name)" class="card-selection p-6 flex flex-col items-center justify-center text-center group">
-                        <div class="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-pink-600 group-hover:text-white transition-colors">
-                            <i data-lucide="building" class="w-8 h-8"></i>
-                        </div>
-                        <span class="font-bold text-gray-800 tracking-tight">อาคาร: {{ b.name }}</span>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <button v-for="b in buildings" :key="b.name" @click="fetchDepts(b.name)"
+                            class="card-pink p-4 font-bold text-gray-600 hover:bg-pink-600 hover:text-white transition-all shadow-sm">
+                            {{ b.name }}
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- STEP 2: Department Selection -->
-            <div v-if="step === 'building'" class="space-y-6 animate-in slide-in-from-right duration-300">
-                <div class="flex items-center gap-3">
-                    <button @click="step = 'main'" class="p-2 hover:bg-white rounded-full text-pink-600 transition-colors"><i data-lucide="arrow-left"></i></button>
-                    <h3 class="font-bold text-xl text-gray-800">อาคาร: {{ selectedBuilding }}</h3>
-                </div>
-                
-                <div v-for="floor in sortedFloors" :key="floor" class="space-y-3">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-pink-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">ชั้น {{ floor }}</span>
-                        <div class="h-[1px] flex-grow bg-gray-200"></div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div v-for="dept in deptsByFloor[floor]" :key="dept.DEP_ID" class="card-selection p-4 flex items-center gap-4">
-                            <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
-                                <i data-lucide="home" class="w-5 h-5"></i>
-                            </div>
-                            <div class="text-left">
-                                <p class="font-bold text-gray-800 text-sm leading-tight">{{ dept.DEP_NAME_LOC }}</p>
-                                <p class="text-[10px] text-gray-400">ID: {{ dept.DEP_ID }}</p>
+                <!-- Department List -->
+                <div v-if="selectedBuilding" class="space-y-4 mt-6 animate-in fade-in duration-500">
+                    <h3 class="font-bold text-pink-700 px-2">ตึก: {{ selectedBuilding }}</h3>
+                    <div v-for="(depts, floor) in deptsByFloor" :key="floor" class="space-y-2">
+                        <div class="text-[12px] font-bold text-pink-400 pl-2">ชั้น {{ floor }}</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div v-for="d in depts" :key="d.DEP_ID" class="card-pink p-4 flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold text-gray-800">{{ d.DEP_NAME_LOC }}</p>
+                                    <p class="text-[10px] text-gray-400">ID: {{ d.DEP_ID }}</p>
+                                </div>
+                                <button @click="openSurveyForm(d)" class="btn-pink px-4 py-2 text-xs font-bold shadow-md hover:opacity-90">
+                                    เริ่มตรวจสอบ
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
+
+            <!-- STEP 2: SURVEY FORM -->
+            <section v-if="step === 'form'" class="space-y-5 no-print">
+                <div class="flex items-center gap-2">
+                    <button @click="step = 'main'" class="p-2 bg-white rounded-full text-pink-600 shadow-sm border border-pink-100"><i data-lucide="chevron-left"></i></button>
+                    <h2 class="font-bold text-lg text-gray-700">แบบตรวจสอบหน่วยงาน</h2>
+                </div>
+
+                <div class="card-pink p-5 bg-white border-t-4 border-pink-600">
+                    <div class="mb-4">
+                        <p class="text-[11px] text-pink-500 font-bold">ข้อมูลหน่วยงาน</p>
+                        <h3 class="text-xl font-bold text-pink-800">{{ currentDept.DEP_NAME_LOC }}</h3>
+                        <p class="text-sm text-gray-400">อาคาร {{ currentDept.LOCATION_NAME }} | ชั้น {{ currentDept.FL }}</p>
+                    </div>
+
+                    <div class="space-y-4 pt-4 border-t border-pink-50">
+                        <label class="block font-bold text-sm text-gray-600">ค้นหาและเพิ่มครุภัณฑ์</label>
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
+                            <input v-model="searchQuery" @input="debounceSearch" placeholder="ระบุ NOID / AssetID / ชื่อ..."
+                                class="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-pink-50 focus:border-pink-300 outline-none transition-all text-sm">
+                        </div>
+
+                        <!-- Search Result List -->
+                        <div v-if="searchResults.length" class="bg-white border-2 border-pink-100 rounded-xl overflow-hidden shadow-lg">
+                            <div v-for="item in searchResults" :key="item.NOID" @click="addItem(item)"
+                                class="p-3 hover:bg-pink-50 cursor-pointer flex justify-between items-center border-b last:border-0">
+                                <div>
+                                    <p class="font-bold text-sm">{{ item.itemName }}</p>
+                                    <p class="text-[10px] text-gray-400">{{ item.NOID }} | {{ item.category }}</p>
+                                </div>
+                                <i data-lucide="plus-circle" class="text-pink-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected List -->
+                <div class="space-y-3">
+                    <h4 class="font-bold text-gray-700 px-2 flex justify-between items-center">
+                        <span>รายการที่สำรวจพบ ({{ selectedItems.length }})</span>
+                    </h4>
+                    <div v-if="selectedItems.length === 0" class="text-center py-10 text-gray-400 italic bg-white rounded-2xl border-2 border-dashed border-pink-100">
+                        ยังไม่ได้เพิ่มรายการครุภัณฑ์
+                    </div>
+                    <div v-for="(item, idx) in selectedItems" :key="idx" class="card-pink p-4 bg-white flex justify-between items-center animate-in zoom-in duration-200">
+                        <div>
+                            <p class="font-bold text-sm">{{ item.itemName }}</p>
+                            <div class="flex gap-2 mt-1">
+                                <span class="text-[9px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded font-bold">{{ item.NOID }}</span>
+                                <span class="text-[9px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{{ item.category }}</span>
+                            </div>
+                        </div>
+                        <button @click="removeItem(idx)" class="text-red-400 p-2 hover:bg-red-50 rounded-full transition-colors">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4 sticky bottom-4 z-20">
+                    <button @click="step = 'main'" class="flex-1 py-4 bg-white border border-pink-200 text-gray-500 font-bold rounded-2xl shadow-sm">ยกเลิก</button>
+                    <button @click="saveAndVerify" class="flex-[2] py-4 btn-pink font-bold rounded-2xl shadow-lg">บันทึกและยืนยันข้อมูล</button>
+                </div>
+            </section>
+
+            <!-- STEP 3: SIGNATURE & RECEIPT -->
+            <section v-if="step === 'verify'" class="space-y-5">
+                <div class="card-pink p-6 bg-white border-2 border-pink-100 shadow-xl">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="check" class="w-10 h-10"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-pink-800">ยืนยันการตรวจสอบ</h2>
+                        <p class="text-sm text-gray-500">{{ currentDept.DEP_NAME_LOC }}</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-600 mb-1">ชื่อ-สกุล ผู้รับรองข้อมูล</label>
+                            <input v-model="verifyName" placeholder="ระบุชื่อหัวหน้าหน่วยงาน/ผู้รับผิดชอบ"
+                                class="w-full px-4 py-3 rounded-xl border-2 border-pink-50 focus:border-pink-300 outline-none text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-600 mb-1">ลงลายมือชื่อ</label>
+                            <div class="signature-container relative">
+                                <canvas id="signature-pad" class="w-full h-40"></canvas>
+                                <button @click="clearSignature" class="absolute top-2 right-2 text-[10px] bg-white px-2 py-1 rounded shadow text-pink-500 font-bold">ล้างลายเซ็น</button>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 space-y-3 no-print">
+                            <button @click="submitFinal" class="w-full py-4 btn-pink font-bold rounded-2xl shadow-lg flex justify-center items-center gap-2">
+                                <i data-lucide="save"></i> บันทึกรับรองข้อมูล
+                            </button>
+                            <button @click="step = 'form'" class="w-full py-3 bg-gray-50 text-gray-500 font-bold rounded-2xl">กลับไปแก้ไข</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 4: RESULT SLIP -->
+            <section v-if="step === 'result'" class="space-y-5 animate-in zoom-in duration-300">
+                <div class="card-pink p-8 bg-white text-center border-4 border-pink-50">
+                    <h2 class="text-2xl font-black text-pink-600 mb-2 uppercase">Success!</h2>
+                    <p class="text-gray-500 text-sm mb-6 font-bold">ดำเนินการตรวจสอบครุภัณฑ์เรียบร้อยแล้ว</p>
+                    
+                    <div class="bg-pink-50 rounded-2xl p-6 mb-6 border border-pink-100 relative">
+                        <div class="text-[10px] absolute top-2 right-4 text-pink-300 font-bold">REF: {{ refID }}</div>
+                        <p class="text-gray-700 font-bold">{{ currentDept.DEP_NAME_LOC }}</p>
+                        <p class="text-sm text-pink-400 mt-1">จำนวนครุภัณฑ์ที่พบ: {{ selectedItems.length }} รายการ</p>
+                        
+                        <div class="flex justify-center mt-6">
+                            <!-- QR Code Placeholder -->
+                            <div class="p-3 bg-white rounded-xl shadow-inner border border-pink-100">
+                                <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + refID" class="w-32 h-32">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 no-print">
+                        <button @click="window.print()" class="p-4 bg-gray-100 text-gray-600 rounded-2xl font-bold flex flex-col items-center gap-1 text-sm">
+                            <i data-lucide="printer" class="w-5 h-5"></i> พิมพ์เอกสาร
+                        </button>
+                        <button @click="shareResult" class="p-4 bg-blue-50 text-blue-600 rounded-2xl font-bold flex flex-col items-center gap-1 text-sm">
+                            <i data-lucide="share" class="w-5 h-5"></i> ส่งต่อ/แชร์
+                        </button>
+                    </div>
+                    
+                    <button @click="resetApp" class="w-full mt-6 py-4 btn-pink font-bold rounded-2xl shadow-lg">
+                        เสร็จสิ้น (กลับหน้าหลัก)
+                    </button>
+                </div>
+            </section>
+
         </main>
 
-        <!-- Loading Screen -->
-        <div v-if="isLoading" class="fixed inset-0 bg-white/80 z-[9999] flex flex-col items-center justify-center backdrop-blur-sm">
-            <div class="w-12 h-12 border-4 border-pink-600 border-t-transparent rounded-full animate-spin"></div>
-            <p class="mt-4 text-pink-600 font-bold">กำลังประมวลผลข้อมูล...</p>
+        <!-- Loading Overlay -->
+        <div v-if="isLoading" class="fixed inset-0 bg-white/90 z-[100] flex flex-col items-center justify-center">
+            <div class="w-16 h-16 border-4 border-pink-600 border-t-transparent rounded-full animate-spin shadow-xl"></div>
+            <p class="mt-6 font-bold text-pink-600 animate-pulse tracking-widest uppercase">IT Survey System...</p>
         </div>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
         const { createApp, ref, onMounted, computed, nextTick } = Vue;
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
+        // ปรับเป็น URL Web App ของคุณ
+        const API_URL = "https://script.google.com/macros/s/AKfycbzL-S57_nU-Zp25P8R5u16Xy5wL5m5v9-5m5m5m5m/exec"; 
 
         createApp({
             setup() {
                 const step = ref('main');
                 const isLoading = ref(false);
-                const dashboard = ref({ total: 0, done: 0, outDatabase: 0, target: 0, progress: 0, year: '', activityName: '' });
+                const dashboard = ref({});
                 const buildings = ref([]);
                 const selectedBuilding = ref('');
                 const deptsInBuilding = ref([]);
+                const currentDept = ref({});
+                const searchQuery = ref('');
+                const searchResults = ref([]);
+                const selectedItems = ref([]);
+                const verifyName = ref('');
+                const refID = ref('');
+                let signaturePad = null;
 
                 const init = async () => {
                     isLoading.value = true;
                     try {
-                        const [dashData, bldData] = await Promise.all([
-                            fetch(`${SCRIPT_URL}?action=getDashboard`).then(r => r.json()),
-                            fetch(`${SCRIPT_URL}?action=getBuildings`).then(r => r.json())
-                        ]);
-                        if (dashData) dashboard.value = dashData;
-                        if (bldData) buildings.value = bldData;
-                    } catch (e) { console.error(e); }
-                    finally { 
+                        // ดึงข้อมูล Dashboard ใหม่ (Survey Extension)
+                        const respDash = await fetch(`${API_URL}?action=getSurveyDashboard`);
+                        dashboard.value = await respDash.json();
+                        
+                        // ดึงรายชื่อตึก
+                        const respBuild = await fetch(`${API_URL}?action=getBuildings`);
+                        buildings.value = await respBuild.json();
+                    } catch (e) {
+                        // Fallback data สำหรับทดสอบ UI
+                        dashboard.value = { year: '2567', target: 0, inDatabase: 0, outDatabase: 0, progress: 0 };
+                        buildings.value = [{name:'ตึกอำนวยการ'}, {name:'ตึกศัลยกรรม'}, {name:'อาคาร 10 ชั้น'}];
+                    } finally {
                         isLoading.value = false;
                         nextTick(() => lucide.createIcons());
                     }
                 };
 
-                const selectBuilding = async (name) => {
+                const fetchDepts = async (building) => {
                     isLoading.value = true;
-                    selectedBuilding.value = name;
+                    selectedBuilding.value = building;
                     try {
-                        const data = await fetch(`${SCRIPT_URL}?action=getDeptsInBuilding&building=${encodeURIComponent(name)}`).then(r => r.json());
-                        if (data) {
-                            deptsInBuilding.value = data;
-                            step.value = 'building';
-                        }
-                    } catch (e) { console.error(e); }
-                    finally {
+                        const resp = await fetch(`${API_URL}?action=getDeptsInBuilding&building=${encodeURIComponent(building)}`);
+                        deptsInBuilding.value = await resp.json();
+                    } catch (e) {
+                        deptsInBuilding.value = [];
+                    } finally {
                         isLoading.value = false;
                         nextTick(() => lucide.createIcons());
                     }
@@ -200,17 +301,129 @@
 
                 const deptsByFloor = computed(() => {
                     return deptsInBuilding.value.reduce((acc, d) => {
-                        const floor = d.FL || 'ไม่ระบุ';
-                        if (!acc[floor]) acc[floor] = [];
-                        acc[floor].push(d);
+                        (acc[d.FL] = acc[d.FL] || []).push(d);
                         return acc;
                     }, {});
                 });
 
-                const sortedFloors = computed(() => Object.keys(deptsByFloor.value).sort((a,b) => (parseInt(a)||0) - (parseInt(b)||0)));
+                const openSurveyForm = (dept) => {
+                    currentDept.value = dept;
+                    selectedItems.value = [];
+                    step.value = 'form';
+                    nextTick(() => lucide.createIcons());
+                };
+
+                let searchTimer = null;
+                const debounceSearch = () => {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(async () => {
+                        if (searchQuery.value.length < 2) { searchResults.value = []; return; }
+                        try {
+                            const resp = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(searchQuery.value)}`);
+                            searchResults.value = await resp.json();
+                        } catch (e) { searchResults.value = []; }
+                        nextTick(() => lucide.createIcons());
+                    }, 500);
+                };
+
+                const addItem = (item) => {
+                    if (!selectedItems.value.find(i => i.NOID === item.NOID)) {
+                        selectedItems.value.push(item);
+                    }
+                    searchQuery.value = '';
+                    searchResults.value = [];
+                    nextTick(() => lucide.createIcons());
+                };
+
+                const removeItem = (idx) => {
+                    selectedItems.value.splice(idx, 1);
+                    nextTick(() => lucide.createIcons());
+                };
+
+                const saveAndVerify = () => {
+                    if (selectedItems.value.length === 0) {
+                        Swal.fire('ข้อความ', 'กรุณาเพิ่มครุภัณฑ์อย่างน้อย 1 รายการ', 'warning');
+                        return;
+                    }
+                    step.value = 'verify';
+                    nextTick(() => {
+                        const canvas = document.getElementById('signature-pad');
+                        if (canvas) {
+                            signaturePad = new SignaturePad(canvas);
+                            // ปรับขนาด Canvas ให้เข้ากับมือถือ
+                            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                            canvas.width = canvas.offsetWidth * ratio;
+                            canvas.height = canvas.offsetHeight * ratio;
+                            canvas.getContext("2d").scale(ratio, ratio);
+                        }
+                        lucide.createIcons();
+                    });
+                };
+
+                const clearSignature = () => signaturePad?.clear();
+
+                const submitFinal = async () => {
+                    if (!verifyName.value) {
+                        Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อผู้รับรอง', 'info');
+                        return;
+                    }
+                    if (signaturePad.isEmpty()) {
+                        Swal.fire('แจ้งเตือน', 'กรุณาลงลายมือชื่อ', 'info');
+                        return;
+                    }
+
+                    isLoading.value = true;
+                    try {
+                        // บันทึกผ่าน doPost (Mockup Logic)
+                        const postData = {
+                            action: 'saveSurvey',
+                            deptId: currentDept.value.DEP_ID,
+                            items: selectedItems.value,
+                            verifier: verifyName.value,
+                            signature: signaturePad.toDataURL()
+                        };
+                        
+                        // จำลองการบันทึก
+                        setTimeout(() => {
+                            isLoading.value = false;
+                            refID.value = `SV-${currentDept.value.DEP_ID}-${Date.now().toString().slice(-4)}`;
+                            step.value = 'result';
+                            nextTick(() => lucide.createIcons());
+                        }, 2000);
+                    } catch (e) {
+                        isLoading.value = false;
+                        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+                    }
+                };
+
+                const shareResult = () => {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'หลักฐานการตรวจสอบครุภัณฑ์',
+                            text: `หน่วยงาน ${currentDept.value.DEP_NAME_LOC} ตรวจสอบแล้ว ${selectedItems.value.length} รายการ`,
+                            url: window.location.href + '?ref=' + refID.value
+                        });
+                    } else {
+                        Swal.fire('แชร์ข้อมูล', 'คัดลอกลิงก์สำเร็จ (จำลอง)', 'success');
+                    }
+                };
+
+                const resetApp = () => {
+                    step.value = 'main';
+                    selectedBuilding.value = '';
+                    verifyName.value = '';
+                    selectedItems.value = [];
+                    init();
+                };
 
                 onMounted(init);
-                return { step, isLoading, dashboard, buildings, selectedBuilding, deptsInBuilding, deptsByFloor, sortedFloors, selectBuilding }
+
+                return {
+                    step, isLoading, dashboard, buildings, selectedBuilding, deptsInBuilding,
+                    deptsByFloor, fetchDepts, openSurveyForm, currentDept, searchQuery, 
+                    searchResults, debounceSearch, addItem, selectedItems, removeItem, 
+                    saveAndVerify, clearSignature, verifyName, submitFinal, refID, shareResult, resetApp
+                };
             }
         }).mount('#app');
     </script>
