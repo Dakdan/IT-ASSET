@@ -3,429 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Asset Survey - โรงพยาบาลอุดรธานี</title>
+    <title>IT Asset Survey - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Signature Pad สำหรับลงลายเซ็น -->
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <style>
-        body { font-family: 'Kanit', sans-serif; background: #fff; }
-        .bg-pink-gradient { background: linear-gradient(135deg, #fce4ec 0%, #ffffff 100%); }
-        .header-pink { background: linear-gradient(180deg, #ad1457 0%, #d81b60 100%); color: white; }
-        .card-pink { background: white; border-radius: 1.25rem; border: 1px solid #f8bbd0; box-shadow: 0 4px 15px rgba(216, 27, 96, 0.05); }
-        .btn-pink { background: linear-gradient(90deg, #d81b60 0%, #ec407a 100%); color: white; border-radius: 0.75rem; transition: transform 0.2s; }
-        .btn-pink:active { transform: scale(0.95); }
-        .watermark { position: fixed; bottom: 20px; right: 20px; font-size: 14px; color: rgba(216, 27, 96, 0.15); font-weight: bold; pointer-events: none; z-index: 0; }
-        [v-cloak] { display: none; }
-        .signature-container { border: 2px dashed #f8bbd0; background: #fff5f8; border-radius: 10px; }
-        @media print { .no-print { display: none; } .print-area { display: block; border: none; } }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #fdf2f4;
+        }
+        .gradient-header {
+            background: linear-gradient(135deg, #ff85a2 0%, #ffb6c1 100%);
+        }
+        .card-stat {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(255, 182, 193, 0.2);
+            transition: transform 0.2s;
+        }
+        .card-stat:hover {
+            transform: translateY(-5px);
+        }
+        .building-group-header {
+            background-color: #fff1f2;
+            border-left: 5px solid #ff85a2;
+        }
     </style>
 </head>
-<body class="bg-pink-gradient min-h-screen">
-    <div id="app" v-cloak>
-        <div class="watermark text-xl">IT UDON HOSP</div>
+<body class="min-h-screen pb-10">
 
-        <!-- Header -->
-        <header class="header-pink p-5 text-center shadow-lg sticky top-0 z-40 no-print">
-            <div class="flex justify-center mb-1">
-                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-14 h-14 bg-white p-1 rounded-full shadow-md">
+    <!-- Header (รูปแบบกลางจากระบบ) -->
+    <header class="gradient-header text-white p-6 shadow-lg mb-8">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-white p-2 rounded-full shadow-inner">
+                    <img src="https://lh3.googleusercontent.com/d/1ZVzODRCE9xvSAOLdOeicsBFCuUNQTZ7KvaQvdWraweQ" alt="Logo" class="w-12 h-12 object-contain">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight uppercase">IT Asset Survey</h1>
+                    <p class="text-pink-100 text-sm opacity-90">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ประจำปี - โรงพยาบาลอุดรธานี</p>
+                </div>
             </div>
-            <h1 class="text-lg font-bold">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ประจำปี</h1>
-            <p class="text-pink-100 text-[12px]">โรงพยาบาลอุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</p>
-        </header>
+            <button onclick="fetchLatestData()" class="bg-white/20 hover:bg-white/30 px-6 py-2 rounded-full backdrop-blur-sm transition text-sm font-bold border border-white/40">
+                รีเฟรชข้อมูล
+            </button>
+        </div>
+    </header>
 
-        <main class="max-w-4xl mx-auto p-4 relative z-10">
+    <main class="max-w-6xl mx-auto px-4">
+        
+        <!-- Dashboard Section (5 หัวข้อตาม Prompt) -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-10">
+            <!-- 1. เป้าหมาย (คอลัมน์ R) -->
+            <div class="card-stat p-5 text-center border-b-4 border-pink-400">
+                <p class="text-gray-500 text-[10px] font-bold uppercase mb-1">1. เป้าหมาย (Col R)</p>
+                <h2 id="dash-goal-r" class="text-2xl font-black text-pink-600">-</h2>
+                <p class="text-[9px] text-gray-400 mt-1">นับจาก Asset_DB</p>
+            </div>
+            <!-- 2. Asset_In_Databass -->
+            <div class="card-stat p-5 text-center border-b-4 border-pink-500">
+                <p class="text-gray-500 text-[10px] font-bold uppercase mb-1">2. Asset_In_Databass</p>
+                <h2 id="dash-in" class="text-2xl font-black text-pink-700">-</h2>
+                <p class="text-[9px] text-gray-400 mt-1">ตรวจสอบในระบบ</p>
+            </div>
+            <!-- 3. Asset_Out_Databass -->
+            <div class="card-stat p-5 text-center border-b-4 border-orange-400">
+                <p class="text-gray-500 text-[10px] font-bold uppercase mb-1">3. Asset_Out_Databass</p>
+                <h2 id="dash-out" class="text-2xl font-black text-orange-500">-</h2>
+                <p class="text-[9px] text-gray-400 mt-1">ตรวจสอบนอกระบบ</p>
+            </div>
+            <!-- 4. Sum -->
+            <div class="card-stat p-5 text-center border-b-4 border-blue-400">
+                <p class="text-gray-500 text-[10px] font-bold uppercase mb-1">4. Sum</p>
+                <h2 id="dash-sum" class="text-2xl font-black text-blue-600">-</h2>
+                <p class="text-[9px] text-gray-400 mt-1">ผลรวมทั้งหมด</p>
+            </div>
+            <!-- 5. Percentage (ข้อ 1 / ข้อ 3) -->
+            <div class="card-stat p-5 text-center border-b-4 border-green-400">
+                <p class="text-gray-500 text-[10px] font-bold uppercase mb-1">5. Percentage (%)</p>
+                <h2 id="dash-percent" class="text-2xl font-black text-green-600">-%</h2>
+                <p class="text-[9px] text-gray-400 mt-1">(เป้าหมาย / Sum) * 100</p>
+            </div>
+        </div>
 
-            <!-- STEP 1: DASHBOARD & BUILDING SELECTION -->
-            <section v-if="step === 'main'" class="space-y-6">
-                <!-- Dashboard Card -->
-                <div class="card-pink p-5 bg-white overflow-hidden relative">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="font-bold text-pink-700 flex items-center gap-2">
-                            <i data-lucide="bar-chart"></i> ภาพรวมการสำรวจ ปี {{ dashboard.year }}
-                        </h2>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="p-3 bg-pink-50 rounded-xl border border-pink-100">
-                            <p class="text-[11px] text-pink-400 font-bold uppercase">เป้าหมาย (R)</p>
-                            <p class="text-2xl font-black text-pink-600">{{ dashboard.target || 0 }}</p>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100">
-                            <p class="text-[11px] text-blue-400 font-bold uppercase">In Database</p>
-                            <p class="text-2xl font-black text-blue-600">{{ dashboard.inDatabase || 0 }}</p>
-                        </div>
-                        <div class="p-3 bg-purple-50 rounded-xl border border-purple-100">
-                            <p class="text-[11px] text-purple-400 font-bold uppercase">Out Database</p>
-                            <p class="text-2xl font-black text-purple-600">{{ dashboard.outDatabase || 0 }}</p>
-                        </div>
-                        <div class="p-3 bg-green-50 rounded-xl border border-green-100">
-                            <p class="text-[11px] text-green-400 font-bold uppercase">Progress</p>
-                            <p class="text-2xl font-black text-green-600">{{ dashboard.progress || 0 }}%</p>
-                        </div>
-                    </div>
+        <!-- Survey List Section -->
+        <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-pink-100">
+            <div class="p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">รายการที่มีการตรวจสอบปีล่าสุด</h3>
+                    <p class="text-xs text-gray-400">จัดกลุ่มตามตึก เรียงตามชั้น และหน่วยงาน</p>
                 </div>
-
-                <!-- Building List -->
-                <div class="space-y-4">
-                    <h3 class="font-bold text-gray-700 px-2 flex items-center gap-2">
-                        <i data-lucide="map-pin" class="text-pink-600"></i> กรุณาเลือกตึก/อาคาร
-                    </h3>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        <button v-for="b in buildings" :key="b.name" @click="fetchDepts(b.name)"
-                            class="card-pink p-4 font-bold text-gray-600 hover:bg-pink-600 hover:text-white transition-all shadow-sm">
-                            {{ b.name }}
-                        </button>
-                    </div>
+                <div class="relative w-full md:w-80">
+                    <input type="text" id="search-input" onkeyup="filterTable()" placeholder="ค้นหาหน่วยงาน หรืออาคาร..." class="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-pink-200 outline-none text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                 </div>
+            </div>
 
-                <!-- Department List -->
-                <div v-if="selectedBuilding" class="space-y-4 mt-6 animate-in fade-in duration-500">
-                    <h3 class="font-bold text-pink-700 px-2">ตึก: {{ selectedBuilding }}</h3>
-                    <div v-for="(depts, floor) in deptsByFloor" :key="floor" class="space-y-2">
-                        <div class="text-[12px] font-bold text-pink-400 pl-2">ชั้น {{ floor }}</div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div v-for="d in depts" :key="d.DEP_ID" class="card-pink p-4 flex justify-between items-center">
-                                <div>
-                                    <p class="font-bold text-gray-800">{{ d.DEP_NAME_LOC }}</p>
-                                    <p class="text-[10px] text-gray-400">ID: {{ d.DEP_ID }}</p>
-                                </div>
-                                <button @click="openSurveyForm(d)" class="btn-pink px-4 py-2 text-xs font-bold shadow-md hover:opacity-90">
-                                    เริ่มตรวจสอบ
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left" id="main-survey-table">
+                    <thead class="bg-gray-50/50 text-gray-400 text-[11px] uppercase tracking-wider font-bold">
+                        <tr>
+                            <th class="px-8 py-4">อาคาร</th>
+                            <th class="px-4 py-4">ชั้น</th>
+                            <th class="px-4 py-4">หน่วยงาน</th>
+                            <th class="px-4 py-4 text-center">รวมจำนวน (ชิ้น)</th>
+                            <th class="px-8 py-4 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="survey-list-tbody">
+                        <!-- Data loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Dept Detail -->
+    <div id="dept-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-white rounded-[2.5rem] max-w-md w-full p-8 shadow-2xl transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-black text-gray-800" id="modal-dept-title">หน่วยงาน</h3>
+                <button onclick="closeModal()" class="text-gray-300 hover:text-red-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="bg-pink-50 rounded-2xl p-4 mb-6">
+                <p id="modal-dept-location" class="text-sm text-pink-600 font-bold tracking-wide">อาคาร / ชั้น</p>
+            </div>
+
+            <div class="space-y-3 mb-8">
+                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                    <span class="text-xs font-bold text-gray-400 uppercase">รหัสหน่วยงาน</span>
+                    <span id="modal-dept-id" class="text-sm font-black text-gray-700">-</span>
                 </div>
-            </section>
-
-            <!-- STEP 2: SURVEY FORM -->
-            <section v-if="step === 'form'" class="space-y-5 no-print">
-                <div class="flex items-center gap-2">
-                    <button @click="step = 'main'" class="p-2 bg-white rounded-full text-pink-600 shadow-sm border border-pink-100"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="font-bold text-lg text-gray-700">แบบตรวจสอบหน่วยงาน</h2>
+                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                    <span class="text-xs font-bold text-gray-400 uppercase">จำนวนครุภัณฑ์</span>
+                    <span id="modal-dept-count" class="text-sm font-black text-pink-500">-</span>
                 </div>
+            </div>
 
-                <div class="card-pink p-5 bg-white border-t-4 border-pink-600">
-                    <div class="mb-4">
-                        <p class="text-[11px] text-pink-500 font-bold">ข้อมูลหน่วยงาน</p>
-                        <h3 class="text-xl font-bold text-pink-800">{{ currentDept.DEP_NAME_LOC }}</h3>
-                        <p class="text-sm text-gray-400">อาคาร {{ currentDept.LOCATION_NAME }} | ชั้น {{ currentDept.FL }}</p>
-                    </div>
-
-                    <div class="space-y-4 pt-4 border-t border-pink-50">
-                        <label class="block font-bold text-sm text-gray-600">ค้นหาและเพิ่มครุภัณฑ์</label>
-                        <div class="relative">
-                            <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
-                            <input v-model="searchQuery" @input="debounceSearch" placeholder="ระบุ NOID / AssetID / ชื่อ..."
-                                class="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-pink-50 focus:border-pink-300 outline-none transition-all text-sm">
-                        </div>
-
-                        <!-- Search Result List -->
-                        <div v-if="searchResults.length" class="bg-white border-2 border-pink-100 rounded-xl overflow-hidden shadow-lg">
-                            <div v-for="item in searchResults" :key="item.NOID" @click="addItem(item)"
-                                class="p-3 hover:bg-pink-50 cursor-pointer flex justify-between items-center border-b last:border-0">
-                                <div>
-                                    <p class="font-bold text-sm">{{ item.itemName }}</p>
-                                    <p class="text-[10px] text-gray-400">{{ item.NOID }} | {{ item.category }}</p>
-                                </div>
-                                <i data-lucide="plus-circle" class="text-pink-500"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Selected List -->
-                <div class="space-y-3">
-                    <h4 class="font-bold text-gray-700 px-2 flex justify-between items-center">
-                        <span>รายการที่สำรวจพบ ({{ selectedItems.length }})</span>
-                    </h4>
-                    <div v-if="selectedItems.length === 0" class="text-center py-10 text-gray-400 italic bg-white rounded-2xl border-2 border-dashed border-pink-100">
-                        ยังไม่ได้เพิ่มรายการครุภัณฑ์
-                    </div>
-                    <div v-for="(item, idx) in selectedItems" :key="idx" class="card-pink p-4 bg-white flex justify-between items-center animate-in zoom-in duration-200">
-                        <div>
-                            <p class="font-bold text-sm">{{ item.itemName }}</p>
-                            <div class="flex gap-2 mt-1">
-                                <span class="text-[9px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded font-bold">{{ item.NOID }}</span>
-                                <span class="text-[9px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{{ item.category }}</span>
-                            </div>
-                        </div>
-                        <button @click="removeItem(idx)" class="text-red-400 p-2 hover:bg-red-50 rounded-full transition-colors">
-                            <i data-lucide="x" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex gap-3 pt-4 sticky bottom-4 z-20">
-                    <button @click="step = 'main'" class="flex-1 py-4 bg-white border border-pink-200 text-gray-500 font-bold rounded-2xl shadow-sm">ยกเลิก</button>
-                    <button @click="saveAndVerify" class="flex-[2] py-4 btn-pink font-bold rounded-2xl shadow-lg">บันทึกและยืนยันข้อมูล</button>
-                </div>
-            </section>
-
-            <!-- STEP 3: SIGNATURE & RECEIPT -->
-            <section v-if="step === 'verify'" class="space-y-5">
-                <div class="card-pink p-6 bg-white border-2 border-pink-100 shadow-xl">
-                    <div class="text-center mb-6">
-                        <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i data-lucide="check" class="w-10 h-10"></i>
-                        </div>
-                        <h2 class="text-xl font-bold text-pink-800">ยืนยันการตรวจสอบ</h2>
-                        <p class="text-sm text-gray-500">{{ currentDept.DEP_NAME_LOC }}</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-600 mb-1">ชื่อ-สกุล ผู้รับรองข้อมูล</label>
-                            <input v-model="verifyName" placeholder="ระบุชื่อหัวหน้าหน่วยงาน/ผู้รับผิดชอบ"
-                                class="w-full px-4 py-3 rounded-xl border-2 border-pink-50 focus:border-pink-300 outline-none text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-bold text-gray-600 mb-1">ลงลายมือชื่อ</label>
-                            <div class="signature-container relative">
-                                <canvas id="signature-pad" class="w-full h-40"></canvas>
-                                <button @click="clearSignature" class="absolute top-2 right-2 text-[10px] bg-white px-2 py-1 rounded shadow text-pink-500 font-bold">ล้างลายเซ็น</button>
-                            </div>
-                        </div>
-
-                        <div class="pt-4 space-y-3 no-print">
-                            <button @click="submitFinal" class="w-full py-4 btn-pink font-bold rounded-2xl shadow-lg flex justify-center items-center gap-2">
-                                <i data-lucide="save"></i> บันทึกรับรองข้อมูล
-                            </button>
-                            <button @click="step = 'form'" class="w-full py-3 bg-gray-50 text-gray-500 font-bold rounded-2xl">กลับไปแก้ไข</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- STEP 4: RESULT SLIP -->
-            <section v-if="step === 'result'" class="space-y-5 animate-in zoom-in duration-300">
-                <div class="card-pink p-8 bg-white text-center border-4 border-pink-50">
-                    <h2 class="text-2xl font-black text-pink-600 mb-2 uppercase">Success!</h2>
-                    <p class="text-gray-500 text-sm mb-6 font-bold">ดำเนินการตรวจสอบครุภัณฑ์เรียบร้อยแล้ว</p>
-                    
-                    <div class="bg-pink-50 rounded-2xl p-6 mb-6 border border-pink-100 relative">
-                        <div class="text-[10px] absolute top-2 right-4 text-pink-300 font-bold">REF: {{ refID }}</div>
-                        <p class="text-gray-700 font-bold">{{ currentDept.DEP_NAME_LOC }}</p>
-                        <p class="text-sm text-pink-400 mt-1">จำนวนครุภัณฑ์ที่พบ: {{ selectedItems.length }} รายการ</p>
-                        
-                        <div class="flex justify-center mt-6">
-                            <!-- QR Code Placeholder -->
-                            <div class="p-3 bg-white rounded-xl shadow-inner border border-pink-100">
-                                <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + refID" class="w-32 h-32">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 no-print">
-                        <button @click="window.print()" class="p-4 bg-gray-100 text-gray-600 rounded-2xl font-bold flex flex-col items-center gap-1 text-sm">
-                            <i data-lucide="printer" class="w-5 h-5"></i> พิมพ์เอกสาร
-                        </button>
-                        <button @click="shareResult" class="p-4 bg-blue-50 text-blue-600 rounded-2xl font-bold flex flex-col items-center gap-1 text-sm">
-                            <i data-lucide="share" class="w-5 h-5"></i> ส่งต่อ/แชร์
-                        </button>
-                    </div>
-                    
-                    <button @click="resetApp" class="w-full mt-6 py-4 btn-pink font-bold rounded-2xl shadow-lg">
-                        เสร็จสิ้น (กลับหน้าหลัก)
-                    </button>
-                </div>
-            </section>
-
-        </main>
-
-        <!-- Loading Overlay -->
-        <div v-if="isLoading" class="fixed inset-0 bg-white/90 z-[100] flex flex-col items-center justify-center">
-            <div class="w-16 h-16 border-4 border-pink-600 border-t-transparent rounded-full animate-spin shadow-xl"></div>
-            <p class="mt-6 font-bold text-pink-600 animate-pulse tracking-widest uppercase">IT Survey System...</p>
+            <button onclick="goToForm()" class="w-full py-4 bg-pink-500 text-white font-black rounded-2xl shadow-lg hover:bg-pink-600 transition-all active:scale-95">
+                ดูรายละเอียดครุภัณฑ์
+            </button>
         </div>
     </div>
 
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        const { createApp, ref, onMounted, computed, nextTick } = Vue;
-        // ปรับเป็น URL Web App ของคุณ
-        const API_URL = "https://script.google.com/macros/s/AKfycbzL-S57_nU-Zp25P8R5u16Xy5wL5m5v9-5m5m5m5m/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
+        
+        window.onload = fetchLatestData;
 
-        createApp({
-            setup() {
-                const step = ref('main');
-                const isLoading = ref(false);
-                const dashboard = ref({});
-                const buildings = ref([]);
-                const selectedBuilding = ref('');
-                const deptsInBuilding = ref([]);
-                const currentDept = ref({});
-                const searchQuery = ref('');
-                const searchResults = ref([]);
-                const selectedItems = ref([]);
-                const verifyName = ref('');
-                const refID = ref('');
-                let signaturePad = null;
-
-                const init = async () => {
-                    isLoading.value = true;
-                    try {
-                        // ดึงข้อมูล Dashboard ใหม่ (Survey Extension)
-                        const respDash = await fetch(`${API_URL}?action=getSurveyDashboard`);
-                        dashboard.value = await respDash.json();
-                        
-                        // ดึงรายชื่อตึก
-                        const respBuild = await fetch(`${API_URL}?action=getBuildings`);
-                        buildings.value = await respBuild.json();
-                    } catch (e) {
-                        // Fallback data สำหรับทดสอบ UI
-                        dashboard.value = { year: '2567', target: 0, inDatabase: 0, outDatabase: 0, progress: 0 };
-                        buildings.value = [{name:'ตึกอำนวยการ'}, {name:'ตึกศัลยกรรม'}, {name:'อาคาร 10 ชั้น'}];
-                    } finally {
-                        isLoading.value = false;
-                        nextTick(() => lucide.createIcons());
-                    }
-                };
-
-                const fetchDepts = async (building) => {
-                    isLoading.value = true;
-                    selectedBuilding.value = building;
-                    try {
-                        const resp = await fetch(`${API_URL}?action=getDeptsInBuilding&building=${encodeURIComponent(building)}`);
-                        deptsInBuilding.value = await resp.json();
-                    } catch (e) {
-                        deptsInBuilding.value = [];
-                    } finally {
-                        isLoading.value = false;
-                        nextTick(() => lucide.createIcons());
-                    }
-                };
-
-                const deptsByFloor = computed(() => {
-                    return deptsInBuilding.value.reduce((acc, d) => {
-                        (acc[d.FL] = acc[d.FL] || []).push(d);
-                        return acc;
-                    }, {});
-                });
-
-                const openSurveyForm = (dept) => {
-                    currentDept.value = dept;
-                    selectedItems.value = [];
-                    step.value = 'form';
-                    nextTick(() => lucide.createIcons());
-                };
-
-                let searchTimer = null;
-                const debounceSearch = () => {
-                    clearTimeout(searchTimer);
-                    searchTimer = setTimeout(async () => {
-                        if (searchQuery.value.length < 2) { searchResults.value = []; return; }
-                        try {
-                            const resp = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(searchQuery.value)}`);
-                            searchResults.value = await resp.json();
-                        } catch (e) { searchResults.value = []; }
-                        nextTick(() => lucide.createIcons());
-                    }, 500);
-                };
-
-                const addItem = (item) => {
-                    if (!selectedItems.value.find(i => i.NOID === item.NOID)) {
-                        selectedItems.value.push(item);
-                    }
-                    searchQuery.value = '';
-                    searchResults.value = [];
-                    nextTick(() => lucide.createIcons());
-                };
-
-                const removeItem = (idx) => {
-                    selectedItems.value.splice(idx, 1);
-                    nextTick(() => lucide.createIcons());
-                };
-
-                const saveAndVerify = () => {
-                    if (selectedItems.value.length === 0) {
-                        Swal.fire('ข้อความ', 'กรุณาเพิ่มครุภัณฑ์อย่างน้อย 1 รายการ', 'warning');
-                        return;
-                    }
-                    step.value = 'verify';
-                    nextTick(() => {
-                        const canvas = document.getElementById('signature-pad');
-                        if (canvas) {
-                            signaturePad = new SignaturePad(canvas);
-                            // ปรับขนาด Canvas ให้เข้ากับมือถือ
-                            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                            canvas.width = canvas.offsetWidth * ratio;
-                            canvas.height = canvas.offsetHeight * ratio;
-                            canvas.getContext("2d").scale(ratio, ratio);
-                        }
-                        lucide.createIcons();
-                    });
-                };
-
-                const clearSignature = () => signaturePad?.clear();
-
-                const submitFinal = async () => {
-                    if (!verifyName.value) {
-                        Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อผู้รับรอง', 'info');
-                        return;
-                    }
-                    if (signaturePad.isEmpty()) {
-                        Swal.fire('แจ้งเตือน', 'กรุณาลงลายมือชื่อ', 'info');
-                        return;
-                    }
-
-                    isLoading.value = true;
-                    try {
-                        // บันทึกผ่าน doPost (Mockup Logic)
-                        const postData = {
-                            action: 'saveSurvey',
-                            deptId: currentDept.value.DEP_ID,
-                            items: selectedItems.value,
-                            verifier: verifyName.value,
-                            signature: signaturePad.toDataURL()
-                        };
-                        
-                        // จำลองการบันทึก
-                        setTimeout(() => {
-                            isLoading.value = false;
-                            refID.value = `SV-${currentDept.value.DEP_ID}-${Date.now().toString().slice(-4)}`;
-                            step.value = 'result';
-                            nextTick(() => lucide.createIcons());
-                        }, 2000);
-                    } catch (e) {
-                        isLoading.value = false;
-                        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
-                    }
-                };
-
-                const shareResult = () => {
-                    if (navigator.share) {
-                        navigator.share({
-                            title: 'หลักฐานการตรวจสอบครุภัณฑ์',
-                            text: `หน่วยงาน ${currentDept.value.DEP_NAME_LOC} ตรวจสอบแล้ว ${selectedItems.value.length} รายการ`,
-                            url: window.location.href + '?ref=' + refID.value
-                        });
-                    } else {
-                        Swal.fire('แชร์ข้อมูล', 'คัดลอกลิงก์สำเร็จ (จำลอง)', 'success');
-                    }
-                };
-
-                const resetApp = () => {
-                    step.value = 'main';
-                    selectedBuilding.value = '';
-                    verifyName.value = '';
-                    selectedItems.value = [];
-                    init();
-                };
-
-                onMounted(init);
-
-                return {
-                    step, isLoading, dashboard, buildings, selectedBuilding, deptsInBuilding,
-                    deptsByFloor, fetchDepts, openSurveyForm, currentDept, searchQuery, 
-                    searchResults, debounceSearch, addItem, selectedItems, removeItem, 
-                    saveAndVerify, clearSignature, verifyName, submitFinal, refID, shareResult, resetApp
-                };
+        async function fetchLatestData() {
+            try {
+                const res = await fetch(`${API_URL}?action=getDashboard`);
+                const data = await res.json();
+                
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    calculateDashboard(latest);
+                    renderSurveyTable(data);
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire("Error", "ไม่สามารถดึงข้อมูลได้", "error");
             }
-        }).mount('#app');
+        }
+
+        function calculateDashboard(latest) {
+            // 1. เป้าหมาย (คอลัมน์ R จากฐานข้อมูล Asset_DB)
+            const goalR = latest.Goal_R || 0; 
+            // 2. Asset_In_Databass
+            const assetIn = latest.Asset_In_Databass || 0;
+            // 3. Asset_Out_Databass
+            const assetOut = latest.Asset_Out_Databass || 0;
+            // 4. Sum
+            const sum = latest.Sum || (assetIn + assetOut);
+            
+            // 5. หาเปอร์เซ็นจาก ข้อ 1 (เป้าหมาย) และ ข้อ 3 (Sum)
+            const percentage = sum > 0 ? ((goalR / sum) * 100).toFixed(2) : 0;
+
+            document.getElementById('dash-goal-r').innerText = Number(goalR).toLocaleString();
+            document.getElementById('dash-in').innerText = Number(assetIn).toLocaleString();
+            document.getElementById('dash-out').innerText = Number(assetOut).toLocaleString();
+            document.getElementById('dash-sum').innerText = Number(sum).toLocaleString();
+            document.getElementById('dash-percent').innerText = percentage + "%";
+        }
+
+        function renderSurveyTable(data) {
+            const tbody = document.getElementById('survey-list-tbody');
+            
+            // เรียงข้อมูลตาม ตึก -> ชั้น -> หน่วยงาน
+            const sortedData = data.sort((a, b) => {
+                if (a.Building !== b.Building) return (a.Building || "").localeCompare(b.Building || "");
+                if (a.Floor !== b.Floor) return (a.Floor || 0) - (b.Floor || 0);
+                return (a.DeptName || "").localeCompare(b.DeptName || "");
+            });
+
+            let html = "";
+            let currentBuilding = "";
+
+            sortedData.forEach(item => {
+                // จัดกลุ่มตามตึก
+                if (item.Building !== currentBuilding) {
+                    currentBuilding = item.Building;
+                    html += `
+                        <tr class="building-group-header">
+                            <td colspan="5" class="px-8 py-3 text-[11px] font-black text-pink-600 uppercase tracking-widest">
+                                อาคาร: ${currentBuilding || "ไม่ระบุตึก"}
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                html += `
+                    <tr class="border-b border-gray-50 hover:bg-pink-50/40 transition-colors group">
+                        <td class="px-8 py-5 text-xs text-gray-400 font-medium">${item.Building || "-"}</td>
+                        <td class="px-4 py-5 text-sm font-black text-gray-700">${item.Floor || "-"}</td>
+                        <td class="px-4 py-5 text-sm font-bold text-gray-800">${item.DeptName || "-"}</td>
+                        <td class="px-4 py-5 text-center">
+                            <span class="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-black">
+                                ${item.Sum || 0}
+                            </span>
+                        </td>
+                        <td class="px-8 py-5 text-center">
+                            <button onclick="openDeptModal('${item.DeptName}', '${item.DEPT_ID}', '${item.Building}', '${item.Floor}', '${item.Sum}')" 
+                                    class="text-[11px] bg-pink-500 text-white px-6 py-2 rounded-xl font-black hover:bg-pink-600 transition-all shadow-md active:scale-95">
+                                เลือก
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-10 text-center text-gray-400">ไม่พบข้อมูล</td></tr>';
+        }
+
+        function filterTable() {
+            const input = document.getElementById("search-input").value.toLowerCase();
+            const tr = document.getElementById("survey-list-tbody").getElementsByTagName("tr");
+
+            for (let i = 0; i < tr.length; i++) {
+                if (tr[i].classList.contains('building-group-header')) continue;
+                const text = tr[i].innerText.toLowerCase();
+                tr[i].style.display = text.includes(input) ? "" : "none";
+            }
+        }
+
+        function openDeptModal(name, id, bldg, floor, count) {
+            document.getElementById('modal-dept-title').innerText = name;
+            document.getElementById('modal-dept-location').innerText = `อาคาร ${bldg} / ชั้น ${floor}`;
+            document.getElementById('modal-dept-id').innerText = id;
+            document.getElementById('modal-dept-count').innerText = count + " ชิ้น";
+            
+            const modal = document.getElementById('dept-modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('dept-modal');
+            const content = document.getElementById('modal-content');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function goToForm() {
+            Swal.fire("กำลังโหลด", "แสดงรายการครุภัณฑ์ของหน่วยงาน...", "info");
+        }
     </script>
 </body>
 </html>
