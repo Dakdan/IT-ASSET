@@ -3,133 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ IT</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>IT Asset Survey - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #fdf2f4; min-height: 100vh; }
-        .glass-card { background: rgba(255, 255, 255, 0.95); border-radius: 24px; box-shadow: 0 10px 30px rgba(255, 154, 178, 0.1); }
-        .btn-primary { background: linear-gradient(135deg, #ff85a2 0%, #ff6384 100%); color: white; }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Header สีชมพูไล่เฉดตามต้นฉบับ */
+        .pink-gradient-header {
+            background: linear-gradient(180deg, #b0124c 0%, #e91e63 50%, #f48fb1 100%);
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            box-shadow: 0 10px 25px rgba(233, 30, 99, 0.15);
+        }
+
+        /* กล่องสถิติ 5 กล่อง */
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 12px 6px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border-bottom: 4px solid transparent;
+            transition: transform 0.2s;
+        }
+        .stat-card:active { transform: scale(0.95); }
+
+        /* Navigation Bar ด้านล่าง */
+        .bottom-nav-container {
+            background: #1a1c1e;
+            border-radius: 40px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .center-add-btn {
+            background: #e91e63;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-top: -35px;
+            border: 5px solid #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.4);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e91e63; border-radius: 10px; }
+        
+        .bldg-divider {
+            background: #fff0f3;
+            color: #d81b60;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="flex justify-center">
 
-    <!-- Dashboard Header -->
-    <div class="max-w-6xl mx-auto mb-10 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <div class="bg-white p-2 rounded-xl shadow-sm"><img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-10 h-10"></div>
-            <div>
-                <h1 class="text-xl font-bold text-gray-800">ระบบสำรวจครุภัณฑ์คอมพิวเตอร์ IT</h1>
-                <p class="text-pink-500 text-xs">โรงพยาบาลอุดรธานี (ปีงบประมาณ 2567)</p>
+    <div class="w-full max-w-md bg-[#f8f9fa] min-h-screen relative flex flex-col overflow-hidden shadow-2xl">
+        
+        <!-- ส่วนหัว (Header) -->
+        <div class="pink-gradient-header pt-12 pb-14 px-6 text-center text-white shrink-0 relative z-10">
+            <div class="flex justify-center mb-4">
+                <div class="bg-white p-2 rounded-2xl shadow-xl">
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-12 h-12 object-contain">
+                </div>
             </div>
-        </div>
-        <button onclick="loadDashboard()" class="text-gray-500 bg-white px-4 py-2 rounded-xl shadow-sm text-sm hover:bg-gray-50">รีเฟรชข้อมูล</button>
-    </div>
-
-    <div class="max-w-6xl mx-auto">
-        <!-- Stats Row -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            <div class="glass-card p-6 text-center border-b-4 border-blue-400">
-                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">เป้าหมาย (GOAL)</p>
-                <p id="stat-goal" class="text-2xl font-bold">0</p>
-            </div>
-            <div class="glass-card p-6 text-center border-b-4 border-emerald-400">
-                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">IN DATABASE</p>
-                <p id="stat-in" class="text-2xl font-bold text-emerald-500">0</p>
-            </div>
-            <div class="glass-card p-6 text-center border-b-4 border-amber-400">
-                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">OUT DATABASE</p>
-                <p id="stat-out" class="text-2xl font-bold text-amber-500">0</p>
-            </div>
-            <div class="glass-card p-6 text-center border-b-4 border-indigo-400">
-                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">รวมที่สำรวจ (SUM)</p>
-                <p id="stat-sum" class="text-2xl font-bold text-indigo-500">0</p>
-            </div>
-            <div class="glass-card p-6 text-center border-b-4 border-pink-500">
-                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">ความสำเร็จ (%)</p>
-                <p id="stat-perc" class="text-2xl font-bold text-pink-600">0%</p>
-            </div>
+            <h1 class="text-xl font-bold tracking-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+            <p class="text-[10px] font-light opacity-80 mt-1 uppercase tracking-[0.2em]">โรงพยาบาลอุดรธานี : กลุ่มงานไอที</p>
         </div>
 
-        <!-- Table -->
-        <div class="glass-card overflow-hidden">
-            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="font-bold text-gray-700">📊 รายการสำรวจแยกตามตึก/หน่วยงาน</h3>
-                <input type="text" id="search" onkeyup="filterTable()" placeholder="ค้นหาหน่วยงาน..." class="border border-gray-200 rounded-lg px-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-pink-200">
+        <!-- เนื้อหาหลัก -->
+        <main class="flex-grow px-4 -mt-10 relative z-20 pb-32">
+            
+            <!-- Dashboard สถิติ 5 กล่อง -->
+            <div class="grid grid-cols-3 gap-2 mb-2">
+                <!-- 1. เป้าหมาย -->
+                <div class="stat-card border-blue-400">
+                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">เป้าหมาย (R)</p>
+                    <h2 id="stat-goal" class="text-lg font-black text-gray-800">-</h2>
+                </div>
+                <!-- 2. In Database -->
+                <div class="stat-card border-emerald-400">
+                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">In Database</p>
+                    <h2 id="stat-in" class="text-lg font-black text-gray-800">-</h2>
+                </div>
+                <!-- 3. Out Database -->
+                <div class="stat-card border-amber-400">
+                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">Out Database</p>
+                    <h2 id="stat-out" class="text-lg font-black text-gray-800">-</h2>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-gray-400 font-bold">
-                        <tr>
-                            <th class="px-6 py-4">อาคาร / ตึก</th>
-                            <th class="px-6 py-4 text-center">ชั้น</th>
-                            <th class="px-6 py-4">ชื่อหน่วยงาน</th>
-                            <th class="px-6 py-4 text-center text-emerald-600">ในระบบ</th>
-                            <th class="px-6 py-4 text-center text-amber-600">นอกระบบ</th>
-                            <th class="px-6 py-4 text-center">รวม (ชิ้น)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody" class="divide-y divide-gray-50">
-                        <!-- Data will be loaded here -->
-                    </tbody>
-                </table>
+            <div class="grid grid-cols-2 gap-2 mb-6">
+                <!-- 4. รวมสำรวจ -->
+                <div class="stat-card border-pink-400">
+                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">รวมสำรวจ</p>
+                    <h2 id="stat-sum" class="text-lg font-black text-gray-800">-</h2>
+                </div>
+                <!-- 5. ความสำเร็จ -->
+                <div class="stat-card border-purple-500">
+                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">ความสำเร็จ</p>
+                    <h2 id="stat-percent" class="text-lg font-black text-purple-600">-%</h2>
+                </div>
+            </div>
+
+            <!-- รายการหน่วยงาน -->
+            <div class="bg-white rounded-[28px] shadow-sm overflow-hidden border border-gray-100">
+                <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-white/50">
+                    <h3 class="font-bold text-xs text-gray-600 flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-pink-500"></i>
+                        รายการตรวจสอบแยกตามอาคาร
+                    </h3>
+                    <div id="loader" class="animate-spin rounded-full h-3 w-3 border-2 border-pink-500 border-t-transparent hidden"></div>
+                </div>
+
+                <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <tbody id="survey-tbody">
+                            <tr>
+                                <td class="p-12 text-center text-gray-300 text-xs italic">
+                                    กำลังดึงข้อมูลจากระบบ...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- แถบเมนูด้านล่าง -->
+        <div class="fixed bottom-6 left-0 right-0 px-6 flex justify-center z-50 pointer-events-none">
+            <div class="bottom-nav-container w-full max-w-sm pointer-events-auto">
+                <button class="text-pink-500">
+                    <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                </button>
+                <button onclick="location.href='asset_survey_form.html'" class="center-add-btn">
+                    <i data-lucide="plus" class="w-9 h-9"></i>
+                </button>
+                <button class="text-gray-500 opacity-50">
+                    <i data-lucide="search" class="w-6 h-6"></i>
+                </button>
             </div>
         </div>
+
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec"; // นำ URL จากการ Deploy Code.gs มาวางที่นี่
+        const API_URL = "https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
-        async function loadDashboard() {
+        window.onload = () => {
+            lucide.createIcons();
+            fetchData();
+        };
+
+        async function fetchData() {
+            document.getElementById('loader').classList.remove('hidden');
             try {
-                const res = await fetch(`${API_URL}?action=getDashboard`);
+                // เรียก action 'getMainDashboard' ตามที่มีใน code.gs
+                const res = await fetch(`${API_URL}?action=getMainDashboard&t=${Date.now()}`);
                 const data = await res.json();
                 
-                // Stats
-                document.getElementById('stat-goal').innerText = data.goal_r.toLocaleString();
-                document.getElementById('stat-in').innerText = data.activities[0].Asset_In_Databass.toLocaleString();
-                document.getElementById('stat-out').innerText = data.activities[0].Asset_Out_Databass.toLocaleString();
-                document.getElementById('stat-sum').innerText = data.activities[0].Sum.toLocaleString();
-                document.getElementById('stat-perc').innerText = ((data.activities[0].Sum / data.goal_r) * 100).toFixed(1) + '%';
-
-                // Map Departments
-                const deptMap = {};
-                data.deptList.forEach(d => { deptMap[d.deptId] = d; });
-
-                const summary = {};
-                const process = (logs, type) => {
-                    logs.forEach(l => {
-                        const id = l.DEP_ID;
-                        if (id && deptMap[id]) {
-                            if (!summary[id]) summary[id] = { ...deptMap[id], in: 0, out: 0 };
-                            summary[id][type]++;
-                        }
-                    });
-                };
-                process(data.assetLogs, 'in');
-                process(data.nonumberLogs, 'out');
-
-                const tbody = document.getElementById('tbody');
-                tbody.innerHTML = '';
-                Object.values(summary).sort((a,b) => a.building.localeCompare(b.building)).forEach(item => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-pink-50/30">
-                            <td class="px-6 py-4 font-medium text-gray-600">🏢 ${item.building}</td>
-                            <td class="px-6 py-4 text-center text-gray-400">${item.floor}</td>
-                            <td class="px-6 py-4 text-gray-700">${item.deptName}</td>
-                            <td class="px-6 py-4 text-center text-emerald-500 font-bold">${item.in}</td>
-                            <td class="px-6 py-4 text-center text-amber-500 font-bold">${item.out}</td>
-                            <td class="px-6 py-4 text-center"><span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold">${item.in + item.out}</span></td>
-                        </tr>`;
-                });
-            } catch (e) { console.error(e); }
+                if (data.status === "success") {
+                    updateDashboard(data.summary);
+                    renderTable(data.details);
+                }
+            } catch (err) {
+                console.error("Error fetching data:", err);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
         }
-        window.onload = loadDashboard;
-        function filterTable() {
-            const val = document.getElementById('search').value.toUpperCase();
-            const rows = document.getElementById('tbody').getElementsByTagName('tr');
-            for (let row of rows) { row.style.display = row.innerText.toUpperCase().includes(val) ? "" : "none"; }
+
+        function updateDashboard(summary) {
+            const goal = summary.goal_r || 0;
+            const sum = summary.sum || 0;
+            const inDb = summary.asset_in || 0;
+            const outDb = summary.asset_out || 0;
+            const percent = goal > 0 ? ((sum / goal) * 100).toFixed(1) : 0;
+
+            document.getElementById('stat-goal').innerText = goal.toLocaleString();
+            document.getElementById('stat-in').innerText = inDb.toLocaleString();
+            document.getElementById('stat-out').innerText = outDb.toLocaleString();
+            document.getElementById('stat-sum').innerText = sum.toLocaleString();
+            document.getElementById('stat-percent').innerText = `${percent}%`;
+        }
+
+        function renderTable(details) {
+            const tbody = document.getElementById('survey-tbody');
+            if (!details || details.length === 0) {
+                tbody.innerHTML = '<tr><td class="p-10 text-center text-gray-400 text-xs">ไม่พบข้อมูลการสำรวจ</td></tr>';
+                return;
+            }
+
+            let html = "";
+            let currentBldg = "";
+
+            details.forEach(item => {
+                // แยกกลุ่มตามอาคาร
+                if (item.building !== currentBldg) {
+                    currentBldg = item.building;
+                    html += `
+                        <tr class="bldg-divider">
+                            <td colspan="3" class="px-4 py-1.5 uppercase tracking-tighter italic">
+                                อาคาร: ${currentBldg}
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                html += `
+                    <tr class="border-b border-gray-50 bg-white hover:bg-pink-50/30 transition-colors cursor-pointer" 
+                        onclick="location.href='asset_survey_form.html?deptId=${item.deptId}'">
+                        <td class="px-4 py-3">
+                            <p class="text-[8px] font-bold text-pink-500 uppercase">ชั้น ${item.floor}</p>
+                            <p class="text-xs font-semibold text-gray-700">${item.deptName}</p>
+                        </td>
+                        <td class="px-2 py-3 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[10px] font-black bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full">
+                                    ${item.sum}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="pr-4 py-3 text-right">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            lucide.createIcons();
         }
     </script>
 </body>
