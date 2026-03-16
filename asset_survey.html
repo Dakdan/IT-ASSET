@@ -4,455 +4,328 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>IT Asset Survey</title>
+<title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - โรงพยาบาลอุดรธานี</title>
+
+<link rel="icon" type="image/png" href="https://img2.pic.in.th/-227e4f6f84f29f020.png">
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@100;300;400;700;800&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 
 body{
-font-family:'Kanit',sans-serif;
-background:#f8f9fa;
+font-family:'Sarabun',sans-serif;
+background:#fdf2f8;
+margin:0;
+display:flex;
+justify-content:center;
 }
 
-.page{
-display:none;
-}
-
-.page.active{
-display:block;
-}
-
-.btn-pink{
-background:#e91e63;
-color:white;
-}
-
-.card{
+#root{
+width:100%;
+max-width:448px;
 background:white;
-border-radius:20px;
-box-shadow:0 10px 20px rgba(0,0,0,0.05);
+min-height:100vh;
+}
+
+.search-highlight{
+background:#ff007f;
+color:#fff;
+padding:2px 4px;
+border-radius:4px;
 }
 
 </style>
 </head>
 
+<body>
 
-<body class="flex justify-center">
+<div id="root"></div>
 
-<div class="w-full max-w-md min-h-screen">
+<script type="text/babel">
 
-<!-- HEADER -->
+const {useState,useEffect,useMemo,useRef}=React;
 
-<div class="bg-pink-600 text-white text-center p-4">
+const Icon=({name,className="",size=24,onClick})=>{
 
-<h1 class="font-bold text-lg">
-ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์
-</h1>
+const ref=useRef(null);
 
-<p class="text-xs opacity-80">
-IT UDON HOSP
-</p>
+useEffect(()=>{
 
-</div>
+if(window.lucide && ref.current){
 
+ref.current.innerHTML=`<i data-lucide="${name}"></i>`;
 
-<!-- DASHBOARD -->
-
-<div id="page-dashboard" class="page active p-4">
-
-<div class="card p-4 mb-4">
-
-<div class="grid grid-cols-2 gap-2 text-center">
-
-<div>
-<p class="text-xs text-gray-400">เป้าหมาย</p>
-<p id="dash-goal" class="font-bold text-lg">0</p>
-</div>
-
-<div>
-<p class="text-xs text-gray-400">รวมสำรวจ</p>
-<p id="dash-sum" class="font-bold text-lg">0</p>
-</div>
-
-</div>
-
-</div>
-
-
-<div class="card">
-
-<div class="p-3 border-b font-bold text-sm">
-รายชื่อหน่วยงาน
-</div>
-
-<div id="dept-list-container">
-
-</div>
-
-</div>
-
-
-<div class="fixed bottom-6 left-1/2 -translate-x-1/2">
-
-<button
-onclick="navigateTo('page-form')"
-class="btn-pink w-14 h-14 rounded-full text-xl">
-
-+
-
-</button>
-
-</div>
-
-</div>
-
-
-<!-- FORM -->
-
-<div id="page-form" class="page p-4">
-
-<div class="card p-4 mb-4">
-
-<select id="form-bldg" onchange="onBuildingChange()" class="w-full p-2 border rounded mb-2">
-<option value="">เลือกอาคาร</option>
-</select>
-
-<select id="form-dept" class="w-full p-2 border rounded">
-<option value="">เลือกหน่วยงาน</option>
-</select>
-
-</div>
-
-
-<div class="card p-4 mb-4">
-
-<div class="flex gap-2 mb-3">
-
-<input
-id="search-input"
-type="text"
-placeholder="ค้นหา AssetID"
-class="flex-1 p-2 border rounded">
-
-<button
-onclick="handleSearch()"
-class="btn-pink px-3 rounded">
-
-ค้นหา
-
-</button>
-
-</div>
-
-<div id="search-results" class="space-y-2">
-
-</div>
-
-<hr class="my-4">
-
-<div class="text-xs text-gray-400 mb-2">
-รายการที่เลือก
-</div>
-
-<div id="selected-list">
-
-<p class="text-center text-gray-300 text-xs">
-ยังไม่มีรายการ
-</p>
-
-</div>
-
-</div>
-
-
-<div class="flex gap-2">
-
-<button
-onclick="navigateTo('page-dashboard')"
-class="flex-1 border rounded p-3">
-
-ยกเลิก
-
-</button>
-
-<button
-class="flex-1 btn-pink rounded p-3">
-
-บันทึก
-
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-
-<script>
-
-const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
-
-let masterDepts=[];
-let selectedAssets=[];
-
-window.onload=()=>{
-
-lucide.createIcons();
-
-initApp();
+window.lucide.createIcons({
+attrs:{class:className,style:`width:${size}px;height:${size}px;`},
+nameAttr:'data-lucide'
+});
 
 }
 
+},[name,className,size]);
 
-function navigateTo(page){
+return <span ref={ref} onClick={onClick}></span>;
 
-document.querySelectorAll('.page')
-.forEach(p=>p.classList.remove('active'));
+};
 
-document.getElementById(page)
-.classList.add('active');
+const App=()=>{
 
-}
+const[view,setView]=useState('dashboard');
 
+const[allAssets,setAllAssets]=useState([]);
 
+const[searchTerm,setSearchTerm]=useState('');
 
-async function initApp(){
+const[loading,setLoading]=useState(true);
+
+const[scannerOpen,setScannerOpen]=useState(false);
+
+const[alertMsg,setAlertMsg]=useState('');
+
+const API="https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
+
+const scannerRef=useRef(null);
+
+useEffect(()=>{
+
+loadAssets();
+
+},[]);
+
+async function loadAssets(){
 
 try{
 
-const dashRes=await fetch(API+"?action=getDashboard");
-const deptRes=await fetch(API+"?action=getDepartments");
-
-const dash=await dashRes.json();
-masterDepts=await deptRes.json();
-
-updateDashboard(dash);
-initFormSelects();
-
-}catch(e){
-
-Swal.fire("Error","โหลดข้อมูลไม่ได้","error");
-
-}
-
-}
-
-
-
-function updateDashboard(data){
-
-document.getElementById("dash-goal").innerText=data.goal||0;
-document.getElementById("dash-sum").innerText=data.totalSum||0;
-
-const container=document.getElementById("dept-list-container");
-
-if(!data.details){
-
-container.innerHTML="<p class='text-center p-4 text-gray-400'>ไม่มีข้อมูล</p>";
-return;
-
-}
-
-let html="";
-
-data.details.forEach(item=>{
-
-html+=`
-
-<div
-class="p-3 border-b flex justify-between cursor-pointer"
-onclick="startSurveyFor('${item.DEPID}')">
-
-<div>
-
-<p class="text-xs text-pink-500">
-ชั้น ${item.FL||'-'}
-</p>
-
-<p class="text-sm">
-${item.DEPNAME}
-</p>
-
-</div>
-
-<div class="font-bold">
-${item.Sum||0}
-</div>
-
-</div>
-
-`;
-
-});
-
-container.innerHTML=html;
-
-}
-
-
-
-function initFormSelects(){
-
-const bldgSet=[...new Set(masterDepts.map(d=>d.building))];
-
-const bSelect=document.getElementById("form-bldg");
-
-bldgSet.forEach(b=>{
-
-bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
-
-});
-
-}
-
-
-
-function onBuildingChange(){
-
-const b=document.getElementById("form-bldg").value;
-const dSelect=document.getElementById("form-dept");
-
-dSelect.innerHTML='<option value="">เลือกหน่วยงาน</option>';
-
-masterDepts
-.filter(d=>d.building==b)
-.forEach(d=>{
-
-dSelect.innerHTML+=`
-<option value="${d.deptId}">
-${d.deptName}
-</option>
-`;
-
-});
-
-}
-
-
-
-function startSurveyFor(id){
-
-const d=masterDepts.find(x=>x.deptId==id);
-
-if(!d)return;
-
-document.getElementById("form-bldg").value=d.building;
-
-onBuildingChange();
-
-document.getElementById("form-dept").value=d.deptId;
-
-selectedAssets=[];
-
-renderSelected();
-
-navigateTo("page-form");
-
-}
-
-
-
-async function handleSearch(){
-
-const q=document.getElementById("search-input").value;
-
-if(!q)return;
-
-try{
-
-const res=await fetch(API+"?action=searchAssets&query="+encodeURIComponent(q));
+const res=await fetch(`${API}?action=getAllAssets`);
 
 const data=await res.json();
 
-const container=document.getElementById("search-results");
-
-if(data.length==0){
-
-container.innerHTML="<p class='text-center text-gray-400 text-xs'>ไม่พบข้อมูล</p>";
-return;
-
-}
-
-container.innerHTML=data.map(item=>`
-
-<div
-class="p-3 bg-pink-50 border rounded flex justify-between cursor-pointer"
-onclick='addAsset(${JSON.stringify(item)})'>
-
-${item.AssetID}
-
-</div>
-
-`).join('');
+setAllAssets(data.assets || []);
 
 }catch(e){
 
-Swal.fire("Error","ค้นหาไม่สำเร็จ","error");
+setAlertMsg("โหลดข้อมูลไม่สำเร็จ");
 
 }
 
-}
-
-
-
-function addAsset(item){
-
-if(selectedAssets.find(x=>x.AssetID==item.AssetID))return;
-
-selectedAssets.push(item);
-
-renderSelected();
+setLoading(false);
 
 }
 
+const filteredAssets=useMemo(()=>{
 
+const term=searchTerm.trim().toLowerCase();
 
-function renderSelected(){
+if(!term)return[];
 
-const container=document.getElementById("selected-list");
+return allAssets
+.filter(a=>String(a.AssetID||"").toLowerCase().endsWith(term))
+.slice(0,30);
 
-if(selectedAssets.length==0){
+},[searchTerm,allAssets]);
 
-container.innerHTML="<p class='text-center text-gray-300 text-xs'>ยังไม่มีรายการ</p>";
-return;
+function highlight(text,term){
+
+if(!term)return text;
+
+const parts=String(text).split(new RegExp(`(${term})`,"gi"));
+
+return(
+<span>
+{parts.map((p,i)=>
+p.toLowerCase()===term.toLowerCase()
+?<span key={i} className="search-highlight">{p}</span>
+:p
+)}
+</span>
+);
 
 }
 
-container.innerHTML=selectedAssets.map((a,i)=>`
+function startScanner(){
 
-<div class="flex justify-between border p-2 rounded">
+setScannerOpen(true);
 
-<span>${a.AssetID}</span>
+setTimeout(async()=>{
 
-<button onclick="removeAsset(${i})" class="text-red-500">
-ลบ
+try{
+
+const scanner=new Html5Qrcode("reader");
+
+scannerRef.current=scanner;
+
+await scanner.start(
+{facingMode:"environment"},
+{fps:15,qrbox:250},
+
+(decoded)=>{
+
+setSearchTerm(decoded);
+
+setView("search");
+
+stopScanner();
+
+}
+
+);
+
+}catch(e){
+
+setAlertMsg("ไม่สามารถเปิดกล้องได้");
+
+setScannerOpen(false);
+
+}
+
+},300);
+
+}
+
+async function stopScanner(){
+
+if(scannerRef.current){
+
+try{
+await scannerRef.current.stop();
+}catch(e){}
+
+}
+
+setScannerOpen(false);
+
+}
+
+return(
+
+<div className="flex flex-col min-h-screen">
+
+{loading && (
+<div className="absolute inset-0 bg-white flex items-center justify-center z-50">
+กำลังโหลด...
+</div>
+)}
+
+<header className="bg-pink-600 text-white p-4 font-bold text-center">
+ระบบตรวจสอบครุภัณฑ์
+</header>
+
+<main className="flex-1 p-4">
+
+{view==="dashboard" && (
+
+<div className="text-center text-gray-400">
+
+<button
+onClick={()=>setView("search")}
+className="bg-pink-600 text-white px-6 py-3 rounded-xl"
+>
+
+ค้นหาครุภัณฑ์
+
 </button>
 
 </div>
 
-`).join('');
+)}
 
-}
+{view==="search" && (
 
+<div>
 
+<input
+value={searchTerm}
+onChange={(e)=>setSearchTerm(e.target.value)}
+placeholder="พิมพ์รหัสท้าย..."
+className="w-full border p-3 rounded-xl mb-4"
+/>
 
-function removeAsset(i){
+{filteredAssets.length>0 ? (
 
-selectedAssets.splice(i,1);
+filteredAssets.map((a,i)=>(
 
-renderSelected();
+<div
+key={i}
+className="p-4 border rounded-xl mb-2"
+>
 
-}
+<div className="font-bold text-pink-600">
+{highlight(a.AssetID,searchTerm)}
+</div>
+
+<div className="text-gray-600">
+{highlight(a.itemName,searchTerm)}
+</div>
+
+</div>
+
+))
+
+):(
+
+<div className="text-gray-300 text-center py-10">
+ไม่พบข้อมูล
+</div>
+
+)}
+
+</div>
+
+)}
+
+</main>
+
+<div className="fixed bottom-6 left-1/2 -translate-x-1/2">
+
+<button
+onClick={startScanner}
+className="bg-pink-600 text-white w-16 h-16 rounded-full"
+>
+
+<Icon name="scan"/>
+
+</button>
+
+</div>
+
+{scannerOpen && (
+
+<div className="fixed inset-0 bg-black flex flex-col items-center justify-center">
+
+<div id="reader" className="w-full max-w-sm mb-4"></div>
+
+<button
+onClick={stopScanner}
+className="text-white border px-6 py-3 rounded-xl"
+>
+
+ปิด
+
+</button>
+
+</div>
+
+)}
+
+</div>
+
+);
+
+};
+
+const root=ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(<App/>);
 
 </script>
-
 
 </body>
 </html>
