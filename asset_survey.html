@@ -1,89 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
+
 <meta charset="UTF-8">
 <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
 
 <style>
 
 body{
-font-family:'Kanit',sans-serif;
-background:linear-gradient(135deg,#ffd6e7,#ffffff);
+font-family:Kanit;
 margin:0;
+background:linear-gradient(180deg,#ffe6f1,#ffffff);
 }
 
 header{
 padding:20px;
-background:#fff;
-box-shadow:0 2px 10px rgba(0,0,0,.1);
+text-align:center;
+}
+
+h1{
+margin:0;
+font-size:24px;
 }
 
 .container{
+max-width:1100px;
+margin:auto;
 padding:20px;
 }
 
 .card{
-background:#fff;
+background:white;
 border-radius:12px;
 padding:20px;
-margin-bottom:15px;
-box-shadow:0 4px 12px rgba(0,0,0,.08);
+box-shadow:0 2px 10px rgba(0,0,0,.1);
+margin-bottom:20px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
 }
 
 button{
-background:#ff7fb0;
+background:#ff6fa8;
 border:none;
-padding:10px 18px;
-color:#fff;
+color:white;
+padding:10px 16px;
 border-radius:8px;
 cursor:pointer;
 }
 
 input{
 padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
 width:100%;
+margin-top:10px;
 }
 
-.progress{
-background:#eee;
-border-radius:10px;
-overflow:hidden;
-}
-
-.progress-bar{
-height:14px;
-background:#ff7fb0;
+.asset-item{
+padding:10px;
+border-bottom:1px solid #eee;
+cursor:pointer;
 }
 
 </style>
+
 </head>
 
 <body>
 
 <header>
-<h2>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
-โรงพยาบาลอุดรธานี
+
+<h1>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+<div>โรงพยาบาลอุดรธานี</div>
+
 </header>
 
 <div class="container">
 
 <div class="card">
+
 <h3>Dashboard</h3>
 
-Target : <span id="target"></span><br>
-Asset In : <span id="in"></span><br>
-Asset Out : <span id="out"></span><br>
-Sum : <span id="sum"></span><br>
+<div class="grid">
 
-<div class="progress">
-<div id="bar" class="progress-bar"></div>
+<div>
+<div>Target</div>
+<h2 id="target">0</h2>
 </div>
 
-<span id="progress"></span>
+<div>
+<div>Asset In</div>
+<h2 id="assetIn">0</h2>
+</div>
+
+<div>
+<div>Asset Out</div>
+<h2 id="assetOut">0</h2>
+</div>
+
+<div>
+<div>Progress</div>
+<h2 id="progress">0%</h2>
+</div>
+
+</div>
 
 </div>
 
@@ -91,27 +115,17 @@ Sum : <span id="sum"></span><br>
 
 <h3>เลือกหน่วยงาน</h3>
 
-<select id="dept"></select>
+<div id="deptList"></div>
 
 </div>
 
-<div class="card">
+<div class="card" id="surveyBox" style="display:none">
 
-<h3>ค้นหาครุภัณฑ์</h3>
+<h3 id="deptTitle"></h3>
 
-<input id="search" placeholder="ค้นหา AssetID">
+<input id="searchBox" placeholder="ค้นหาครุภัณฑ์">
 
-<div id="result"></div>
-
-</div>
-
-<div class="card">
-
-<h3>รายการที่เลือก</h3>
-
-<ul id="selected"></ul>
-
-<button onclick="save()">บันทึก</button>
+<div id="assetList"></div>
 
 </div>
 
@@ -119,92 +133,99 @@ Sum : <span id="sum"></span><br>
 
 <script>
 
-const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
+const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec"
 
-let selected=[];
+let currentDept=null
 
 async function loadDashboard(){
 
-const r=await fetch(API+"?action=dashboard");
-const d=await r.json();
+const r=await fetch(API+"?action=dashboard")
+const d=await r.json()
 
-target.innerText=d.target;
-in.innerText=d.assetIn;
-out.innerText=d.assetOut;
-sum.innerText=d.sum;
-
-progress.innerText=d.progress+"%";
-
-bar.style.width=d.progress+"%";
+document.getElementById("target").innerText=d.target
+document.getElementById("assetIn").innerText=d.assetIn
+document.getElementById("assetOut").innerText=d.assetOut
+document.getElementById("progress").innerText=d.progress+"%"
 
 }
 
 async function loadDepartments(){
 
-const r=await fetch(API+"?action=departments");
-const data=await r.json();
+const r=await fetch(API+"?action=departments")
+
+const data=await r.json()
+
+const box=document.getElementById("deptList")
+
+box.innerHTML=""
 
 data.forEach(d=>{
-const o=document.createElement("option");
-o.value=d.deptId;
-o.textContent=d.deptName;
-dept.appendChild(o);
-});
+
+const div=document.createElement("div")
+
+div.className="asset-item"
+
+div.innerText=d.Building+" / "+d.Floor+" / "+d.DeptName
+
+div.onclick=()=>openDept(d)
+
+box.appendChild(div)
+
+})
 
 }
 
-search.onkeyup=async ()=>{
+function openDept(d){
 
-const q=search.value;
+currentDept=d
 
-if(q.length<2)return;
+document.getElementById("surveyBox").style.display="block"
 
-const r=await fetch(API+"?action=searchAsset&q="+encodeURIComponent(q));
-const data=await r.json();
+document.getElementById("deptTitle").innerText=d.DeptName
 
-result.innerHTML="";
+}
+
+document.getElementById("searchBox").addEventListener("keyup",async function(){
+
+const q=this.value
+
+if(q.length<2)return
+
+const r=await fetch(API+"?action=searchAsset&q="+encodeURIComponent(q))
+
+const data=await r.json()
+
+const box=document.getElementById("assetList")
+
+box.innerHTML=""
 
 data.forEach(a=>{
 
-const div=document.createElement("div");
-div.textContent=a.assetId;
+const div=document.createElement("div")
 
-div.onclick=()=>{
-selected.push(a);
-renderSelected();
-}
+div.className="asset-item"
 
-result.appendChild(div);
+div.innerText=a.AssetID+" "+a.Name
 
-});
+div.onclick=()=>saveAsset(a)
 
-}
+box.appendChild(div)
 
-function renderSelected(){
+})
 
-selectedList=selected.map(a=>"<li>"+a.assetId+"</li>").join("");
+})
 
-selected.innerHTML=selectedList;
+async function saveAsset(a){
 
-}
+await fetch(API+"?action=saveSurvey&dept="+currentDept.DEPT_ID+"&deptName="+currentDept.DeptName+"&assetId="+a.AssetID)
 
-async function save(){
-
-const payload={
-deptId:dept.value,
-deptName:dept.options[dept.selectedIndex].text,
-assets:selected,
-activityId:""
-};
-
-await fetch(API+"?action=saveSurvey&data="+encodeURIComponent(JSON.stringify(payload)));
-
-alert("บันทึกแล้ว");
+alert("บันทึกแล้ว")
 
 }
 
-loadDashboard();
-loadDepartments();
+loadDashboard()
+
+loadDepartments()
 
 </script>
 
