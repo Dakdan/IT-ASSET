@@ -226,267 +226,187 @@
     </div>
 
     <script>
-        const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
-          async function loadDashboard(){
-          
-          const res=await fetch(API+"?action=getDashboard");
-          
-          const data=await res.json();
-          
-          document.getElementById("goal").innerText=data.goal;
-          
-          document.getElementById("in").innerText=data.totalIn;
-          
-          document.getElementById("out").innerText=data.totalOut;
-          
-          document.getElementById("sum").innerText=data.totalSum;
-          
-          }
-          
-          loadDashboard();
-        let masterDepts = [];
-        let selectedAssets = [];
-        let currentActivityId = null;
-        let sigPad = null;
+const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
-        window.onload = () => {
-            lucide.createIcons();
-            const canvas = document.getElementById('sig-pad');
-            sigPad = new SignaturePad(canvas);
-            initApp();
-        };
+let masterDepts = [];
+let selectedAssets = [];
+let currentActivityId = null;
+let sigPad = null;
 
-        function setLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
+window.onload = () => {
 
-        async function initApp() {
-            setLoading(true);
-            try {
-                const [dashRes, deptRes] = await Promise.all([
-                    fetch(`${API}?action=getDashboard&t=${Date.now()}`),
-                    fetch(`${API}?action=getDepartments`)
-                ]);
-                const dash = await dashRes.json();
-                masterDepts = await deptRes.json();
-                updateDashboard(dash);
-                initFormSelects();
-            } catch (e) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้', 'error');
-            }
-            setLoading(false);
+    lucide.createIcons();
+
+    const canvas = document.getElementById('sig-pad');
+    sigPad = new SignaturePad(canvas);
+
+    initApp();
+};
+
+function setLoading(s){
+    document.getElementById('loading').classList.toggle('hidden', !s);
+}
+
+function closeModal(id){
+    document.getElementById(id).classList.add('hidden');
+}
+
+function showModal(id){
+    document.getElementById(id).classList.remove('hidden');
+}
+
+async function initApp(){
+
+    setLoading(true);
+
+    try{
+
+        const dashRes = await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
+        const deptRes = await fetch(`${API}?action=getDepartments`);
+
+        const dash = await dashRes.json();
+        masterDepts = await deptRes.json();
+
+        updateDashboard(dash);
+        initFormSelects();
+
+    }catch(e){
+
+        Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
+
+    }
+
+    setLoading(false);
+
+}
+
+function navigateTo(pageId){
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    window.scrollTo(0,0);
+
+}
+
+function updateDashboard(data){
+
+    document.getElementById('dash-goal').innerText = data.goal || 0;
+    document.getElementById('dash-in').innerText = data.totalIn || 0;
+    document.getElementById('dash-out').innerText = data.totalOut || 0;
+    document.getElementById('dash-sum').innerText = data.totalSum || 0;
+
+    const pct = data.goal > 0 ? ((data.totalSum / data.goal) * 100).toFixed(1) : 0;
+
+    document.getElementById('dash-percent').innerText = pct + '%';
+
+    const container = document.getElementById('dept-list-container');
+
+    if(!data.details || data.details.length===0){
+
+        container.innerHTML = `<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูล</p>`;
+        return;
+
+    }
+
+    let html="";
+    let currentBldg="";
+
+    const sorted = data.details.sort((a,b)=>
+        (a.LOCATION_NAME||"").localeCompare(b.LOCATION_NAME||"")
+    );
+
+    sorted.forEach(item=>{
+
+        if(item.LOCATION_NAME!==currentBldg){
+
+            currentBldg=item.LOCATION_NAME;
+
+            html+=`
+            <div class="bg-gray-50 text-gray-400 px-4 py-2 font-bold text-[9px] uppercase border-b">
+            อาคาร: ${currentBldg || 'ทั่วไป'}
+            </div>
+            `;
+
         }
 
-        function navigateTo(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            window.scrollTo(0, 0);
-        }
+        html+=`
+        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer"
+        onclick="startSurveyFor('${item.DEPID}')">
 
-        // --- DASHBOARD ---
-        function updateDashboard(data) {
-            document.getElementById('dash-goal').innerText = data.goal.toLocaleString();
-            document.getElementById('dash-in').innerText = data.totalIn.toLocaleString();
-            document.getElementById('dash-out').innerText = data.totalOut.toLocaleString();
-            document.getElementById('dash-sum').innerText = data.totalSum.toLocaleString();
-            const pct = data.goal > 0 ? ((data.totalSum / data.goal) * 100).toFixed(1) : 0;
-            document.getElementById('dash-percent').innerText = pct + '%';
+            <div>
+                <p class="text-[9px] text-pink-400 font-bold">ชั้น ${item.FL || '-'}</p>
+                <p class="font-medium text-gray-700">${item.DEP_NAME_LOC || item.DEPNAME}</p>
+            </div>
 
-            const container = document.getElementById('dept-list-container');
-            let html = "";
-            let currentBldg = "";
-            const sorted = data.details.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
-            
-            if (sorted.length === 0) {
-                container.innerHTML = '<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูลการสำรวจ</p>';
-                return;
-            }
+            <div class="bg-white border text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
+                ${item.Sum || 0}
+            </div>
 
-            sorted.forEach(item => {
-                if (item.LOCATION_NAME !== currentBldg) {
-                    currentBldg = item.LOCATION_NAME;
-                    html += `<div class="bg-gray-50 text-gray-400 px-4 py-2 font-bold text-[9px] uppercase border-b">อาคาร: ${currentBldg || 'ทั่วไป'}</div>`;
-                }
-                html += `
-                    <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer transition-colors" onclick="startSurveyFor('${item.DEPID}')">
-                        <div>
-                            <p class="text-[9px] text-pink-400 font-bold">ชั้น ${item.FL || '-'}</p>
-                            <p class="font-medium text-gray-700">${item.DEP_NAME_LOC || item.DEPNAME}</p>
-                        </div>
-                        <div class="bg-white border text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">${item.Sum}</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
+        </div>
+        `;
 
-        // --- FORM ---
-        function initFormSelects() {
-            const bldgSet = [...new Set(masterDepts.map(d => d.building).filter(Boolean))].sort();
-            const bSelect = document.getElementById('form-bldg');
-            bSelect.innerHTML = '<option value="">-- เลือกอาคาร --</option>';
-            bldgSet.forEach(b => { bSelect.innerHTML += `<option value="${b}">${b}</option>`; });
-        }
+    });
 
-        function onBuildingChange() {
-            const b = document.getElementById('form-bldg').value;
-            const dSelect = document.getElementById('form-dept');
-            dSelect.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
-            masterDepts.filter(d => d.building === b).forEach(d => {
-                dSelect.innerHTML += `<option value="${d.deptId}">${d.deptName}</option>`;
-            });
-        }
+    container.innerHTML = html;
 
-        function startSurveyFor(id) {
-            const d = masterDepts.find(x => x.deptId == id);
-            if (d) {
-                document.getElementById('form-bldg').value = d.building;
-                onBuildingChange();
-                document.getElementById('form-dept').value = d.deptId;
-                selectedAssets = [];
-                renderSelected();
-                navigateTo('page-form');
-            }
-        }
+}
 
-        async function handleSearch() {
-            const q = document.getElementById('search-input').value;
-            if (!q) return;
-            setLoading(true);
-            try {
-                const res = await fetch(`${API}?action=searchAssets&query=${encodeURIComponent(q)}`);
-                const data = await res.json();
-                const container = document.getElementById('search-results');
-                if (data.length === 0) {
-                    container.innerHTML = '<p class="text-center text-xs text-gray-400 py-4 italic">ไม่พบข้อมูลครุภัณฑ์</p>';
-                } else {
-                    container.innerHTML = data.map(item => `
-                        <div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center active:bg-pink-100 transition-colors" onclick='addAsset(${JSON.stringify(item)})'>
-                            <div class="text-[11px]"><p class="font-bold text-gray-700">${item.itemName}</p><p class="text-gray-400">ID: ${item.AssetID}</p></div>
-                            <i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
-                        </div>
-                    `).join('');
-                    lucide.createIcons();
-                }
-            } catch (e) {}
-            setLoading(false);
-        }
+function initFormSelects(){
 
-        function addAsset(item) {
-            if (selectedAssets.find(x => x.AssetID === item.AssetID)) return;
-            selectedAssets.push({ ...item, isNew: false });
-            renderSelected();
-        }
+    const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
 
-        function showNewAssetModal() { showModal('modal-new-asset'); }
-        
-        function addNewAsset() {
-            const name = document.getElementById('new-name').value;
-            const sn = document.getElementById('new-sn').value;
-            if (!name) return;
-            selectedAssets.push({ itemName: name, serial: sn, category: document.getElementById('new-cat').value, isNew: true, AssetID: 'NEW-' + Date.now() });
-            renderSelected();
-            closeModal('modal-new-asset');
-            document.getElementById('new-name').value = '';
-            document.getElementById('new-sn').value = '';
-        }
+    const bSelect=document.getElementById('form-bldg');
 
-        function renderSelected() {
-            const container = document.getElementById('selected-list');
-            if (selectedAssets.length === 0) { container.innerHTML = '<p class="text-center text-gray-300 text-[10px] py-4 italic">ยังไม่มีรายการที่เลือก</p>'; return; }
-            container.innerHTML = selectedAssets.map((item, i) => `
-                <div class="flex justify-between items-center bg-white p-4 rounded-2xl border-l-4 ${item.isNew ? 'border-amber-400' : 'border-emerald-400'} shadow-sm">
-                    <div class="text-[11px] font-medium">
-                        ${item.itemName} <span class="text-[9px] opacity-50 block">${item.isNew ? ('SN: ' + (item.serial || 'ไม่ระบุ')) : item.AssetID}</span>
-                    </div>
-                    <button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-300 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
+    bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
 
-        async function submitSurvey() {
-            const deptId = document.getElementById('form-dept').value;
-            if (!deptId || selectedAssets.length === 0) return Swal.fire('เตือน', 'กรุณาเลือกหน่วยงานและรายการครุภัณฑ์ที่พบ', 'warning');
-            
-            setLoading(true);
-            const payload = {
-                action: 'saveSurvey',
-                deptId: deptId,
-                deptName: masterDepts.find(x => x.deptId == deptId).deptName,
-                assets: selectedAssets.filter(x => !x.isNew),
-                newAssets: selectedAssets.filter(x => x.isNew)
-            };
-            
-            try {
-                const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
-                if (result.success) {
-                    currentActivityId = result.activityId;
-                    showDetail(currentActivityId);
-                    navigateTo('page-detail');
-                }
-            } catch (e) {
-                Swal.fire('ล้มเหลว', 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
-            }
-            setLoading(false);
-        }
+    bldgSet.forEach(b=>{
 
-        // --- DETAIL & SLIP ---
-        async function showDetail(id) {
-            setLoading(true);
-            try {
-                const res = await fetch(`${API}?action=getSurveyDetail&activityId=${id}`);
-                const data = await res.json();
-                
-                document.getElementById('detail-act-id').innerText = id;
-                document.getElementById('detail-dept').innerText = data.deptName;
-                document.getElementById('detail-date').innerText = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: 'long', year: 'numeric' });
-                
-                const list = document.getElementById('detail-list');
-                const combined = [
-                    ...data.assets.map(a => `<div class="flex justify-between border-b border-gray-50 py-2"><span>${a.AssetID}</span><span class="text-gray-400 text-right">${a.itemName}</span></div>`),
-                    ...data.newAssets.map(a => `<div class="flex justify-between border-b border-gray-50 py-2 text-amber-600 italic"><span>${a.serial || 'N/A'}</span><span class="text-right">${a.itemName} (นอกระบบ)</span></div>`)
-                ];
-                list.innerHTML = combined.join('');
+        bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
 
-                document.getElementById('detail-qr').innerHTML = "";
-                new QRCode(document.getElementById("detail-qr"), { text: id, width: 80, height: 80, colorDark: "#e91e63" });
+    });
 
-                document.getElementById('detail-sign-box').classList.add('hidden');
-                document.getElementById('btn-open-sign').classList.remove('hidden');
-            } catch (e) {}
-            setLoading(false);
-        }
+}
 
-        function showSignModal() { showModal('modal-sign'); }
+function onBuildingChange(){
 
-        async function handleConfirmSign() {
-            const name = document.getElementById('input-signer').value;
-            if (!name || sigPad.isEmpty()) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อและเซ็นชื่อรับรอง', 'warning');
+    const b=document.getElementById('form-bldg').value;
+    const dSelect=document.getElementById('form-dept');
 
-            setLoading(true);
-            const base64 = sigPad.toDataURL();
-            try {
-                const res = await fetch(API, { method: 'POST', body: JSON.stringify({
-                    action: 'confirmSurvey',
-                    activityId: currentActivityId,
-                    signer: name,
-                    signature: base64
-                })});
-                const result = await res.json();
-                if (result.success) {
-                    document.getElementById('detail-sign-img').src = base64;
-                    document.getElementById('detail-signer-name').innerText = name;
-                    document.getElementById('detail-sign-box').classList.remove('hidden');
-                    document.getElementById('btn-open-sign').classList.add('hidden');
-                    closeModal('modal-sign');
-                    Swal.fire('สำเร็จ', 'รับรองข้อมูลเรียบร้อยแล้ว', 'success');
-                }
-            } catch (e) {}
-            setLoading(false);
-        }
-    </script>
+    dSelect.innerHTML='<option value="">-- เลือกหน่วยงาน --</option>';
+
+    masterDepts
+    .filter(d=>d.building===b)
+    .forEach(d=>{
+
+        dSelect.innerHTML+=`
+        <option value="${d.deptId}">
+        ${d.deptName}
+        </option>`;
+
+    });
+
+}
+
+function startSurveyFor(id){
+
+    const d=masterDepts.find(x=>x.deptId==id);
+
+    if(!d)return;
+
+    document.getElementById('form-bldg').value=d.building;
+
+    onBuildingChange();
+
+    document.getElementById('form-dept').value=d.deptId;
+
+    selectedAssets=[];
+    renderSelected();
+
+    navigateTo('page-form');
+
+}
+
+</script>
 </body>
 </html>
