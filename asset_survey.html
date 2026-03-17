@@ -244,37 +244,21 @@ function navigateTo(pageId){
 
 async function initApp(){
     setLoading(true);
-
-    // 1. ดึงข้อมูล Dashboard (ถ้าได้ตัวเลข 1387 ขึ้นมาแล้ว ตัวนี้ผ่าน)
-    try {
-        const dashRes = await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
-        if (!dashRes.ok) throw new Error();
+    try{
+        const [dashRes, deptRes] = await Promise.all([
+            fetch(`${API}?action=getDashboard&t=${Date.now()}`),
+            fetch(`${API}?action=getDepartments`)
+        ]);
         const dash = await dashRes.json();
-        updateDashboard(dash);
-    } catch(e) {
-        console.error("Dashboard failed", e);
-        // ไม่ต้อง Swal เพราะอยากให้หน้าจอยังโชว์ส่วนอื่นได้
-    }
-
-    // 2. ดึงข้อมูล Departments (ตัวนี้น่าจะเป็นสาเหตุที่ทำให้ Modal เด้ง)
-    try {
-        const deptRes = await fetch(`${API}?action=getDepartments`);
-        if (!deptRes.ok) throw new Error();
         masterDepts = await deptRes.json();
+        updateDashboard(dash);
         initFormSelects();
-    } catch(e) {
-        console.error("Departments failed", e);
-        // แจ้งเตือนแค่ว่าโหลดรายชื่อไม่สำเร็จพอ ไม่ต้องบอกว่า "เชื่อมต่อระบบไม่ได้"
-        Swal.fire({
-            icon: 'warning',
-            title: 'แจ้งเตือน',
-            text: 'โหลดรายชื่อหน่วยงานไม่สำเร็จ (ตรวจสอบ action=getDepartments)',
-            confirmButtonColor: '#3085d6'
-        });
+    }catch(e){
+        Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
     }
-
     setLoading(false);
 }
+
 function updateDashboard(data) {
     // อัปเดตตัวเลขสถิติด้านบน
     document.getElementById('dash-goal').innerText = data.goal || 0;
