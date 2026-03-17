@@ -310,7 +310,7 @@ setLoading(false);
 
 
 function updateDashboard(data) {
-    // ... ส่วนการอัปเดตตัวเลขสถิติคงเดิม ...
+    // ... ส่วนอัปเดตตัวเลขสถิติ (คงเดิม) ...
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
@@ -340,35 +340,32 @@ function updateDashboard(data) {
                 </div>`;
         }
 
-        // ส่วนแสดงรายละเอียดหน่วยงาน
+        // --- จุดแก้ไขสำคัญ: ใช้ DEPT_PHO ที่ส่งมาจาก Backend ---
+        // ตรวจสอบว่า Backend ส่งค่า DEPT_PHO มา (ซึ่งควรเป็น URL drive.google.com/uc?id=...)
+        const imgUrl = item.DEPT_PHO || 'https://www.w3schools.com/howto/img_avatar.png';
+
         html += `
-            <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer transition-colors"
-                 onclick="startSurveyFor('${item.DEPID}')">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 border border-pink-100">
-                        <img src="${item.DEPT_PHO || 'https://www.w3schools.com/howto/img_avatar.png'}" 
-                             onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'"
-                             class="w-full h-full object-cover">
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-pink-500 font-bold uppercase">ชั้น ${item.FL || '-'} | โทร: ${item.Tell || '-'}</p>
-                        <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
-                        <p class="text-[9px] text-gray-400 mt-0.5">${item.JOBE_SYSTEMP || ''}</p>
-                    </div>
+        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer"
+             onclick="startSurveyFor('${item.DEPID}')">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gray-100 overflow-hidden shrink-0 border border-pink-100 shadow-sm">
+                    <img src="${imgUrl}" 
+                         onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'"
+                         class="w-full h-full object-cover">
                 </div>
-                <div class="flex flex-col items-end gap-1">
-                    <div class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-[11px] font-black shadow-sm">
-                        ${item.Sum || 0}
-                    </div>
-                    ${item.GPS ? `<i data-lucide="navigation" class="w-3 h-3 text-blue-400"></i>` : ''}
+                <div>
+                    <p class="text-[10px] text-pink-500 font-bold uppercase">ชั้น ${item.FL || '-'} | สำรวจแล้ว: ${item.Sum || 0}</p>
+                    <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
+                    <p class="text-[9px] text-gray-400 mt-0.5">ID: ${item.DEPID}</p>
                 </div>
-            </div>`;
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+        </div>`;
     });
 
     container.innerHTML = html;
-    lucide.createIcons(); // สั่งให้ Icon แสดงผล
+    lucide.createIcons();
 }
-
 
 
 function initFormSelects(){
