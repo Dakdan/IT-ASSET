@@ -1,0 +1,17 @@
+function initMap() {
+    // 1. สร้างแผนที่
+    const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12,
+        center: { lat: 17.4075, lng: 102.8127 }, // พิกัดเริ่มต้น (เช่น อุดรธานี)
+    });
+
+    // 2. โหลดไฟล์ .geojson จาก Repository ของคุณเอง
+    // เปลี่ยน URL เป็นที่อยู่ไฟล์ของคุณ (แนะนำให้ใช้ Relative Path ถ้าอยู่ที่เดียวกัน)
+    map.data.loadGeoJson('test.geojson');
+
+    // 3. ปรับแต่งสไตล์ของจุด (Optional)
+    map.data.setStyle({
+        icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+        title: 'จุดพิกัดจากระบบ'
+    });
+}
