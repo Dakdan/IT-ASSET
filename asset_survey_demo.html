@@ -30,7 +30,6 @@
 </head>
 <body class="flex justify-center">
 
-    <!-- Loading Screen -->
     <div id="loading" class="loading-overlay hidden">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mb-4"></div>
         <p class="text-pink-600 font-bold">กำลังดำเนินการ...</p>
@@ -38,7 +37,6 @@
 
     <div class="w-full max-w-md bg-[#f8f9fa] min-h-screen relative flex flex-col shadow-2xl overflow-x-hidden">
         
-        <!-- HEADER -->
         <header class="pink-gradient-header pt-6 pb-10 px-6 text-white shrink-0 relative z-10 no-print flex items-center gap-4">
             <div onclick="location.reload()" class="bg-white p-2 rounded-2xl shadow-lg shrink-0">
                 <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-10 h-10 object-contain">
@@ -49,7 +47,6 @@
             </div>
         </header>
 
-        <!-- PAGE 1: DASHBOARD -->
         <div id="page-dashboard" class="page active px-4 -mt-8 relative z-20 pb-24 no-print">
             <div class="grid grid-cols-3 gap-2 mb-2">
                 <div class="stat-card border-blue-400">
@@ -61,7 +58,7 @@
                     <h2 id="dash-in" class="text-base font-black text-gray-800">0</h2>
                 </div>
                 <div class="stat-card border-amber-400">
-                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-tight">ไมมีทะเบียน</p>
+                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-tight">ไม่มีทะเบียน</p>
                     <h2 id="dash-out" class="text-base font-black text-gray-800">0</h2>
                 </div>
             </div>
@@ -84,11 +81,9 @@
                     <button onclick="initApp()" class="text-[10px] text-pink-500 font-bold">รีเฟรช</button>
                 </div>
                 <div id="dept-list-container" class="max-h-[380px] overflow-y-auto text-sm">
-                    <!-- Table Rows Injection -->
                 </div>
             </div>
 
-            <!-- Floating Action Button -->
             <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
                 <button onclick="navigateTo('page-form')" class="bg-pink-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center border-4 border-white active:scale-95 transition-transform">
                     <i data-lucide="plus" class="w-8 h-8"></i>
@@ -96,7 +91,6 @@
             </div>
         </div>
 
-        <!-- PAGE 2: SURVEY FORM -->
         <div id="page-form" class="page px-4 -mt-8 relative z-20 pb-10 no-print">
             <div class="card p-5 mb-4">
                 <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
@@ -138,8 +132,7 @@
                 <button onclick="submitSurvey()" class="flex-[2] py-4 btn-pink rounded-xl font-bold text-sm shadow-lg active:scale-95">บันทึกสำรวจ</button>
             </div>
         </div>
-                    
-             <!-- PAGE 3: SUMMARY & SLIP -->
+        
         <div id="page-detail" class="page px-4 -mt-8 relative z-20 pb-10">
             <div id="print-content" class="card p-8 mb-4">
                 <div class="text-center mb-6">
@@ -164,7 +157,6 @@
                     <div id="detail-list" class="space-y-1 text-[11px]"></div>
                 </div>
 
-                <!-- Signature Section -->
                 <div id="detail-sign-box" class="mt-8 text-center pt-6 border-t border-gray-100 hidden">
                     <img id="detail-sign-img" class="mx-auto max-h-20 mb-1" src="" alt="Sign">
                     <p id="detail-signer-name" class="font-bold text-sm border-t inline-block px-4 mt-2"></p>
@@ -183,7 +175,6 @@
 
     </div>
 
-    <!-- MODAL: SIGNATURE -->
     <div id="modal-sign" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
             <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
@@ -201,7 +192,6 @@
         </div>
     </div>
 
-    <!-- MODAL: NEW ASSET -->
     <div id="modal-new-asset" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
             <h3 class="font-bold text-gray-700 mb-5 flex items-center gap-2">
@@ -224,93 +214,52 @@
             </div>
         </div>
     </div>
-<script>
 
+<script>
 const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
 let masterDepts=[];
 let selectedAssets=[];
-let currentActivityId=null;
 let sigPad=null;
-
+let currentActivityId=null;
 
 window.onload=()=>{
-
-lucide.createIcons();
-
-const canvas=document.getElementById('sig-pad');
-sigPad=new SignaturePad(canvas);
-
-initApp();
-
+    lucide.createIcons();
+    const canvas=document.getElementById('sig-pad');
+    sigPad=new SignaturePad(canvas);
+    initApp();
 };
 
-
-
-function setLoading(s){
-
-document.getElementById('loading').classList.toggle('hidden',!s);
-
-}
-
-
-function closeModal(id){
-
-document.getElementById(id).classList.add('hidden');
-
-}
-
-
-function showModal(id){
-
-document.getElementById(id).classList.remove('hidden');
-
-}
-
+function setLoading(s){ document.getElementById('loading').classList.toggle('hidden',!s); }
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+function showModal(id){ document.getElementById(id).classList.remove('hidden'); }
+function showNewAssetModal(){ showModal('modal-new-asset'); }
+function showSignModal(){ showModal('modal-sign'); }
 
 function navigateTo(pageId){
-
-document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-
-document.getElementById(pageId).classList.add('active');
-
-window.scrollTo(0,0);
-
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    window.scrollTo(0,0);
 }
-
-
 
 async function initApp(){
-
-setLoading(true);
-
-try{
-
-const dashRes=await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
-const deptRes=await fetch(`${API}?action=getDepartments`);
-
-const dash=await dashRes.json();
-
-masterDepts=await deptRes.json();
-
-updateDashboard(dash);
-
-initFormSelects();
-
-}catch(e){
-
-Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
-
+    setLoading(true);
+    try{
+        const [dashRes, deptRes] = await Promise.all([
+            fetch(`${API}?action=getDashboard&t=${Date.now()}`),
+            fetch(`${API}?action=getDepartments`)
+        ]);
+        const dash = await dashRes.json();
+        masterDepts = await deptRes.json();
+        updateDashboard(dash);
+        initFormSelects();
+    }catch(e){
+        Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
+    }
+    setLoading(false);
 }
-
-setLoading(false);
-
-}
-
-
 
 function updateDashboard(data) {
-    // ... ส่วนการอัปเดตตัวเลขสถิติคงเดิม ...
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
@@ -319,220 +268,209 @@ function updateDashboard(data) {
     document.getElementById('dash-percent').innerText = pct + "%";
 
     const container = document.getElementById('dept-list-container');
-    if (!data.details || data.details.length === 0) {
-        container.innerHTML = `<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูล</p>`;
-        return;
-    }
+    if (!data.details) return;
 
     let html = "";
     let currentBldg = "";
     
-    // เรียงตามอาคาร
     const sorted = data.details.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
 
     sorted.forEach(item => {
-        // ส่วนแสดงชื่ออาคาร (Header Group)
         if (item.LOCATION_NAME !== currentBldg) {
             currentBldg = item.LOCATION_NAME;
-            html += `
-                <div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-[48px] z-10">
-                    <i data-lucide="map-pin" class="w-3 h-3 inline mr-1"></i> อาคาร: ${currentBldg || 'ไม่ระบุอาคาร'}
-                </div>`;
+            html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
 
-        // ส่วนแสดงรายละเอียดหน่วยงาน
+        // --- แก้ไขจุดนี้: แสดงเฉพาะรูปที่มีจริง และเอา Avatar ออก ---
+        let imgTag = "";
+        if(item.DEPT_PHO && item.DEPT_PHO !== "") {
+            imgTag = `<img src="${item.DEPT_PHO}" class="w-full h-full object-cover">`;
+        } else {
+            // กรณีไม่มีรูป ให้แสดงเป็นกล่องว่างๆ สีเทาอ่อนแทน
+            imgTag = `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
+        }
+
         html += `
-            <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer transition-colors"
-                 onclick="startSurveyFor('${item.DEPID}')">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 border border-pink-100">
-                        <img src="${item.DEPT_PHO || 'https://www.w3schools.com/howto/img_avatar.png'}" 
-                             onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'"
-                             class="w-full h-full object-cover">
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-pink-500 font-bold uppercase">ชั้น ${item.FL || '-'} | โทร: ${item.Tell || '-'}</p>
-                        <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
-                        <p class="text-[9px] text-gray-400 mt-0.5">${item.JOBE_SYSTEMP || ''}</p>
-                    </div>
+        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
+             onclick="startSurveyFor('${item.DEPID || item.deptId}')">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">
+                    ${imgTag}
                 </div>
-                <div class="flex flex-col items-end gap-1">
-                    <div class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-[11px] font-black shadow-sm">
-                        ${item.Sum || 0}
-                    </div>
-                    ${item.GPS ? `<i data-lucide="navigation" class="w-3 h-3 text-blue-400"></i>` : ''}
+                <div>
+                    <p class="text-[10px] text-pink-500 font-bold">
+                        ชั้น ${item.FL || '-'} | สำรวจแล้ว: <span class="text-pink-600">${item.Sum || 0}</span>
+                    </p>
+                    <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
                 </div>
-            </div>`;
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+        </div>`;
     });
-
     container.innerHTML = html;
-    lucide.createIcons(); // สั่งให้ Icon แสดงผล
+    if(window.lucide) lucide.createIcons();
 }
-
-
 
 function initFormSelects(){
-
-const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
-
-const bSelect=document.getElementById('form-bldg');
-
-bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
-
-bldgSet.forEach(b=>{
-
-bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
-
-});
-
+    const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
+    const bSelect=document.getElementById('form-bldg');
+    bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
+    bldgSet.forEach(b=> bSelect.innerHTML+=`<option value="${b}">${b}</option>`);
 }
-
-
 
 function onBuildingChange(){
-
-const b=document.getElementById('form-bldg').value;
-
-const dSelect=document.getElementById('form-dept');
-
-dSelect.innerHTML='<option value="">-- เลือกหน่วยงาน --</option>';
-
-masterDepts
-.filter(d=>d.building===b)
-.forEach(d=>{
-
-dSelect.innerHTML+=`<option value="${d.deptId}">${d.deptName}</option>`;
-
-});
-
+    const b=document.getElementById('form-bldg').value;
+    const dSelect=document.getElementById('form-dept');
+    dSelect.innerHTML='<option value="">-- เลือกหน่วยงาน --</option>';
+    masterDepts.filter(d=>d.building===b).forEach(d=>{
+        dSelect.innerHTML+=`<option value="${d.deptId}">${d.deptName}</option>`;
+    });
 }
-
-
 
 function startSurveyFor(id){
-
-const d=masterDepts.find(x=>x.deptId==id);
-
-if(!d)return;
-
-document.getElementById('form-bldg').value=d.building;
-
-onBuildingChange();
-
-document.getElementById('form-dept').value=d.deptId;
-
-selectedAssets=[];
-
-renderSelected();
-
-navigateTo('page-form');
-
+    const d=masterDepts.find(x => (x.deptId || x.DEPID) == id);
+    if(!d) return;
+    document.getElementById('form-bldg').value=d.building;
+    onBuildingChange();
+    document.getElementById('form-dept').value=(d.deptId || d.DEPID);
+    selectedAssets=[];
+    renderSelected();
+    navigateTo('page-form');
 }
-
-
 
 async function handleSearch(){
-
-const q=document.getElementById('search-input').value;
-
-if(!q)return;
-
-setLoading(true);
-
-try{
-
-const res=await fetch(`${API}?action=searchAssets&query=${encodeURIComponent(q)}`);
-
-const data=await res.json();
-
-const container=document.getElementById('search-results');
-
-if(data.length===0){
-
-container.innerHTML='<p class="text-center text-xs text-gray-400 py-4 italic">ไม่พบข้อมูลครุภัณฑ์</p>';
-
-}else{
-
-container.innerHTML=data.map(item=>`
-
-<div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center"
-onclick='addAsset(${JSON.stringify(item)})'>
-
-<div class="text-[11px]">
-
-<p class="font-bold text-gray-700">${item.itemName}</p>
-
-<p class="text-gray-400">ID: ${item.AssetID}</p>
-
-</div>
-
-<i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
-
-</div>
-
-`).join('');
-
-lucide.createIcons();
-
+    const q=document.getElementById('search-input').value;
+    if(!q) return;
+    setLoading(true);
+    try{
+        const res=await fetch(`${API}?action=searchAssets&query=${encodeURIComponent(q)}`);
+        const data=await res.json();
+        const container=document.getElementById('search-results');
+        if(data.length===0){
+            container.innerHTML='<p class="text-center text-xs text-gray-400 py-4 italic">ไม่พบข้อมูลครุภัณฑ์</p>';
+        }else{
+            container.innerHTML=data.map(item=>`
+                <div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center" onclick='addAsset(${JSON.stringify(item)})'>
+                    <div class="text-[11px]"><p class="font-bold text-gray-700">${item.AssetID}</p></div>
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
+                </div>`).join('');
+            lucide.createIcons();
+        }
+    }catch(e){}
+    setLoading(false);
 }
-
-}catch(e){}
-
-setLoading(false);
-
-}
-
-
 
 function addAsset(item){
-
-if(selectedAssets.find(x=>x.AssetID===item.AssetID))return;
-
-selectedAssets.push({...item,isNew:false});
-
-renderSelected();
-
+    if(selectedAssets.find(x=>x.AssetID===item.AssetID)) return;
+    selectedAssets.push({...item, itemName: "ครุภัณฑ์ในระบบ"});
+    renderSelected();
 }
-
-
 
 function renderSelected(){
-
-const container=document.getElementById('selected-list');
-
-if(selectedAssets.length===0){
-
-container.innerHTML='<p class="text-center text-gray-300 text-[10px] py-4 italic">ยังไม่มีรายการที่เลือก</p>';
-return;
-
+    const container=document.getElementById('selected-list');
+    if(selectedAssets.length===0){
+        container.innerHTML='<p class="text-center text-gray-300 text-[10px] py-4 italic">ยังไม่มีรายการที่เลือก</p>';
+        return;
+    }
+    container.innerHTML=selectedAssets.map((item,i)=>`
+        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border-l-4 border-emerald-400 shadow-sm">
+            <div class="text-[11px] font-medium">${item.itemName || 'ครุภัณฑ์'}<span class="text-[9px] opacity-50 block">${item.AssetID || item.serial}</span></div>
+            <button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-300 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>`).join('');
+    lucide.createIcons();
 }
 
-container.innerHTML=selectedAssets.map((item,i)=>`
-
-<div class="flex justify-between items-center bg-white p-4 rounded-2xl border-l-4 border-emerald-400 shadow-sm">
-
-<div class="text-[11px] font-medium">
-
-${item.itemName}
-
-<span class="text-[9px] opacity-50 block">${item.AssetID}</span>
-
-</div>
-
-<button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-300 p-1">
-
-<i data-lucide="x" class="w-4 h-4"></i>
-
-</button>
-
-</div>
-
-`).join('');
-
-lucide.createIcons();
-
+function addNewAsset(){
+    const name=document.getElementById('new-name').value;
+    const sn=document.getElementById('new-sn').value;
+    const cat=document.getElementById('new-cat').value;
+    if(!name || !sn) return;
+    selectedAssets.push({ itemName: name, serial: sn, category: cat, isNew: true });
+    renderSelected();
+    closeModal('modal-new-asset');
+    document.getElementById('new-name').value="";
+    document.getElementById('new-sn').value="";
 }
 
+async function submitSurvey(){
+    const bldg=document.getElementById('form-bldg').value;
+    const deptId=document.getElementById('form-dept').value;
+    if(!bldg || !deptId || selectedAssets.length===0){
+        Swal.fire('ข้อมูลไม่ครบ','กรุณาเลือกหน่วยงานและรายการครุภัณฑ์','warning');
+        return;
+    }
+    setLoading(true);
+    const dept = masterDepts.find(x=>(x.deptId||x.DEPID)==deptId);
+    const payload = {
+        action: 'saveSurvey',
+        deptId: deptId,
+        deptName: dept.deptName,
+        assets: selectedAssets.filter(x=>!x.isNew),
+        newAssets: selectedAssets.filter(x=>x.isNew),
+        jobetype: "Survey"
+    };
+
+    try{
+        const res = await fetch(API, { method:'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        if(result.success){
+            currentActivityId = result.activityId;
+            showSummary(result.activityId);
+        }
+    }catch(e){ Swal.fire('Error','บันทึกไม่สำเร็จ','error'); }
+    setLoading(false);
+}
+
+async function showSummary(actId){
+    setLoading(true);
+    try{
+        const res = await fetch(`${API}?action=getSurveyDetail&activityId=${actId}`);
+        const data = await res.json();
+        document.getElementById('detail-act-id').innerText = data.activityId;
+        document.getElementById('detail-dept').innerText = data.deptName;
+        document.getElementById('detail-date').innerText = new Date().toLocaleDateString('th-TH');
+        
+        const listHtml = [
+            ...data.assets.map(a=>`<li>- ${a.AssetID}</li>`),
+            ...data.newAssets.map(a=>`<li>- ${a.itemName} (SN: ${a.serial})</li>`)
+        ].join('');
+        document.getElementById('detail-list').innerHTML = `<ul class="list-none">${listHtml}</ul>`;
+        
+        document.getElementById('detail-qr').innerHTML = "";
+        new QRCode(document.getElementById('detail-qr'), { text: actId, width: 80, height: 80 });
+        
+        navigateTo('page-detail');
+    }catch(e){}
+    setLoading(false);
+}
+
+async function handleConfirmSign(){
+    const signer = document.getElementById('input-signer').value;
+    if(!signer || sigPad.isEmpty()){
+        Swal.fire('คำเตือน','กรุณาระบุชื่อและลงลายเซ็น','warning');
+        return;
+    }
+    setLoading(true);
+    const payload = {
+        action: 'confirmSurvey',
+        activityId: currentActivityId,
+        signer: signer,
+        signature: sigPad.toDataURL()
+    };
+    try{
+        const res = await fetch(API, { method:'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        if(result.success){
+            document.getElementById('detail-sign-img').src = payload.signature;
+            document.getElementById('detail-signer-name').innerText = signer;
+            document.getElementById('detail-sign-box').classList.remove('hidden');
+            document.getElementById('btn-open-sign').classList.add('hidden');
+            closeModal('modal-sign');
+            Swal.fire('สำเร็จ','ยืนยันข้อมูลเรียบร้อย','success');
+        }
+    }catch(e){}
+    setLoading(false);
+}
 </script>
 </body>
 </html>
