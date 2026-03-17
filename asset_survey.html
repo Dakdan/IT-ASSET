@@ -138,16 +138,8 @@
                 <button onclick="submitSurvey()" class="flex-[2] py-4 btn-pink rounded-xl font-bold text-sm shadow-lg active:scale-95">บันทึกสำรวจ</button>
             </div>
         </div>
-container.innerHTML = data.map(item => `
-<div class="p-3 bg-pink-50 border rounded-xl flex justify-between items-center"
-onclick='addAsset(${JSON.stringify(item)})'>
 
-<div class="text-sm font-bold">
-${item.AssetID}
-</div>
 
-</div>
-`).join('');
         <!-- PAGE 3: SUMMARY & SLIP -->
         <div id="page-detail" class="page px-4 -mt-8 relative z-20 pb-10">
             <div id="print-content" class="card p-8 mb-4">
@@ -519,9 +511,33 @@ return;
 
 }
 
+container.innerHTML=selectedAssets.map((item,i)=>`
 
+<div class="flex justify-between items-center bg-white p-4 rounded-2xl border-l-4 border-emerald-400 shadow-sm">
+
+<div class="text-[11px] font-medium">
+
+${item.itemName}
+
+<span class="text-[9px] opacity-50 block">${item.AssetID}</span>
+
+</div>
+
+<button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-300 p-1">
+
+<i data-lucide="x" class="w-4 h-4"></i>
+
+</button>
+
+</div>
+
+`).join('');
+
+lucide.createIcons();
+
+}
 
 </script>
 </body>
 </html>
-
+ตรวจสอบความถูกต้อง
