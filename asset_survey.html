@@ -244,35 +244,45 @@ function navigateTo(pageId){
 
 async function initApp(){
     setLoading(true);
-    try{
+    try {
+        // ใช้ Promise.all เพื่อดึงข้อมูลพร้อมกัน 3 อย่าง
         const [dashRes, deptRes, filteredRes] = await Promise.all([
             fetch(`${API}?action=getDashboard&t=${Date.now()}`),
             fetch(`${API}?action=getDepartments`),
             fetch(`${API}?action=getFilteredDepartments`)
         ]);
+
         const dash = await dashRes.json();
         masterDepts = await deptRes.json();
         const filteredDepts = await filteredRes.json();
         
-        updateDashboard(dash, filteredDepts);
+        // ส่งข้อมูลทั้งชุดสถิติ (dash) และ รายการที่สำรวจแล้ว (filteredDepts) เข้าไปแสดงผล
+        updateDashboard(dash, filteredDepts); 
         initFormSelects();
-    }catch(e){
-        Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
+
+    } catch(e) {
+        // ตรวจสอบ alert: หากการเชื่อมต่อมีปัญหาจะแสดงข้อความนี้
+        console.error(e);
+        Swal.fire({
+            icon: 'error',
+            title: 'ข้อผิดพลาด',
+            text: 'ไม่สามารถโหลดข้อมูลจาก Server ได้ กรุณาลองใหม่อีกครั้ง',
+            confirmButtonColor: '#e91e63'
+        });
     }
     setLoading(false);
 }
 
-// ฟังก์ชันสำหรับอัปเดตเฉพาะตัวเลข 5 ข้อบน Dashboard
-function updateDashboardStats(data) {
+// ฟังก์ชันรวมที่แสดงผลทั้งตัวเลข 5 ช่อง และรายการหน่วยงานด้านล่าง
+function updateDashboard(data, filteredDetails) {
+    // 1. อัปเดตตัวเลข Stats 5 ช่อง
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
     document.getElementById('dash-sum').innerText = data.totalSum || 0;
     document.getElementById('dash-percent').innerText = (data.percent || 0) + "%";
-}
 
-// ฟังก์ชันสำหรับสร้างรายการหน่วยงาน (แยกออกมาต่างหาก)
-function renderCheckedDepartments(filteredDetails) {
+    // 2. จัดการรายการหน่วยงานด้านล่าง
     const container = document.getElementById('dept-list-container');
     if (!container) return;
 
@@ -283,6 +293,8 @@ function renderCheckedDepartments(filteredDetails) {
 
     let html = "";
     let currentBldg = "";
+    
+    // เรียงลำดับตามชื่ออาคาร
     const sorted = filteredDetails.sort((a, b) => (a.building || "").localeCompare(b.building || ""));
 
     sorted.forEach(item => {
@@ -291,7 +303,7 @@ function renderCheckedDepartments(filteredDetails) {
             html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
 
-        let imgTag = item.deptPhoto 
+        let imgTag = (item.deptPhoto && item.deptPhoto !== "") 
             ? `<img src="${item.deptPhoto}" class="w-full h-full object-cover">`
             : `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
 
