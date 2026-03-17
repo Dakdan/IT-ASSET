@@ -432,97 +432,81 @@ function updateDashboard(data, filteredDetails) {
 }
 
 async function showDeptDetail(id) {
-    if(!id || id === 'undefined') {
-        console.error("Invalid Department ID");
-        return;
-    }
+    if(!id || id === 'undefined') return;
 
+    // 1. ดึงข้อมูลจาก Master มาแสดงที่ Modal ทันที (ไม่ต้องรอโหลดจาก Server)
     const dept = masterDepts.find(x => (x.deptId || x.DEPID) == id);
-    if (!dept) {
-        console.warn("Department not found in master list: ", id);
-        return;
+    if (!dept) return;
+
+    // ตั้งค่าหัวข้อเป็น ชื่อตึก และปรับ Contrast ให้ชัดเจน
+    document.getElementById('md-name').innerText = dept.building || "-"; 
+    document.getElementById('md-floor').innerText = dept.floor || '-';
+    document.getElementById('md-system').innerText = dept.jobSystem || '-';
+    document.getElementById('md-tel').innerText = dept.tel || '-';
+    document.getElementById('md-gps').innerText = dept.gps || dept.GPS || '0';
+    document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
+    document.getElementById('md-note').innerText = `หน่วยงาน: ${dept.deptName || dept.DEP_NAME_LOC}\nหมายเหตุ: ${(dept.note1 || "")} ${(dept.note2 || "")}`;
+
+    // จัดการรูปภาพหน่วยงาน
+    const imgEl = document.getElementById('md-dept-photo');
+    const placeholderEl = document.getElementById('md-dept-photo-placeholder');
+    const photoUrl = dept.deptPhoto || dept.DEPT_PHO || "";
+
+    if (photoUrl) {
+        imgEl.src = photoUrl;
+        imgEl.classList.remove('hidden');
+        placeholderEl.classList.add('hidden');
+    } else {
+        imgEl.classList.add('hidden');
+        placeholderEl.classList.remove('hidden');
     }
 
-    setLoading(true);
+    // ล้างรายการเก่าออกก่อนโหลดใหม่
+    document.getElementById('md-list-log').innerHTML = '<p class="text-[10px] text-slate-400 animate-pulse">กำลังโหลดข้อมูล...</p>';
+    document.getElementById('md-list-nonum').innerHTML = '<p class="text-[10px] text-slate-400 animate-pulse">กำลังโหลดข้อมูล...</p>';
+
+    // 2. แสดง Modal ทันทีเพื่อให้ผู้ใช้เห็นชื่อตึก
+    showModal('modal-dept-detail');
+    if(window.lucide) lucide.createIcons();
+
+    // 3. ไปดึงประวัติการสำรวจแบบเงียบๆ (ไม่ใช้ SweetAlert ขวางแล้ว)
     try {
         const res = await fetch(`${API}?action=getSurveyDetailByDept&deptId=${id}`);
         const data = await res.json();
 
-        // *** ส่วนที่แก้ไข: แสดงรูปภาพหน่วยงานใน Modal ***
-        const imgEl = document.getElementById('md-dept-photo');
-        const placeholderEl = document.getElementById('md-dept-photo-placeholder');
-        
-        // ใช้ url รูปภาพจากข้อมูล Filtered ถ้ามี (เผื่อกรณีดึงรูปจากประวัติสำรวจล่าสุด)
-        const photoUrl = data.deptPhoto || dept.deptPhoto || dept.DEPT_PHO;
-
-        if (photoUrl && photoUrl !== "") {
-            imgEl.src = photoUrl;
-            imgEl.classList.remove('hidden');
-            placeholderEl.classList.add('hidden');
-        } else {
-            imgEl.src = "";
-            imgEl.classList.add('hidden');
-            placeholderEl.classList.remove('hidden');
-        }
-        // ****************************************
-
-        // แสดงข้อมูลลงใน Modal (คงเดิม)
-       // --- ส่วนที่ปรับปรุงการแสดงผลข้อมูลหน่วยงาน ---
-
-// 1. แสดงชื่อ อาคาร/ตึก/สถานที่ ไว้ที่หัวข้อใหญ่ (แทน DEP ID เดิม)
-        document.getElementById('md-name').innerText = dept.building || "-"; 
-        
-        // 2. แสดงชื่อหน่วยงาน (Department Name) ไว้ที่ช่องหมายเหตุ หรือเพิ่มตัวแปรใหม่
-        // ในที่นี้ผมปรับให้ md-note แสดงชื่อหน่วยงานควบคู่กับหมายเหตุเพื่อให้เจ้าหน้าที่ทราบว่ากำลังดูหน่วยงานไหนในตึกนั้น
-        document.getElementById('md-note').innerText = `หน่วยงาน: ${dept.deptName || dept.DEP_NAME_LOC}\nหมายเหตุ: ${(dept.note1 || "")} ${(dept.note2 || "")}`;
-        
-        // 3. ข้อมูลทางเทคนิคอื่นๆ (รหัสหน่วยงานเก็บไว้ใน md-id แต่ใน HTML เราเปลี่ยน Label เป็น 'ตึก/สถานที่' ไปแล้ว)
-        document.getElementById('md-id').innerText = dept.building || "-"; 
-        document.getElementById('md-floor').innerText = dept.floor || '-';
-        document.getElementById('md-system').innerText = dept.jobSystem || '-';
-        document.getElementById('md-tel').innerText = dept.tel || '-';
-        document.getElementById('md-gps').innerText = dept.gps || dept.GPS || '0';
-        document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
         const logContainer = document.getElementById('md-list-log');
         const nonumContainer = document.getElementById('md-list-nonum');
         
-        logContainer.innerHTML = (data.assets && data.assets.length) 
-            ? data.assets.map(a => `<div class="p-3 bg-emerald-50 text-[10px] rounded-xl border border-emerald-100 font-bold text-emerald-700">📌 ${a.AssetID} <span class="block opacity-50 font-normal">ในระบบ</span></div>`).join('')
-            : '<p class="text-[10px] text-gray-300 italic py-2">ไม่มีข้อมูลในระบบ</p>';
+        if(!data.error) {
+            // แสดงรายการในระบบ (High Contrast)
+            logContainer.innerHTML = (data.assets && data.assets.length) 
+                ? data.assets.map(a => `<div class="p-3 bg-white border-2 border-emerald-100 text-slate-950 text-[11px] rounded-xl font-black shadow-sm">📌 ${a.AssetID}</div>`).join('')
+                : '<p class="text-[10px] text-slate-400 italic py-2">ไม่มีข้อมูลในระบบ</p>';
             
-        nonumContainer.innerHTML = (data.newAssets && data.newAssets.length)
-            ? data.newAssets.map(a => `<div class="p-3 bg-amber-50 text-[10px] rounded-xl border border-amber-100 font-bold text-amber-700">📦 ${a.itemName} <span class="block opacity-50 font-normal">SN: ${a.serial}</span></div>`).join('')
-            : '<p class="text-[10px] text-gray-300 italic py-2">ไม่มีข้อมูลนอกทะเบียน</p>';
+            // แสดงรายการนอกระบบ (High Contrast)
+            nonumContainer.innerHTML = (data.newAssets && data.newAssets.length)
+                ? data.newAssets.map(a => `<div class="p-3 bg-white border-2 border-amber-100 text-slate-950 text-[11px] rounded-xl font-black shadow-sm">📦 ${a.itemName} (SN: ${a.serial})</div>`).join('')
+                : '<p class="text-[10px] text-slate-400 italic py-2">ไม่มีข้อมูลนอกทะเบียน</p>';
 
-        document.getElementById('md-count-log').innerText = data.assets ? data.assets.length : 0;
-        document.getElementById('md-count-nonum').innerText = data.newAssets ? data.newAssets.length : 0;
-
-        document.getElementById('btn-edit-survey').onclick = () => {
-            closeModal('modal-dept-detail');
-            startSurveyFor(id); 
-        };
-
-        showModal('modal-dept-detail');
-        if(window.lucide) lucide.createIcons();
+            document.getElementById('md-count-log').innerText = data.assets ? data.assets.length : 0;
+            document.getElementById('md-count-nonum').innerText = data.newAssets ? data.newAssets.length : 0;
+        } else {
+            throw new Error("No data found");
+        }
     } catch(e) {
-        console.error("Error fetching detail:", e);
-        Swal.fire({
-            icon: 'info',
-            title: 'แจ้งเตือน',
-            text: 'ไม่พบรายละเอียดการสำรวจเดิม คุณต้องการเริ่มสำรวจใหม่สำหรับหน่วยงานนี้หรือไม่?',
-            showCancelButton: true,
-            confirmButtonText: 'เริ่มสำรวจ',
-            cancelButtonText: 'ยกเลิก',
-            confirmButtonColor: '#e91e63'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                startSurveyFor(id);
-            }
-        });
+        // กรณีไม่พบประวัติ ให้แสดงข้อความใน Modal แทนการเด้ง Alert
+        document.getElementById('md-list-log').innerHTML = '<p class="text-[10px] text-slate-400 italic py-2">ยังไม่พบประวัติการสำรวจ</p>';
+        document.getElementById('md-list-nonum').innerHTML = '<p class="text-[10px] text-slate-400 italic py-2">ยังไม่พบประวัติการสำรวจ</p>';
+        document.getElementById('md-count-log').innerText = "0";
+        document.getElementById('md-count-nonum').innerText = "0";
     }
-    setLoading(false);
-}
 
+    // ตั้งค่าปุ่มเริ่มการสำรวจ
+    document.getElementById('btn-edit-survey').onclick = () => {
+        closeModal('modal-dept-detail');
+        startSurveyFor(id); 
+    };
+}
 function initFormSelects(){
     const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
     const bSelect=document.getElementById('form-bldg');
