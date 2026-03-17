@@ -259,7 +259,7 @@ async function initApp(){
 }
 
 function updateDashboard(data) {
-    // อัปเดตตัวเลขสถิติ (ตรงตาม Stat Cards แถวบนในรูป)
+    // อัปเดตตัวเลขสถิติ
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
@@ -277,35 +277,36 @@ function updateDashboard(data) {
     const sorted = data.details.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
 
     sorted.forEach(item => {
-        // ส่วน Header อาคาร (แถบสีเทาในรูป)
+        // ส่วน Header อาคาร (แถบสีเทาอ่อนแบบในรูป)
         if (item.LOCATION_NAME !== currentBldg) {
             currentBldg = item.LOCATION_NAME;
-            html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
+            html += `<div class="bg-gray-50 text-gray-400 px-5 py-2 font-bold text-[10px] uppercase tracking-wider border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
 
-        // จัดการรูปภาพ (ดึงจากคอลัมน์ N)
+        // รูปภาพ Profile (Avatar)
         const imgUrl = item.DEPT_PHO || 'https://www.w3schools.com/howto/img_avatar.png';
 
-        // โครงสร้าง Card หน่วยงาน (ตาม UI ในรูป)
         html += `
-        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
-             onclick="startSurveyFor('${item.DEPID}')">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-gray-100 overflow-hidden shrink-0 border border-pink-100 shadow-sm">
+        <div class="flex justify-between items-center px-5 py-4 border-b border-gray-50 hover:bg-pink-50/20 active:bg-pink-50 transition-colors cursor-pointer" 
+             onclick="startSurveyFor('${item.DEPID || item.deptId}')">
+            <div class="flex items-center gap-4">
+                <div class="w-[52px] h-[52px] rounded-2xl bg-gray-100 overflow-hidden shrink-0 border border-pink-50 shadow-sm">
                     <img src="${imgUrl}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'" class="w-full h-full object-cover">
                 </div>
-                <div>
-                    <p class="text-[10px] text-pink-500 font-bold">
-                        ชั้น ${item.FL || '-'} | สำรวจแล้ว: <span class="text-pink-600">${item.Sum || 0}</span>
+                <div class="flex flex-col gap-0.5">
+                    <p class="text-[11px] text-pink-500 font-medium">
+                        ชั้น ${item.FL || '-'} | <span class="text-gray-400">สำรวจแล้ว:</span> <span class="font-bold text-pink-600">${item.Sum || 0}</span>
                     </p>
-                    <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
+                    <p class="font-bold text-gray-800 text-[15px] leading-tight tracking-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
                 </div>
             </div>
-            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+            <div class="text-gray-300">
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </div>
         </div>`;
     });
     container.innerHTML = html;
-    lucide.createIcons(); // รีเฟรชไอคอน Chevron
+    lucide.createIcons();
 }
 
 function initFormSelects(){
