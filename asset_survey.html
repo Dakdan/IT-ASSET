@@ -3,23 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>IT Asset Survey - All in One</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
+
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <style>
-body{
-font-family:'Kanit',sans-serif;
-background:#f8f9fa;
-}
+
+body{font-family:'Kanit',sans-serif;background:#f8f9fa}
+
 .pink-gradient-header{
 background:linear-gradient(180deg,#b0124c 0%,#e91e63 50%,#f48fb1 100%);
 border-bottom-left-radius:40px;
 border-bottom-right-radius:40px;
 }
+
 .stat-card{
 background:white;
 border-radius:20px;
@@ -28,21 +33,18 @@ text-align:center;
 box-shadow:0 4px 12px rgba(0,0,0,0.03);
 border-bottom:4px solid transparent;
 }
-.page{
-display:none;
-}
-.page.active{
-display:block;
-}
+
+.page{display:none}
+.page.active{display:block}
+
 .card{
 background:white;
 border-radius:24px;
 box-shadow:0 10px 25px rgba(0,0,0,0.05);
 }
-.btn-pink{
-background:#e91e63;
-color:white;
-}
+
+.btn-pink{background:#e91e63;color:white}
+
 canvas{
 border:2px dashed #ffcad8;
 background:#fff9fa;
@@ -62,131 +64,147 @@ flex-direction:column;
 align-items:center;
 justify-content:center;
 }
+
 </style>
 </head>
+
 <body class="flex justify-center">
-<!-- Loading -->
+
 <div id="loading" class="loading-overlay hidden">
 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mb-4"></div>
-<p class="text-pink-600 font-bold">
-กำลังดำเนินการ...
-</p>
+<p class="text-pink-600 font-bold">กำลังดำเนินการ...</p>
 </div>
+
 <div class="w-full max-w-md bg-[#f8f9fa] min-h-screen relative flex flex-col shadow-2xl overflow-x-hidden">
-<!-- HEADER -->
-<header class="pink-gradient-header pt-10 pb-12 px-6 text-center text-white shrink-0 relative z-10">
+
+<header class="pink-gradient-header pt-10 pb-12 px-6 text-center text-white">
+
 <div class="flex justify-center mb-3" onclick="location.reload()">
 <div class="bg-white p-2 rounded-2xl shadow-lg">
-<img src="https://img2.pic.in.th/-227e4f6f84f29f020.png"
-class="w-10 h-10 object-contain">
+<img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-10 h-10">
 </div>
 </div>
+
 <h1 class="text-lg font-bold">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-<p class="text-[9px] font-light opacity-90 uppercase tracking-widest">
-โรงพยาบาลอุดรธานี : IT MEDICAL GROUP
-</p>
+<p class="text-[9px] uppercase">โรงพยาบาลอุดรธานี : IT MEDICAL GROUP</p>
+
 </header>
-<!-- PAGE : DASHBOARD -->
-<div id="page-dashboard" class="page active px-4 -mt-8 relative z-20 pb-24">
-<!-- Dashboard Stats -->
+
+<!-- PAGE DASHBOARD -->
+
+<div id="page-dashboard" class="page active px-4 -mt-8 pb-24">
+
 <div class="grid grid-cols-3 gap-2 mb-2">
-<div class="stat-card border-blue-400">
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
-เป้าหมาย (R)
-</p>
-<h2 id="dash-goal" class="text-base font-black text-gray-800">
-0
-</h2>
 
+<div class="stat-card">
+<p class="text-[8px] text-gray-400">เป้าหมาย</p>
+<h2 id="dash-goal" class="font-bold">0</h2>
 </div>
 
-
-<div class="stat-card border-emerald-400">
-
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
-Asset In
-</p>
-
-<h2 id="dash-in" class="text-base font-black text-gray-800">
-0
-</h2>
-
+<div class="stat-card">
+<p class="text-[8px] text-gray-400">Asset In</p>
+<h2 id="dash-in" class="font-bold">0</h2>
 </div>
 
-
-<div class="stat-card border-amber-400">
-
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
-Asset Out
-</p>
-
-<h2 id="dash-out" class="text-base font-black text-gray-800">
-0
-</h2>
-
+<div class="stat-card">
+<p class="text-[8px] text-gray-400">Asset Out</p>
+<h2 id="dash-out" class="font-bold">0</h2>
 </div>
 
 </div>
-
-
 
 <div class="grid grid-cols-2 gap-2 mb-4">
 
-<div class="stat-card border-pink-400">
-
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
-รวมสำรวจ
-</p>
-
-<h2 id="dash-sum" class="text-base font-black text-gray-800">
-0
-</h2>
-
+<div class="stat-card">
+<p class="text-[8px] text-gray-400">รวมสำรวจ</p>
+<h2 id="dash-sum" class="font-bold">0</h2>
 </div>
 
-
-<div class="stat-card border-purple-500">
-
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
-ความสำเร็จ
-</p>
-
-<h2 id="dash-percent" class="text-base font-black text-purple-600">
-0%
-</h2>
-
+<div class="stat-card">
+<p class="text-[8px] text-gray-400">ความสำเร็จ</p>
+<h2 id="dash-percent" class="font-bold">0%</h2>
 </div>
 
 </div>
 
+<div class="bg-white rounded-[28px] shadow-sm border">
 
+<div class="p-4 flex justify-between">
 
-<!-- Department List -->
-
-<div class="bg-white rounded-[28px] shadow-sm overflow-hidden border border-gray-100">
-
-<div class="p-4 border-b border-gray-50 flex justify-between items-center">
-
-<h3 class="font-bold text-xs text-gray-600 flex items-center gap-2">
-
-<i data-lucide="list-checks" class="w-4 h-4 text-pink-500"></i>
-
-รายชื่อหน่วยงาน
-
+<h3 class="text-xs font-bold flex gap-2">
+<i data-lucide="list-checks"></i> รายชื่อหน่วยงาน
 </h3>
 
-<button onclick="initApp()" class="text-[10px] text-pink-500 font-bold">
+<button onclick="initApp()" class="text-xs text-pink-500">รีเฟรช</button>
 
-รีเฟรช
+</div>
+
+<div id="dept-list-container" class="max-h-[380px] overflow-y-auto"></div>
+
+</div>
+
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2">
+
+<button onclick="navigateTo('page-form')" class="bg-pink-600 text-white w-14 h-14 rounded-full">
+
+<i data-lucide="plus"></i>
 
 </button>
 
 </div>
 
+</div>
 
-<div id="dept-list-container" class="max-h-[380px] overflow-y-auto text-sm">
 
-<!-- JS Inject -->
+<!-- PAGE FORM -->
+
+<div id="page-form" class="page px-4 pb-10">
+
+<div class="card p-5 mb-4">
+
+<select id="form-bldg" onchange="onBuildingChange()" class="w-full p-3 bg-gray-50 rounded-xl mb-2">
+<option value="">-- เลือกอาคาร --</option>
+</select>
+
+<select id="form-dept" class="w-full p-3 bg-gray-50 rounded-xl">
+<option value="">-- เลือกหน่วยงาน --</option>
+</select>
+
+</div>
+
+<div class="card p-5 mb-6">
+
+<div class="flex gap-2 mb-4">
+
+<input id="search-input" placeholder="ค้นหารหัส/ชื่อ..." class="flex-1 p-3 bg-gray-50 rounded-xl">
+
+<button onclick="handleSearch()" class="btn-pink px-4 rounded-xl">
+
+<i data-lucide="search"></i>
+
+</button>
+
+</div>
+
+<div id="search-results" class="space-y-2 mb-4"></div>
+
+<div id="selected-list" class="space-y-2">
+
+<p class="text-center text-gray-300 text-xs">ยังไม่มีรายการ</p>
+
+</div>
+
+</div>
+
+<div class="flex gap-3">
+
+<button onclick="navigateTo('page-dashboard')" class="flex-1 py-4 bg-white text-gray-400 rounded-xl">
+ยกเลิก
+</button>
+
+<button onclick="submitSurvey()" class="flex-1 py-4 btn-pink rounded-xl">
+บันทึก
+</button>
 
 </div>
 
@@ -195,55 +213,42 @@ Asset Out
 </div>
 
 
-</div>
-
-
-</body>
-</html>
 <script>
+
 const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
 let masterDepts=[];
 let selectedAssets=[];
-let currentActivityId=null;
 let sigPad=null;
+
 
 window.onload=()=>{
 
-    lucide.createIcons();
+lucide.createIcons();
 
-    const canvas=document.getElementById('sig-pad');
+const canvas=document.getElementById('sig-pad');
 
-    if(canvas){
-        sigPad=new SignaturePad(canvas);
-    }
+if(canvas){
+sigPad=new SignaturePad(canvas);
+}
 
-    initApp();
+initApp();
 
 };
 
 
 function setLoading(s){
-
-    const el=document.getElementById('loading');
-    if(!el) return;
-
-    el.classList.toggle('hidden',!s);
-
+document.getElementById('loading').classList.toggle('hidden',!s);
 }
 
 
 function navigateTo(pageId){
 
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
 
-    const page=document.getElementById(pageId);
+document.getElementById(pageId).classList.add('active');
 
-    if(page){
-        page.classList.add('active');
-    }
-
-    window.scrollTo(0,0);
+window.scrollTo(0,0);
 
 }
 
@@ -251,26 +256,28 @@ function navigateTo(pageId){
 
 async function initApp(){
 
-    setLoading(true);
+setLoading(true);
 
-    try{
+try{
 
-        const dashRes=await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
-        const deptRes=await fetch(`${API}?action=getDepartments`);
+const dashRes=await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
+const deptRes=await fetch(`${API}?action=getDepartments`);
 
-        const dash=await dashRes.json();
-        masterDepts=await deptRes.json();
+const dash=await dashRes.json();
 
-        updateDashboard(dash);
-        initFormSelects();
+masterDepts=await deptRes.json();
 
-    }catch(e){
+updateDashboard(dash);
 
-        Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
+initFormSelects();
 
-    }
+}catch(e){
 
-    setLoading(false);
+Swal.fire('Error','โหลดข้อมูลไม่ได้','error');
+
+}
+
+setLoading(false);
 
 }
 
@@ -278,74 +285,10 @@ async function initApp(){
 
 function updateDashboard(data){
 
-    if(!data) return;
-
-    const goal=document.getElementById('dash-goal');
-    const inEl=document.getElementById('dash-in');
-    const outEl=document.getElementById('dash-out');
-    const sumEl=document.getElementById('dash-sum');
-    const pctEl=document.getElementById('dash-percent');
-
-    if(goal) goal.innerText=data.goal||0;
-    if(inEl) inEl.innerText=data.totalIn||0;
-    if(outEl) outEl.innerText=data.totalOut||0;
-    if(sumEl) sumEl.innerText=data.totalSum||0;
-
-    const pct=data.goal>0?((data.totalSum/data.goal)*100).toFixed(1):0;
-
-    if(pctEl) pctEl.innerText=pct+"%";
-
-    const container=document.getElementById('dept-list-container');
-
-    if(!container) return;
-
-    if(!data.details || data.details.length===0){
-
-        container.innerHTML=`<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูล</p>`;
-        return;
-
-    }
-
-    let html="";
-    let currentBldg="";
-
-    const sorted=[...data.details].sort((a,b)=>
-        (a.LOCATION_NAME||"").localeCompare(b.LOCATION_NAME||"")
-    );
-
-    sorted.forEach(item=>{
-
-        if(item.LOCATION_NAME!==currentBldg){
-
-            currentBldg=item.LOCATION_NAME;
-
-            html+=`
-            <div class="bg-gray-50 text-gray-400 px-4 py-2 font-bold text-[9px] uppercase border-b">
-            อาคาร: ${currentBldg||'ทั่วไป'}
-            </div>
-            `;
-
-        }
-
-        html+=`
-        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer"
-        onclick="startSurveyFor('${item.DEPID}')">
-
-        <div>
-        <p class="text-[9px] text-pink-400 font-bold">ชั้น ${item.FL||'-'}</p>
-        <p class="font-medium text-gray-700">${item.DEP_NAME_LOC||item.DEPNAME}</p>
-        </div>
-
-        <div class="bg-white border text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
-        ${item.Sum||0}
-        </div>
-
-        </div>
-        `;
-
-    });
-
-    container.innerHTML=html;
+document.getElementById('dash-goal').innerText=data.goal||0;
+document.getElementById('dash-in').innerText=data.totalIn||0;
+document.getElementById('dash-out').innerText=data.totalOut||0;
+document.getElementById('dash-sum').innerText=data.totalSum||0;
 
 }
 
@@ -353,26 +296,27 @@ function updateDashboard(data){
 
 function initFormSelects(){
 
-    const bSelect=document.getElementById('form-bldg');
+const bSelect=document.getElementById('form-bldg');
 
-    if(!bSelect) return;
+if(!bSelect)return;
 
-    const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
+const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))];
 
-    bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
+bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
 
-    bldgSet.forEach(b=>{
-
-        bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
-
-    });
+bldgSet.forEach(b=>{
+bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
+});
 
 }
+
+
+
 async function handleSearch(){
 
-const q=document.getElementById('search-input').value.trim();
+const q=document.getElementById('search-input').value;
 
-if(!q) return;
+if(!q)return;
 
 setLoading(true);
 
@@ -384,47 +328,74 @@ const data=await res.json();
 
 const container=document.getElementById('search-results');
 
-if(!container) return;
+if(data.length===0){
 
-if(!data || data.length===0){
-
-container.innerHTML=
-'<p class="text-center text-xs text-gray-400 py-4 italic">ไม่พบข้อมูลครุภัณฑ์</p>';
+container.innerHTML='<p class="text-center text-xs text-gray-400">ไม่พบข้อมูล</p>';
 
 }else{
 
 container.innerHTML=data.map(item=>`
 
-<div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center cursor-pointer"
+<div class="p-3 bg-pink-50 border rounded-xl flex justify-between items-center"
 onclick='addAsset(${JSON.stringify(item)})'>
 
-<div class="text-[11px]">
+<div class="text-sm font-bold">
 
-<p class="font-bold text-gray-700">${item.itemName}</p>
-<p class="text-gray-400">ID: ${item.AssetID}</p>
+${item.AssetID}
 
 </div>
-
-<i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
 
 </div>
 
 `).join('');
 
-lucide.createIcons();
-
 }
 
-}catch(e){
-
-Swal.fire('ข้อผิดพลาด','ค้นหาครุภัณฑ์ไม่สำเร็จ','error');
-
-}
+}catch(e){}
 
 setLoading(false);
 
 }
 
+
+
+function addAsset(item){
+
+if(selectedAssets.find(x=>x.AssetID===item.AssetID))return;
+
+selectedAssets.push(item);
+
+renderSelected();
+
+}
+
+
+
+function renderSelected(){
+
+const container=document.getElementById('selected-list');
+
+if(selectedAssets.length===0){
+
+container.innerHTML='<p class="text-center text-gray-300 text-xs">ยังไม่มีรายการ</p>';
+
+return;
+
+}
+
+container.innerHTML=selectedAssets.map((item,i)=>`
+
+<div class="flex justify-between bg-white p-3 rounded-xl">
+
+<div>${item.AssetID}</div>
+
+<button onclick="selectedAssets.splice(${i},1);renderSelected()">ลบ</button>
+
+</div>
+
+`).join('');
+
+}
 
 </script>
 
