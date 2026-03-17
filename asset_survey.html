@@ -244,31 +244,37 @@ function navigateTo(pageId){
 
 async function initApp(){
     setLoading(true);
-    
-    // 1. ดึงข้อมูล Dashboard (ถ้าส่วนนี้ได้ ก็ให้โชว์ตัวเลขไปก่อน)
+
+    // 1. ดึงข้อมูล Dashboard (ถ้าได้ตัวเลข 1387 ขึ้นมาแล้ว ตัวนี้ผ่าน)
     try {
         const dashRes = await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
+        if (!dashRes.ok) throw new Error();
         const dash = await dashRes.json();
         updateDashboard(dash);
     } catch(e) {
-        console.error("Dashboard Error:", e);
-        // อาจจะใช้ Toast เล็กๆ แทน Modal ใหญ่ที่ขวางหน้าจอ
+        console.error("Dashboard failed", e);
+        // ไม่ต้อง Swal เพราะอยากให้หน้าจอยังโชว์ส่วนอื่นได้
     }
 
-    // 2. ดึงข้อมูลหน่วยงาน (สำหรับเลือกในฟอร์ม)
+    // 2. ดึงข้อมูล Departments (ตัวนี้น่าจะเป็นสาเหตุที่ทำให้ Modal เด้ง)
     try {
         const deptRes = await fetch(`${API}?action=getDepartments`);
+        if (!deptRes.ok) throw new Error();
         masterDepts = await deptRes.json();
         initFormSelects();
     } catch(e) {
-        console.error("Departments Error:", e);
-        // ถ้าโหลดรายชื่อหน่วยงานไม่ได้จริงๆ ค่อยแจ้งเตือน
-        Swal.fire('แจ้งเตือน','โหลดรายชื่อหน่วยงานไม่สำเร็จ บางฟังก์ชันอาจใช้งานไม่ได้','warning');
+        console.error("Departments failed", e);
+        // แจ้งเตือนแค่ว่าโหลดรายชื่อไม่สำเร็จพอ ไม่ต้องบอกว่า "เชื่อมต่อระบบไม่ได้"
+        Swal.fire({
+            icon: 'warning',
+            title: 'แจ้งเตือน',
+            text: 'โหลดรายชื่อหน่วยงานไม่สำเร็จ (ตรวจสอบ action=getDepartments)',
+            confirmButtonColor: '#3085d6'
+        });
     }
 
     setLoading(false);
 }
-
 function updateDashboard(data) {
     // อัปเดตตัวเลขสถิติด้านบน
     document.getElementById('dash-goal').innerText = data.goal || 0;
