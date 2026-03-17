@@ -260,7 +260,6 @@ async function initApp(){
 }
 
 function updateDashboard(data) {
-    // อัปเดตตัวเลขสถิติด้านบน
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
@@ -271,26 +270,17 @@ function updateDashboard(data) {
     const container = document.getElementById('dept-list-container');
     if (!data.details) return;
 
-    // --- จุดสำคัญ: กรองแสดงเฉพาะหน่วยงานที่ Sum > 0 เท่านั้น ---
-    // (Backend ส่งค่า row[6] มาเป็น Sum ให้อยู่แล้ว)
-    const filteredDepts = data.details.filter(item => {
-        const sumValue = parseInt(item.Sum);
-        return !isNaN(sumValue) && sumValue > 0;
-    });
+    // --- ส่วนที่แก้ไข: กรองเฉพาะหน่วยงานที่มี่ค่า Sum > 0 เท่านั้น ---
+    const filteredDepts = data.details.filter(item => (item.Sum || 0) > 0);
 
     let html = "";
     let currentBldg = "";
     
-    // เรียงลำดับตามอาคาร (LOCATION_NAME)
+    // เรียงลำดับตามอาคารจากข้อมูลที่กรองแล้ว
     const sorted = filteredDepts.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
 
     if (sorted.length === 0) {
-        container.innerHTML = `
-            <div class="flex flex-col items-center justify-center py-12 opacity-40">
-                <i data-lucide="clipboard-x" class="w-12 h-12 mb-2"></i>
-                <p class="text-[10px] italic">ยังไม่มีข้อมูลการสำรวจในระบบ</p>
-            </div>`;
-        if(window.lucide) lucide.createIcons();
+        container.innerHTML = '<p class="text-center text-gray-400 py-10 text-[10px] italic">ไม่พบข้อมูลหน่วยงานที่สำรวจแล้ว</p>';
         return;
     }
 
@@ -300,7 +290,6 @@ function updateDashboard(data) {
             html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
 
-        // แสดงรูปภาพ (ไม่มี Avatar สำรองตามที่คุยกัน)
         let imgTag = "";
         if(item.DEPT_PHO && item.DEPT_PHO !== "") {
             imgTag = `<img src="${item.DEPT_PHO}" class="w-full h-full object-cover">`;
@@ -310,14 +299,14 @@ function updateDashboard(data) {
 
         html += `
         <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
-             onclick="startSurveyFor('${item.DEPID}')">
+             onclick="startSurveyFor('${item.DEPID || item.deptId}')">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">
                     ${imgTag}
                 </div>
                 <div>
                     <p class="text-[10px] text-pink-500 font-bold">
-                        Phone ${item.Tell || '-'} | สำรวจแล้ว: <span class="text-pink-600">${item.Sum}</span>
+                        Phone ${item.Tell || '-'} | สำรวจแล้ว: <span class="text-pink-600">${item.Sum || 0}</span>
                     </p>
                     <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
                 </div>
@@ -325,7 +314,6 @@ function updateDashboard(data) {
             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
         </div>`;
     });
-    
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
 }
