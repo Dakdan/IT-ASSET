@@ -244,18 +244,28 @@ function navigateTo(pageId){
 
 async function initApp(){
     setLoading(true);
-    try{
-        const [dashRes, deptRes] = await Promise.all([
-            fetch(`${API}?action=getDashboard&t=${Date.now()}`),
-            fetch(`${API}?action=getDepartments`)
-        ]);
+    
+    // 1. ดึงข้อมูล Dashboard (ถ้าส่วนนี้ได้ ก็ให้โชว์ตัวเลขไปก่อน)
+    try {
+        const dashRes = await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
         const dash = await dashRes.json();
-        masterDepts = await deptRes.json();
         updateDashboard(dash);
-        initFormSelects();
-    }catch(e){
-        Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
+    } catch(e) {
+        console.error("Dashboard Error:", e);
+        // อาจจะใช้ Toast เล็กๆ แทน Modal ใหญ่ที่ขวางหน้าจอ
     }
+
+    // 2. ดึงข้อมูลหน่วยงาน (สำหรับเลือกในฟอร์ม)
+    try {
+        const deptRes = await fetch(`${API}?action=getDepartments`);
+        masterDepts = await deptRes.json();
+        initFormSelects();
+    } catch(e) {
+        console.error("Departments Error:", e);
+        // ถ้าโหลดรายชื่อหน่วยงานไม่ได้จริงๆ ค่อยแจ้งเตือน
+        Swal.fire('แจ้งเตือน','โหลดรายชื่อหน่วยงานไม่สำเร็จ บางฟังก์ชันอาจใช้งานไม่ได้','warning');
+    }
+
     setLoading(false);
 }
 
