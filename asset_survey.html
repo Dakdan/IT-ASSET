@@ -468,7 +468,7 @@ container.innerHTML='<p class="text-center text-xs text-gray-400 py-4 italic">เน
 
 }else{
 
-container.innerHTML=data.map(item=>`
+
 
 <div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center"
 onclick='addAsset(${JSON.stringify(item)})'>
@@ -476,9 +476,6 @@ onclick='addAsset(${JSON.stringify(item)})'>
 <div class="text-[11px]">
 
 <p class="font-bold text-gray-700">${item.itemName}</p>
-
-<p class="text-gray-400">ID: ${item.AssetID}</p>
-
 </div>
 
 <i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
