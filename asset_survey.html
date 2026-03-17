@@ -26,6 +26,11 @@
         canvas { border: 2px dashed #ffcad8; background: #fff9fa; border-radius: 15px; cursor: crosshair; width: 100%; height: 200px; }
         .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         @media print { .no-print { display: none !important; } .print-only { display: block !important; } body { background: white; } .card { box-shadow: none; border: 1px solid #eee; } }
+        
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #f48fb1; border-radius: 10px; }
     </style>
 </head>
 <body class="flex justify-center">
@@ -80,7 +85,7 @@
                     </h3>
                     <button onclick="initApp()" class="text-[10px] text-pink-500 font-bold">รีเฟรช</button>
                 </div>
-                <div id="dept-list-container" class="max-h-[380px] overflow-y-auto text-sm">
+                <div id="dept-list-container" class="max-h-[380px] overflow-y-auto text-sm custom-scroll">
                 </div>
             </div>
 
@@ -215,10 +220,59 @@
         </div>
     </div>
 
+    <div id="modal-dept-detail" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-[32px] w-full max-w-md h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 bg-pink-50 shrink-0 flex justify-between items-center border-b">
+                <h3 class="font-bold text-gray-700 flex items-center gap-2 text-base">
+                    <i data-lucide="info" class="w-5 h-5 text-pink-500"></i> รายละเอียดการตรวจสอบ
+                </h3>
+                <button onclick="closeModal('modal-dept-detail')" class="text-gray-400"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 custom-scroll">
+                <div class="mb-6">
+                    <p class="text-[10px] font-bold text-pink-400 uppercase mb-3">ข้อมูลหน่วยงาน</p>
+                    <div class="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-4 rounded-2xl">
+                        <div class="col-span-2"><span class="text-gray-400">หน่วยงาน:</span> <span id="md-name" class="font-bold">-</span></div>
+                        <div><span class="text-gray-400">DEP_ID:</span> <span id="md-id" class="font-bold">-</span></div>
+                        <div><span class="text-gray-400">ชั้น:</span> <span id="md-floor" class="font-bold">-</span></div>
+                        <div><span class="text-gray-400">ระบบงาน:</span> <span id="md-system" class="font-bold">-</span></div>
+                        <div><span class="text-gray-400">เบอร์โทร:</span> <span id="md-tel" class="font-bold">-</span></div>
+                        <div><span class="text-gray-400">GPS:</span> <span id="md-gps" class="font-bold text-pink-600">-</span></div>
+                        <div><span class="text-gray-400">สถานะ:</span> <span id="md-active" class="font-bold">-</span></div>
+                        <div class="col-span-2 border-t pt-2 mt-2"><span class="text-gray-400">หมายเหตุ:</span> <span id="md-note" class="block italic text-[10px]">-</span></div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-[10px] font-bold text-emerald-500 uppercase mb-3 flex justify-between">
+                        <span>รายการในทะเบียน</span>
+                        <span id="md-count-log" class="bg-emerald-100 px-2 rounded-full">0</span>
+                    </p>
+                    <div id="md-list-log" class="space-y-2"></div>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-[10px] font-bold text-amber-500 uppercase mb-3 flex justify-between">
+                        <span>รายการนอกทะเบียน</span>
+                        <span id="md-count-nonum" class="bg-amber-100 px-2 rounded-full">0</span>
+                    </p>
+                    <div id="md-list-nonum" class="space-y-2"></div>
+                </div>
+            </div>
+            <div class="p-6 bg-white border-t flex gap-3 shrink-0">
+                <button onclick="closeModal('modal-dept-detail')" class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold text-sm">กลับ</button>
+                <button id="btn-edit-survey" class="flex-1 py-4 btn-pink rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i> เริ่มสำรวจใหม่
+                </button>
+            </div>
+        </div>
+    </div>
+
 <script>
 const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
 let masterDepts=[];
+let globalFilteredDepts=[]; // เก็บข้อมูลหน่วยงานที่สำรวจแล้วไว้ใช้ใน Modal
 let selectedAssets=[];
 let sigPad=null;
 let currentActivityId=null;
@@ -245,7 +299,6 @@ function navigateTo(pageId){
 async function initApp(){
     setLoading(true);
     try {
-        // ใช้ Promise.all เพื่อดึงข้อมูลพร้อมกัน 3 อย่าง
         const [dashRes, deptRes, filteredRes] = await Promise.all([
             fetch(`${API}?action=getDashboard&t=${Date.now()}`),
             fetch(`${API}?action=getDepartments`),
@@ -254,35 +307,25 @@ async function initApp(){
 
         const dash = await dashRes.json();
         masterDepts = await deptRes.json();
-        const filteredDepts = await filteredRes.json();
+        globalFilteredDepts = await filteredRes.json();
         
-        // ส่งข้อมูลทั้งชุดสถิติ (dash) และ รายการที่สำรวจแล้ว (filteredDepts) เข้าไปแสดงผล
-        updateDashboard(dash, filteredDepts); 
+        updateDashboard(dash, globalFilteredDepts); 
         initFormSelects();
 
     } catch(e) {
-        // ตรวจสอบ alert: หากการเชื่อมต่อมีปัญหาจะแสดงข้อความนี้
         console.error(e);
-        Swal.fire({
-            icon: 'error',
-            title: 'ข้อผิดพลาด',
-            text: 'ไม่สามารถโหลดข้อมูลจาก Server ได้ กรุณาลองใหม่อีกครั้ง',
-            confirmButtonColor: '#e91e63'
-        });
+        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดข้อมูลจาก Server ได้', confirmButtonColor: '#e91e63' });
     }
     setLoading(false);
 }
 
-// ฟังก์ชันรวมที่แสดงผลทั้งตัวเลข 5 ช่อง และรายการหน่วยงานด้านล่าง
 function updateDashboard(data, filteredDetails) {
-    // 1. อัปเดตตัวเลข Stats 5 ช่อง
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
     document.getElementById('dash-sum').innerText = data.totalSum || 0;
     document.getElementById('dash-percent').innerText = (data.percent || 0) + "%";
 
-    // 2. จัดการรายการหน่วยงานด้านล่าง
     const container = document.getElementById('dept-list-container');
     if (!container) return;
 
@@ -293,8 +336,6 @@ function updateDashboard(data, filteredDetails) {
 
     let html = "";
     let currentBldg = "";
-    
-    // เรียงลำดับตามชื่ออาคาร
     const sorted = filteredDetails.sort((a, b) => (a.building || "").localeCompare(b.building || ""));
 
     sorted.forEach(item => {
@@ -307,17 +348,18 @@ function updateDashboard(data, filteredDetails) {
             ? `<img src="${item.deptPhoto}" class="w-full h-full object-cover">`
             : `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
 
+        // แก้ไข: เปลี่ยนจาก startSurveyFor เป็น showDeptDetail
         html += `
         <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
-             onclick="startSurveyFor('${item.deptId || item.DEPID}')">
+             onclick="showDeptDetail('${item.deptId || item.DEPID}')">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">
                     ${imgTag}
                 </div>
                 <div>
                     <p class="font-semibold text-gray-800 text-sm leading-tight">${item.deptName || item.DEP_NAME_LOC}</p>
-                    <p class="text-[10px] text-pink-500 font-bold">
-                        ☎️ ${item.tel || '-'} | 📌: <span class="text-pink-600">${item.GPS || 0}</span>
+                    <p class="text-[10px] text-pink-500 font-bold uppercase">
+                        ☎️ ${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.GPS || 0}
                     </p>                   
                 </div>
             </div>
@@ -328,11 +370,66 @@ function updateDashboard(data, filteredDetails) {
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
 }
+
+// ฟังก์ชันใหม่: แสดง Modal รายละเอียดหน่วยงาน
+async function showDeptDetail(id) {
+    const dept = masterDepts.find(x => (x.deptId || x.DEPID) == id);
+    if (!dept) return;
+
+    setLoading(true);
+    try {
+        // ดึงรายละเอียดเชิงลึก (Log) ผ่าน activityId ถ้ามี หรือจะดึงผ่าน deptId ก็ได้ 
+        // ในที่นี้ขอจำลองการกรองจากข้อมูลที่มีอยู่หรือเรียก API รายละเอียดเพิ่ม
+        // สมมติว่าต้องการข้อมูลล่าสุดที่สำรวจไป:
+        const res = await fetch(`${API}?action=getSurveyDetailByDept&deptId=${id}`);
+        const data = await res.json();
+
+        document.getElementById('md-name').innerText = dept.deptName;
+        document.getElementById('md-id').innerText = id;
+        document.getElementById('md-floor').innerText = dept.floor || '-';
+        document.getElementById('md-system').innerText = dept.jobSystem || '-';
+        document.getElementById('md-tel').innerText = dept.tel || '-';
+        document.getElementById('md-gps').innerText = dept.gps || '0';
+        document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
+        document.getElementById('md-note').innerText = (dept.note1 || "") + " " + (dept.note2 || "");
+
+        // แสดงรายการครุภัณฑ์ (ถ้ามี)
+        const logContainer = document.getElementById('md-list-log');
+        const nonumContainer = document.getElementById('md-list-nonum');
+        
+        logContainer.innerHTML = (data.assets && data.assets.length) 
+            ? data.assets.map(a => `<div class="p-3 bg-emerald-50 text-[10px] rounded-xl border border-emerald-100 font-bold text-emerald-700">📌 ${a.AssetID} <span class="block opacity-50 font-normal">ในระบบ</span></div>`).join('')
+            : '<p class="text-[10px] text-gray-300 italic py-2">ไม่มีข้อมูล</p>';
+            
+        nonumContainer.innerHTML = (data.newAssets && data.newAssets.length)
+            ? data.newAssets.map(a => `<div class="p-3 bg-amber-50 text-[10px] rounded-xl border border-amber-100 font-bold text-amber-700">📦 ${a.itemName} <span class="block opacity-50 font-normal">SN: ${a.serial}</span></div>`).join('')
+            : '<p class="text-[10px] text-gray-300 italic py-2">ไม่มีข้อมูล</p>';
+
+        document.getElementById('md-count-log').innerText = data.assets ? data.assets.length : 0;
+        document.getElementById('md-count-nonum').innerText = data.newAssets ? data.newAssets.length : 0;
+
+        // ปรับปุ่มแก้ไข
+        document.getElementById('btn-edit-survey').onclick = () => {
+            closeModal('modal-dept-detail');
+            startSurveyFor(id);
+        };
+
+        showModal('modal-dept-detail');
+        if(window.lucide) lucide.createIcons();
+    } catch(e) {
+        // ถ้าไม่มีข้อมูลการสำรวจเดิม ให้เปิดหน้าสำรวจเลย
+        startSurveyFor(id);
+    }
+    setLoading(false);
+}
+
 function initFormSelects(){
     const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
     const bSelect=document.getElementById('form-bldg');
-    bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
-    bldgSet.forEach(b=> bSelect.innerHTML+=`<option value="${b}">${b}</option>`);
+    if(bSelect) {
+        bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
+        bldgSet.forEach(b=> bSelect.innerHTML+=`<option value="${b}">${b}</option>`);
+    }
 }
 
 function onBuildingChange(){
@@ -410,9 +507,8 @@ function addNewAsset(){
 }
 
 async function submitSurvey(){
-    const bldg=document.getElementById('form-bldg').value;
     const deptId=document.getElementById('form-dept').value;
-    if(!bldg || !deptId || selectedAssets.length===0){
+    if(!deptId || selectedAssets.length===0){
         Swal.fire('ข้อมูลไม่ครบ','กรุณาเลือกหน่วยงานและรายการครุภัณฑ์','warning');
         return;
     }
