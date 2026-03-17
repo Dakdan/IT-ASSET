@@ -345,28 +345,7 @@ window.onload=()=>{
     initApp();
 };
 
-/* ================== LOADING CONTROL ================== */
-function setLoading(state){
-    const el = document.getElementById('loading');
-    if(state){
-        el.classList.remove('hidden');
-    }else{
-        el.classList.add('hidden');
-    }
-}
-
-// helper ครอบ async ให้โชว์ loading ทุกครั้ง
-async function withLoading(fn){
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 50)); // ให้ UI render ก่อน
-    try{
-        return await fn();
-    }finally{
-        setLoading(false);
-    }
-}
-/* ===================================================== */
-
+function setLoading(s){ document.getElementById('loading').classList.toggle('hidden',!s); }
 function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 function showModal(id){ document.getElementById(id).classList.remove('hidden'); }
 function showNewAssetModal(){ showModal('modal-new-asset'); }
@@ -378,9 +357,9 @@ function navigateTo(pageId){
     window.scrollTo(0,0);
 }
 
-/* ================= INIT ================= */
 async function initApp(){
-    await withLoading(async ()=>{
+    setLoading(true);
+    try {
         const [dashRes, deptRes, filteredRes] = await Promise.all([
             fetch(`${API}?action=getDashboard&t=${Date.now()}`),
             fetch(`${API}?action=getDepartments`),
@@ -393,62 +372,226 @@ async function initApp(){
         
         updateDashboard(dash, globalFilteredDepts); 
         initFormSelects();
-    });
+    } catch(e) {
+        console.error(e);
+        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดข้อมูลได้', confirmButtonColor: '#e91e63' });
+    }
+    setLoading(false);
 }
-/* ======================================= */
 
-async function handleSearch(){
-    const q=document.getElementById('search-input').value;
-    if(!q) return;
+function updateDashboard(data, filteredDetails) {
+    document.getElementById('dash-goal').innerText = data.goal || 0;
+    document.getElementById('dash-in').innerText = data.totalIn || 0;
+    document.getElementById('dash-out').innerText = data.totalOut || 0;
+    document.getElementById('dash-sum').innerText = data.totalSum || 0;
+    document.getElementById('dash-percent').innerText = (data.percent || 0) + "%";
 
-    await withLoading(async ()=>{
-        const res=await fetch(`${API}?action=searchAssets&query=${encodeURIComponent(q)}`);
-        const data=await res.json();
+    const container = document.getElementById('dept-list-container');
+    if (!container) return;
 
-        const container=document.getElementById('search-results');
+    if (!filteredDetails || filteredDetails.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-10 text-[10px] italic">ไม่พบข้อมูลหน่วยงานที่สำรวจแล้ว</p>';
+        return;
+    }
 
-        if(data.length===0){
-            container.innerHTML='<p class="text-center text-xs text-gray-400 py-4 italic">ไม่พบข้อมูลครุภัณฑ์</p>';
-        }else{
-            container.innerHTML=data.map(item=>`
-                <div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center" onclick='addAsset(${JSON.stringify(item)})'>
-                    <div class="text-[11px]">
-                        <p class="font-bold text-gray-700">${item.AssetID}</p>
-                    </div>
-                    <i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
-                </div>
-            `).join('');
-            lucide.createIcons();
+    let html = "";
+    let currentBldg = "";
+    const sorted = [...filteredDetails].sort((a, b) => (a.building || "").localeCompare(b.building || ""));
+
+    sorted.forEach(item => {
+        const id = item.deptId || item.DEPID;
+        const name = item.deptName || item.DEP_NAME_LOC;
+
+        if (item.building !== currentBldg) {
+            currentBldg = item.building;
+            html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
+
+        let imgTag = (item.deptPhoto && item.deptPhoto !== "") 
+            ? `<img src="${item.deptPhoto}" class="w-full h-full object-cover">`
+            : `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
+
+        html += `
+        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
+             onclick="showDeptDetail('${id}')">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">
+                    ${imgTag}
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800 text-sm leading-tight">${name}</p>
+                    <p class="text-[10px] text-pink-500 font-bold uppercase">
+                        ☎️ ${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.gps || item.GPS || 0}
+                    </p>                     
+                </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+        </div>`;
     });
+    
+    container.innerHTML = html;
+    if(window.lucide) lucide.createIcons();
 }
 
 async function showDeptDetail(id) {
-    if(!id) return;
+    if(!id || id === 'undefined') return;
 
+    // 1. ดึงข้อมูลจาก Master มาแสดงที่ Modal ทันที (ไม่ต้องรอโหลดจาก Server)
     const dept = masterDepts.find(x => (x.deptId || x.DEPID) == id);
     if (!dept) return;
 
-    // render ทันที
+    // ตั้งค่าหัวข้อเป็น ชื่อตึก และปรับ Contrast ให้ชัดเจน
     document.getElementById('md-name').innerText = dept.building || "-"; 
     document.getElementById('md-floor').innerText = dept.floor || '-';
     document.getElementById('md-system').innerText = dept.jobSystem || '-';
     document.getElementById('md-tel').innerText = dept.tel || '-';
     document.getElementById('md-gps').innerText = dept.gps || dept.GPS || '0';
+    document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
     document.getElementById('md-note').innerText = `หน่วยงาน: ${dept.deptName || dept.DEP_NAME_LOC}`;
 
-    showModal('modal-dept-detail');
+    // จัดการรูปภาพหน่วยงาน
+    const imgEl = document.getElementById('md-dept-photo');
+    const placeholderEl = document.getElementById('md-dept-photo-placeholder');
+    const photoUrl = dept.deptPhoto || dept.DEPT_PHO || "";
 
-    await withLoading(async ()=>{
+    if (photoUrl) {
+        imgEl.src = photoUrl;
+        imgEl.classList.remove('hidden');
+        placeholderEl.classList.add('hidden');
+    } else {
+        imgEl.classList.add('hidden');
+        placeholderEl.classList.remove('hidden');
+    }
+
+    // ล้างรายการเก่าออกก่อนโหลดใหม่
+    document.getElementById('md-list-log').innerHTML = '<p class="text-[10px] text-slate-400 animate-pulse">กำลังโหลดข้อมูล...</p>';
+    document.getElementById('md-list-nonum').innerHTML = '<p class="text-[10px] text-slate-400 animate-pulse">กำลังโหลดข้อมูล...</p>';
+
+    // 2. แสดง Modal ทันทีเพื่อให้ผู้ใช้เห็นชื่อตึก
+    showModal('modal-dept-detail');
+    if(window.lucide) lucide.createIcons();
+
+    // 3. ไปดึงประวัติการสำรวจแบบเงียบๆ (ไม่ใช้ SweetAlert ขวางแล้ว)
+    try {
         const res = await fetch(`${API}?action=getSurveyDetailByDept&deptId=${id}`);
         const data = await res.json();
 
         const logContainer = document.getElementById('md-list-log');
         const nonumContainer = document.getElementById('md-list-nonum');
+        
+        if(!data.error) {
+            // แสดงรายการในระบบ (High Contrast)
+            logContainer.innerHTML = (data.assets && data.assets.length) 
+                ? data.assets.map(a => `<div class="p-3 bg-white border-2 border-emerald-100 text-slate-950 text-[11px] rounded-xl font-black shadow-sm">📌 ${a.AssetID}</div>`).join('')
+                : '<p class="text-[10px] text-slate-400 italic py-2">ไม่มีข้อมูลในระบบ</p>';
+            
+            // แสดงรายการนอกระบบ (High Contrast)
+            nonumContainer.innerHTML = (data.newAssets && data.newAssets.length)
+                ? data.newAssets.map(a => `<div class="p-3 bg-white border-2 border-amber-100 text-slate-950 text-[11px] rounded-xl font-black shadow-sm">📦 ${a.itemName} (SN: ${a.serial})</div>`).join('')
+                : '<p class="text-[10px] text-slate-400 italic py-2">ไม่มีข้อมูลนอกทะเบียน</p>';
 
-        logContainer.innerHTML = (data.assets || []).map(a => `<div>${a.AssetID}</div>`).join('') || 'ไม่มีข้อมูล';
-        nonumContainer.innerHTML = (data.newAssets || []).map(a => `<div>${a.itemName}</div>`).join('') || 'ไม่มีข้อมูล';
+            document.getElementById('md-count-log').innerText = data.assets ? data.assets.length : 0;
+            document.getElementById('md-count-nonum').innerText = data.newAssets ? data.newAssets.length : 0;
+        } else {
+            throw new Error("No data found");
+        }
+    } catch(e) {
+        // กรณีไม่พบประวัติ ให้แสดงข้อความใน Modal แทนการเด้ง Alert
+        document.getElementById('md-list-log').innerHTML = '<p class="text-[10px] text-slate-400 italic py-2">ยังไม่พบประวัติการสำรวจ</p>';
+        document.getElementById('md-list-nonum').innerHTML = '<p class="text-[10px] text-slate-400 italic py-2">ยังไม่พบประวัติการสำรวจ</p>';
+        document.getElementById('md-count-log').innerText = "0";
+        document.getElementById('md-count-nonum').innerText = "0";
+    }
+
+    // ตั้งค่าปุ่มเริ่มการสำรวจ
+    document.getElementById('btn-edit-survey').onclick = () => {
+        closeModal('modal-dept-detail');
+        startSurveyFor(id); 
+    };
+}
+function initFormSelects(){
+    const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
+    const bSelect=document.getElementById('form-bldg');
+    if(bSelect) {
+        bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
+        bldgSet.forEach(b=> bSelect.innerHTML+=`<option value="${b}">${b}</option>`);
+    }
+}
+
+function onBuildingChange(){
+    const b=document.getElementById('form-bldg').value;
+    const dSelect=document.getElementById('form-dept');
+    dSelect.innerHTML='<option value="">-- เลือกหน่วยงาน --</option>';
+    masterDepts.filter(d=>d.building===b).forEach(d=>{
+        const id = d.deptId || d.DEPID;
+        const name = d.deptName || d.DEP_NAME_LOC;
+        dSelect.innerHTML+=`<option value="${id}">${name}</option>`;
     });
+}
+
+function startSurveyFor(id){
+    const d=masterDepts.find(x => (x.deptId || x.DEPID) == id);
+    if(!d) return;
+    document.getElementById('form-bldg').value=d.building;
+    onBuildingChange();
+    document.getElementById('form-dept').value=(d.deptId || d.DEPID);
+    selectedAssets=[];
+    renderSelected();
+    navigateTo('page-form');
+}
+
+async function handleSearch(){
+    const q=document.getElementById('search-input').value;
+    if(!q) return;
+    setLoading(true);
+    try{
+        const res=await fetch(`${API}?action=searchAssets&query=${encodeURIComponent(q)}`);
+        const data=await res.json();
+        const container=document.getElementById('search-results');
+        if(data.length===0){
+            container.innerHTML='<p class="text-center text-xs text-gray-400 py-4 italic">ไม่พบข้อมูลครุภัณฑ์</p>';
+        }else{
+            container.innerHTML=data.map(item=>`
+                <div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center" onclick='addAsset(${JSON.stringify(item)})'>
+                    <div class="text-[11px]"><p class="font-bold text-gray-700">${item.AssetID}</p></div>
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
+                </div>`).join('');
+            lucide.createIcons();
+        }
+    }catch(e){}
+    setLoading(false);
+}
+
+function addAsset(item){
+    if(selectedAssets.find(x=>x.AssetID===item.AssetID)) return;
+    selectedAssets.push({...item, itemName: "ครุภัณฑ์ในระบบ"});
+    renderSelected();
+}
+
+function renderSelected(){
+    const container=document.getElementById('selected-list');
+    if(selectedAssets.length===0){
+        container.innerHTML='<p class="text-center text-gray-300 text-[10px] py-4 italic">ยังไม่มีรายการที่เลือก</p>';
+        return;
+    }
+    container.innerHTML=selectedAssets.map((item,i)=>`
+        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border-l-4 border-emerald-400 shadow-sm">
+            <div class="text-[11px] font-medium">${item.itemName || 'ครุภัณฑ์'}<span class="text-[9px] opacity-50 block">${item.AssetID || item.serial}</span></div>
+            <button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-300 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>`).join('');
+    lucide.createIcons();
+}
+
+function addNewAsset(){
+    const name=document.getElementById('new-name').value;
+    const sn=document.getElementById('new-sn').value;
+    const cat=document.getElementById('new-cat').value;
+    if(!name || !sn) return;
+    selectedAssets.push({ itemName: name, serial: sn, category: cat, isNew: true });
+    renderSelected();
+    closeModal('modal-new-asset');
+    document.getElementById('new-name').value="";
+    document.getElementById('new-sn').value="";
 }
 
 async function submitSurvey(){
@@ -457,82 +600,77 @@ async function submitSurvey(){
         Swal.fire('ข้อมูลไม่ครบ','กรุณาเลือกหน่วยงานและรายการครุภัณฑ์','warning');
         return;
     }
+    setLoading(true);
+    const dept = masterDepts.find(x=>(x.deptId||x.DEPID)==deptId);
+    const payload = {
+        action: 'saveSurvey',
+        deptId: deptId,
+        deptName: dept.deptName || dept.DEP_NAME_LOC,
+        assets: selectedAssets.filter(x=>!x.isNew),
+        newAssets: selectedAssets.filter(x=>x.isNew),
+        jobetype: "Survey"
+    };
 
-    await withLoading(async ()=>{
-        const dept = masterDepts.find(x=>(x.deptId||x.DEPID)==deptId);
-
-        const payload = {
-            action: 'saveSurvey',
-            deptId: deptId,
-            deptName: dept.deptName || dept.DEP_NAME_LOC,
-            assets: selectedAssets.filter(x=>!x.isNew),
-            newAssets: selectedAssets.filter(x=>x.isNew),
-            jobetype: "Survey"
-        };
-
+    try{
         const res = await fetch(API, { method:'POST', body: JSON.stringify(payload) });
         const result = await res.json();
-
         if(result.success){
             currentActivityId = result.activityId;
-            await showSummary(result.activityId);
+            showSummary(result.activityId);
         }
-    });
+    }catch(e){ Swal.fire('Error','บันทึกไม่สำเร็จ','error'); }
+    setLoading(false);
 }
 
 async function showSummary(actId){
-    await withLoading(async ()=>{
+    setLoading(true);
+    try{
         const res = await fetch(`${API}?action=getSurveyDetail&activityId=${actId}`);
         const data = await res.json();
-
         document.getElementById('detail-act-id').innerText = data.activityId;
         document.getElementById('detail-dept').innerText = data.deptName;
-
-        document.getElementById('detail-list').innerHTML = [
-            ...(data.assets || []).map(a=>`<li>${a.AssetID}</li>`),
-            ...(data.newAssets || []).map(a=>`<li>${a.itemName}</li>`)
+        document.getElementById('detail-date').innerText = new Date().toLocaleDateString('th-TH');
+        
+        const listHtml = [
+            ...(data.assets || []).map(a=>`<li>- ${a.AssetID}</li>`),
+            ...(data.newAssets || []).map(a=>`<li>- ${a.itemName} (SN: ${a.serial})</li>`)
         ].join('');
-
+        document.getElementById('detail-list').innerHTML = `<ul class="list-none">${listHtml}</ul>`;
+        
         document.getElementById('detail-qr').innerHTML = "";
-        new QRCode(document.getElementById('detail-qr'), {
-            text: actId,
-            width: 80,
-            height: 80
-        });
-
+        new QRCode(document.getElementById('detail-qr'), { text: actId, width: 80, height: 80 });
+        
         navigateTo('page-detail');
-    });
+    }catch(e){}
+    setLoading(false);
 }
 
 async function handleConfirmSign(){
     const signer = document.getElementById('input-signer').value;
-
     if(!signer || sigPad.isEmpty()){
         Swal.fire('คำเตือน','กรุณาระบุชื่อและลงลายเซ็น','warning');
         return;
     }
-
-    await withLoading(async ()=>{
-        const payload = {
-            action: 'confirmSurvey',
-            activityId: currentActivityId,
-            signer: signer,
-            signature: sigPad.toDataURL()
-        };
-
+    setLoading(true);
+    const payload = {
+        action: 'confirmSurvey',
+        activityId: currentActivityId,
+        signer: signer,
+        signature: sigPad.toDataURL()
+    };
+    try{
         const res = await fetch(API, { method:'POST', body: JSON.stringify(payload) });
         const result = await res.json();
-
         if(result.success){
             document.getElementById('detail-sign-img').src = payload.signature;
             document.getElementById('detail-signer-name').innerText = signer;
             document.getElementById('detail-sign-box').classList.remove('hidden');
             document.getElementById('btn-open-sign').classList.add('hidden');
             closeModal('modal-sign');
-
             Swal.fire('สำเร็จ','ยืนยันข้อมูลเรียบร้อย','success');
         }
-    });
+    }catch(e){}
+    setLoading(false);
 }
 </script>
 </body>
