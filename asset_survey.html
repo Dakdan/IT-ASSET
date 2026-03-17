@@ -187,10 +187,19 @@
                 </h3>
                 <button onclick="closeModal('modal-dept-detail')" class="text-gray-400"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
+            
             <div class="flex-1 overflow-y-auto p-6 custom-scroll">
+                
+                <div class="mb-6 rounded-2xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50">
+                    <img id="md-dept-photo" src="" alt="Department Photo" class="w-full h-48 object-cover hidden">
+                    <div id="md-dept-photo-placeholder" class="w-full h-48 flex flex-col items-center justify-center gap-3 text-gray-300">
+                        <i data-lucide="image" class="w-12 h-12"></i>
+                        <p class="text-xs">ไม่มีรูปภาพหน่วยงาน</p>
+                    </div>
+                </div>
                 <div class="mb-6">
                     <p class="text-[10px] font-bold text-pink-400 uppercase mb-3">ข้อมูลหน่วยงาน</p>
-                    <div class="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-4 rounded-2xl">
+                    <div class="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner">
                         <div class="col-span-2"><span class="text-gray-400">หน่วยงาน:</span> <span id="md-name" class="font-bold">-</span></div>
                         <div><span class="text-gray-400">DEP_ID:</span> <span id="md-id" class="font-bold">-</span></div>
                         <div><span class="text-gray-400">ชั้น:</span> <span id="md-floor" class="font-bold">-</span></div>
@@ -218,6 +227,7 @@
                     <div id="md-list-nonum" class="space-y-2"></div>
                 </div>
             </div>
+            
             <div class="p-6 bg-white border-t flex gap-3 shrink-0">
                 <button onclick="closeModal('modal-dept-detail')" class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold text-sm">กลับ</button>
                 <button id="btn-edit-survey" class="flex-1 py-4 btn-pink rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
@@ -371,7 +381,6 @@ function updateDashboard(data, filteredDetails) {
     if(window.lucide) lucide.createIcons();
 }
 
-// แก้ไขฟังก์ชัน showDeptDetail เพื่อป้องกันการเด้งไปหน้า Form โดยอัตโนมัติ
 async function showDeptDetail(id) {
     if(!id || id === 'undefined') {
         console.error("Invalid Department ID");
@@ -389,7 +398,25 @@ async function showDeptDetail(id) {
         const res = await fetch(`${API}?action=getSurveyDetailByDept&deptId=${id}`);
         const data = await res.json();
 
-        // แสดงข้อมูลลงใน Modal
+        // *** ส่วนที่แก้ไข: แสดงรูปภาพหน่วยงานใน Modal ***
+        const imgEl = document.getElementById('md-dept-photo');
+        const placeholderEl = document.getElementById('md-dept-photo-placeholder');
+        
+        // ใช้ url รูปภาพจากข้อมูล Filtered ถ้ามี (เผื่อกรณีดึงรูปจากประวัติสำรวจล่าสุด)
+        const photoUrl = data.deptPhoto || dept.deptPhoto || dept.DEPT_PHO;
+
+        if (photoUrl && photoUrl !== "") {
+            imgEl.src = photoUrl;
+            imgEl.classList.remove('hidden');
+            placeholderEl.classList.add('hidden');
+        } else {
+            imgEl.src = "";
+            imgEl.classList.add('hidden');
+            placeholderEl.classList.remove('hidden');
+        }
+        // ****************************************
+
+        // แสดงข้อมูลลงใน Modal (คงเดิม)
         document.getElementById('md-name').innerText = dept.deptName || dept.DEP_NAME_LOC || '-';
         document.getElementById('md-id').innerText = id;
         document.getElementById('md-floor').innerText = dept.floor || '-';
@@ -415,14 +442,13 @@ async function showDeptDetail(id) {
 
         document.getElementById('btn-edit-survey').onclick = () => {
             closeModal('modal-dept-detail');
-            startSurveyFor(id); // เข้าหน้าฟอร์มเฉพาะตอนกดปุ่มยืนยันว่าจะเริ่มใหม่
+            startSurveyFor(id); 
         };
 
         showModal('modal-dept-detail');
         if(window.lucide) lucide.createIcons();
     } catch(e) {
         console.error("Error fetching detail:", e);
-        // แทนที่จะเด้งไปหน้าฟอร์ม ให้แจ้งเตือนผู้ใช้ก่อน
         Swal.fire({
             icon: 'info',
             title: 'แจ้งเตือน',
