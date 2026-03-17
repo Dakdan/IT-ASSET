@@ -125,7 +125,293 @@
 
     <script>
         // กำหนดค่า API จาก Apps Script ที่ Deploy แล้ว
-        const API_URL = 'YOUR_APPS_SCRIPT_WEBAPP_URL'; 
+        const API_URL = '<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - IT UDON HOSP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+        /* ลายน้ำ */
+        body::before {
+            content: "IT UDON HOSP";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 8rem;
+            color: rgba(255, 182, 193, 0.08);
+            pointer-events: none;
+            z-index: -1;
+            white-space: nowrap;
+        }
+        .pink-gradient {
+            background: linear-gradient(90deg, #ff7eb3 0%, #ff758c 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(255, 116, 140, 0.1), 0 8px 10px -6px rgba(255, 116, 140, 0.1);
+        }
+        .status-badge {
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        @media print {
+            body::before { display: none; }
+            .no-print { display: none; }
+            .print-area { width: 100%; }
+            @page { size: landscape; }
+        }
+        /* Modal Overlay Animation */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s ease;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff758c;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-gray-800 pb-10">
+
+    <!-- Loading Modal -->
+    <div id="loaderModal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center">
+            <div class="loader mb-4"></div>
+            <p class="text-pink-600 font-medium">กำลังดำเนินการ...</p>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="pink-gradient text-white p-6 shadow-lg rounded-b-[40px] mb-8">
+        <div class="container mx-auto flex flex-col md:flex-row items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="bg-white p-2 rounded-full shadow-md">
+                    <img src="https://img5.pic.in.th/file/secure-sv1/logo-hosp.png" alt="Logo" class="w-12 h-12 object-contain" onerror="this.src='https://via.placeholder.com/50?text=IT'">
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold leading-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+                    <p class="text-sm opacity-90">โรงพยาบาลอุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศ</p>
+                </div>
+            </div>
+            <div class="mt-4 md:mt-0 bg-white/20 px-4 py-2 rounded-full text-sm">
+                <i class="fas fa-calendar-alt mr-2"></i> <span id="currentDate"></span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 print-area">
+        <!-- 1. ส่วนข้อมูลหน่วยงาน -->
+        <div id="deptInfo" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-3 text-center py-20 text-gray-400" id="initialLoading">
+                <i class="fas fa-search fa-3x mb-4 animate-bounce"></i>
+                <p id="statusText">กรุณารอข้อมูลจากระบบ...</p>
+            </div>
+        </div>
+
+        <!-- 2. Tabs ส่วนจัดการข้อมูล -->
+        <div id="mainTabs" class="mb-6 overflow-x-auto no-print hidden">
+            <div class="flex space-x-2 border-b border-pink-100 min-w-max pb-2">
+                <button onclick="switchTab('on-log')" class="tab-btn px-6 py-2 rounded-t-xl font-medium transition active text-pink-600 border-b-2 border-pink-500 bg-pink-50" id="tab-on-log">
+                    ครุภัณฑ์ในระบบ
+                </button>
+                <button onclick="switchTab('non-log')" class="tab-btn px-6 py-2 rounded-t-xl font-medium text-gray-500 hover:text-pink-400 transition" id="tab-non-log">
+                    ครุภัณฑ์นอกระบบ
+                </button>
+                <button onclick="switchTab('history')" class="tab-btn px-6 py-2 rounded-t-xl font-medium text-gray-500 hover:text-pink-400 transition" id="tab-history">
+                    ประวัติรับบริการ
+                </button>
+                <button onclick="switchTab('download')" class="tab-btn px-6 py-2 rounded-t-xl font-medium text-gray-500 hover:text-pink-400 transition" id="tab-download">
+                    เอกสาร/Download
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="tabContent" class="space-y-6"></div>
+    </main>
+
+    <script>
+        // แก้ไข URL นี้เป็น Web App URL จาก Google Apps Script ของคุณ
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwbwGmL5Y1SEb9kykCQ1bOPj_2RHvd_IPl5pHHe3MH3r0OQ5souilUz7b-zHUWKyNHcsA/exec'; 
+        let currentData = null;
+
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('th-TH', { 
+            year: 'numeric', month: 'long', day: 'numeric' 
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const depId = urlParams.get('DEP_ID');
+
+        window.onload = async () => {
+            if(depId) {
+                await fetchData();
+            } else {
+                document.getElementById('statusText').innerHTML = '<span class="text-red-500 font-bold">ไม่พบรหัสหน่วยงาน (DEP_ID) ใน URL</span><br><small>ตัวอย่าง: ?DEP_ID=101</small>';
+            }
+        };
+
+        async function fetchData() {
+            showLoader(true);
+            try {
+                const response = await fetch(`${API_URL}?DEP_ID=${depId}&action=getFullData`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('statusText').innerHTML = `<span class="text-red-500 font-bold">ข้อผิดพลาด: ${data.error}</span>`;
+                    showLoader(false);
+                    return;
+                }
+
+                renderUI(data);
+                showLoader(false);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('statusText').innerHTML = '<span class="text-red-500 font-bold">ไม่สามารถเชื่อมต่อกับ Server ได้</span>';
+                showLoader(false);
+            }
+        }
+
+        function renderUI(data) {
+            currentData = data;
+            const dept = data.department;
+            
+            document.getElementById('mainTabs').classList.remove('hidden');
+            
+            document.getElementById('deptInfo').innerHTML = `
+                <div class="lg:col-span-1 bg-white p-6 rounded-3xl card-shadow border border-pink-50">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="w-32 h-32 rounded-2xl overflow-hidden mb-4 border-4 border-pink-100 bg-gray-50 flex items-center justify-center">
+                            <img src="${dept.DEPT_PHO || ''}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150/ff758c/ffffff?text=DEPT'">
+                        </div>
+                        <h2 class="text-xl font-bold text-pink-600 mb-1">${dept.DEPNAME || 'ไม่ทราบชื่อ'}</h2>
+                        <span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-xs font-medium">ID: ${dept.DEP_ID}</span>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 bg-white p-6 rounded-3xl card-shadow border border-pink-50 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center"><i class="fas fa-building w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">ตึก:</span> <b>${dept.LOCATION_NAME || '-'}</b></div>
+                        <div class="flex items-center"><i class="fas fa-layer-group w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">ชั้น:</span> <b>${dept.FL || '-'}</b></div>
+                        <div class="flex items-center"><i class="fas fa-phone-alt w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">โทร:</span> <b>${dept.Tell || '-'}</b></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center"><i class="fas fa-map-marker-alt w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">GPS:</span> 
+                            ${dept.GPS ? `<a href="https://maps.google.com/?q=${dept.GPS}" target="_blank" class="text-blue-500 underline text-sm">${dept.GPS}</a>` : '<b>-</b>'}
+                        </div>
+                        <div class="flex items-center"><i class="fas fa-info-circle w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">อ้างอิง:</span> <b>${dept.DEP_NAME_LOC || '-'}</b></div>
+                        <button onclick="window.print()" class="no-print mt-2 w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-xl transition shadow-md">
+                            <i class="fas fa-print mr-2"></i> พิมพ์ข้อมูลหน่วยงาน
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            switchTab('on-log');
+            document.getElementById('initialLoading').style.display = 'none';
+        }
+
+        function switchTab(tabId) {
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(b => {
+                b.classList.remove('text-pink-600', 'border-b-2', 'border-pink-500', 'bg-pink-50');
+                b.classList.add('text-gray-500');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('text-pink-600', 'border-b-2', 'border-pink-500', 'bg-pink-50');
+            document.getElementById(`tab-${tabId}`).classList.remove('text-gray-500');
+
+            renderTabContent(tabId);
+        }
+
+        function renderTabContent(tabId) {
+            let html = "";
+            if (tabId === 'on-log') {
+                const list = currentData.assetsOn || [];
+                html = `
+                    <div class="bg-white rounded-3xl card-shadow overflow-hidden">
+                        <div class="pink-gradient p-4 text-white font-medium flex justify-between items-center">
+                            <span>รายการครุภัณฑ์ในระบบ (${list.length})</span>
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-pink-50 text-pink-600">
+                                    <tr>
+                                        <th class="p-4">รหัสครุภัณฑ์</th>
+                                        <th class="p-4">ประเภท</th>
+                                        <th class="p-4">ลำดับความสำคัญ</th>
+                                        <th class="p-4">สถานะการใช้งาน</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-pink-50">
+                                    ${list.length > 0 ? list.map(item => `
+                                        <tr class="hover:bg-pink-50/50 transition">
+                                            <td class="p-4 font-mono text-sm">${item.AssetID || '-'}</td>
+                                            <td class="p-4">${item.Asset_Type || '-'}</td>
+                                            <td class="p-4"><span class="bg-blue-100 text-blue-600 status-badge">${item.PiorytyJobe || 'ปกติ'}</span></td>
+                                            <td class="p-4"><span class="bg-green-100 text-green-600 status-badge">${item.CoStatus || 'ปกติ'}</span></td>
+                                        </tr>
+                                    `).join('') : '<tr><td colspan="4" class="p-10 text-center text-gray-400">ไม่พบข้อมูลครุภัณฑ์ในระบบ</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else if (tabId === 'non-log') {
+                const list = currentData.assetsNon || [];
+                html = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${list.length > 0 ? list.map(item => `
+                            <div class="bg-white p-5 rounded-2xl card-shadow border-l-4 border-pink-400 flex justify-between items-center">
+                                <div>
+                                    <div class="text-xs text-gray-400">${item.AssetType || 'ไม่ระบุประเภท'}</div>
+                                    <div class="font-bold text-gray-700">${item.AssetID || item.NOID || 'N/A'}</div>
+                                    <div class="text-sm text-gray-500">${item.Detail || '-'}</div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="bg-green-100 text-green-600 status-badge">${item.CoStatus || 'ปกติ'}</span>
+                                </div>
+                            </div>
+                        `).join('') : '<div class="md:col-span-2 text-center py-10 text-gray-400 bg-white rounded-3xl card-shadow">ไม่พบข้อมูลครุภัณฑ์นอกระบบ</div>'}
+                    </div>
+                `;
+            } else {
+                html = `
+                    <div class="bg-white p-20 rounded-3xl card-shadow text-center text-gray-400">
+                        <i class="fas fa-tools fa-3x mb-4 opacity-20"></i>
+                        <p>ส่วนนี้อยู่ระหว่างการพัฒนาเพิ่มเติม (Coming Soon)</p>
+                    </div>
+                `;
+            }
+            document.getElementById('tabContent').innerHTML = html;
+        }
+
+        function showLoader(show) {
+            const modal = document.getElementById('loaderModal');
+            if(show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>'; 
         let currentData = null;
 
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('th-TH', { 
