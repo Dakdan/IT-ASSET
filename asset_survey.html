@@ -259,7 +259,7 @@ async function initApp(){
 }
 
 function updateDashboard(data) {
-    // 1. อัปเดต Stats (เป้าหมาย, ในทะเบียน, ฯลฯ)
+    // ... ส่วนอัปเดต Stats ด้านบนคงเดิม ...
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
@@ -273,7 +273,6 @@ function updateDashboard(data) {
     let html = "";
     let currentBldg = "";
     
-    // เรียงตามอาคาร (ยึดโครงสร้างเดิม)
     const sorted = data.details.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
 
     sorted.forEach(item => {
@@ -282,21 +281,18 @@ function updateDashboard(data) {
             html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
 
-        // --- ส่วนจัดการรูปภาพที่คุยกันมา ---
-        let imgID = item.DEPT_PHO; // ดึงจากคอลัมน์ N
-        let imgUrl = 'https://www.w3schools.com/howto/img_avatar.png'; // ค่าเริ่มต้นถ้าไม่มีรูป
-        
-        if (imgID) {
-            // ใช้ Link สำหรับดึงรูปจาก Google Drive โดยตรงผ่าน File ID (ที่เราจัดการย้ายโฟลเดอร์กันมา)
-            imgUrl = "https://lh3.googleusercontent.com/d/" + imgID;
-        }
+        // --- แก้ไขจุดนี้: ใช้ DEPT_PHO ที่ส่งมาจาก Backend โดยตรง ---
+        // Backend (Code.gs) ส่ง URL ที่เป็น /thumbnail มาให้เรียบร้อยแล้ว
+        let imgUrl = item.DEPT_PHO || 'https://www.w3schools.com/howto/img_avatar.png';
 
         html += `
         <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
              onclick="startSurveyFor('${item.DEPID || item.deptId}')">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-2xl bg-gray-100 overflow-hidden shrink-0 border border-pink-100 shadow-sm">
-                    <img src="${imgUrl}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'" class="w-full h-full object-cover">
+                    <img src="${imgUrl}" 
+                         onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'" 
+                         class="w-full h-full object-cover">
                 </div>
                 <div>
                     <p class="text-[10px] text-pink-500 font-bold">
