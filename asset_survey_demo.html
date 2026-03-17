@@ -309,70 +309,64 @@ setLoading(false);
 
 
 
-function updateDashboard(data){
+function updateDashboard(data) {
+    // ... ส่วนการอัปเดตตัวเลขสถิติคงเดิม ...
+    document.getElementById('dash-goal').innerText = data.goal || 0;
+    document.getElementById('dash-in').innerText = data.totalIn || 0;
+    document.getElementById('dash-out').innerText = data.totalOut || 0;
+    document.getElementById('dash-sum').innerText = data.totalSum || 0;
+    const pct = data.goal > 0 ? ((data.totalSum / data.goal) * 100).toFixed(1) : 0;
+    document.getElementById('dash-percent').innerText = pct + "%";
 
-document.getElementById('dash-goal').innerText=data.goal||0;
+    const container = document.getElementById('dept-list-container');
+    if (!data.details || data.details.length === 0) {
+        container.innerHTML = `<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูล</p>`;
+        return;
+    }
 
-document.getElementById('dash-in').innerText=data.totalIn||0;
+    let html = "";
+    let currentBldg = "";
+    
+    // เรียงตามอาคาร
+    const sorted = data.details.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
 
-document.getElementById('dash-out').innerText=data.totalOut||0;
+    sorted.forEach(item => {
+        // ส่วนแสดงชื่ออาคาร (Header Group)
+        if (item.LOCATION_NAME !== currentBldg) {
+            currentBldg = item.LOCATION_NAME;
+            html += `
+                <div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-[48px] z-10">
+                    <i data-lucide="map-pin" class="w-3 h-3 inline mr-1"></i> อาคาร: ${currentBldg || 'ไม่ระบุอาคาร'}
+                </div>`;
+        }
 
-document.getElementById('dash-sum').innerText=data.totalSum||0;
+        // ส่วนแสดงรายละเอียดหน่วยงาน
+        html += `
+            <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer transition-colors"
+                 onclick="startSurveyFor('${item.DEPID}')">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 border border-pink-100">
+                        <img src="${item.DEPT_PHO || 'https://www.w3schools.com/howto/img_avatar.png'}" 
+                             onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'"
+                             class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-pink-500 font-bold uppercase">ชั้น ${item.FL || '-'} | โทร: ${item.Tell || '-'}</p>
+                        <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
+                        <p class="text-[9px] text-gray-400 mt-0.5">${item.JOBE_SYSTEMP || ''}</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    <div class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-[11px] font-black shadow-sm">
+                        ${item.Sum || 0}
+                    </div>
+                    ${item.GPS ? `<i data-lucide="navigation" class="w-3 h-3 text-blue-400"></i>` : ''}
+                </div>
+            </div>`;
+    });
 
-const pct=data.goal>0?((data.totalSum/data.goal)*100).toFixed(1):0;
-
-document.getElementById('dash-percent').innerText=pct+"%";
-
-const container=document.getElementById('dept-list-container');
-
-if(!data.details||data.details.length===0){
-
-container.innerHTML=`<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูล</p>`;
-return;
-
-}
-
-let html="";
-let currentBldg="";
-
-const sorted=data.details.sort((a,b)=>
-(a.LOCATION_NAME||"").localeCompare(b.LOCATION_NAME||"")
-);
-
-sorted.forEach(item=>{
-
-if(item.LOCATION_NAME!==currentBldg){
-
-currentBldg=item.LOCATION_NAME;
-
-html+=`
-<div class="bg-gray-50 text-gray-400 px-4 py-2 font-bold text-[9px] uppercase border-b">
-อาคาร: ${currentBldg||'ทั่วไป'}
-</div>
-`;
-
-}
-
-html+=`
-<div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer"
-onclick="startSurveyFor('${item.DEPID}')">
-
-<div>
-<p class="text-[9px] text-pink-400 font-bold">ชั้น ${item.FL||'-'}</p>
-<p class="font-medium text-gray-700">${item.DEP_NAME_LOC||item.DEPNAME}</p>
-</div>
-
-<div class="bg-white border text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
-${item.Sum||0}
-</div>
-
-</div>
-`;
-
-});
-
-container.innerHTML=html;
-
+    container.innerHTML = html;
+    lucide.createIcons(); // สั่งให้ Icon แสดงผล
 }
 
 
