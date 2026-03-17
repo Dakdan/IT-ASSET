@@ -192,11 +192,9 @@
             </div>
             
             <div class="flex-1 overflow-y-auto p-4 custom-scroll bg-gray-50">  
-                        <div>
-                            <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest leading-none >🏩</p>
-                            <h2 id="md-note" class="text-lg font-black text-slate-950 leading-tight">-</h2>
-                        </div>
-                <div class="mb-5 rounded-[24px] overflow-hidden border-4 border-white shadow-xl bg-slate-200 aspect-video relative">                    <img id="md-dept-photo" src="" alt="Department Photo" class="w-full h-full object-cover hidden">
+                       
+                <div class="mb-5 rounded-[24px] overflow-hidden border-4 border-white shadow-xl bg-slate-200 aspect-video relative">                    
+                    <img id="md-dept-photo" src="" alt="Department Photo" class="w-full h-full object-cover hidden">
                     <div id="md-dept-photo-placeholder" class="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-400">
                         <i data-lucide="image" class="w-12 h-12 opacity-20"></i>
                         <p class="text-[10px] font-bold uppercase tracking-widest">No Image Available</p>
@@ -282,10 +280,10 @@
         
         <div class="p-6 bg-white border-t-2 border-slate-100 flex gap-4 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.05)]">
             <button onclick="closeModal('modal-dept-detail')" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-sm active:scale-95 transition-all">
-                ปิดหน้าต่าง
+                🔙 กลับ
             </button>
             <button id="btn-edit-survey" class="flex-[1.8] py-4 bg-pink-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-pink-200 active:scale-95 transition-all">
-                <i data-lucide="edit-3" class="w-5 h-5"></i> เริ่มการสำรวจใหม่
+                <i data-lucide="edit-3" class="w-5 h-5"></i> ✔️ ตรวจสอบใหม่
             </button>
         </div>
     </div>
@@ -449,7 +447,7 @@ async function showDeptDetail(id) {
     document.getElementById('md-tel').innerText = dept.tel || '-';
     document.getElementById('md-gps').innerText = dept.gps || dept.GPS || '0';
     document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
-    document.getElementById('md-note').innerText = `หน่วยงาน: ${dept.deptName || dept.DEP_NAME_LOC}`;
+    document.getElementById('md-note').innerText = ` ${dept.deptName || dept.DEP_NAME_LOC}`;
 
     // จัดการรูปภาพหน่วยงาน
     const imgEl = document.getElementById('md-dept-photo');
