@@ -270,10 +270,19 @@ function updateDashboard(data) {
     const container = document.getElementById('dept-list-container');
     if (!data.details) return;
 
+    // --- ส่วนที่แก้ไข: กรองเฉพาะหน่วยงานที่มี่ค่า Sum > 0 เท่านั้น ---
+    const filteredDepts = data.details.filter(item => (item.Sum || 0) > 0);
+
     let html = "";
     let currentBldg = "";
     
-    const sorted = data.details.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
+    // เรียงลำดับตามอาคารจากข้อมูลที่กรองแล้ว
+    const sorted = filteredDepts.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
+
+    if (sorted.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-10 text-[10px] italic">ไม่พบข้อมูลหน่วยงานที่สำรวจแล้ว</p>';
+        return;
+    }
 
     sorted.forEach(item => {
         if (item.LOCATION_NAME !== currentBldg) {
@@ -281,12 +290,10 @@ function updateDashboard(data) {
             html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
 
-        // --- แก้ไขจุดนี้: แสดงเฉพาะรูปที่มีจริง และเอา Avatar ออก ---
         let imgTag = "";
         if(item.DEPT_PHO && item.DEPT_PHO !== "") {
             imgTag = `<img src="${item.DEPT_PHO}" class="w-full h-full object-cover">`;
         } else {
-            // กรณีไม่มีรูป ให้แสดงเป็นกล่องว่างๆ สีเทาอ่อนแทน
             imgTag = `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
         }
 
