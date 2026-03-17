@@ -262,13 +262,17 @@ async function initApp(){
     setLoading(false);
 }
 
-function updateDashboard(data, filteredDetails) {
+// ฟังก์ชันสำหรับอัปเดตเฉพาะตัวเลข 5 ข้อบน Dashboard
+function updateDashboardStats(data) {
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
     document.getElementById('dash-sum').innerText = data.totalSum || 0;
     document.getElementById('dash-percent').innerText = (data.percent || 0) + "%";
+}
 
+// ฟังก์ชันสำหรับสร้างรายการหน่วยงาน (แยกออกมาต่างหาก)
+function renderCheckedDepartments(filteredDetails) {
     const container = document.getElementById('dept-list-container');
     if (!container) return;
 
@@ -279,8 +283,6 @@ function updateDashboard(data, filteredDetails) {
 
     let html = "";
     let currentBldg = "";
-    
-    // เรียงตามอาคาร
     const sorted = filteredDetails.sort((a, b) => (a.building || "").localeCompare(b.building || ""));
 
     sorted.forEach(item => {
@@ -289,12 +291,9 @@ function updateDashboard(data, filteredDetails) {
             html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
 
-        let imgTag = "";
-        if(item.deptPhoto && item.deptPhoto !== "") {
-            imgTag = `<img src="${item.deptPhoto}" class="w-full h-full object-cover">`;
-        } else {
-            imgTag = `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
-        }
+        let imgTag = item.deptPhoto 
+            ? `<img src="${item.deptPhoto}" class="w-full h-full object-cover">`
+            : `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
 
         html += `
         <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
@@ -317,7 +316,6 @@ function updateDashboard(data, filteredDetails) {
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
 }
-
 function initFormSelects(){
     const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
     const bSelect=document.getElementById('form-bldg');
