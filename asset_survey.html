@@ -43,7 +43,7 @@
     <div class="w-full max-w-md bg-[#f8f9fa] min-h-screen relative flex flex-col shadow-2xl overflow-x-hidden">
         
         <header class="pink-gradient-header pt-6 pb-10 px-6 text-white shrink-0 relative z-10 no-print flex items-center gap-4">
-            <div onclick="location.reload()" class="bg-white p-2 rounded-2xl shadow-lg shrink-0">
+            <div onclick="location.reload()" class="bg-white p-2 rounded-2xl shadow-lg shrink-0 cursor-pointer">
                 <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-10 h-10 object-contain">
             </div>
             <div class="text-left flex-1">
@@ -269,10 +269,11 @@
     </div>
 
 <script>
+// --- ส่วนที่แก้ไข: ปรับ Property Names ให้ตรงกับ Backend API ---
 const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
 let masterDepts=[];
-let globalFilteredDepts=[]; // เก็บข้อมูลหน่วยงานที่สำรวจแล้วไว้ใช้ใน Modal
+let globalFilteredDepts=[]; 
 let selectedAssets=[];
 let sigPad=null;
 let currentActivityId=null;
@@ -336,6 +337,7 @@ function updateDashboard(data, filteredDetails) {
 
     let html = "";
     let currentBldg = "";
+    // เรียงตามอาคาร
     const sorted = filteredDetails.sort((a, b) => (a.building || "").localeCompare(b.building || ""));
 
     sorted.forEach(item => {
@@ -348,19 +350,19 @@ function updateDashboard(data, filteredDetails) {
             ? `<img src="${item.deptPhoto}" class="w-full h-full object-cover">`
             : `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
 
-        // แก้ไข: เปลี่ยนจาก startSurveyFor เป็น showDeptDetail
+        // ปรับ Property จาก API: item.deptName, item.gps
         html += `
         <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
-             onclick="showDeptDetail('${item.deptId || item.DEPID}')">
+             onclick="showDeptDetail('${item.deptId}')">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">
                     ${imgTag}
                 </div>
                 <div>
-                    <p class="font-semibold text-gray-800 text-sm leading-tight">${item.deptName || item.DEP_NAME_LOC}</p>
+                    <p class="font-semibold text-gray-800 text-sm leading-tight">${item.deptName}</p>
                     <p class="text-[10px] text-pink-500 font-bold uppercase">
-                        ☎️ ${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.GPS || 0}
-                    </p>                   
+                        ☎️ ${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.gps || 0}
+                    </p>                    
                 </div>
             </div>
             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
@@ -371,16 +373,13 @@ function updateDashboard(data, filteredDetails) {
     if(window.lucide) lucide.createIcons();
 }
 
-// ฟังก์ชันใหม่: แสดง Modal รายละเอียดหน่วยงาน
 async function showDeptDetail(id) {
-    const dept = masterDepts.find(x => (x.deptId || x.DEPID) == id);
+    const dept = masterDepts.find(x => x.deptId == id);
     if (!dept) return;
 
     setLoading(true);
     try {
-        // ดึงรายละเอียดเชิงลึก (Log) ผ่าน activityId ถ้ามี หรือจะดึงผ่าน deptId ก็ได้ 
-        // ในที่นี้ขอจำลองการกรองจากข้อมูลที่มีอยู่หรือเรียก API รายละเอียดเพิ่ม
-        // สมมติว่าต้องการข้อมูลล่าสุดที่สำรวจไป:
+        // กรองหาข้อมูลครุภัณฑ์ล่าสุดจาก API (ถ้ามีฟังก์ชัน getSurveyDetailByDept ใน Backend)
         const res = await fetch(`${API}?action=getSurveyDetailByDept&deptId=${id}`);
         const data = await res.json();
 
@@ -393,22 +392,20 @@ async function showDeptDetail(id) {
         document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
         document.getElementById('md-note').innerText = (dept.note1 || "") + " " + (dept.note2 || "");
 
-        // แสดงรายการครุภัณฑ์ (ถ้ามี)
         const logContainer = document.getElementById('md-list-log');
         const nonumContainer = document.getElementById('md-list-nonum');
         
         logContainer.innerHTML = (data.assets && data.assets.length) 
             ? data.assets.map(a => `<div class="p-3 bg-emerald-50 text-[10px] rounded-xl border border-emerald-100 font-bold text-emerald-700">📌 ${a.AssetID} <span class="block opacity-50 font-normal">ในระบบ</span></div>`).join('')
-            : '<p class="text-[10px] text-gray-300 italic py-2">ไม่มีข้อมูล</p>';
+            : '<p class="text-[10px] text-gray-300 italic py-2">ไม่มีข้อมูลในระบบ</p>';
             
         nonumContainer.innerHTML = (data.newAssets && data.newAssets.length)
             ? data.newAssets.map(a => `<div class="p-3 bg-amber-50 text-[10px] rounded-xl border border-amber-100 font-bold text-amber-700">📦 ${a.itemName} <span class="block opacity-50 font-normal">SN: ${a.serial}</span></div>`).join('')
-            : '<p class="text-[10px] text-gray-300 italic py-2">ไม่มีข้อมูล</p>';
+            : '<p class="text-[10px] text-gray-300 italic py-2">ไม่มีข้อมูลนอกทะเบียน</p>';
 
         document.getElementById('md-count-log').innerText = data.assets ? data.assets.length : 0;
         document.getElementById('md-count-nonum').innerText = data.newAssets ? data.newAssets.length : 0;
 
-        // ปรับปุ่มแก้ไข
         document.getElementById('btn-edit-survey').onclick = () => {
             closeModal('modal-dept-detail');
             startSurveyFor(id);
@@ -417,7 +414,6 @@ async function showDeptDetail(id) {
         showModal('modal-dept-detail');
         if(window.lucide) lucide.createIcons();
     } catch(e) {
-        // ถ้าไม่มีข้อมูลการสำรวจเดิม ให้เปิดหน้าสำรวจเลย
         startSurveyFor(id);
     }
     setLoading(false);
@@ -442,11 +438,11 @@ function onBuildingChange(){
 }
 
 function startSurveyFor(id){
-    const d=masterDepts.find(x => (x.deptId || x.DEPID) == id);
+    const d=masterDepts.find(x => x.deptId == id);
     if(!d) return;
     document.getElementById('form-bldg').value=d.building;
     onBuildingChange();
-    document.getElementById('form-dept').value=(d.deptId || d.DEPID);
+    document.getElementById('form-dept').value=d.deptId;
     selectedAssets=[];
     renderSelected();
     navigateTo('page-form');
@@ -513,7 +509,7 @@ async function submitSurvey(){
         return;
     }
     setLoading(true);
-    const dept = masterDepts.find(x=>(x.deptId||x.DEPID)==deptId);
+    const dept = masterDepts.find(x=>x.deptId==deptId);
     const payload = {
         action: 'saveSurvey',
         deptId: deptId,
