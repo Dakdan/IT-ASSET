@@ -259,6 +259,7 @@ async function initApp(){
 }
 
 function updateDashboard(data) {
+    // อัปเดตตัวเลขสถิติ (ตรงตาม Stat Cards แถวบนในรูป)
     document.getElementById('dash-goal').innerText = data.goal || 0;
     document.getElementById('dash-in').innerText = data.totalIn || 0;
     document.getElementById('dash-out').innerText = data.totalOut || 0;
@@ -271,22 +272,32 @@ function updateDashboard(data) {
 
     let html = "";
     let currentBldg = "";
+    
+    // เรียงลำดับตามอาคาร
     const sorted = data.details.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
 
     sorted.forEach(item => {
+        // ส่วน Header อาคาร (แถบสีเทาในรูป)
         if (item.LOCATION_NAME !== currentBldg) {
             currentBldg = item.LOCATION_NAME;
-            html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || 'ไม่ระบุอาคาร'}</div>`;
+            html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
         }
+
+        // จัดการรูปภาพ (ดึงจากคอลัมน์ N)
         const imgUrl = item.DEPT_PHO || 'https://www.w3schools.com/howto/img_avatar.png';
+
+        // โครงสร้าง Card หน่วยงาน (ตาม UI ในรูป)
         html += `
-        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" onclick="startSurveyFor('${item.DEPID}')">
+        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
+             onclick="startSurveyFor('${item.DEPID}')">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-2xl bg-gray-100 overflow-hidden shrink-0 border border-pink-100 shadow-sm">
                     <img src="${imgUrl}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'" class="w-full h-full object-cover">
                 </div>
                 <div>
-                    <p class="text-[10px] text-pink-500 font-bold uppercase">ชั้น ${item.FL || '-'} | สำรวจแล้ว: ${item.Sum || 0}</p>
+                    <p class="text-[10px] text-pink-500 font-bold">
+                        ชั้น ${item.FL || '-'} | สำรวจแล้ว: <span class="text-pink-600">${item.Sum || 0}</span>
+                    </p>
                     <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
                 </div>
             </div>
@@ -294,7 +305,7 @@ function updateDashboard(data) {
         </div>`;
     });
     container.innerHTML = html;
-    lucide.createIcons();
+    lucide.createIcons(); // รีเฟรชไอคอน Chevron
 }
 
 function initFormSelects(){
