@@ -260,64 +260,28 @@ async function initApp(){
 }
 
 function updateDashboard(data) {
+    // 1. แสดงค่าเป้าหมาย (Goal)
     document.getElementById('dash-goal').innerText = data.goal || 0;
-    document.getElementById('dash-in').innerText = data.totalIn || 0;
-    document.getElementById('dash-out').innerText = data.totalOut || 0;
-    document.getElementById('dash-sum').innerText = data.totalSum || 0;
-    const pct = data.goal > 0 ? ((data.totalSum / data.goal) * 100).toFixed(1) : 0;
-    document.getElementById('dash-percent').innerText = pct + "%";
-
-    const container = document.getElementById('dept-list-container');
-    if (!data.details) return;
-
-    // --- ส่วนที่แก้ไข: กรองเฉพาะหน่วยงานที่มี่ค่า Sum > 0 เท่านั้น ---
-    const filteredDepts = data.details.filter(item => (item.Sum || 0) > 0);
-
-    let html = "";
-    let currentBldg = "";
     
-    // เรียงลำดับตามอาคารจากข้อมูลที่กรองแล้ว
-    const sorted = filteredDepts.sort((a, b) => (a.LOCATION_NAME || "").localeCompare(b.LOCATION_NAME || ""));
+    // 2. แสดง Asset_In_Databass
+    document.getElementById('dash-in').innerText = data.totalIn || 0;
+    
+    // 3. แสดง Asset_Out_Databass
+    document.getElementById('dash-out').innerText = data.totalOut || 0;
+    
+    // 4. แสดง Sum
+    document.getElementById('dash-sum').innerText = data.totalSum || 0;
+    
+    // 5. แสดงเปอร์เซ็นต์ (ใช้ค่า percent ที่ส่งมาจาก Backend ได้เลย)
+    document.getElementById('dash-percent').innerText = (data.percent || 0) + "%";
 
-    if (sorted.length === 0) {
-        container.innerHTML = '<p class="text-center text-gray-400 py-10 text-[10px] italic">ไม่พบข้อมูลหน่วยงานที่สำรวจแล้ว</p>';
-        return;
+    // ลบส่วนการสร้างรายการหน่วยงาน (dept-list-container) ออกทั้งหมด 
+    // เนื่องจาก Backend ไม่ได้ส่งค่า details มาแล้วเพื่อให้ตรงตามคำสั่ง
+    const container = document.getElementById('dept-list-container');
+    if (container) {
+        container.innerHTML = ''; 
     }
-
-    sorted.forEach(item => {
-        if (item.LOCATION_NAME !== currentBldg) {
-            currentBldg = item.LOCATION_NAME;
-            html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
-        }
-
-        let imgTag = "";
-        if(item.DEPT_PHO && item.DEPT_PHO !== "") {
-            imgTag = `<img src="${item.DEPT_PHO}" class="w-full h-full object-cover">`;
-        } else {
-            imgTag = `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
-        }
-
-        html += `
-        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
-             onclick="startSurveyFor('${item.DEPID || item.deptId}')">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">
-                    ${imgTag}
-                </div>
-                <div>
-                    <p class="text-[10px] text-pink-500 font-bold">
-                        Phone ${item.Tell || '-'} | สำรวจแล้ว: <span class="text-pink-600">${item.Sum || 0}</span>
-                    </p>
-                    <p class="font-semibold text-gray-800 text-sm leading-tight">${item.DEP_NAME_LOC || item.DEPNAME}</p>
-                </div>
-            </div>
-            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
-        </div>`;
-    });
-    container.innerHTML = html;
-    if(window.lucide) lucide.createIcons();
 }
-
 function initFormSelects(){
     const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
     const bSelect=document.getElementById('form-bldg');
