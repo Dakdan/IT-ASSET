@@ -50,7 +50,8 @@
         </header>
 
         <!-- PAGE 1: DASHBOARD -->
-        <div id="page-dashboard" class="page active px-4 -mt-8 relative z-20 pb-32 no-print"> <div class="grid grid-cols-3 gap-2 mb-2">
+        <div id="page-dashboard" class="page active px-4 -mt-8 relative z-20 pb-24 no-print">
+            <div class="grid grid-cols-3 gap-2 mb-2">
                 <div class="stat-card border-blue-400">
                     <p class="text-[8px] text-gray-400 font-bold uppercase mb-1">เป้าหมาย (R)</p>
                     <h2 id="dash-goal" class="text-base font-black text-gray-800">0</h2>
@@ -60,7 +61,7 @@
                     <h2 id="dash-in" class="text-base font-black text-gray-800">0</h2>
                 </div>
                 <div class="stat-card border-amber-400">
-                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-tight">ไม่มีทะเบียน</p>
+                    <p class="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-tight">ไมมีทะเบียน</p>
                     <h2 id="dash-out" class="text-base font-black text-gray-800">0</h2>
                 </div>
             </div>
@@ -74,24 +75,6 @@
                     <h2 id="dash-percent" class="text-base font-black text-purple-600">0%</h2>
                 </div>
             </div>
-
-            <div class="bg-white rounded-[28px] shadow-sm overflow-hidden border border-gray-100 flex flex-col mb-4">
-                <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-                    <h3 class="font-bold text-xs text-gray-600 flex items-center gap-2">
-                        <i data-lucide="list-checks" class="w-4 h-4 text-pink-500"></i> รายชื่อหน่วยงาน
-                    </h3>
-                    <button onclick="initApp()" class="text-[10px] text-pink-500 font-bold">รีเฟรช</button>
-                </div>
-                <div id="dept-list-container" class="max-h-[calc(100vh-320px)] min-h-[400px] overflow-y-auto text-sm scroll-smooth">
-                    </div>
-            </div>
-
-            <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-                <button onclick="navigateTo('page-form')" class="bg-pink-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center border-4 border-white active:scale-95 transition-transform hover:bg-pink-700">
-                    <i data-lucide="plus" class="w-8 h-8"></i>
-                </button>
-            </div>
-        </div>
 
             <div class="bg-white rounded-[28px] shadow-sm overflow-hidden border border-gray-100">
                 <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-white/80 backdrop-blur-sm sticky top-0 z-10">
