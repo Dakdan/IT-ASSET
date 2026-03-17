@@ -4,16 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IT Asset Survey - All in One</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
 <style>
-body{font-family:'Kanit',sans-serif;background:#f8f9fa}
+body{
+font-family:'Kanit',sans-serif;
+background:#f8f9fa;
+}
 .pink-gradient-header{
 background:linear-gradient(180deg,#b0124c 0%,#e91e63 50%,#f48fb1 100%);
 border-bottom-left-radius:40px;
@@ -27,14 +28,21 @@ text-align:center;
 box-shadow:0 4px 12px rgba(0,0,0,0.03);
 border-bottom:4px solid transparent;
 }
-.page{display:none}
-.page.active{display:block}
+.page{
+display:none;
+}
+.page.active{
+display:block;
+}
 .card{
 background:white;
 border-radius:24px;
 box-shadow:0 10px 25px rgba(0,0,0,0.05);
 }
-.btn-pink{background:#e91e63;color:white}
+.btn-pink{
+background:#e91e63;
+color:white;
+}
 canvas{
 border:2px dashed #ffcad8;
 background:#fff9fa;
@@ -43,6 +51,7 @@ cursor:crosshair;
 width:100%;
 height:200px;
 }
+
 .loading-overlay{
 position:fixed;
 inset:0;
@@ -55,91 +64,143 @@ justify-content:center;
 }
 </style>
 </head>
-
 <body class="flex justify-center">
-
+<!-- Loading -->
 <div id="loading" class="loading-overlay hidden">
 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mb-4"></div>
-<p class="text-pink-600 font-bold">กำลังดำเนินการ...</p>
+<p class="text-pink-600 font-bold">
+กำลังดำเนินการ...
+</p>
 </div>
-
 <div class="w-full max-w-md bg-[#f8f9fa] min-h-screen relative flex flex-col shadow-2xl overflow-x-hidden">
-
+<!-- HEADER -->
 <header class="pink-gradient-header pt-10 pb-12 px-6 text-center text-white shrink-0 relative z-10">
 <div class="flex justify-center mb-3" onclick="location.reload()">
 <div class="bg-white p-2 rounded-2xl shadow-lg">
-<img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-10 h-10 object-contain">
+<img src="https://img2.pic.in.th/-227e4f6f84f29f020.png"
+class="w-10 h-10 object-contain">
 </div>
 </div>
-
 <h1 class="text-lg font-bold">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
 <p class="text-[9px] font-light opacity-90 uppercase tracking-widest">
 โรงพยาบาลอุดรธานี : IT MEDICAL GROUP
 </p>
 </header>
-
-
-<!-- PAGE DASHBOARD -->
-
+<!-- PAGE : DASHBOARD -->
 <div id="page-dashboard" class="page active px-4 -mt-8 relative z-20 pb-24">
-
+<!-- Dashboard Stats -->
 <div class="grid grid-cols-3 gap-2 mb-2">
-
 <div class="stat-card border-blue-400">
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">เป้าหมาย (R)</p>
-<h2 id="dash-goal" class="text-base font-black text-gray-800">0</h2>
+<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
+เป้าหมาย (R)
+</p>
+<h2 id="dash-goal" class="text-base font-black text-gray-800">
+0
+</h2>
+
 </div>
+
 
 <div class="stat-card border-emerald-400">
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">Asset In</p>
-<h2 id="dash-in" class="text-base font-black text-gray-800">0</h2>
+
+<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
+Asset In
+</p>
+
+<h2 id="dash-in" class="text-base font-black text-gray-800">
+0
+</h2>
+
 </div>
+
 
 <div class="stat-card border-amber-400">
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">Asset Out</p>
-<h2 id="dash-out" class="text-base font-black text-gray-800">0</h2>
+
+<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
+Asset Out
+</p>
+
+<h2 id="dash-out" class="text-base font-black text-gray-800">
+0
+</h2>
+
 </div>
 
 </div>
+
+
 
 <div class="grid grid-cols-2 gap-2 mb-4">
 
 <div class="stat-card border-pink-400">
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">รวมสำรวจ</p>
-<h2 id="dash-sum" class="text-base font-black text-gray-800">0</h2>
+
+<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
+รวมสำรวจ
+</p>
+
+<h2 id="dash-sum" class="text-base font-black text-gray-800">
+0
+</h2>
+
 </div>
+
 
 <div class="stat-card border-purple-500">
-<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">ความสำเร็จ</p>
-<h2 id="dash-percent" class="text-base font-black text-purple-600">0%</h2>
+
+<p class="text-[8px] text-gray-400 font-bold uppercase mb-1">
+ความสำเร็จ
+</p>
+
+<h2 id="dash-percent" class="text-base font-black text-purple-600">
+0%
+</h2>
+
 </div>
 
 </div>
+
+
+
+<!-- Department List -->
 
 <div class="bg-white rounded-[28px] shadow-sm overflow-hidden border border-gray-100">
 
 <div class="p-4 border-b border-gray-50 flex justify-between items-center">
+
 <h3 class="font-bold text-xs text-gray-600 flex items-center gap-2">
+
 <i data-lucide="list-checks" class="w-4 h-4 text-pink-500"></i>
+
 รายชื่อหน่วยงาน
+
 </h3>
 
 <button onclick="initApp()" class="text-[10px] text-pink-500 font-bold">
+
 รีเฟรช
+
 </button>
 
 </div>
 
-<div id="dept-list-container" class="max-h-[380px] overflow-y-auto text-sm"></div>
+
+<div id="dept-list-container" class="max-h-[380px] overflow-y-auto text-sm">
+
+<!-- JS Inject -->
 
 </div>
 
 </div>
 
+</div>
 
 
+</div>
+
+
+</body>
+</html>
 <script>
-
 const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
 let masterDepts=[];
@@ -149,52 +210,67 @@ let sigPad=null;
 
 window.onload=()=>{
 
-lucide.createIcons();
+    lucide.createIcons();
 
-const canvas=document.getElementById('sig-pad');
-if(canvas){
-sigPad=new SignaturePad(canvas);
-}
+    const canvas=document.getElementById('sig-pad');
 
-initApp();
+    if(canvas){
+        sigPad=new SignaturePad(canvas);
+    }
+
+    initApp();
 
 };
 
 
 function setLoading(s){
-document.getElementById('loading').classList.toggle('hidden',!s);
+
+    const el=document.getElementById('loading');
+    if(!el) return;
+
+    el.classList.toggle('hidden',!s);
+
 }
 
+
 function navigateTo(pageId){
-document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-document.getElementById(pageId).classList.add('active');
-window.scrollTo(0,0);
+
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+
+    const page=document.getElementById(pageId);
+
+    if(page){
+        page.classList.add('active');
+    }
+
+    window.scrollTo(0,0);
+
 }
 
 
 
 async function initApp(){
 
-setLoading(true);
+    setLoading(true);
 
-try{
+    try{
 
-const dashRes=await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
-const deptRes=await fetch(`${API}?action=getDepartments`);
+        const dashRes=await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
+        const deptRes=await fetch(`${API}?action=getDepartments`);
 
-const dash=await dashRes.json();
-masterDepts=await deptRes.json();
+        const dash=await dashRes.json();
+        masterDepts=await deptRes.json();
 
-updateDashboard(dash);
-initFormSelects();
+        updateDashboard(dash);
+        initFormSelects();
 
-}catch(e){
+    }catch(e){
 
-Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
+        Swal.fire('ข้อผิดพลาด','ไม่สามารถเชื่อมต่อข้อมูลจากระบบได้','error');
 
-}
+    }
 
-setLoading(false);
+    setLoading(false);
 
 }
 
@@ -202,61 +278,74 @@ setLoading(false);
 
 function updateDashboard(data){
 
-document.getElementById('dash-goal').innerText=data.goal||0;
-document.getElementById('dash-in').innerText=data.totalIn||0;
-document.getElementById('dash-out').innerText=data.totalOut||0;
-document.getElementById('dash-sum').innerText=data.totalSum||0;
+    if(!data) return;
 
-const pct=data.goal>0?((data.totalSum/data.goal)*100).toFixed(1):0;
-document.getElementById('dash-percent').innerText=pct+"%";
+    const goal=document.getElementById('dash-goal');
+    const inEl=document.getElementById('dash-in');
+    const outEl=document.getElementById('dash-out');
+    const sumEl=document.getElementById('dash-sum');
+    const pctEl=document.getElementById('dash-percent');
 
-const container=document.getElementById('dept-list-container');
+    if(goal) goal.innerText=data.goal||0;
+    if(inEl) inEl.innerText=data.totalIn||0;
+    if(outEl) outEl.innerText=data.totalOut||0;
+    if(sumEl) sumEl.innerText=data.totalSum||0;
 
-if(!data.details||data.details.length===0){
-container.innerHTML=`<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูล</p>`;
-return;
-}
+    const pct=data.goal>0?((data.totalSum/data.goal)*100).toFixed(1):0;
 
-let html="";
-let currentBldg="";
+    if(pctEl) pctEl.innerText=pct+"%";
 
-const sorted=data.details.sort((a,b)=>
-(a.LOCATION_NAME||"").localeCompare(b.LOCATION_NAME||"")
-);
+    const container=document.getElementById('dept-list-container');
 
-sorted.forEach(item=>{
+    if(!container) return;
 
-if(item.LOCATION_NAME!==currentBldg){
+    if(!data.details || data.details.length===0){
 
-currentBldg=item.LOCATION_NAME;
+        container.innerHTML=`<p class="text-center py-10 text-gray-300 italic">ไม่พบข้อมูล</p>`;
+        return;
 
-html+=`
-<div class="bg-gray-50 text-gray-400 px-4 py-2 font-bold text-[9px] uppercase border-b">
-อาคาร: ${currentBldg||'ทั่วไป'}
-</div>
-`;
+    }
 
-}
+    let html="";
+    let currentBldg="";
 
-html+=`
-<div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer"
-onclick="startSurveyFor('${item.DEPID}')">
+    const sorted=[...data.details].sort((a,b)=>
+        (a.LOCATION_NAME||"").localeCompare(b.LOCATION_NAME||"")
+    );
 
-<div>
-<p class="text-[9px] text-pink-400 font-bold">ชั้น ${item.FL||'-'}</p>
-<p class="font-medium text-gray-700">${item.DEP_NAME_LOC||item.DEPNAME}</p>
-</div>
+    sorted.forEach(item=>{
 
-<div class="bg-white border text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
-${item.Sum||0}
-</div>
+        if(item.LOCATION_NAME!==currentBldg){
 
-</div>
-`;
+            currentBldg=item.LOCATION_NAME;
 
-});
+            html+=`
+            <div class="bg-gray-50 text-gray-400 px-4 py-2 font-bold text-[9px] uppercase border-b">
+            อาคาร: ${currentBldg||'ทั่วไป'}
+            </div>
+            `;
 
-container.innerHTML=html;
+        }
+
+        html+=`
+        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer"
+        onclick="startSurveyFor('${item.DEPID}')">
+
+        <div>
+        <p class="text-[9px] text-pink-400 font-bold">ชั้น ${item.FL||'-'}</p>
+        <p class="font-medium text-gray-700">${item.DEP_NAME_LOC||item.DEPNAME}</p>
+        </div>
+
+        <div class="bg-white border text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
+        ${item.Sum||0}
+        </div>
+
+        </div>
+        `;
+
+    });
+
+    container.innerHTML=html;
 
 }
 
@@ -264,20 +353,77 @@ container.innerHTML=html;
 
 function initFormSelects(){
 
-const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
+    const bSelect=document.getElementById('form-bldg');
 
-const bSelect=document.getElementById('form-bldg');
+    if(!bSelect) return;
 
-if(!bSelect)return;
+    const bldgSet=[...new Set(masterDepts.map(d=>d.building).filter(Boolean))].sort();
 
-bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
+    bSelect.innerHTML='<option value="">-- เลือกอาคาร --</option>';
 
-bldgSet.forEach(b=>{
-bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
-});
+    bldgSet.forEach(b=>{
+
+        bSelect.innerHTML+=`<option value="${b}">${b}</option>`;
+
+    });
+
+}
+async function handleSearch(){
+
+const q=document.getElementById('search-input').value.trim();
+
+if(!q) return;
+
+setLoading(true);
+
+try{
+
+const res=await fetch(`${API}?action=searchAssets&query=${encodeURIComponent(q)}`);
+
+const data=await res.json();
+
+const container=document.getElementById('search-results');
+
+if(!container) return;
+
+if(!data || data.length===0){
+
+container.innerHTML=
+'<p class="text-center text-xs text-gray-400 py-4 italic">ไม่พบข้อมูลครุภัณฑ์</p>';
+
+}else{
+
+container.innerHTML=data.map(item=>`
+
+<div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl flex justify-between items-center cursor-pointer"
+onclick='addAsset(${JSON.stringify(item)})'>
+
+<div class="text-[11px]">
+
+<p class="font-bold text-gray-700">${item.itemName}</p>
+<p class="text-gray-400">ID: ${item.AssetID}</p>
+
+</div>
+
+<i data-lucide="plus-circle" class="w-5 h-5 text-pink-400"></i>
+
+</div>
+
+`).join('');
+
+lucide.createIcons();
 
 }
 
+}catch(e){
+
+Swal.fire('ข้อผิดพลาด','ค้นหาครุภัณฑ์ไม่สำเร็จ','error');
+
+}
+
+setLoading(false);
+
+}
 
 
 </script>
