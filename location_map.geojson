@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [102.8127, 17.4075] 
+      },
+      "properties": {
+        "name": "จุดพิกัดตัวอย่างในอุดรธานี"
+      }
+    }
+  ]
+}
