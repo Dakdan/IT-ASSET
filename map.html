@@ -1,17 +1,41 @@
-function initMap() {
-    // 1. สร้างแผนที่
-    const map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12,
-        center: { lat: 17.4075, lng: 102.8127 }, // พิกัดเริ่มต้น (เช่น อุดรธานี)
-    });
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>GPS Map Viewer</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY"></script>
+    <style>
+      /* กำหนดขนาดแผนที่ */
+      #map { height: 600px; width: 100%; border-radius: 8px; }
+    </style>
+  </head>
+  <body>
+    <h2>ระบบแสดงพิกัด GPS จากไฟล์ GeoJSON</h2>
+    <div id="map"></div>
 
-    // 2. โหลดไฟล์ .geojson จาก Repository ของคุณเอง
-    // เปลี่ยน URL เป็นที่อยู่ไฟล์ของคุณ (แนะนำให้ใช้ Relative Path ถ้าอยู่ที่เดียวกัน)
-    map.data.loadGeoJson('location_map.geojson');
+    <script>
+      function initMap() {
+        // 2. ตั้งค่าจุดกึ่งกลางแผนที่ (เช่น พิกัดโรงพยาบาล)
+        const centerCoords = { lat: 17.4075, lng: 102.8127 };
+        const map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 14,
+          center: centerCoords,
+          mapTypeId: 'terrain' // หรือ 'hybrid' สำหรับภาพดาวเทียม
+        });
 
-    // 3. ปรับแต่งสไตล์ของจุด (Optional)
-    map.data.setStyle({
-        icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-        title: 'จุดพิกัดจากระบบ'
-    });
-}
+        // 3. คำสั่งสำคัญ: โหลดไฟล์ .geojson มาแสดงผล
+        // ถ้าไฟล์ชื่อ data.geojson อยู่ในโฟลเดอร์เดียวกัน ให้ใส่ชื่อไฟล์ได้เลย
+        map.data.loadGeoJson('location_map.geojson');
+
+        // 4. ตกแต่งสีของจุดพิกัด (Optional)
+        map.data.setStyle({
+          fillColor: 'blue',
+          strokeWeight: 1,
+          icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+        });
+      }
+
+      // เรียกใช้งานฟังก์ชันเมื่อโหลดหน้าเว็บเสร็จ
+      window.onload = initMap;
+    </script>
+  </body>
+</html>
