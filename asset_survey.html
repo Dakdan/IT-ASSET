@@ -467,15 +467,22 @@ async function showDeptDetail(id) {
         // ****************************************
 
         // แสดงข้อมูลลงใน Modal (คงเดิม)
-        document.getElementById('md-name').innerText = dept.deptName || dept.DEP_NAME_LOC || '-';
-        document.getElementById('md-id').innerText = id;
+       // --- ส่วนที่ปรับปรุงการแสดงผลข้อมูลหน่วยงาน ---
+
+// 1. แสดงชื่อ อาคาร/ตึก/สถานที่ ไว้ที่หัวข้อใหญ่ (แทน DEP ID เดิม)
+        document.getElementById('md-name').innerText = dept.building || "-"; 
+        
+        // 2. แสดงชื่อหน่วยงาน (Department Name) ไว้ที่ช่องหมายเหตุ หรือเพิ่มตัวแปรใหม่
+        // ในที่นี้ผมปรับให้ md-note แสดงชื่อหน่วยงานควบคู่กับหมายเหตุเพื่อให้เจ้าหน้าที่ทราบว่ากำลังดูหน่วยงานไหนในตึกนั้น
+        document.getElementById('md-note').innerText = `หน่วยงาน: ${dept.deptName || dept.DEP_NAME_LOC}\nหมายเหตุ: ${(dept.note1 || "")} ${(dept.note2 || "")}`;
+        
+        // 3. ข้อมูลทางเทคนิคอื่นๆ (รหัสหน่วยงานเก็บไว้ใน md-id แต่ใน HTML เราเปลี่ยน Label เป็น 'ตึก/สถานที่' ไปแล้ว)
+        document.getElementById('md-id').innerText = dept.building || "-"; 
         document.getElementById('md-floor').innerText = dept.floor || '-';
         document.getElementById('md-system').innerText = dept.jobSystem || '-';
         document.getElementById('md-tel').innerText = dept.tel || '-';
         document.getElementById('md-gps').innerText = dept.gps || dept.GPS || '0';
         document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
-        document.getElementById('md-note').innerText = (dept.note1 || "") + " " + (dept.note2 || "");
-
         const logContainer = document.getElementById('md-list-log');
         const nonumContainer = document.getElementById('md-list-nonum');
         
