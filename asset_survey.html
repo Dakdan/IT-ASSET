@@ -179,63 +179,124 @@
 
     </div>
 
-    <div id="modal-dept-detail" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[32px] w-full max-w-md h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="p-6 bg-pink-50 shrink-0 flex justify-between items-center border-b">
-                <h3 class="font-bold text-gray-700 flex items-center gap-2 text-base">
-                    <i data-lucide="info" class="w-5 h-5 text-pink-500"></i> รายละเอียดการตรวจสอบ
-                </h3>
-                <button onclick="closeModal('modal-dept-detail')" class="text-gray-400"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
+    <div id="modal-dept-detail" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-white rounded-[32px] w-full max-w-md h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-gray-200">
+        
+        <div class="p-5 bg-pink-600 shrink-0 flex justify-between items-center shadow-md">
+            <h3 class="font-bold text-white flex items-center gap-2 text-lg">
+                <i data-lucide="building-2" class="w-6 h-6"></i> รายละเอียดการตรวจสอบ
+            </h3>
+            <button onclick="closeModal('modal-dept-detail')" class="bg-white/20 p-1 rounded-full text-white hover:bg-white/40 transition-colors">
+                <i data-lucide="x" class="w-7 h-7"></i>
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4 custom-scroll bg-gray-50">
             
-            <div class="flex-1 overflow-y-auto p-6 custom-scroll">
+            <div class="mb-5 rounded-2xl overflow-hidden border-2 border-white shadow-lg bg-gray-200 aspect-video relative">
+                <img id="md-dept-photo" src="" alt="Department Photo" class="w-full h-full object-cover hidden">
+                <div id="md-dept-photo-placeholder" class="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
+                    <i data-lucide="image" class="w-12 h-12 opacity-30"></i>
+                    <p class="text-xs font-medium">ไม่มีรูปภาพหน่วยงาน</p>
+                </div>
+                <div class="absolute bottom-3 right-3 px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full">
+                    <span id="md-active" class="text-white text-[10px] font-bold tracking-wider uppercase">ACTIVE</span>
+                </div>
+            </div>
+
+            <div class="mb-5 bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                <p class="text-[11px] font-black text-pink-600 uppercase mb-4 tracking-widest flex items-center gap-2">
+                    <span class="w-1 h-3 bg-pink-600 rounded-full"></span> ข้อมูลหน่วยงาน
+                </p>
                 
-                <div class="mb-6 rounded-2xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50">
-                    <img id="md-dept-photo" src="" alt="Department Photo" class="w-full h-48 object-cover hidden">
-                    <div id="md-dept-photo-placeholder" class="w-full h-48 flex flex-col items-center justify-center gap-3 text-gray-300">
-                        <i data-lucide="image" class="w-12 h-12"></i>
-                        <p class="text-xs">ไม่มีรูปภาพหน่วยงาน</p>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="bg-pink-50 p-2 rounded-lg shrink-0"><i data-lucide="map-pin" class="w-4 h-4 text-pink-600"></i></div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase">ชื่อหน่วยงาน</p>
+                            <p id="md-name" class="text-sm font-black text-slate-900 leading-tight">-</p>
+                        </div>
                     </div>
-                </div>
-                <div class="mb-6">
-                    <p class="text-[10px] font-bold text-pink-400 uppercase mb-3">ข้อมูลหน่วยงาน</p>
-                    <div class="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner">
-                        <div class="col-span-2"><span class="text-gray-400">หน่วยงาน:</span> <span id="md-name" class="font-bold">-</span></div>
-                        <div><span class="text-gray-400">DEP_ID:</span> <span id="md-id" class="font-bold">-</span></div>
-                        <div><span class="text-gray-400">ชั้น:</span> <span id="md-floor" class="font-bold">-</span></div>
-                        <div><span class="text-gray-400">ระบบงาน:</span> <span id="md-system" class="font-bold">-</span></div>
-                        <div><span class="text-gray-400">เบอร์โทร:</span> <span id="md-tel" class="font-bold">-</span></div>
-                        <div><span class="text-gray-400">GPS:</span> <span id="md-gps" class="font-bold text-pink-600">-</span></div>
-                        <div><span class="text-gray-400">สถานะ:</span> <span id="md-active" class="font-bold">-</span></div>
-                        <div class="col-span-2 border-t pt-2 mt-2"><span class="text-gray-400">หมายเหตุ:</span> <span id="md-note" class="block italic text-[10px]">-</span></div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-slate-100 p-2 rounded-lg shrink-0"><i data-lucide="hash" class="w-4 h-4 text-slate-600"></i></div>
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">DEP ID</p>
+                                <p id="md-id" class="text-xs font-black text-slate-900">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="bg-slate-100 p-2 rounded-lg shrink-0"><i data-lucide="layers" class="w-4 h-4 text-slate-600"></i></div>
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">ชั้น</p>
+                                <p id="md-floor" class="text-xs font-black text-slate-900">-</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="mb-6">
-                    <p class="text-[10px] font-bold text-emerald-500 uppercase mb-3 flex justify-between">
-                        <span>รายการในทะเบียน</span>
-                        <span id="md-count-log" class="bg-emerald-100 px-2 rounded-full">0</span>
-                    </p>
-                    <div id="md-list-log" class="space-y-2"></div>
-                </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-slate-100 p-2 rounded-lg shrink-0"><i data-lucide="monitor" class="w-4 h-4 text-slate-600"></i></div>
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">ระบบงาน</p>
+                                <p id="md-system" class="text-xs font-black text-slate-900">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="bg-blue-50 p-2 rounded-lg shrink-0"><i data-lucide="phone" class="w-4 h-4 text-blue-600"></i></div>
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">เบอร์โทร</p>
+                                <p id="md-tel" class="text-xs font-black text-blue-700">-</p>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="mb-6">
-                    <p class="text-[10px] font-bold text-amber-500 uppercase mb-3 flex justify-between">
-                        <span>รายการนอกทะเบียน</span>
-                        <span id="md-count-nonum" class="bg-amber-100 px-2 rounded-full">0</span>
-                    </p>
-                    <div id="md-list-nonum" class="space-y-2"></div>
+                    <div class="flex items-center gap-3 p-3 bg-amber-50 rounded-2xl border border-amber-100">
+                        <i data-lucide="navigation-2" class="w-5 h-5 text-amber-600"></i>
+                        <div class="flex-1">
+                            <p class="text-[10px] text-amber-700 font-bold uppercase leading-none mb-1">พิกัด GPS</p>
+                            <p id="md-gps" class="text-xs font-black text-slate-900 tracking-tighter">0.000000, 0.000000</p>
+                        </div>
+                        <button class="text-[10px] font-bold text-amber-600 underline">นำทาง</button>
+                    </div>
+
+                    <div class="pt-2 border-t border-dashed">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">หมายเหตุ / ข้อมูลเพิ่มเติม</p>
+                        <p id="md-note" class="text-[11px] text-slate-600 italic bg-gray-50 p-2 rounded-lg">-</p>
+                    </div>
                 </div>
             </div>
-            
-            <div class="p-6 bg-white border-t flex gap-3 shrink-0">
-                <button onclick="closeModal('modal-dept-detail')" class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold text-sm">กลับ</button>
-                <button id="btn-edit-survey" class="flex-1 py-4 btn-pink rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
-                    <i data-lucide="edit-3" class="w-4 h-4"></i> เริ่มสำรวจใหม่
-                </button>
+
+            <div class="space-y-4">
+                <div class="bg-white p-4 rounded-3xl border border-emerald-100">
+                    <p class="text-[11px] font-black text-emerald-600 uppercase mb-3 flex justify-between items-center">
+                        <span class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4"></i> รายการในทะเบียน</span>
+                        <span id="md-count-log" class="bg-emerald-600 text-white px-3 py-0.5 rounded-full text-[10px]">0</span>
+                    </p>
+                    <div id="md-list-log" class="grid grid-cols-1 gap-2"></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-3xl border border-amber-100">
+                    <p class="text-[11px] font-black text-amber-600 uppercase mb-3 flex justify-between items-center">
+                        <span class="flex items-center gap-2"><i data-lucide="alert-circle" class="w-4 h-4"></i> รายการนอกทะเบียน</span>
+                        <span id="md-count-nonum" class="bg-amber-600 text-white px-3 py-0.5 rounded-full text-[10px]">0</span>
+                    </p>
+                    <div id="md-list-nonum" class="grid grid-cols-1 gap-2"></div>
+                </div>
             </div>
         </div>
+        
+        <div class="p-5 bg-white border-t-2 border-gray-100 flex gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+            <button onclick="closeModal('modal-dept-detail')" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-sm active:scale-95 transition-all">
+                ปิดหน้าต่าง
+            </button>
+            <button id="btn-edit-survey" class="flex-[1.5] py-4 bg-pink-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-pink-200 active:scale-95 transition-all">
+                <i data-lucide="plus-square" class="w-5 h-5"></i> บันทึกสำรวจใหม่
+            </button>
+        </div>
     </div>
+</div>
 
     <div id="modal-sign" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
