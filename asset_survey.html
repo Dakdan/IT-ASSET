@@ -27,7 +27,6 @@
         .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         @media print { .no-print { display: none !important; } .print-only { display: block !important; } body { background: white; } .card { box-shadow: none; border: 1px solid #eee; } }
         
-        /* Custom Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #f48fb1; border-radius: 10px; }
@@ -180,46 +179,6 @@
 
     </div>
 
-    <div id="modal-sign" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
-            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                <i data-lucide="pen-tool" class="w-5 h-5 text-pink-500"></i> ลงชื่อรับรองข้อมูล
-            </h3>
-            <input type="text" id="input-signer" placeholder="ระบุชื่อ-นามสกุล..." class="w-full p-4 bg-gray-50 rounded-2xl mb-4 outline-none border focus:border-pink-300">
-            <canvas id="sig-pad"></canvas>
-            <div class="flex justify-between mt-2">
-                <button onclick="sigPad.clear()" class="text-[11px] text-gray-400 underline">ล้างลายเซ็น</button>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeModal('modal-sign')" class="flex-1 py-4 text-gray-400 font-bold">ปิด</button>
-                <button onclick="handleConfirmSign()" class="flex-[2] py-4 btn-pink rounded-2xl font-bold">ยืนยันลายเซ็น</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-new-asset" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
-            <h3 class="font-bold text-gray-700 mb-5 flex items-center gap-2">
-                <i data-lucide="plus-square" class="w-5 h-5 text-pink-500"></i> เพิ่มรายการนอกระบบ
-            </h3>
-            <div class="space-y-4">
-                <input type="text" id="new-name" placeholder="ชื่อรายการ (เช่น PC, Monitor)..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
-                <input type="text" id="new-sn" placeholder="Serial Number / Tag ID..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
-                <select id="new-cat" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
-                    <option value="PC">Computer PC</option>
-                    <option value="Notebook">Notebook</option>
-                    <option value="Printer">Printer</option>
-                    <option value="Network">Network Device</option>
-                    <option value="Other">อื่นๆ</option>
-                </select>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeModal('modal-new-asset')" class="flex-1 py-4 text-gray-400 font-bold text-sm">ยกเลิก</button>
-                <button onclick="addNewAsset()" class="flex-[2] py-4 btn-pink rounded-2xl font-bold text-sm">เพิ่มรายการ</button>
-            </div>
-        </div>
-    </div>
-
     <div id="modal-dept-detail" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-[32px] w-full max-w-md h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             <div class="p-6 bg-pink-50 shrink-0 flex justify-between items-center border-b">
@@ -268,8 +227,47 @@
         </div>
     </div>
 
+    <div id="modal-sign" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
+            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                <i data-lucide="pen-tool" class="w-5 h-5 text-pink-500"></i> ลงชื่อรับรองข้อมูล
+            </h3>
+            <input type="text" id="input-signer" placeholder="ระบุชื่อ-นามสกุล..." class="w-full p-4 bg-gray-50 rounded-2xl mb-4 outline-none border focus:border-pink-300">
+            <canvas id="sig-pad"></canvas>
+            <div class="flex justify-between mt-2">
+                <button onclick="sigPad.clear()" class="text-[11px] text-gray-400 underline">ล้างลายเซ็น</button>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeModal('modal-sign')" class="flex-1 py-4 text-gray-400 font-bold">ปิด</button>
+                <button onclick="handleConfirmSign()" class="flex-[2] py-4 btn-pink rounded-2xl font-bold">ยืนยันลายเซ็น</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-new-asset" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl">
+            <h3 class="font-bold text-gray-700 mb-5 flex items-center gap-2">
+                <i data-lucide="plus-square" class="w-5 h-5 text-pink-500"></i> เพิ่มรายการนอกระบบ
+            </h3>
+            <div class="space-y-4">
+                <input type="text" id="new-name" placeholder="ชื่อรายการ (เช่น PC, Monitor)..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
+                <input type="text" id="new-sn" placeholder="Serial Number / Tag ID..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
+                <select id="new-cat" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
+                    <option value="PC">Computer PC</option>
+                    <option value="Notebook">Notebook</option>
+                    <option value="Printer">Printer</option>
+                    <option value="Network">Network Device</option>
+                    <option value="Other">อื่นๆ</option>
+                </select>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeModal('modal-new-asset')" class="flex-1 py-4 text-gray-400 font-bold text-sm">ยกเลิก</button>
+                <button onclick="addNewAsset()" class="flex-[2] py-4 btn-pink rounded-2xl font-bold text-sm">เพิ่มรายการ</button>
+            </div>
+        </div>
+    </div>
+
 <script>
-// --- ส่วนที่แก้ไข: ปรับ Property Names ให้ตรงกับ Backend API ---
 const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
 let masterDepts=[];
@@ -312,10 +310,9 @@ async function initApp(){
         
         updateDashboard(dash, globalFilteredDepts); 
         initFormSelects();
-
     } catch(e) {
         console.error(e);
-        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดข้อมูลจาก Server ได้', confirmButtonColor: '#e91e63' });
+        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดข้อมูลได้', confirmButtonColor: '#e91e63' });
     }
     setLoading(false);
 }
@@ -337,10 +334,13 @@ function updateDashboard(data, filteredDetails) {
 
     let html = "";
     let currentBldg = "";
-    // เรียงตามอาคาร
-    const sorted = filteredDetails.sort((a, b) => (a.building || "").localeCompare(b.building || ""));
+    const sorted = [...filteredDetails].sort((a, b) => (a.building || "").localeCompare(b.building || ""));
 
     sorted.forEach(item => {
+        // แก้ไข: ใช้ทั้ง deptId หรือ DEPID เพื่อให้รองรับ API ทุกแบบ
+        const id = item.deptId || item.DEPID;
+        const name = item.deptName || item.DEP_NAME_LOC;
+
         if (item.building !== currentBldg) {
             currentBldg = item.building;
             html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
@@ -350,18 +350,17 @@ function updateDashboard(data, filteredDetails) {
             ? `<img src="${item.deptPhoto}" class="w-full h-full object-cover">`
             : `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
 
-        // ปรับ Property จาก API: item.deptName, item.gps
         html += `
         <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
-             onclick="showDeptDetail('${item.deptId}')">
+             onclick="showDeptDetail('${id}')">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">
                     ${imgTag}
                 </div>
                 <div>
-                    <p class="font-semibold text-gray-800 text-sm leading-tight">${item.deptName}</p>
+                    <p class="font-semibold text-gray-800 text-sm leading-tight">${name}</p>
                     <p class="text-[10px] text-pink-500 font-bold uppercase">
-                        ☎️ ${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.gps || 0}
+                        ☎️ ${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.gps || item.GPS || 0}
                     </p>                    
                 </div>
             </div>
@@ -373,22 +372,32 @@ function updateDashboard(data, filteredDetails) {
     if(window.lucide) lucide.createIcons();
 }
 
+// ฟังก์ชันเปิด Modal รายละเอียดหน่วยงาน
 async function showDeptDetail(id) {
-    const dept = masterDepts.find(x => x.deptId == id);
-    if (!dept) return;
+    if(!id || id === 'undefined') {
+        console.error("Invalid Department ID");
+        return;
+    }
+
+    // แก้ไข: ค้นหาใน masterDepts โดยเช็คทั้ง deptId และ DEPID
+    const dept = masterDepts.find(x => (x.deptId || x.DEPID) == id);
+    if (!dept) {
+        console.warn("Department not found in master list: ", id);
+        return;
+    }
 
     setLoading(true);
     try {
-        // กรองหาข้อมูลครุภัณฑ์ล่าสุดจาก API (ถ้ามีฟังก์ชัน getSurveyDetailByDept ใน Backend)
         const res = await fetch(`${API}?action=getSurveyDetailByDept&deptId=${id}`);
         const data = await res.json();
 
-        document.getElementById('md-name').innerText = dept.deptName;
+        // แสดงข้อมูลหน่วยงานลงใน Modal
+        document.getElementById('md-name').innerText = dept.deptName || dept.DEP_NAME_LOC || '-';
         document.getElementById('md-id').innerText = id;
         document.getElementById('md-floor').innerText = dept.floor || '-';
         document.getElementById('md-system').innerText = dept.jobSystem || '-';
         document.getElementById('md-tel').innerText = dept.tel || '-';
-        document.getElementById('md-gps').innerText = dept.gps || '0';
+        document.getElementById('md-gps').innerText = dept.gps || dept.GPS || '0';
         document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
         document.getElementById('md-note').innerText = (dept.note1 || "") + " " + (dept.note2 || "");
 
@@ -414,6 +423,8 @@ async function showDeptDetail(id) {
         showModal('modal-dept-detail');
         if(window.lucide) lucide.createIcons();
     } catch(e) {
+        console.error("Error fetching detail:", e);
+        // ถ้าดึงรายละเอียดเชิงลึกไม่ได้ ให้เข้าหน้าสำรวจโดยตรง
         startSurveyFor(id);
     }
     setLoading(false);
@@ -433,16 +444,18 @@ function onBuildingChange(){
     const dSelect=document.getElementById('form-dept');
     dSelect.innerHTML='<option value="">-- เลือกหน่วยงาน --</option>';
     masterDepts.filter(d=>d.building===b).forEach(d=>{
-        dSelect.innerHTML+=`<option value="${d.deptId}">${d.deptName}</option>`;
+        const id = d.deptId || d.DEPID;
+        const name = d.deptName || d.DEP_NAME_LOC;
+        dSelect.innerHTML+=`<option value="${id}">${name}</option>`;
     });
 }
 
 function startSurveyFor(id){
-    const d=masterDepts.find(x => x.deptId == id);
+    const d=masterDepts.find(x => (x.deptId || x.DEPID) == id);
     if(!d) return;
     document.getElementById('form-bldg').value=d.building;
     onBuildingChange();
-    document.getElementById('form-dept').value=d.deptId;
+    document.getElementById('form-dept').value=(d.deptId || d.DEPID);
     selectedAssets=[];
     renderSelected();
     navigateTo('page-form');
@@ -509,11 +522,11 @@ async function submitSurvey(){
         return;
     }
     setLoading(true);
-    const dept = masterDepts.find(x=>x.deptId==deptId);
+    const dept = masterDepts.find(x=>(x.deptId||x.DEPID)==deptId);
     const payload = {
         action: 'saveSurvey',
         deptId: deptId,
-        deptName: dept.deptName,
+        deptName: dept.deptName || dept.DEP_NAME_LOC,
         assets: selectedAssets.filter(x=>!x.isNew),
         newAssets: selectedAssets.filter(x=>x.isNew),
         jobetype: "Survey"
@@ -540,8 +553,8 @@ async function showSummary(actId){
         document.getElementById('detail-date').innerText = new Date().toLocaleDateString('th-TH');
         
         const listHtml = [
-            ...data.assets.map(a=>`<li>- ${a.AssetID}</li>`),
-            ...data.newAssets.map(a=>`<li>- ${a.itemName} (SN: ${a.serial})</li>`)
+            ...(data.assets || []).map(a=>`<li>- ${a.AssetID}</li>`),
+            ...(data.newAssets || []).map(a=>`<li>- ${a.itemName} (SN: ${a.serial})</li>`)
         ].join('');
         document.getElementById('detail-list').innerHTML = `<ul class="list-none">${listHtml}</ul>`;
         
