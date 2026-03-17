@@ -337,7 +337,6 @@ function updateDashboard(data, filteredDetails) {
     const sorted = [...filteredDetails].sort((a, b) => (a.building || "").localeCompare(b.building || ""));
 
     sorted.forEach(item => {
-        // แก้ไข: ใช้ทั้ง deptId หรือ DEPID เพื่อให้รองรับ API ทุกแบบ
         const id = item.deptId || item.DEPID;
         const name = item.deptName || item.DEP_NAME_LOC;
 
@@ -361,7 +360,7 @@ function updateDashboard(data, filteredDetails) {
                     <p class="font-semibold text-gray-800 text-sm leading-tight">${name}</p>
                     <p class="text-[10px] text-pink-500 font-bold uppercase">
                         ☎️ ${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.gps || item.GPS || 0}
-                    </p>                    
+                    </p>                     
                 </div>
             </div>
             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
@@ -372,14 +371,13 @@ function updateDashboard(data, filteredDetails) {
     if(window.lucide) lucide.createIcons();
 }
 
-// ฟังก์ชันเปิด Modal รายละเอียดหน่วยงาน
+// แก้ไขฟังก์ชัน showDeptDetail เพื่อป้องกันการเด้งไปหน้า Form โดยอัตโนมัติ
 async function showDeptDetail(id) {
     if(!id || id === 'undefined') {
         console.error("Invalid Department ID");
         return;
     }
 
-    // แก้ไข: ค้นหาใน masterDepts โดยเช็คทั้ง deptId และ DEPID
     const dept = masterDepts.find(x => (x.deptId || x.DEPID) == id);
     if (!dept) {
         console.warn("Department not found in master list: ", id);
@@ -391,7 +389,7 @@ async function showDeptDetail(id) {
         const res = await fetch(`${API}?action=getSurveyDetailByDept&deptId=${id}`);
         const data = await res.json();
 
-        // แสดงข้อมูลหน่วยงานลงใน Modal
+        // แสดงข้อมูลลงใน Modal
         document.getElementById('md-name').innerText = dept.deptName || dept.DEP_NAME_LOC || '-';
         document.getElementById('md-id').innerText = id;
         document.getElementById('md-floor').innerText = dept.floor || '-';
@@ -417,15 +415,27 @@ async function showDeptDetail(id) {
 
         document.getElementById('btn-edit-survey').onclick = () => {
             closeModal('modal-dept-detail');
-            startSurveyFor(id);
+            startSurveyFor(id); // เข้าหน้าฟอร์มเฉพาะตอนกดปุ่มยืนยันว่าจะเริ่มใหม่
         };
 
         showModal('modal-dept-detail');
         if(window.lucide) lucide.createIcons();
     } catch(e) {
         console.error("Error fetching detail:", e);
-        // ถ้าดึงรายละเอียดเชิงลึกไม่ได้ ให้เข้าหน้าสำรวจโดยตรง
-        startSurveyFor(id);
+        // แทนที่จะเด้งไปหน้าฟอร์ม ให้แจ้งเตือนผู้ใช้ก่อน
+        Swal.fire({
+            icon: 'info',
+            title: 'แจ้งเตือน',
+            text: 'ไม่พบรายละเอียดการสำรวจเดิม คุณต้องการเริ่มสำรวจใหม่สำหรับหน่วยงานนี้หรือไม่?',
+            showCancelButton: true,
+            confirmButtonText: 'เริ่มสำรวจ',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#e91e63'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                startSurveyFor(id);
+            }
+        });
     }
     setLoading(false);
 }
