@@ -210,8 +210,8 @@
                             <i data-lucide="building-2" class="w-6 h-6 text-pink-700"></i>
                         </div>
                         <div>
-                            <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none mb-1">ตึก / อาคาร / สถานที่</p>
-                            <h2 id="md-name" class="text-lg font-black text-slate-950 leading-tight">-</h2>
+                            <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none mb-1">หน่วยงาน</p>
+                            <h2 id="md-note" class="text-lg font-black text-slate-950 leading-tight">-</h2>
                         </div>
                     </div>
                     
@@ -219,6 +219,8 @@
                         <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                             <i data-lucide="layers" class="w-5 h-5 text-slate-600"></i>
                             <div>
+                                <p class="text-[9px] text-slate-400 font-bold uppercase leading-none mb-1">ตึก / อาคาร / สถานที่</p>
+                                <p id="md-name"  class="text-sm font-black text-slate-950">-</p>
                                 <p class="text-[9px] text-slate-400 font-bold uppercase leading-none mb-1">ชั้นที่</p>
                                 <p id="md-floor" class="text-sm font-black text-slate-950">-</p>
                             </div>
@@ -250,7 +252,7 @@
                             <span id="md-gps" class="text-pink-600 font-black">-</span>
                         </div>
                         <div class="p-3 bg-amber-50 rounded-xl border border-amber-100 border-dashed">
-                            <p id="md-note" class="text-[11px] text-amber-900 font-medium italic">-</p>
+                            
                         </div>
                     </div>
                 </div>
@@ -445,7 +447,7 @@ async function showDeptDetail(id) {
     document.getElementById('md-tel').innerText = dept.tel || '-';
     document.getElementById('md-gps').innerText = dept.gps || dept.GPS || '0';
     document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
-    document.getElementById('md-note').innerText = `หน่วยงาน: ${dept.deptName || dept.DEP_NAME_LOC}\nหมายเหตุ: ${(dept.note1 || "")} ${(dept.note2 || "")}`;
+    document.getElementById('md-note').innerText = `หน่วยงาน: ${dept.deptName || dept.DEP_NAME_LOC}`;
 
     // จัดการรูปภาพหน่วยงาน
     const imgEl = document.getElementById('md-dept-photo');
