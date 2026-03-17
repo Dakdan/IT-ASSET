@@ -519,26 +519,7 @@ return;
 
 }
 
-container.innerHTML=selectedAssets.map((item,i)=>`
 
-<div class="flex justify-between items-center bg-white p-4 rounded-2xl border-l-4 border-emerald-400 shadow-sm">
-
-<div class="text-[11px] font-medium">
-
-${item.itemName}
-
-<span class="text-[9px] opacity-50 block">${item.AssetID}</span>
-
-</div>
-
-<button onclick="selectedAssets.splice(${i},1);renderSelected()" class="text-red-300 p-1">
-<i data-lucide="x" class="w-4 h-4"></i>
-</button>
-</div>
-
-lucide.createIcons();
-
-}
 
 </script>
 </body>
