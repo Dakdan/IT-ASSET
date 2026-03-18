@@ -3,75 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Viewer</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+
+<title>Viewer</title>
+<link rel="stylesheet" href="css/style.css">
+
 </head>
+<body>
 
-<body class="bg-gray-50 p-4">
-<h1 class="text-xl font-bold mb-4">Dashboard</h1>
+<div class="login-wrapper">
 
-<div class="grid grid-cols-2 gap-3 mb-4">
-  <div class="bg-white p-4 rounded-xl shadow">
-    <p>เป้าหมาย</p>
-    <h2 id="goal" class="text-xl font-bold">0</h2>
+  <!-- HEADER -->
+  <div class="login-header">
+    <h1>Dashboard</h1>
+    <p>ภาพรวมข้อมูล</p>
   </div>
-  <div class="bg-white p-4 rounded-xl shadow">
-    <p>สำรวจแล้ว</p>
-    <h2 id="sum" class="text-xl font-bold">0</h2>
+
+  <!-- CARD -->
+  <div class="login-card">
+
+    <div class="form-group">
+      <label>Goal</label>
+      <input id="goal" disabled>
+    </div>
+
+    <div class="form-group">
+      <label>Total</label>
+      <input id="sum" disabled>
+    </div>
+
+    <div id="dept-list"></div>
+
   </div>
 </div>
 
-<div id="dept-list" class="space-y-2"></div>
+<!-- LOADER -->
+<div class="loader-overlay" id="loader">
+  <div class="spinner"></div>
+</div>
+
+<!-- POPUP -->
+<div class="popup-overlay" id="popup">
+  <div class="popup-box" id="popupBox">
+    <h3 id="popupTitle"></h3>
+    <p id="popupMsg"></p>
+    <button class="btn-login" onclick="closePopup()">ตกลง</button>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
+async function loadDashboard(){
+  showLoader();
 
-window.onload = async () => {
-  lucide.createIcons();
-  loadData();
-};
+  try{
+    const data = await API.getInitialData();
 
-async function loadData(){
-  const res = await fetch(`${API}?action=getInitialData`);
-  const data = await res.json();
+    document.getElementById("goal").value = data.dashboard.goal || 0;
+    document.getElementById("sum").value = data.dashboard.totalSum || 0;
 
-  document.getElementById("goal").innerText = data.dashboard.goal;
-  document.getElementById("sum").innerText = data.dashboard.totalSum;
+    const container = document.getElementById("dept-list");
 
-  renderDept(data.filtered);
-}
-
-function renderDept(list){
-  const el = document.getElementById("dept-list");
-
-  el.innerHTML = list.map(d => `
-    <div class="bg-white p-3 rounded-xl shadow flex justify-between">
-      <div>
-        <p class="font-bold">${d.deptName}</p>
-        <p class="text-xs text-gray-400">${d.building}</p>
+    container.innerHTML = data.filtered.map(d => `
+      <div class="form-group">
+        <button class="btn-login" onclick="goEdit('${d.deptId}')">
+          ${d.deptName}
+        </button>
       </div>
-      <button onclick="openEditor('${d.deptId}')" 
-        class="text-blue-500 text-xs">สำรวจ</button>
-    </div>
-  `).join("");
+    `).join("");
+
+  }catch(err){
+    showPopup("error","Error","โหลดข้อมูลไม่สำเร็จ");
+  }
+
+  hideLoader();
 }
 
-function openEditor(deptId){
-  location.href = `editor.html?deptId=${deptId}`;
+function goEdit(deptId){
+  window.location.href = `edit.html?deptId=${deptId}`;
 }
-  <script src="js/api.js"></script>
-<script>
-async function load(){
-  const data = await apiGet("getInitialData");
-  if(!data) return;
 
-  console.log(data);
+/* ===== UI ===== */
+
+function showLoader(){
+  document.getElementById("loader").style.display = "flex";
 }
-</script>
 
+function hideLoader(){
+  document.getElementById("loader").style.display = "none";
+}
+
+function showPopup(type,title,msg){
+  const popup = document.getElementById("popup");
+  const box = document.getElementById("popupBox");
+
+  box.className = "popup-box " + type;
+  document.getElementById("popupTitle").innerText = title;
+  document.getElementById("popupMsg").innerText = msg;
+
+  popup.style.display = "flex";
+}
+
+function closePopup(){
+  document.getElementById("popup").style.display = "none";
+}
+
+loadDashboard();
 </script>
 
 </body>
 </html>
-
