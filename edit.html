@@ -1,0 +1,14 @@
+<script src="js/api.js"></script>
+<script>
+async function save(){
+  const res = await apiPost({
+    action: "saveSurvey",
+    deptId: "D01",
+    assets: []
+  });
+
+  if(res?.success){
+    alert("สำเร็จ");
+  }
+}
+</script>
