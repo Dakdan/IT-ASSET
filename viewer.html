@@ -1,0 +1,9 @@
+<script src="js/api.js"></script>
+<script>
+async function load(){
+  const data = await apiGet("getInitialData");
+  if(!data) return;
+
+  console.log(data);
+}
+</script>
