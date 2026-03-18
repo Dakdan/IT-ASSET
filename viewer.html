@@ -4,111 +4,228 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Viewer</title>
-<link rel="stylesheet" href="css/style.css">
+<title>IT UDON HOSP</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --pink1:#f8bbd0;
+  --pink2:#fce4ec;
+  --main:#d81b60;
+}
+
+*{font-family:'Kanit';box-sizing:border-box}
+
+body{
+  margin:0;
+  background:linear-gradient(135deg,var(--pink1),#fff,var(--pink2));
+  min-height:100vh;
+}
+
+/* WATERMARK */
+body::after{
+  content:"IT UDON HOSP";
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:60px;
+  color:rgba(0,0,0,0.05);
+  pointer-events:none;
+}
+
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#ad1457,#f06292);
+  color:#fff;
+  padding:20px;
+  text-align:center;
+  border-radius:0 0 25px 25px;
+}
+
+.header img{
+  width:70px;
+  background:#fff;
+  border-radius:50%;
+  padding:5px;
+}
+
+.container{
+  padding:15px;
+  max-width:900px;
+  margin:auto;
+}
+
+/* CARD */
+.card{
+  background:#fff;
+  padding:15px;
+  border-radius:20px;
+  margin-bottom:10px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.08);
+}
+
+/* BUTTON */
+.btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#d81b60,#f06292);
+  color:#fff;
+  margin-top:10px;
+}
+
+/* INPUT */
+input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+
+/* LOADER */
+.loader{
+  position:fixed;
+  inset:0;
+  display:none;
+  background:rgba(255,255,255,0.8);
+  justify-content:center;
+  align-items:center;
+}
+
+.spinner{
+  width:40px;height:40px;
+  border:4px solid #eee;
+  border-top:4px solid #d81b60;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PRINT */
+@media print{
+  body{background:#fff}
+  .btn{display:none}
+}
+</style>
 
 </head>
 <body>
 
-<div class="login-wrapper">
+<!-- HEADER -->
+<div class="header">
+  <img src="https://cdn-icons-png.flaticon.com/512/2921/2921222.png">
+  <h2>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
+  <p>โรงพยาบาลอุดรธานี</p>
+  <small>กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</small>
+</div>
 
-  <!-- HEADER -->
-  <div class="login-header">
-    <h1>Dashboard</h1>
-    <p>ภาพรวมข้อมูล</p>
-  </div>
+<div class="container">
 
-  <!-- CARD -->
-  <div class="login-card">
+<!-- DASHBOARD -->
+<div class="card">
+  <h3>Dashboard</h3>
+  <p>Goal: <span id="goal"></span></p>
+  <p>Total: <span id="sum"></span></p>
+</div>
 
-    <div class="form-group">
-      <label>Goal</label>
-      <input id="goal" disabled>
-    </div>
+<!-- DEPT -->
+<div id="dept"></div>
 
-    <div class="form-group">
-      <label>Total</label>
-      <input id="sum" disabled>
-    </div>
+<!-- SEARCH -->
+<div class="card">
+  <input id="search" placeholder="ค้นหา Asset">
+  <button class="btn" onclick="search()">ค้นหา</button>
+  <div id="results"></div>
+</div>
 
-    <div id="dept-list"></div>
+<!-- SELECTED -->
+<div class="card">
+  <h3>รายการที่เลือก</h3>
+  <div id="selected"></div>
+  <button class="btn" onclick="save()">บันทึก</button>
+</div>
 
-  </div>
 </div>
 
 <!-- LOADER -->
-<div class="loader-overlay" id="loader">
+<div class="loader" id="loader">
   <div class="spinner"></div>
 </div>
 
-<!-- POPUP -->
-<div class="popup-overlay" id="popup">
-  <div class="popup-box" id="popupBox">
-    <h3 id="popupTitle"></h3>
-    <p id="popupMsg"></p>
-    <button class="btn-login" onclick="closePopup()">ตกลง</button>
-  </div>
-</div>
-
-<script src="js/api.js"></script>
-
 <script>
-async function loadDashboard(){
+const API_URL="YOUR_WEBAPP_URL";
+let selected=[];
+
+function showLoader(){loader.style.display="flex"}
+function hideLoader(){loader.style.display="none"}
+
+/* LOAD */
+async function load(){
   showLoader();
 
-  try{
-    const data = await API.getInitialData();
+  const res=await fetch(API_URL+"?action=getInitialData");
+  const data=await res.json();
 
-    document.getElementById("goal").value = data.dashboard.goal || 0;
-    document.getElementById("sum").value = data.dashboard.totalSum || 0;
+  goal.innerText=data.dashboard.goal;
+  sum.innerText=data.dashboard.totalSum;
 
-    const container = document.getElementById("dept-list");
-
-    container.innerHTML = data.filtered.map(d => `
-      <div class="form-group">
-        <button class="btn-login" onclick="goEdit('${d.deptId}')">
-          ${d.deptName}
-        </button>
-      </div>
-    `).join("");
-
-  }catch(err){
-    showPopup("error","Error","โหลดข้อมูลไม่สำเร็จ");
-  }
+  dept.innerHTML=data.filtered.map(d=>`
+    <div class="card">
+      <b>${d.deptName}</b>
+    </div>
+  `).join("");
 
   hideLoader();
 }
 
-function goEdit(deptId){
-  window.location.href = `edit.html?deptId=${deptId}`;
+/* SEARCH */
+async function search(){
+  showLoader();
+  const res=await fetch(API_URL+"?action=searchAssets&q="+search.value);
+  const data=await res.json();
+
+  results.innerHTML=data.map(x=>`
+    <div class="card" onclick='add(${JSON.stringify(x)})'>
+      ${x.AssetID}
+    </div>
+  `).join("");
+
+  hideLoader();
 }
 
-/* ===== UI ===== */
-
-function showLoader(){
-  document.getElementById("loader").style.display = "flex";
+/* ADD */
+function add(x){
+  if(selected.find(i=>i.AssetID===x.AssetID))return;
+  selected.push(x);
+  render();
 }
 
-function hideLoader(){
-  document.getElementById("loader").style.display = "none";
+/* RENDER */
+function render(){
+  selected.innerHTML="";
+  document.getElementById("selected").innerHTML=
+    selected.map(x=>`<div>${x.AssetID}</div>`).join("");
 }
 
-function showPopup(type,title,msg){
-  const popup = document.getElementById("popup");
-  const box = document.getElementById("popupBox");
+/* SAVE */
+async function save(){
+  showLoader();
 
-  box.className = "popup-box " + type;
-  document.getElementById("popupTitle").innerText = title;
-  document.getElementById("popupMsg").innerText = msg;
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"saveSurvey",
+      assets:selected
+    })
+  });
 
-  popup.style.display = "flex";
+  hideLoader();
+  alert("บันทึกแล้ว");
 }
 
-function closePopup(){
-  document.getElementById("popup").style.display = "none";
-}
-
-loadDashboard();
+load();
 </script>
 
 </body>
