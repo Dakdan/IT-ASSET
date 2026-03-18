@@ -1,4 +1,66 @@
-<script src="js/api.js"></script>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Viewer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-gray-50 p-4">
+<h1 class="text-xl font-bold mb-4">Dashboard</h1>
+
+<div class="grid grid-cols-2 gap-3 mb-4">
+  <div class="bg-white p-4 rounded-xl shadow">
+    <p>เป้าหมาย</p>
+    <h2 id="goal" class="text-xl font-bold">0</h2>
+  </div>
+  <div class="bg-white p-4 rounded-xl shadow">
+    <p>สำรวจแล้ว</p>
+    <h2 id="sum" class="text-xl font-bold">0</h2>
+  </div>
+</div>
+
+<div id="dept-list" class="space-y-2"></div>
+
+<script>
+const API = "YOUR_WEBAPP_URL";
+
+window.onload = async () => {
+  lucide.createIcons();
+  loadData();
+};
+
+async function loadData(){
+  const res = await fetch(`${API}?action=getInitialData`);
+  const data = await res.json();
+
+  document.getElementById("goal").innerText = data.dashboard.goal;
+  document.getElementById("sum").innerText = data.dashboard.totalSum;
+
+  renderDept(data.filtered);
+}
+
+function renderDept(list){
+  const el = document.getElementById("dept-list");
+
+  el.innerHTML = list.map(d => `
+    <div class="bg-white p-3 rounded-xl shadow flex justify-between">
+      <div>
+        <p class="font-bold">${d.deptName}</p>
+        <p class="text-xs text-gray-400">${d.building}</p>
+      </div>
+      <button onclick="openEditor('${d.deptId}')" 
+        class="text-blue-500 text-xs">สำรวจ</button>
+    </div>
+  `).join("");
+}
+
+function openEditor(deptId){
+  location.href = `editor.html?deptId=${deptId}`;
+}
+  <script src="js/api.js"></script>
 <script>
 async function load(){
   const data = await apiGet("getInitialData");
@@ -7,3 +69,9 @@ async function load(){
   console.log(data);
 }
 </script>
+
+</script>
+
+</body>
+</html>
+
