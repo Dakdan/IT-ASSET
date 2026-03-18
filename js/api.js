@@ -1,6 +1,7 @@
 // 🔗 เปลี่ยนเป็น Web App URL ของคุณ
-const API_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
 
+// 🔗 เปลี่ยนเป็น Web App URL ของคุณ
+const API_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
 
 // ===============================
 // ⏱️ timeout กัน request ค้าง
@@ -107,6 +108,10 @@ function showError(msg) {
 // ===============================
 function showLoading() {
   document.body.classList.add("loading");
+}
+
+function hideLoading() {
+  document.body.classList.remove("loading");
 }
 
 function hideLoading() {
