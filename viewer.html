@@ -3,185 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</title>
 
-<title>IT UDON HOSP</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
-
-<style>
-body{
-  margin:0;
-  font-family:'Kanit';
-  background:linear-gradient(135deg,#f8bbd0,#fff,#fce4ec);
-}
-
-/* HEADER */
-.header{
-  background:linear-gradient(135deg,#d81b60,#f06292);
-  color:#fff;
-  text-align:center;
-  padding:20px;
-}
-
-/* CARD */
-.card{
-  background:#fff;
-  margin:10px;
-  padding:15px;
-  border-radius:15px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-/* BUTTON */
-.btn{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  background:#d81b60;
-  color:#fff;
-  margin-top:10px;
-}
-
-/* INPUT */
-input{
-  width:100%;
-  padding:10px;
-  border-radius:10px;
-  border:1px solid #ddd;
-}
-
-/* LOADER */
-.loader{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(255,255,255,0.7);
-  justify-content:center;
-  align-items:center;
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">
-  <h2>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
-  <p>โรงพยาบาลอุดรธานี</p>
-</div>
-
-<!-- DASHBOARD -->
-<div class="card">
-  <h3>Dashboard</h3>
-  <div>Goal: <span id="goal"></span></div>
-  <div>Total: <span id="total"></span></div>
-</div>
-
-<!-- SEARCH -->
-<div class="card">
-  <input id="searchInput" placeholder="ค้นหา Asset">
-  <button class="btn" onclick="search()">ค้นหา</button>
-  <div id="results"></div>
-</div>
-
-<!-- SELECT -->
-<div class="card">
-  <h3>รายการที่เลือก</h3>
-  <div id="selected"></div>
-  <button class="btn" onclick="save()">บันทึก</button>
-</div>
-
-<div class="loader" id="loader">Loading...</div>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 
 <script src="js/api.js"></script>
 
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="login-header">
+  <img src="logo.png" class="header-logo">
+  <h1>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+  <p>โรงพยาบาลอุดรธานี</p>
+</div>
+
+<div class="login-card">
+
+  <!-- SEARCH -->
+  <div class="form-group">
+    <input type="text" id="searchInput" placeholder="ค้นหา Asset ID..." onkeyup="search()">
+  </div>
+
+  <!-- RESULT -->
+  <div id="result"></div>
+
+</div>
+
+<!-- LOADING -->
+<div id="loading" class="loading-overlay">
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay">
+  <div class="modal-card modal-card-lg" id="modalContent"></div>
+</div>
+
 <script>
-let selected = [];
 
-/* ===== UI ===== */
-function showLoader(){ loader.style.display="flex"; }
-function hideLoader(){ loader.style.display="none"; }
-
-/* ===== LOAD ===== */
-async function load(){
-  showLoader();
-
-  const data = await apiGet("getInitialData");
-
-  if(data.error){
-    alert("โหลดข้อมูลไม่สำเร็จ");
-    return;
-  }
-
-  goal.innerText = data.dashboard.goal;
-  total.innerText = data.dashboard.totalSum;
-
-  hideLoader();
-}
-
-/* ===== SEARCH ===== */
 async function search(){
-  showLoader();
-
   const q = document.getElementById("searchInput").value;
+  if(!q) return;
 
-  const data = await apiGet("searchAssets",{ q });
+  setLoading(true);
+
+  const data = await apiGet("searchAssets",{q});
+
+  setLoading(false);
 
   if(data.error){
-    alert("ค้นหาไม่สำเร็จ");
+    alert("โหลดข้อมูลไม่ได้");
     return;
   }
 
-  results.innerHTML = data.map(x=>`
-    <div class="card" onclick='add(${JSON.stringify(x)})'>
-      ${x.AssetID}
+  renderList(data);
+}
+
+function renderList(list){
+  const el = document.getElementById("result");
+
+  el.innerHTML = list.map(i=>`
+    <div class="card" style="padding:15px;margin-bottom:10px;cursor:pointer"
+      onclick="openDetail('${i.ASSETID}')">
+
+      <b>${i.ASSETID}</b><br>
+      <span>${i.NAME || '-'}</span><br>
+      <small>${i.DEPARTMENT || '-'}</small>
+
     </div>
-  `).join("");
-
-  hideLoader();
+  `).join('');
 }
 
-/* ===== ADD ===== */
-function add(item){
-  if(selected.find(x=>x.AssetID===item.AssetID)){
-    alert("มีแล้ว");
-    return;
-  }
+async function openDetail(id){
+  setLoading(true);
 
-  selected.push(item);
-  renderSelected();
+  const data = await apiGet("searchAssets",{q:id});
+
+  setLoading(false);
+
+  const item = data[0];
+
+  document.getElementById("modalContent").innerHTML = `
+    <h2>${item.ASSETID}</h2>
+    <p>${item.NAME || '-'}</p>
+    <p>${item.DEPARTMENT || '-'}</p>
+
+    <button class="btn-login" onclick="goEdit('${item.ASSETID}')">แก้ไข</button>
+    <button class="btn-login" onclick="closeModal()">ปิด</button>
+  `;
+
+  document.getElementById("modal").classList.add("show");
 }
 
-/* ===== RENDER ===== */
-function renderSelected(){
-  document.getElementById("selected").innerHTML =
-    selected.map(x=>`<div>${x.AssetID}</div>`).join("");
+function closeModal(){
+  document.getElementById("modal").classList.remove("show");
 }
 
-/* ===== SAVE ===== */
-async function save(){
-  if(selected.length === 0){
-    alert("ไม่มีข้อมูล");
-    return;
-  }
-
-  showLoader();
-
-  const res = await apiPost("saveSurvey",{
-    assets:selected
-  });
-
-  hideLoader();
-
-  if(res.error){
-    alert("บันทึกไม่สำเร็จ");
-    return;
-  }
-
-  alert("บันทึกสำเร็จ");
+function goEdit(id){
+  window.location.href = `edit.html?id=${id}`;
 }
 
-load();
+function setLoading(s){
+  document.getElementById("loading").classList.toggle("show",s);
+}
+
 </script>
 
 </body>
