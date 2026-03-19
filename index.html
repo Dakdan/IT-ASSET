@@ -119,7 +119,8 @@
         .dash-table td { padding: 12px 8px; font-size: 13px; border-bottom: 1px solid #f1f5f9; text-align: center; font-weight: bold; }
         
         #reader { width: 100%; border-radius: 20px; overflow: hidden; }
-        .search-highlight { background-color: #ff007f; color: #ffffff; padding: 2px 4px; border-radius: 4px; }
+        /* ปรับสี Highlight ให้ชัดเจนขึ้น */
+        .search-highlight { background-color: #fef08a; color: #1e293b; padding: 0px 2px; border-radius: 2px; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -175,18 +176,35 @@
 
             useEffect(() => { fetchInitialData(); }, []);
 
-            // --- แก้ไข: ค้นหาจากเลขท้าย และเรียงลำดับย้อนกลับ (ล่างขึ้นบน) ---
+            // --- ส่วนสำคัญ: ค้นหาจากเลขท้าย และเรียงลำดับจากหลังไปหน้า ---
             const filteredAssets = useMemo(() => {
                 const term = searchTerm.toString().trim().toLowerCase();
                 if (!term) return [];
                 
+                // 1. กรองรายการที่มีเลขนี้ปรากฏอยู่ (Includes)
                 const matches = allAssets.filter(asset => 
-                    String(asset.AssetID || "").toLowerCase().endsWith(term) ||
-                    String(asset.NOID || "").toLowerCase().endsWith(term)
+                    String(asset.AssetID || "").toLowerCase().includes(term) ||
+                    String(asset.NOID || "").toLowerCase().includes(term)
                 );
 
-                // เรียงจากแถวท้ายสุดของ Sheet ขึ้นมาก่อน
-                return [...matches].reverse().slice(0, 30); 
+                // 2. จัดลำดับ: เช็คจาก "หลังไปหน้า"
+                return [...matches].sort((a, b) => {
+                    const aID = String(a.AssetID || "").toLowerCase();
+                    const bID = String(b.AssetID || "").toLowerCase();
+                    
+                    // Priority 1: ใครลงท้ายด้วย term เป๊ะๆ ให้ขึ้นก่อน
+                    const aEnds = aID.endsWith(term);
+                    const bEnds = bID.endsWith(term);
+                    if (aEnds && !bEnds) return -1;
+                    if (!aEnds && bEnds) return 1;
+
+                    // Priority 2: ถ้าลงท้ายเหมือนกัน หรือไม่ลงท้ายเหมือนกัน 
+                    // ให้กลับด้านข้อความแล้วเปรียบเทียบ (เปรียบเทียบจากท้ายไปหน้า)
+                    const revA = aID.split('').reverse().join('');
+                    const revB = bID.split('').reverse().join('');
+                    
+                    return revA.localeCompare(revB);
+                }).slice(0, 50); 
             }, [searchTerm, allAssets]);
 
             const verifiedCount = useMemo(() => allAssets.filter(a => a.note4 == 1 || a.note4 == "1").length, [allAssets]);
@@ -211,7 +229,6 @@
                 setScannerOpen(false);
             };
 
-            // --- แก้ไข: Scanner รองรับ QR หลากหลาย และส่งค่าไปหน้าค้นหาเพื่อให้เลือกเอง ---
             const startScanner = () => {
                 setScannerOpen(true);
                 setTimeout(async () => {
@@ -225,7 +242,6 @@
                                 let rawId = decodedText.trim();
                                 let targetId = rawId;
 
-                                // จัดการ QR หลากหลายรูปแบบ (URL หรือรหัสยาว)
                                 if (rawId.includes('/')) {
                                     targetId = rawId.split('/').filter(p => p !== "").pop();
                                 } else if (rawId.includes(':') || (rawId.includes('-') && rawId.length > 10)) {
@@ -233,8 +249,6 @@
                                 }
 
                                 stopScanner();
-                                
-                                // ส่งค่าไปค้นหา เพื่อให้ผู้ใช้เลือกจากรายการ (ไม่เข้าหน้า Detail ทันที)
                                 setSearchTerm(targetId);
                                 setView('search');
                                 setShowSearch(true);
@@ -248,9 +262,17 @@
             };
 
             const getHighlightedText = (text, highlight) => {
-                if (!highlight.trim()) return text;
-                const parts = String(text).split(new RegExp(`(${highlight})`, 'gi'));
-                return <span>{parts.map((p, i) => p.toLowerCase() === highlight.toLowerCase() ? <span key={i} className="search-highlight">{p}</span> : p)}</span>;
+                if (!highlight || !highlight.trim()) return text;
+                const strText = String(text);
+                const parts = strText.split(new RegExp(`(${highlight})`, 'gi'));
+                return (
+                    <span>
+                        {parts.map((p, i) => 
+                            p.toLowerCase() === highlight.toLowerCase() ? 
+                            <span key={i} className="search-highlight">{p}</span> : p
+                        )}
+                    </span>
+                );
             };
 
             return (
