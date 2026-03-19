@@ -215,16 +215,18 @@
                             (decodedText) => {
                                 let rawId = decodedText.trim();
                                 let targetId = rawId;
-                                if (rawId.startsWith('http')) {
-                                    const urlParts = rawId.split('/');
-                                    targetId = urlParts.pop() || urlParts.pop();
+
+                                // ดึงรหัสจาก NextGov URL (หยิบค่าที่อยู่หลัง IcmAssetDetail)
+                                if (rawId.includes('IcmAssetDetail/')) {
+                                    const parts = rawId.split('IcmAssetDetail/')[1];
+                                    if (parts) {
+                                        targetId = parts.split('/')[0];
+                                    }
                                 }
-                                
-                                // แก้ไข: อัปเดต state เพื่อให้แสดงผลในหน้าค้นหา
+
                                 setSearchTerm(targetId);
                                 setView('search');
                                 setShowSearch(true);
-
                                 stopScanner();
                                 handleViewDetail(targetId);
                             }
