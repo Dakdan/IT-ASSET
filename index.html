@@ -91,7 +91,7 @@
 
             useEffect(() => { fetchInitialData(); }, []);
 
-            // --- Logic ค้นหา: เรียงตามเลขท้าย และเปลี่ยนแผงทันที ---
+            // --- กรองเลขท้าย และเรียงลำดับรายการ ---
             const filteredAssets = useMemo(() => {
                 const term = searchTerm.toString().replace(/\s/g, '').toLowerCase();
                 if (!term) return [];
@@ -110,19 +110,6 @@
                     return aID.length - bID.length;
                 }).slice(0, 50); 
             }, [searchTerm, allAssets]);
-
-            const handleViewDetail = async (noid) => {
-                setLoading(true);
-                try {
-                    const resp = await fetch(`${API_URL}?action=getAsset&noid=${noid}`);
-                    const data = await resp.json();
-                    if (data && data.success) {
-                        setSelectedAsset(data);
-                        setModalOpen(true);
-                    } else { setAlertMsg('ไม่พบข้อมูลครุภัณฑ์นี้'); }
-                } catch (err) { console.error(err); } 
-                finally { setLoading(false); }
-            };
 
             const stopScanner = async () => {
                 if (scannerRef.current) {
@@ -148,7 +135,7 @@
                                     targetId = targetId.split(':').pop();
                                 }
                                 stopScanner();
-                                // บังคับเปลี่ยนเลข เปลี่ยนแผง และเปลี่ยนหน้าจอ
+                                // บังคับเปลี่ยนเลข และกระโดดไปหน้าค้นหาทันที
                                 setSearchTerm(targetId);
                                 setView('search');
                                 setShowSearch(true);
@@ -179,25 +166,19 @@
                 <div className="flex flex-col min-h-screen bg-white relative overflow-x-hidden">
                     {loading && (
                         <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-[9999] flex items-center justify-center">
-                            <div className="text-pink-500 flex flex-col items-center gap-2">
-                                <div className="w-10 h-10 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin"></div>
-                                <span className="font-bold text-sm">กำลังโหลด...</span>
-                            </div>
+                            <div className="text-pink-500 animate-bounce">กำลังโหลด...</div>
                         </div>
                     )}
 
                     <header className="header-pink-vibrant pt-3 pb-5 px-5 flex flex-col justify-start">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-white rounded-xl p-1 shadow-md flex-shrink-0">
+                            <div className="w-12 h-12 bg-white rounded-xl p-1 shadow-md">
                                 <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" className="w-full h-full object-contain" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <h1 className="text-white text-lg font-black truncate leading-tight">ระบบตรวจสอบครุภัณฑ์</h1>
-                                <p className="text-[10px] text-pink-100 font-bold opacity-90 leading-none">โรงพยาบาลอุดรธานี</p>
+                            <div className="flex-1">
+                                <h1 className="text-white text-lg font-black truncate">ระบบตรวจสอบครุภัณฑ์</h1>
+                                <p className="text-[10px] text-pink-100 font-bold opacity-90">โรงพยาบาลอุดรธานี</p>
                             </div>
-                            <button onClick={fetchInitialData} className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
-                                <Icon name="rotate-cw" size={18} />
-                            </button>
                         </div>
                     </header>
 
@@ -206,7 +187,7 @@
                             <div className="glass-search-card flex items-center px-4 py-3 gap-3">
                                 <Icon name="search" size={20} className="text-pink-500" />
                                 <input type="text" className="flex-1 bg-transparent outline-none font-black text-slate-700" 
-                                    placeholder="ค้นหาเลขท้าย..." value={searchTerm} 
+                                    placeholder="พิมพ์เลขรหัส..." value={searchTerm} 
                                     onChange={(e) => { setSearchTerm(e.target.value); if(view !== 'search') setView('search'); }} 
                                 />
                                 <Icon name="x" size={18} className="text-slate-300" onClick={() => { setSearchTerm(''); setShowSearch(false); setView('dashboard'); }} />
@@ -217,17 +198,17 @@
                     <main className="flex-1 px-4 py-6 pb-24">
                         {view === 'dashboard' ? (
                             <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-pink-50 p-4 rounded-3xl border-2 border-pink-100 text-center">
-                                        <p className="text-[10px] font-black text-pink-400 uppercase">ทั้งหมด</p>
-                                        <p className="text-2xl font-black text-slate-800">{allAssets.length}</p>
+                                <div className="grid grid-cols-2 gap-3 text-center">
+                                    <div className="bg-pink-50 p-4 rounded-3xl border-2 border-pink-100">
+                                        <p className="text-2xl font-black">{allAssets.length}</p>
+                                        <p className="text-[10px] text-pink-400 font-bold">ทั้งหมด</p>
                                     </div>
-                                    <div className="bg-emerald-50 p-4 rounded-3xl border-2 border-emerald-100 text-center">
-                                        <p className="text-[10px] font-black text-emerald-400 uppercase">ตรวจสอบแล้ว</p>
-                                        <p className="text-2xl font-black text-slate-800">{allAssets.filter(a => a.note4 == 1).length}</p>
+                                    <div className="bg-emerald-50 p-4 rounded-3xl border-2 border-emerald-100">
+                                        <p className="text-2xl font-black text-emerald-600">{allAssets.filter(a => a.note4 == 1).length}</p>
+                                        <p className="text-[10px] text-emerald-400 font-bold">ตรวจแล้ว</p>
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden">
+                                <div className="bg-white rounded-3xl border-2 border-slate-100 overflow-hidden shadow-sm">
                                     <table className="dash-table">
                                         <thead><tr className="bg-slate-800 text-white text-[10px]"><th>กลุ่มงาน</th><th>OPD</th><th>IPD</th><th>BACK</th></tr></thead>
                                         <tbody>
@@ -246,21 +227,23 @@
                         ) : (
                             <div className="space-y-3">
                                 {filteredAssets.length > 0 ? filteredAssets.map((asset, idx) => (
-                                    <div key={idx} onClick={() => handleViewDetail(asset.NOID)} className="p-5 bg-white rounded-3xl border-2 border-pink-100 flex items-center justify-between active:scale-95 transition-transform shadow-sm">
+                                    <div key={idx} onClick={() => { 
+                                        setLoading(true);
+                                        fetch(`${API_URL}?action=getAsset&noid=${asset.NOID}`)
+                                            .then(r => r.json())
+                                            .then(data => { setSelectedAsset(data); setModalOpen(true); setLoading(false); });
+                                    }} className="p-5 bg-white rounded-3xl border-2 border-pink-100 flex items-center justify-between active:scale-95 transition-transform">
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="px-2 py-0.5 bg-pink-500 text-white text-[10px] font-black rounded-md uppercase">
+                                                <span className="px-2 py-0.5 bg-pink-500 text-white text-[10px] font-black rounded-md">
                                                     {getHighlightedText(asset.AssetID, searchTerm)}
                                                 </span>
-                                                <span className="text-[10px] font-bold text-slate-400 truncate max-w-[150px]">
-                                                    {asset.location || "ไม่ระบุสถานที่"}
-                                                </span>
                                             </div>
-                                            <p className="font-black text-slate-800 text-lg truncate">{asset.itemName}</p>
+                                            <p className="font-black text-slate-800 truncate">{asset.itemName}</p>
                                         </div>
                                         <Icon name="chevron-right" size={24} className="text-pink-400" />
                                     </div>
-                                )) : <div className="text-center py-20 text-slate-300 italic">ไม่พบข้อมูล</div>}
+                                )) : <div className="text-center py-20 text-slate-300">ไม่พบข้อมูล</div>}
                             </div>
                         )}
                     </main>
@@ -275,34 +258,30 @@
 
                     {scannerOpen && (
                         <div className="fixed inset-0 z-[6000] bg-black flex flex-col items-center justify-center p-6">
-                            <div id="reader" className="mb-6"></div>
-                            <button onClick={stopScanner} className="w-full max-w-sm py-4 bg-white/10 text-white rounded-2xl font-bold border border-white/20">ยกเลิก</button>
+                            <div id="reader" className="w-full mb-6"></div>
+                            <button onClick={stopScanner} className="w-full py-4 bg-white/20 text-white rounded-2xl font-bold">ยกเลิก</button>
                         </div>
                     )}
 
                     {modalOpen && selectedAsset && (
                         <div className="fixed inset-0 z-[5000] bg-slate-900/60 backdrop-blur-sm flex items-end justify-center">
                             <div className="modal-content-wrapper border-t-8 border-pink-500">
-                                <div className="p-6 pb-4 flex items-center justify-between">
-                                    <button onClick={() => setModalOpen(false)} className="bg-slate-100 px-4 py-2 rounded-xl text-slate-600 font-bold text-xs flex items-center gap-2"><Icon name="chevron-left" size={14} />ย้อนกลับ</button>
-                                    <h3 className="font-black text-slate-800 text-sm uppercase">Asset Info</h3>
+                                <div className="p-6 flex items-center justify-between">
+                                    <button onClick={() => setModalOpen(false)} className="bg-slate-100 px-4 py-2 rounded-xl text-slate-600 font-bold text-xs">ย้อนกลับ</button>
+                                    <h3 className="font-black text-slate-800 text-sm">ข้อมูลครุภัณฑ์</h3>
                                 </div>
-                                <div className="modal-content-scroll space-y-4">
-                                    <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden border-2 border-pink-50 relative">
-                                        {selectedAsset.imgUrl ? <img src={selectedAsset.imgUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs italic">ไม่มีรูปภาพ</div>}
+                                <div className="modal-content-scroll space-y-4 pb-10">
+                                    <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden">
+                                        {selectedAsset.imgUrl ? <img src={selectedAsset.imgUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300">ไม่มีรูปภาพ</div>}
                                     </div>
-                                    <div className="grid gap-2 text-sm pb-10">
-                                        <div className="p-3.5 rounded-2xl border bg-pink-50 border-pink-200">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase">รหัสครุภัณฑ์</p>
+                                    <div className="space-y-2">
+                                        <div className="p-4 bg-pink-50 rounded-2xl border border-pink-100">
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase">รหัสครุภัณฑ์</p>
                                             <p className="font-bold text-pink-600">{selectedAsset.AssetID}</p>
                                         </div>
-                                        <div className="p-3.5 rounded-2xl border bg-slate-50 border-slate-100">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase">ชื่ออุปกรณ์</p>
+                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase">ชื่ออุปกรณ์</p>
                                             <p className="font-bold text-slate-700">{selectedAsset.itemName}</p>
-                                        </div>
-                                        <div className="p-3.5 rounded-2xl border bg-slate-50 border-slate-100">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase">สถานที่</p>
-                                            <p className="font-bold text-slate-700">{selectedAsset.location}</p>
                                         </div>
                                     </div>
                                 </div>
