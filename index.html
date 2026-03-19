@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตรวจสอบครุภัณฑ์ - รพ.อุดรธานี</title>
+    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - โรงพยาบาลอุดรธานี</title>
+    
     <link rel="icon" type="image/png" href="https://img2.pic.in.th/-227e4f6f84f29f020.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -11,7 +12,9 @@
             theme: {
                 extend: {
                     fontFamily: { sarabun: ['Sarabun', 'sans-serif'] },
-                    colors: { hospital: { primary: '#e91e63', accent: '#db2777', light: '#fdf2f8' } }
+                    colors: {
+                        hospital: { primary: '#e91e63', accent: '#db2777', light: '#fdf2f8' }
+                    }
                 }
             }
         }
@@ -23,20 +26,100 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Sarabun', sans-serif; background: #fdf2f8; min-height: 100vh; margin: 0; display: flex; justify-content: center; }
-        #root { width: 100%; max-width: 448px; background: white; min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
-        .header-pink-vibrant { background: linear-gradient(180deg, #cc0849 0%, #f51d65 80%, #f786bd 100%); border-bottom-left-radius: 32px; border-bottom-right-radius: 32px; box-shadow: 0 10px 30px rgba(173, 20, 87, 0.3); border-bottom: 5px solid #880e4f; position: relative; z-index: 10; min-height: 140px; padding-bottom: 60px; }
-        .sticky-search-container { position: sticky; top: 15px; z-index: 1000; margin-top: -50px; padding: 0 166px; } /* ปรับตามต้นฉบับ */
-        .glass-search-card { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border: 5px solid #e91e63; box-shadow: 0 20px 40px rgba(233, 30, 99, 0.25); border-radius: 24px; }
-        .nav-container { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 448px; padding: 12px; z-index: 2000; display: flex; justify-content: center; }
-        .nav-bar { width: 100%; max-width: 400px; height: 64px; border-radius: 32px; background: rgba(15, 23, 42, 0.95); border: 2px solid #334155; display: flex; align-items: center; justify-content: space-around; padding: 0 20px; }
-        .scan-fab { background: linear-gradient(135deg, #ff4081 0%, #e91e63 100%); width: 60px; height: 60px; border-radius: 50%; border: 4px solid #ffffff; display: flex; align-items: center; justify-content: center; margin-top: -30px; box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4); }
-        .modal-content-wrapper { width: 100%; max-width: 448px; background: white; border-top-left-radius: 40px; border-top-right-radius: 40px; display: flex; flex-direction: column; max-height: 94vh; overflow: hidden; }
-        .modal-content-scroll { flex: 1; overflow-y: auto; padding: 0 24px; }
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background: #fdf2f8; 
+            min-height: 100vh; 
+            margin: 0; 
+            display: flex;
+            justify-content: center;
+        }
+        #root { width: 100%; max-width: 448px; background: white; min-height: 100vh; position: relative; }
+
+        .header-pink-vibrant { 
+            background: linear-gradient(180deg, #cc0849 0%, #f51d65 80%, #f786bd 100%); 
+            border-bottom-left-radius: 32px;
+            border-bottom-right-radius: 32px;
+            box-shadow: 0 10px 30px rgba(173, 20, 87, 0.3);
+            border-bottom: 5px solid #880e4f;
+            position: relative;
+            z-index: 10;
+            min-height: 140px;
+            padding-bottom: 60px;
+        }
+
+        .sticky-search-container {
+            position: sticky; top: 15px; z-index: 1000;
+            margin-top: -50px; padding: 0 16px;
+        }
+
+        .glass-search-card { 
+            background: rgba(255, 255, 255, 0.98); 
+            backdrop-filter: blur(10px); 
+            border: 5px solid #e91e63;
+            box-shadow: 0 20px 40px rgba(233, 30, 99, 0.25);
+            border-radius: 24px;
+        }
+
+        .nav-container { 
+            position: fixed; bottom: 0; left: 50%;
+            transform: translateX(-50%); width: 100%;
+            max-width: 448px; padding: 12px; z-index: 2000; 
+            display: flex; justify-content: center;
+        }
+
+        .nav-bar { 
+            width: 100%; max-width: 400px; height: 64px; 
+            border-radius: 32px; background: rgba(15, 23, 42, 0.95); 
+            border: 2px solid #334155; display: flex;
+            align-items: center; justify-content: space-around; padding: 0 20px;
+        }
+
+        .scan-fab { 
+            background: linear-gradient(135deg, #ff4081 0%, #e91e63 100%); 
+            width: 60px; height: 60px; border-radius: 50%; 
+            border: 4px solid #ffffff; display: flex;
+            align-items: center; justify-content: center;
+            margin-top: -30px; box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4);
+        }
+
+        .modal-content-wrapper {
+            width: 100%;
+            max-width: 448px;
+            background: white;
+            border-top-left-radius: 40px;
+            border-top-right-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            max-height: 94vh;
+            overflow: hidden;
+        }
+
+        .modal-content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 24px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-footer {
+            padding: 16px 24px 32px 24px;
+            background: white;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .back-button-modal {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; background: #f1f5f9;
+            border-radius: 16px; color: #475569;
+            font-weight: 800; font-size: 13px;
+        }
+
         .dash-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .dash-table td { padding: 12px 8px; font-size: 13px; border-bottom: 1px solid #f1f5f9; text-align: center; font-weight: bold; }
-        #reader { width: 100%; border-radius: 20px; overflow: hidden; background: #000; }
-        .search-highlight { background-color: #fef08a; color: #1e293b; padding: 0px 2px; border-radius: 2px; font-weight: 800; }
+        
+        #reader { width: 100%; border-radius: 20px; overflow: hidden; }
+        .search-highlight { background-color: #ff007f; color: #ffffff; padding: 2px 4px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -68,6 +151,7 @@
             const [selectedAsset, setSelectedAsset] = useState(null);
             const [modalOpen, setModalOpen] = useState(false);
             const [scannerOpen, setScannerOpen] = useState(false);
+            const [alertMsg, setAlertMsg] = useState('');
             const [showSearch, setShowSearch] = useState(false);
             
             const API_URL = "https://script.google.com/macros/s/AKfycbzhlc0yAeCjPvX6uwtXyFPxQWFk2llo-Yc7KWIsFkXGbl3EtAUjMZPY38TN4Hi2SoI/exec";
@@ -84,34 +168,33 @@
                     const dash = await dashResp.json();
                     setAllAssets(assetsJson.assets || []);
                     setDashData(dash || []);
-                } catch (err) { console.error(err); } 
-                finally { setLoading(false); }
+                } catch (err) { 
+                    setAlertMsg('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+                } finally { setLoading(false); }
             };
 
             useEffect(() => { fetchInitialData(); }, []);
 
-            const getHighlightedText = (text, highlight) => {
-                if (!highlight || !highlight.trim()) return text;
-                const strText = String(text);
-                const parts = strText.split(new RegExp(`(${highlight})`, 'gi'));
-                return (
-                    <span>
-                        {parts.map((p, i) => 
-                            p.toLowerCase() === highlight.toLowerCase() ? 
-                            <span key={i} className="search-highlight">{p}</span> : p
-                        )}
-                    </span>
-                );
-            };
-
             const filteredAssets = useMemo(() => {
-                const term = searchTerm.toString().replace(/\s/g, '').toLowerCase();
+                const term = searchTerm.trim().toLowerCase();
                 if (!term) return [];
-                const matches = allAssets.filter(asset => 
-                    String(asset.AssetID || "").toLowerCase().includes(term)
-                );
-                return matches.slice(0, 50); 
+                return allAssets.filter(asset => String(asset.AssetID || "").toLowerCase().endsWith(term)).slice(0, 30); 
             }, [searchTerm, allAssets]);
+
+            const verifiedCount = useMemo(() => allAssets.filter(a => a.note4 == 1 || a.note4 == "1").length, [allAssets]);
+
+            const handleViewDetail = async (noid) => {
+                setLoading(true);
+                try {
+                    const resp = await fetch(`${API_URL}?action=getAsset&noid=${noid}`);
+                    const data = await resp.json();
+                    if (data && data.success) {
+                        setSelectedAsset(data);
+                        setModalOpen(true);
+                    } else { setAlertMsg('ไม่พบข้อมูลครุภัณฑ์นี้'); }
+                } catch (err) { console.error(err); } 
+                finally { setLoading(false); }
+            };
 
             const stopScanner = async () => {
                 if (scannerRef.current) {
@@ -128,65 +211,72 @@
                         scannerRef.current = html5QrCode;
                         await html5QrCode.start(
                             { facingMode: "environment" },
-                            { fps: 20, qrbox: { width: 250, height: 250 } },
+                            { fps: 15, qrbox: { width: 250, height: 250 } },
                             (decodedText) => {
-                                let result = decodedText.trim();
-                                if (result.includes('/')) result = result.split('/').pop();
+                                let rawId = decodedText.trim();
+                                let targetId = rawId;
+                                if (rawId.startsWith('http')) {
+                                    const urlParts = rawId.split('/');
+                                    targetId = urlParts.pop() || urlParts.pop();
+                                }
                                 
-                                // ซ่อมเฉพาะตรงนี้: ส่งค่าไปค้นหาและเปลี่ยนหน้า
-                                setSearchTerm(result);
+                                // แก้ไข: อัปเดต state เพื่อให้แสดงผลในหน้าค้นหา
+                                setSearchTerm(targetId);
                                 setView('search');
                                 setShowSearch(true);
-                                
+
                                 stopScanner();
+                                handleViewDetail(targetId);
                             }
                         );
                     } catch (err) {
+                        setAlertMsg('กรุณาอนุญาตการเข้าถึงกล้อง');
                         setScannerOpen(false);
                     }
                 }, 300);
             };
 
-            const getAssetDetail = (noid) => {
-                setLoading(true);
-                fetch(`${API_URL}?action=getAsset&noid=${noid}`)
-                    .then(r => r.json())
-                    .then(data => { 
-                        setSelectedAsset(data); 
-                        setModalOpen(true); 
-                        setLoading(false); 
-                    });
+            const getHighlightedText = (text, highlight) => {
+                if (!highlight.trim()) return text;
+                const parts = String(text).split(new RegExp(`(${highlight})`, 'gi'));
+                return <span>{parts.map((p, i) => p.toLowerCase() === highlight.toLowerCase() ? <span key={i} className="search-highlight">{p}</span> : p)}</span>;
             };
 
             return (
                 <div className="flex flex-col min-h-screen bg-white relative overflow-x-hidden">
                     {loading && (
-                        <div className="fixed inset-0 bg-white/70 backdrop-blur-sm z-[9999] flex items-center justify-center">
-                            <div className="text-pink-500 animate-spin font-black text-4xl">...</div>
+                        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-[9999] flex items-center justify-center">
+                            <div className="text-pink-500 flex flex-col items-center gap-2">
+                                <div className="w-10 h-10 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin"></div>
+                                <span className="font-bold text-sm">กำลังโหลด...</span>
+                            </div>
                         </div>
                     )}
 
-                    <header className="header-pink-vibrant pt-3 pb-5 px-5 flex flex-col justify-start">
+                   <header className="header-pink-vibrant pt-3 pb-5 px-5 flex flex-col justify-start">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-white rounded-xl p-1 shadow-md">
+                            <div className="w-12 h-12 bg-white rounded-xl p-1 shadow-md flex-shrink-0">
                                 <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" className="w-full h-full object-contain" />
                             </div>
-                            <div className="flex-1">
-                                <h1 className="text-white text-lg font-black truncate">ระบบตรวจสอบครุภัณฑ์</h1>
-                                <p className="text-[10px] text-pink-100 font-bold opacity-90">IT UDON HOSPITAL</p>
-                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h1 className="text-white text-lg font-black truncate leading-tight">ระบบตรวจสอบครุภัณฑ์</h1>
+                                <p className="text-[10px] text-pink-100 font-bold opacity-90 leading-none">โรงพยาบาลอุดรธานี</p>
+                           </div>
+                            <button onClick={fetchInitialData} className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
+                                <Icon name="rotate-cw" size={18} />
+                            </button>
                         </div>
                     </header>
 
-                    {(showSearch || view === 'search') && (
-                        <div className="sticky-search-container">
+                    {showSearch && (
+                        <div className="sticky-search-container animate-in slide-in-from-top duration-300">
                             <div className="glass-search-card flex items-center px-4 py-3 gap-3">
                                 <Icon name="search" size={20} className="text-pink-500" />
                                 <input type="text" className="flex-1 bg-transparent outline-none font-black text-slate-700" 
-                                    placeholder="ค้นหารหัสครุภัณฑ์..." value={searchTerm} 
-                                    onChange={(e) => { setSearchTerm(e.target.value); setView('search'); }} 
+                                    placeholder="ค้นหารหัสท้าย..." value={searchTerm} 
+                                    onChange={(e) => { setSearchTerm(e.target.value); if(view !== 'search') setView('search'); }} 
                                 />
-                                {searchTerm && <Icon name="x" size={18} className="text-slate-300" onClick={() => setSearchTerm('')} />}
+                                <Icon name="x" size={18} className="text-slate-300" onClick={() => { setSearchTerm(''); setShowSearch(false); setView('dashboard'); }} />
                             </div>
                         </div>
                     )}
@@ -196,21 +286,21 @@
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="bg-pink-50 p-4 rounded-3xl border-2 border-pink-100 text-center">
-                                        <p className="text-2xl font-black text-pink-600">{allAssets.length}</p>
-                                        <p className="text-[10px] text-pink-400 font-bold">ครุภัณฑ์ทั้งหมด</p>
+                                        <p className="text-[10px] font-black text-pink-400 uppercase">ทั้งหมด</p>
+                                        <p className="text-2xl font-black text-slate-800">{allAssets.length}</p>
                                     </div>
                                     <div className="bg-emerald-50 p-4 rounded-3xl border-2 border-emerald-100 text-center">
-                                        <p className="text-2xl font-black text-emerald-600">{allAssets.filter(a => a.note4 == 1).length}</p>
-                                        <p className="text-[10px] text-emerald-400 font-bold">เช็คแล้ว</p>
+                                        <p className="text-[10px] font-black text-emerald-400 uppercase">ตรวจสอบแล้ว</p>
+                                        <p className="text-2xl font-black text-slate-800">{verifiedCount}</p>
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-3xl border-2 border-slate-100 overflow-hidden shadow-sm">
+                                <div className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden">
                                     <table className="dash-table">
                                         <thead><tr className="bg-slate-800 text-white text-[10px]"><th>กลุ่มงาน</th><th>OPD</th><th>IPD</th><th>BACK</th></tr></thead>
                                         <tbody>
                                             {dashData.map((row, i) => (
-                                                <tr key={i} className={row.PIORITY_NAME === 'รวม' ? 'bg-slate-50 font-black text-slate-900' : 'text-slate-500'}>
-                                                    <td className="text-left pl-4">{row.PIORITY_NAME}</td>
+                                                <tr key={i} className={row.PIORITY_NAME === 'รวม' ? 'bg-slate-50' : ''}>
+                                                    <td className="text-left pl-4 text-slate-500">{row.PIORITY_NAME}</td>
                                                     <td className="text-emerald-600">{row.OPD}</td>
                                                     <td className="text-cyan-600">{row.IPD}</td>
                                                     <td className="text-amber-600">{row['Back Office']}</td>
@@ -223,16 +313,14 @@
                         ) : (
                             <div className="space-y-3">
                                 {filteredAssets.length > 0 ? filteredAssets.map((asset, idx) => (
-                                    <div key={idx} onClick={() => getAssetDetail(asset.NOID)} className="p-4 bg-white rounded-3xl border-2 border-pink-100 flex items-center justify-between active:scale-95 transition-transform">
+                                    <div key={idx} onClick={() => handleViewDetail(asset.NOID)} className="p-5 bg-white rounded-3xl border-2 border-pink-100 flex items-center justify-between active:scale-95 transition-transform">
                                         <div className="min-w-0 flex-1">
-                                            <span className="px-2 py-0.5 bg-pink-500 text-white text-[10px] font-black rounded-md">
-                                                {getHighlightedText(asset.AssetID, searchTerm)}
-                                            </span>
-                                            <p className="font-black text-slate-800 truncate mt-1">{asset.itemName}</p>
+                                            <p className="text-[13px] font-extrabold text-pink-500">{getHighlightedText(asset.AssetID, searchTerm)}</p>
+                                            <p className="font-black text-slate-800 text-lg truncate">{getHighlightedText(asset.itemName, searchTerm)}</p>
                                         </div>
                                         <Icon name="chevron-right" size={24} className="text-pink-400" />
                                     </div>
-                                )) : <div className="text-center py-20 text-slate-300 font-bold">ไม่พบข้อมูลรหัสนี้</div>}
+                                )) : <div className="text-center py-20 text-slate-300 italic">ไม่พบข้อมูล</div>}
                             </div>
                         )}
                     </main>
@@ -241,81 +329,70 @@
                         <nav className="nav-bar">
                             <button onClick={() => { setView('dashboard'); setShowSearch(false); }} className={view === 'dashboard' ? 'text-pink-500' : 'text-slate-500'}><Icon name="home" size={20} /></button>
                             <div className="scan-fab" onClick={startScanner}><Icon name="scan" size={24} className="text-white" /></div>
-                            <button onClick={() => { setView('search'); setShowSearch(true); }} className={view === 'search' ? 'text-pink-500' : 'text-slate-500'}><Icon name="search" size={20} /></button>
+                            <button onClick={() => { setShowSearch(true); setView('search'); }} className={view === 'search' ? 'text-pink-500' : 'text-slate-500'}><Icon name="search-check" size={20} /></button>
                         </nav>
                     </div>
 
                     {scannerOpen && (
-                        <div className="fixed inset-0 z-[6000] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6">
-                            <div className="text-white mb-6 text-center">
-                                <h3 className="font-black text-xl">สแกน QR Code</h3>
-                                <p className="text-xs opacity-60">จัดให้รหัสอยู่ในกรอบสีเขียว</p>
-                            </div>
-                            <div id="reader" className="w-full max-w-[300px] border-4 border-white/20 rounded-3xl overflow-hidden"></div>
-                            <button onClick={stopScanner} className="mt-10 px-10 py-4 bg-white/10 text-white rounded-2xl font-bold border border-white/20">ปิดหน้าต่าง</button>
+                        <div className="fixed inset-0 z-[6000] bg-black flex flex-col items-center justify-center p-6">
+                            <div id="reader" className="mb-6"></div>
+                            <button onClick={stopScanner} className="w-full max-w-sm py-4 bg-white/10 text-white rounded-2xl font-bold border border-white/20">ยกเลิก</button>
                         </div>
                     )}
 
                     {modalOpen && selectedAsset && (
                         <div className="fixed inset-0 z-[5000] bg-slate-900/60 backdrop-blur-sm flex items-end justify-center">
-                            <div className="modal-content-wrapper border-t-8 border-pink-500">
-                                <div className="p-6 flex items-center justify-between border-b border-slate-50">
-                                    <button onClick={() => setModalOpen(false)} className="bg-slate-100 px-4 py-2 rounded-xl text-slate-600 font-bold text-xs">ย้อนกลับ</button>
-                                    <h3 className="font-black text-slate-800 text-sm">ข้อมูลครุภัณฑ์</h3>
-                                    <div className="w-10"></div>
-                                </div>
-                                <div className="modal-content-scroll space-y-4 pb-32 pt-4">
-                                    <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden">
-                                        {selectedAsset.imgUrl ? <img src={selectedAsset.imgUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 font-bold">ไม่มีรูปภาพ</div>}
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-2">
-                                        <div className="p-4 bg-pink-50 rounded-2xl border-2 border-pink-100">
-                                            <p className="text-[10px] text-pink-400 font-bold uppercase">Asset ID</p>
-                                            <p className="font-black text-pink-600 text-lg">{selectedAsset.AssetID}</p>
-                                        </div>
-                                        <div className="p-4 bg-white rounded-2xl border-2 border-slate-100">
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase">ชื่อรายการ</p>
-                                            <p className="font-black text-slate-700">{selectedAsset.itemName}</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="p-3 bg-slate-50 rounded-xl">
-                                            <p className="text-[10px] text-slate-400 font-bold">ยี่ห้อ (Brand)</p>
-                                            <p className="font-bold text-slate-700 text-sm">{selectedAsset.Brand || '-'}</p>
-                                        </div>
-                                        <div className="p-3 bg-slate-50 rounded-xl">
-                                            <p className="text-[10px] text-slate-400 font-bold">รุ่น (Model)</p>
-                                            <p className="font-bold text-slate-700 text-sm">{selectedAsset.Model || '-'}</p>
-                                        </div>
-                                        <div className="col-span-2 p-3 bg-slate-50 rounded-xl">
-                                            <p className="text-[10px] text-slate-400 font-bold">Serial Number</p>
-                                            <p className="font-bold text-slate-700 text-sm">{selectedAsset.SerialNo || '-'}</p>
-                                        </div>
-                                    </div>
-                                    <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                                        <p className="text-[10px] text-emerald-400 font-bold mb-1">สถานที่ติดตั้ง</p>
-                                        <p className="font-bold text-slate-700 text-sm">{selectedAsset.DEPT_NAME}</p>
-                                        <p className="text-[10px] text-slate-500 font-bold">ตึก {selectedAsset.Building} ชั้น {selectedAsset.Floor}</p>
-                                    </div>
-                                    <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-200">
-                                        <div>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase">สถานะ</p>
-                                            <p className={`font-black ${selectedAsset.note4 == 1 ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                                {selectedAsset.note4 == 1 ? 'ตรวจสอบแล้ว' : 'ยังไม่ได้ตรวจสอบ'}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase">ตรวจล่าสุด</p>
-                                            <p className="text-xs font-bold text-slate-600">{selectedAsset.checkDate || '-'}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-md border-t border-slate-100">
-                                    <button className="w-full py-4 bg-pink-500 text-white rounded-2xl font-black shadow-lg">
-                                        ยืนยันการตรวจสอบ
+                            <div className="modal-content-wrapper animate-in slide-in-from-bottom duration-300 border-t-8 border-pink-500">
+                                
+                                <div className="p-6 pb-4 flex items-center justify-between flex-shrink-0">
+                                    <button onClick={() => setModalOpen(false)} className="back-button-modal">
+                                        <Icon name="chevron-left" size={16} /> ย้อนกลับ
                                     </button>
+                                    <div className="text-right">
+                                        <h3 className="font-black text-slate-800 text-sm">รายละเอียดครุภัณฑ์</h3>
+                                        <p className="text-[9px] text-pink-500 font-bold uppercase">Asset Information</p>
+                                    </div>
+                                </div>
+
+                                <div className="modal-content-scroll space-y-4">
+                                    <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden border-2 border-pink-50 relative">
+                                        {selectedAsset.imgUrl ? <img src={selectedAsset.imgUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs italic">ไม่มีรูปภาพ</div>}
+                                        <div className="absolute top-3 right-3 bg-pink-500 text-white px-3 py-1 rounded-full text-[10px] font-black">{selectedAsset.coStatus || "สถานะปกติ"}</div>
+                                    </div>
+
+                                    <div className="grid gap-2.5 text-sm">
+                                        {[
+                                            { label: "รหัสครุภัณฑ์", val: selectedAsset.AssetID, hl: true, icon: "id-card" },
+                                            { label: "ชื่ออุปกรณ์", val: selectedAsset.itemName, hl: true, icon: "monitor" },
+                                            { label: "ยี่ห้อ/รุ่น/สเปค", val: selectedAsset.spec, icon: "cpu" },
+                                            { label: "สถานที่ใช้งาน", val: selectedAsset.location, hl: true, icon: "map-pin" },
+                                            { label: "วันที่รับเข้า", val: selectedAsset.receiveDate, icon: "calendar" },
+                                            { label: "อายุการใช้งาน", val: `${selectedAsset.age} ปี`, icon: "history" },
+                                            { label: "สถานะ MA", val: selectedAsset.maStatus, icon: "settings" }
+                                        ].map((item, i) => (
+                                            <div key={i} className={`p-3.5 rounded-2xl border ${item.hl ? 'bg-pink-50 border-pink-200' : 'bg-slate-50 border-slate-100'} flex items-start gap-3`}>
+                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.hl ? 'bg-pink-500 text-white' : 'bg-slate-200 text-slate-500'}`}><Icon name={item.icon} size={16} /></div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-0.5">{item.label}</p>
+                                                    <p className={`font-bold leading-tight ${item.hl ? 'text-pink-600' : 'text-slate-700'}`}>{item.val || '-'}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="modal-footer flex gap-3 flex-shrink-0">
+                                    <button onClick={() => setAlertMsg('ระบบอยู่ระหว่างการพัฒนา')} className="flex-1 py-4 bg-white border-2 border-pink-500 text-pink-500 rounded-2xl font-black text-xs uppercase">แก้ไขข้อมูล</button>
+                                    <button onClick={() => setAlertMsg('กำลังส่งคำสั่งพิมพ์...')} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase shadow-lg">ออกสติกเกอร์</button>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {alertMsg && (
+                        <div className="fixed top-4 left-4 right-4 z-[9999] bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-between" onClick={() => setAlertMsg('')}>
+                            <div className="flex items-center gap-3"><Icon name="info" size={20} className="text-pink-400" /><span className="text-sm font-bold">{alertMsg}</span></div>
+                            <Icon name="x" size={16} className="text-slate-500" />
                         </div>
                     )}
                 </div>
