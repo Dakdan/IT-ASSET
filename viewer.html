@@ -107,67 +107,6 @@ showPage('department')
 
 
 // ======================= api.js =======================
-const API_URL="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec"
-
-async function api(action,params={}){
- showLoading(true)
- const url=new URL(API_URL)
- url.searchParams.append('action',action)
- Object.keys(params).forEach(k=>url.searchParams.append(k,params[k]))
- const res=await fetch(url)
- const j=await res.json()
- showLoading(false)
- return j
-}
-
-async function apiPost(action,data={}){
- showLoading(true)
- const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action,...data})})
- const j=await res.json()
- showLoading(false)
- return j
-}
-
-
-// ======================= Code.gs =======================
-const ASSET_DB_ID="YOUR_ASSET_ID"
-const DEPT_DB_ID="YOUR_DEPT_ID"
-
-function jsonResponse(data,status="success"){
- return ContentService.createTextOutput(JSON.stringify({status,data}))
- .setMimeType(ContentService.MimeType.JSON)
-}
-
-function doGet(e){
- const a=e.parameter.action
- if(a==='getDepartments')return jsonResponse(getDepartments())
- if(a==='searchAssets')return jsonResponse(searchAssets(e.parameter.query))
- if(a==='getSurveyDetail')return jsonResponse(getSurveyDetail(e.parameter.activityId))
-}
-
-function doPost(e){
- const d=JSON.parse(e.postData.contents)
- if(d.action==='saveSurvey')return jsonResponse(saveSurvey(d))
- if(d.action==='confirmSurvey')return jsonResponse(confirmSurvey(d))
-}
-
-function getDepartments(){
- const sh=SpreadsheetApp.openById(DEPT_DB_ID).getSheets()[0]
- const v=sh.getDataRange().getValues()
- return v.slice(1).map(r=>({deptId:r[0],deptName:r[2]}))
-}
-
-function searchAssets(q){
- if(!q)return []
- const sh=SpreadsheetApp.openById(ASSET_DB_ID).getSheetByName('Asset_DB')
- const v=sh.getDataRange().getValues()
- return v.slice(1).filter(r=>String(r[3]).includes(q)).map(r=>({AssetID:r[3]}))
-}
-
-function saveSurvey(d){
- const id='SV-'+Date.now()
- return {activityId:id}
-}
 
 function confirmSurvey(d){return {success:true}}
 
