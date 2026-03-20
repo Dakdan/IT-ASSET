@@ -3,344 +3,445 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>บันทึกการสำรวจครุภัณฑ์ - IT UDON HOSP</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <title>IT Udon Hospital - Asset Survey</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Kanit', sans-serif; background: linear-gradient(135deg, #fff, #fce4ec, #f8bbd0); min-height: 100vh; }
-        .loading-overlay { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(6px); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-        .loading-overlay.show { display: flex; }
-        .loading-spinner { width: 50px; height: 50px; border: 4px solid rgba(233, 30, 99, 0.15); border-top: 4px solid #e91e63; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; }
-        .modal-overlay.show { display: flex; }
-        .modal-card { background: #fff; width: 100%; max-width: 480px; max-height: 90vh; border-radius: 28px; padding: 24px; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
-        .btn-pink { background: linear-gradient(135deg, #d81b60, #f06292); color: #fff; border-radius: 16px; transition: all 0.2s ease; box-shadow: 0 6px 15px rgba(216,27,96,0.25); }
-        .card { background: rgba(255,255,255,0.95); border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .pink-gradient-header { background: linear-gradient(135deg, #ad1457 0%, #f06292 100%); border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
+            min-height: 100vh;
+            color: #4a4a4a;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 192, 203, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        .btn-pink {
+            background: linear-gradient(90deg, #ff85a1 0%, #ffb6c1 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-pink:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 133, 161, 0.4);
+        }
+        .search-highlight {
+            background-color: #ffdae0;
+            color: #d63384;
+            font-weight: bold;
+            border-radius: 4px;
+            padding: 0 2px;
+        }
+        .signature-pad {
+            border: 2px dashed #ffb6c1;
+            background: #fff;
+            border-radius: 12px;
+        }
+        .loader-overlay {
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            position: fixed; inset: 0;
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffdae0; border-radius: 10px; }
         
-        /* สไตล์สำหรับเลือกกะ */
-        .shift-checkbox:checked + span { background-color: #d81b60; color: white; border-color: #d81b60; }
+        /* สไตล์สำหรับ optgroup */
+        optgroup {
+            font-style: normal;
+            font-weight: 700;
+            color: #ff85a1;
+            background-color: #fff;
+        }
+        option {
+            color: #4a4a4a;
+            font-weight: 400;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-area { display: block !important; }
+        }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <span class="mt-4 font-bold text-pink-600">กำลังประมวลผล...</span>
+    <div id="loader" class="loader-overlay flex flex-col gap-4">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500"></div>
+        <p class="text-pink-600 font-medium">กำลังประมวลผล...</p>
     </div>
 
-    <header class="pink-gradient-header p-8 text-white text-center shadow-lg">
-        <h1 class="text-2xl font-bold">ระบบสำรวจครุภัณฑ์</h1>
-        <p class="opacity-90" id="displayDeptName">กำลังโหลดข้อมูลหน่วยงาน...</p>
+    <header class="max-w-4xl mx-auto mb-8 text-center no-print">
+        <div class="flex flex-col items-center gap-2">
+            <div class="w-16 h-16 bg-white rounded-2xl shadow-sm p-2 mb-2">
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-full h-full object-contain" />
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 leading-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+            <p class="text-pink-500 font-bold text-sm uppercase tracking-wider">โรงพยาบาลอุดรธานี</p>
+        </div>
     </header>
 
-    <main class="container mx-auto max-w-2xl p-4 -mt-6">
-        <div class="card p-6 mb-4">
-            <div class="flex justify-between items-center text-sm">
-                <span id="displayDeptId" class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full font-bold"></span>
-                <span id="displayBuilding" class="text-gray-500"></span>
-            </div>
-        </div>
-
-      <div class="card p-6 mb-4">
-                <h2 class="font-semibold text-pink-800 mb-3 underline decoration-pink-200">ตรวจสอบครุภัณฑ์</h2>
-                <div class="flex gap-2">
-                    <input type="text" id="assetSearchInput" 
-                           oninput="handleLiveSearch(this.value)" 
-                           placeholder="พิมพ์เพื่อค้นหา (จากคอลัมน์ E)..." 
-                           class="flex-1 border-2 border-pink-50 rounded-xl px-4 py-2 focus:outline-none focus:border-pink-300 text-sm shadow-sm">
-                    
-                    <button onclick="startScanner()" class="bg-pink-100 text-pink-600 p-2 rounded-xl hover:bg-pink-200 transition-colors">
-                        <i class="fas fa-qrcode text-xl"></i>
-                    </button>
-                </div>
-                <div id="assetSearchResult" class="mt-4 space-y-2"></div>
-            </div>
-
-        <div class="mb-4">
-            <h3 class="px-2 font-bold text-gray-600 mb-2">รายการที่เลือก (<span id="count">0</span>)</h3>
-            <div id="selectedList" class="space-y-2"></div>
-        </div>
-
-        <button onclick="submitSurvey()" class="btn-pink w-full py-4 text-lg font-bold shadow-xl mb-10">
-            บันทึกข้อมูลและไปหน้าลงนาม
-        </button>
-    </main>
-
-    <div id="scannerSection" class="hidden fixed inset-0 bg-black z-[10001] flex flex-col">
-        <div class="p-4 flex justify-between items-center text-white bg-pink-800">
-            <span class="font-bold"><i class="fas fa-camera mr-2"></i>สแกนรหัสครุภัณฑ์</span>
-            <button onclick="stopScanner()" class="text-3xl">&times;</button>
-        </div>
-        <div id="reader" class="w-full flex-grow bg-black"></div>
-    </div>
-
-    <div id="modalAssetDetail" class="modal-overlay">
-        <div class="modal-card">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-xl font-bold text-pink-700">รายละเอียดครุภัณฑ์</h3>
-                <button onclick="closeModal('modalAssetDetail')" class="text-gray-400 text-2xl">&times;</button>
-            </div>
-            
-            <div class="bg-pink-50 p-4 rounded-2xl mb-4 border border-pink-100">
-                <p class="text-xs text-pink-400 font-bold uppercase">Asset ID</p>
-                <p id="showAssetID" class="text-xl font-bold text-gray-800"></p>
-                <p id="showItemName" class="text-sm text-gray-600 mt-1"></p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 text-[11px] mb-6">
-                <div class="p-2 bg-gray-50 rounded-lg">
-                    <span class="text-gray-400 block">วันที่รับเข้า:</span>
-                    <span id="showReceiveDate" class="font-medium text-gray-700"></span>
-                </div>
-                <div class="p-2 bg-gray-50 rounded-lg">
-                    <span class="text-gray-400 block">อายุการใช้งาน:</span>
-                    <span id="showAge" class="font-medium text-gray-700"></span>
-                </div>
-                <div class="col-span-2 p-2 bg-gray-50 rounded-lg">
-                    <span class="text-gray-400 block">สเปค/รายละเอียด:</span>
-                    <span id="showSpec" class="font-medium text-gray-700"></span>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="text-sm font-bold text-gray-600 block mb-1">ความสำคัญ (Priority)</label>
-                    <select id="inpPriority" class="w-full border-2 border-gray-100 rounded-xl px-3 py-2 text-sm focus:border-pink-300 outline-none">
-                        <option value="ปกติ">ปกติ (ใช้งานทั่วไป)</option>
-                        <option value="ด่วน">ด่วน (ต้องการการบำรุงรักษา)</option>
-                        <option value="ส่งซ่อม">ส่งซ่อม (ใช้งานไม่ได้)</option>
+    <main class="max-w-4xl mx-auto space-y-6 no-print">
+        <!-- ข้อมูลหน่วยงาน -->
+        <div id="step-1" class="glass-card p-6 md:p-8 space-y-6">
+            <h2 class="text-xl font-bold border-l-4 border-pink-500 pl-3">ข้อมูลหน่วยงาน</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-black text-gray-400 uppercase">เลือกอาคาร</label>
+                    <select id="building-select" onchange="filterDepartments()" class="w-full p-3 rounded-xl border border-pink-100 outline-none focus:ring-2 focus:ring-pink-300">
+                        <option value="">-- โหลดข้อมูล... --</option>
                     </select>
                 </div>
-
-                <div>
-                    <label class="text-sm font-bold text-gray-600 block mb-2">ช่วงเวลาที่ใช้งาน (Shift Work)</label>
-                    <div class="flex gap-2">
-                        <label class="flex-1 cursor-pointer">
-                            <input type="checkbox" name="shift" value="เช้า" class="hidden shift-checkbox">
-                            <span class="block text-center py-2 border-2 border-gray-100 rounded-xl text-xs font-medium transition-all text-gray-500">เช้า</span>
-                        </label>
-                        <label class="flex-1 cursor-pointer">
-                            <input type="checkbox" name="shift" value="บ่าย" class="hidden shift-checkbox">
-                            <span class="block text-center py-2 border-2 border-gray-100 rounded-xl text-xs font-medium transition-all text-gray-500">บ่าย</span>
-                        </label>
-                        <label class="flex-1 cursor-pointer">
-                            <input type="checkbox" name="shift" value="ดึก" class="hidden shift-checkbox">
-                            <span class="block text-center py-2 border-2 border-gray-100 rounded-xl text-xs font-medium transition-all text-gray-500">ดึก</span>
-                        </label>
+                <div class="space-y-2">
+                    <label class="text-xs font-black text-gray-400 uppercase">เลือกหน่วยงาน (แยกตามชั้น)</label>
+                    <select id="dept-select" onchange="displayDeptInfo()" class="w-full p-3 rounded-xl border border-pink-100 outline-none focus:ring-2 focus:ring-pink-300">
+                        <option value="">-- เลือกอาคารก่อน --</option>
+                    </select>
+                </div>
+            </div>
+            <div id="dept-info" class="hidden bg-pink-50 p-4 rounded-3xl flex flex-col md:flex-row gap-4 items-center">
+                <div class="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <img id="dept-img" src="https://via.placeholder.com/100?text=IT+UDON" class="object-cover w-full h-full">
+                </div>
+                <div class="flex-1 text-center md:text-left">
+                    <h3 id="info-name" class="font-bold text-lg text-gray-800">ชื่อหน่วยงาน</h3>
+                    <div class="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1">
+                        <p id="info-loc" class="text-gray-500 text-sm">ชั้น / อาคาร</p>
+                        <p id="info-tel" class="text-xs text-pink-400 font-bold">โทร: -</p>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeModal('modalAssetDetail')" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold">ยกเลิก</button>
-                <button id="btnConfirmAdd" class="flex-[2] btn-pink py-3 font-bold">เพิ่มลงรายการสำรวจ</button>
+        <!-- รายการครุภัณฑ์ -->
+        <div id="step-2" class="glass-card p-6 md:p-8 space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold border-l-4 border-pink-500 pl-3">รายการครุภัณฑ์</h2>
+                <button onclick="openSearchModal()" class="px-5 py-2.5 btn-pink rounded-2xl text-sm font-bold flex items-center gap-2 shadow-md active:scale-95 transition-transform">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    เพิ่มรายการ
+                </button>
+            </div>
+            <div id="asset-list" class="space-y-3 min-h-[100px]">
+                <p class="text-center text-gray-300 py-10 italic">ยังไม่มีรายการครุภัณฑ์ที่เลือก</p>
+            </div>
+            <div class="pt-6 flex gap-3">
+                <button onclick="saveDraft()" class="flex-1 bg-white border-2 border-pink-100 text-pink-400 py-4 rounded-2xl font-black text-xs uppercase hover:bg-pink-50 transition-colors">บันทึกร่าง</button>
+                <button onclick="openVerifyModal()" class="flex-1 btn-pink py-4 rounded-2xl font-black text-xs uppercase shadow-lg tracking-widest">ยืนยันข้อมูล</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Search Modal -->
+    <div id="search-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-[32px] p-6 space-y-4 shadow-2xl border-t-8 border-pink-500 animate-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-black text-slate-800">ค้นหาครุภัณฑ์</h3>
+                    <p class="text-[10px] text-pink-500 font-bold uppercase">Asset Database Search</p>
+                </div>
+                <button onclick="closeSearchModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 text-xl font-bold">&times;</button>
+            </div>
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="พิมพ์เลขรหัสครุภัณฑ์ หรือชื่อรายการ..." oninput="handleSearch()" class="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none focus:border-pink-200 focus:bg-white transition-all font-bold">
+                <svg class="w-6 h-6 text-pink-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <div id="search-results" class="max-h-96 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                <p class="text-center text-slate-300 py-10 italic">พิมพ์รหัส หรือชื่อเพื่อค้นหา...</p>
             </div>
         </div>
     </div>
 
-    <script src="js/api.js"></script>
-   <script>
-        let allAssets = []; // เก็บข้อมูลทั้งหมดไว้ Filter
-        let selectedAssets = [];
-        let scannerRef = null;
-        let currentDeptId = new URLSearchParams(window.location.search).get('deptId') || "";
-        let currentDeptName = "";
+    <!-- Verify Modal -->
+    <div id="verify-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-[32px] p-8 space-y-6 shadow-2xl border-t-8 border-pink-500 animate-in slide-in-from-bottom-8 duration-300">
+            <div class="text-center space-y-1">
+                <h3 class="text-xl font-black text-slate-800">ลงชื่อรับรอง</h3>
+                <p class="text-xs text-pink-500 font-bold uppercase tracking-widest">Verification & Signature</p>
+            </div>
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase">ชื่อผู้รับผิดชอบ / หัวหน้าหน่วยงาน</label>
+                    <input type="text" id="signer-name" placeholder="ระบุชื่อ-นามสกุล" class="w-full p-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none focus:border-pink-200 focus:bg-white font-bold">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase">ลากนิ้วเพื่อลงลายมือชื่อ</label>
+                    <canvas id="signature-canvas" class="signature-pad w-full h-44"></canvas>
+                    <div class="flex justify-end">
+                        <button onclick="clearPad()" class="text-[10px] font-bold text-slate-400 hover:text-pink-500 underline uppercase">ล้างลายเซ็น</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeVerifyModal()" class="flex-1 py-4 text-slate-400 font-bold text-xs uppercase">ยกเลิก</button>
+                <button onclick="finalSubmit()" class="flex-1 btn-pink py-4 rounded-2xl font-black text-xs uppercase shadow-lg">บันทึกและส่งข้อมูล</button>
+            </div>
+        </div>
+    </div>
 
-        // โหลดข้อมูลครั้งเดียวตอนเปิดหน้า
-        window.onload = async () => {
-            if (!currentDeptId) {
-                Swal.fire("ผิดพลาด", "ไม่พบรหัสหน่วยงาน", "error");
-                return;
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
+        let departments = [], allAssets = [], selectedAssets = [], signaturePad;
+
+        window.onload = () => {
+            initSignaturePad();
+            loadInitialData();
+            
+            // โหลด Draft เก่าถ้ามี
+            const draft = localStorage.getItem('asset_survey_draft');
+            if(draft) {
+                selectedAssets = JSON.parse(draft);
+                renderSelectedList();
             }
-            
-            // แสดง Loading เฉพาะตอนโหลด Data ครั้งแรก
-            document.getElementById('loadingOverlay').classList.add('show');
-            
+        };
+
+        function initSignaturePad() {
+            const canvas = document.getElementById('signature-canvas');
+            signaturePad = new SignaturePad(canvas);
+            const resize = () => {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+            };
+            window.addEventListener('resize', resize);
+            resize();
+        }
+
+        async function loadInitialData() {
+            showLoader(true);
             try {
-                // 1. โหลดข้อมูลหน่วยงาน
-                const res = await getDeptInfo(currentDeptId);
-                if (res && !res.error) {
-                    currentDeptName = res.deptName;
-                    document.getElementById('displayDeptName').innerText = res.deptName;
-                    document.getElementById('displayDeptId').innerText = `ID: ${res.deptId}`;
-                    document.getElementById('displayBuilding').innerText = `อาคาร: ${res.building || '-'}`;
-                }
-
-                // 2. โหลดข้อมูลครุภัณฑ์ทั้งหมดมารอไว้ (เหมือน React)
-                allAssets = await getAllAssets(); 
-                
-            } catch (e) {
-                console.error("Load Error:", e);
-            } finally {
-                document.getElementById('loadingOverlay').classList.remove('show');
+                const [dResp, aResp] = await Promise.all([
+                    fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getDepartments' }) }),
+                    fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getAssets' }) })
+                ]);
+                departments = await dResp.json();
+                allAssets = await aResp.json();
+                populateFilters();
+            } catch (e) { 
+                console.error(e);
+                alert("โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); 
             }
-        };
+            finally { showLoader(false); }
+        }
 
-        // --- ระบบสแกนเนอร์ ---
-        const startScanner = () => {
-            document.getElementById('scannerSection').classList.remove('hidden');
-            setTimeout(async () => {
-                try {
-                    const html5QrCode = new Html5Qrcode("reader");
-                    scannerRef = html5QrCode;
-                    await html5QrCode.start(
-                        { facingMode: "environment" },
-                        { fps: 15, qrbox: { width: 250, height: 250 } },
-                        (decodedText) => {
-                            let rawId = decodedText.trim();
-                            let targetId = rawId;
-
-                            // Logic ตัด URL NextGov
-                            if (rawId.includes('IcmAssetDetail/')) {
-                                const parts = rawId.split('IcmAssetDetail/')[1];
-                                if (parts) targetId = parts.split('/')[0];
-                            }
-                            
-                            stopScanner();
-                            document.getElementById('assetSearchInput').value = targetId;
-                            handleLiveSearch(targetId); // สั่งกรองทันที
-                        }
-                    );
-                } catch (err) {
-                    Swal.fire("กล้องทำงานไม่ได้", "กรุณาอนุญาตให้ใช้งานกล้อง", "error");
-                    stopScanner();
-                }
-            }, 300);
-        };
-
-        const stopScanner = async () => {
-            if (scannerRef) {
-                try { await scannerRef.stop(); } catch (e) {}
-                scannerRef = null;
-            }
-            document.getElementById('scannerSection').classList.add('hidden');
-        };
-
-        // --- ระบบ Filter (Real-time ไม่ต้องรอ Overlay) ---
-        function handleLiveSearch(value) {
-            const term = value.trim().toLowerCase();
-            const container = document.getElementById('assetSearchResult');
+        function populateFilters() {
+            const bSelect = document.getElementById('building-select');
+            bSelect.innerHTML = '<option value="">-- เลือกอาคาร --</option>';
             
-            if (!term) {
-                container.innerHTML = "";
+            const uniqueBuildings = [...new Set(departments.map(d => d.LOCATION_NAME).filter(Boolean))].sort();
+            uniqueBuildings.forEach(b => {
+                bSelect.innerHTML += `<option value="${b}">${b}</option>`;
+            });
+            filterDepartments();
+        }
+
+        // ฟังก์ชันแก้ไขใหม่: จัดกลุ่มหน่วยงานตามชั้น (Optgroup)
+        function filterDepartments() {
+            const bVal = document.getElementById('building-select').value;
+            const dSelect = document.getElementById('dept-select');
+            dSelect.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
+            
+            if (!bVal) return;
+
+            // กรองตามอาคารที่เลือก
+            let filteredDepts = departments.filter(d => d.LOCATION_NAME === bVal);
+
+            // จัดกลุ่มตามชั้น (FL)
+            const groupedByFloor = filteredDepts.reduce((acc, dept) => {
+                const floor = dept.FL || "ไม่ระบุชั้น";
+                if (!acc[floor]) acc[floor] = [];
+                acc[floor].push(dept);
+                return acc;
+            }, {});
+
+            // เรียงลำดับชั้นจากน้อยไปมาก
+            const sortedFloors = Object.keys(groupedByFloor).sort((a, b) => {
+                const numA = parseInt(a);
+                const numB = parseInt(b);
+                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                return a.localeCompare(b);
+            });
+
+            // สร้าง HTML สำหรับ Optgroup
+            sortedFloors.forEach(floor => {
+                const group = document.createElement('optgroup');
+                group.label = isNaN(parseInt(floor)) ? floor : `ชั้น ${floor}`;
+                
+                // เรียงหน่วยงานในชั้นนั้นๆ ตามชื่อ
+                const deptsInFloor = groupedByFloor[floor].sort((a, b) => 
+                    (a.DEPNAME || "").localeCompare(b.DEPNAME || "")
+                );
+
+                deptsInFloor.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.DEP_ID;
+                    opt.textContent = d.DEPNAME || d.DEP_NAME_LOC;
+                    group.appendChild(opt);
+                });
+
+                dSelect.appendChild(group);
+            });
+        }
+
+        function displayDeptInfo() {
+            const id = document.getElementById('dept-select').value;
+            const infoBox = document.getElementById('dept-info');
+            if(!id) { infoBox.classList.add('hidden'); return; }
+            const dept = departments.find(d => d.DEP_ID == id);
+            if(dept) {
+                document.getElementById('info-name').innerText = dept.DEPNAME || dept.DEP_NAME_LOC;
+                document.getElementById('info-loc').innerText = `${dept.LOCATION_NAME || ''} ชั้น ${dept.FL || '-'}`;
+                document.getElementById('info-tel').innerText = `โทร: ${dept.Tell || '-'}`;
+                infoBox.classList.remove('hidden');
+            }
+        }
+
+        function getHighlightedHTML(text, highlight) {
+            if (!highlight.trim()) return text;
+            const textStr = String(text);
+            const parts = textStr.split(new RegExp(`(${highlight})`, 'gi'));
+            return parts.map(p => 
+                p.toLowerCase() === highlight.toLowerCase() 
+                ? `<span class="search-highlight">${p}</span>` 
+                : p
+            ).join('');
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.trim();
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '';
+
+            if(query.length < 2) {
+                resultsDiv.innerHTML = '<p class="text-center text-slate-300 py-10 italic">พิมพ์รหัส หรือชื่อเพื่อค้นหา...</p>';
                 return;
             }
 
-            // ค้นหาจากท้ายรหัส (endsWith) ตาม Logic React
-            const filtered = allAssets.filter(asset => 
-                String(asset.AssetID || "").toLowerCase().endsWith(term)
+            const filtered = allAssets.filter(a => 
+                String(a.AssetID || "").toLowerCase().includes(query.toLowerCase()) || 
+                String(a['ชื่อรายการครุภัณฑ์'] || "").toLowerCase().includes(query.toLowerCase()) ||
+                String(a.Searail || "").toLowerCase().includes(query.toLowerCase())
             ).slice(0, 30);
 
-            renderSearchResults(filtered, term);
-        }
-
-        function renderSearchResults(items, highlight) {
-            const container = document.getElementById('assetSearchResult');
-            let html = '';
-
-            if (items.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400 py-4 text-xs">-- ไม่พบข้อมูล --</p>';
+            if(filtered.length === 0) {
+                resultsDiv.innerHTML = '<p class="text-center text-slate-300 py-10">ไม่พบครุภัณฑ์ในระบบ</p>';
                 return;
             }
 
-            items.forEach(item => {
-                const text = String(item.AssetID || "");
-                const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
-                const highlightedHTML = parts.map(p => 
-                    p.toLowerCase() === highlight.toLowerCase() 
-                    ? `<span class="bg-yellow-200 text-pink-600 font-bold px-0.5">${p}</span>` 
-                    : p
-                ).join('');
+            filtered.forEach(asset => {
+                const id = asset.AssetID || asset['รหัสครุภัณฑ์'] || "-";
+                const name = asset['ชื่อรายการครุภัณฑ์'] || asset.Detail || "ไม่ระบุชื่อ";
+                const sn = asset.Searail || "-";
 
-                html += `
-                <div onclick='openAssetModal(${JSON.stringify(item)})' 
-                     class="bg-white p-3 rounded-xl border border-pink-50 hover:border-pink-200 mb-2 cursor-pointer shadow-sm animate-fade-in">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <p class="text-[10px] text-gray-400 font-mono font-bold">KEY: ${item.KeyID}</p>
-                            <p class="text-sm text-gray-800 font-medium">${highlightedHTML}</p>
-                            <p class="text-[11px] text-gray-500">${item.ItemName || ''}</p>
-                        </div>
-                        <i class="fas fa-plus-circle text-pink-300"></i>
+                const div = document.createElement('div');
+                div.className = "p-4 border-2 border-slate-50 rounded-2xl hover:border-pink-100 hover:bg-pink-50 cursor-pointer flex justify-between items-center transition-all active:scale-[0.98]";
+                div.innerHTML = `
+                    <div class="min-w-0 pr-2">
+                        <p class="text-[11px] font-black text-pink-500">${getHighlightedHTML(id, query)}</p>
+                        <p class="font-bold text-slate-700 truncate">${getHighlightedHTML(name, query)}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">S/N: ${getHighlightedHTML(sn, query)}</p>
                     </div>
-                </div>`;
+                    <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-500 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                    </div>
+                `;
+                div.onclick = () => {
+                    const assetId = asset.AssetID || asset['รหัสครุภัณฑ์'];
+                    if(!selectedAssets.find(a => (a.AssetID || a['รหัสครุภัณฑ์']) === assetId)) {
+                        selectedAssets.push(asset);
+                        renderSelectedList();
+                        saveDraftLocally();
+                    }
+                    closeSearchModal();
+                };
+                resultsDiv.appendChild(div);
             });
-            container.innerHTML = html;
-        }
-
-        function openAssetModal(item) {
-            document.getElementById('assetSearchResult').innerHTML = ""; 
-            document.getElementById('assetSearchInput').value = ""; 
-            
-            document.getElementById('showAssetID').innerText = item.AssetID;
-            document.getElementById('showItemName').innerText = item.ItemName || '-';
-            document.getElementById('showSpec').innerText = item.Spec || '-';
-            document.getElementById('showReceiveDate').innerText = item.ReceiveDate || '-';
-            document.getElementById('showAge').innerText = item.Age || '-';
-            
-            document.getElementById('btnConfirmAdd').onclick = () => {
-                const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(el => el.value);
-                addToList({
-                    AssetID: item.AssetID,
-                    KeyID: item.KeyID,
-                    Priority: document.getElementById('inpPriority').value,
-                    ShiftWork: shifts.join(',') || 'ทุกช่วงเวลา'
-                });
-                closeModal('modalAssetDetail');
-            };
-            document.getElementById('modalAssetDetail').classList.add('show');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('show');
-            document.querySelectorAll('input[name="shift"]').forEach(el => el.checked = false);
-            document.getElementById('inpPriority').value = "ปกติ";
-        }
-
-        function addToList(item) {
-            if (selectedAssets.find(a => a.AssetID === item.AssetID)) {
-                return Swal.fire("ซ้ำ", "รายการนี้อยู่ในรายการสำรวจแล้ว", "info");
-            }
-            selectedAssets.push(item);
-            renderSelectedList();
         }
 
         function renderSelectedList() {
-            let html = '';
-            selectedAssets.forEach((item, index) => {
-                html += `
-                <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-pink-500 mb-2 text-sm">
-                    <div>
-                        <p class="font-bold text-gray-700">${item.AssetID}</p>
-                        <p class="text-[10px] text-gray-400">${item.Priority} | ${item.ShiftWork}</p>
+            const container = document.getElementById('asset-list');
+            if(selectedAssets.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-300 py-10 italic">ยังไม่มีรายการครุภัณฑ์ที่เลือก</p>';
+                return;
+            }
+            container.innerHTML = selectedAssets.map(a => `
+                <div class="flex justify-between items-center p-4 bg-white border-2 border-pink-50 rounded-[20px] shadow-sm animate-in fade-in duration-300">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-black text-pink-500">${a.AssetID || a['รหัสครุภัณฑ์']}</p>
+                        <p class="font-bold text-slate-800 truncate">${a['ชื่อรายการครุภัณฑ์'] || a.Detail}</p>
                     </div>
-                    <button onclick="selectedAssets.splice(${index},1); renderSelectedList();" class="text-red-400 p-2">
-                        <i class="fas fa-trash-alt"></i>
+                    <button onclick="removeAsset('${a.AssetID || a['รหัสครุภัณฑ์']}')" class="text-slate-300 hover:text-red-400 p-2 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
-                </div>`;
-            });
-            document.getElementById('selectedList').innerHTML = html;
-            document.getElementById('count').innerText = selectedAssets.length;
+                </div>
+            `).join('');
         }
 
-        async function submitSurvey() {
-            if (selectedAssets.length === 0) return Swal.fire("แจ้งเตือน", "กรุณาเลือกอย่างน้อย 1 รายการ", "warning");
-            const payload = { deptId: currentDeptId, deptName: currentDeptName, assets: selectedAssets };
-            document.getElementById('loadingOverlay').classList.add('show');
-            const res = await saveAssetSurvey(payload);
-            document.getElementById('loadingOverlay').classList.remove('show');
-            if (res.success || res.activityId) {
-                Swal.fire("สำเร็จ", "บันทึกข้อมูลเรียบร้อย", "success").then(() => {
-                    window.location.href = `signature_page.html?activityId=${res.activityId}`;
+        function removeAsset(id) {
+            selectedAssets = selectedAssets.filter(a => (a.AssetID || a['รหัสครุภัณฑ์']) !== id);
+            renderSelectedList();
+            saveDraftLocally();
+        }
+
+        function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); document.getElementById('search-input').focus(); }
+        function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
+        function openVerifyModal() { 
+            if(selectedAssets.length === 0) return alert("กรุณาเลือกครุภัณฑ์อย่างน้อย 1 รายการ");
+            document.getElementById('verify-modal').classList.remove('hidden'); 
+        }
+        function closeVerifyModal() { document.getElementById('verify-modal').classList.add('hidden'); }
+        function clearPad() { signaturePad.clear(); }
+        function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
+
+        async function finalSubmit() {
+            const name = document.getElementById('signer-name').value.trim();
+            if(!name || signaturePad.isEmpty()) return alert("กรุณากรอกชื่อและลงลายมือชื่อ");
+            
+            showLoader(true);
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'submitSurvey',
+                        payload: {
+                            deptId: document.getElementById('dept-select').value,
+                            deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
+                            userName: name,
+                            assets: selectedAssets,
+                            signature: signaturePad.toDataURL()
+                        }
+                    })
                 });
+                const res = await response.json();
+                if(res.success) {
+                    alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+                    localStorage.removeItem('asset_survey_draft');
+                    location.reload();
+                }
+            } catch (e) { 
+                console.error(e);
+                alert("เกิดข้อผิดพลาดในการส่งข้อมูล"); 
             }
+            finally { showLoader(false); }
+        }
+
+        function saveDraftLocally() {
+            localStorage.setItem('asset_survey_draft', JSON.stringify(selectedAssets));
+        }
+
+        function saveDraft() {
+            saveDraftLocally();
+            alert("บันทึกร่างรายการครุภัณฑ์แล้ว");
         }
     </script>
 </body>
