@@ -83,3 +83,47 @@ async function apiPost(action, data = {}) {
     showLoading(false);
   }
 }
+/**
+ * ============================================================
+ * ฟังก์ชันเพิ่มเติมสำหรับระบบ Survey
+ * ============================================================
+ */
+
+/**
+ * 1. ฟังก์ชันบันทึกข้อมูลการสำรวจ (Save Survey)
+ * ส่งข้อมูล Assets และ DEPT_ID ไปที่ Backend
+ */
+async function saveAssetSurvey(surveyData) {
+  // surveyData ประกอบด้วย deptId, deptName, assets[], newAssets[]
+  return await apiPost("saveSurvey", surveyData);
+}
+
+/**
+ * 2. ฟังก์ชันอัปโหลดลายเซ็น (Upload Signature)
+ * แปลง Canvas เป็น Base64 และส่งไปเก็บที่ Google Drive (Folder 1LIi...)
+ */
+async function uploadSignatureImage(activityId, base64Image) {
+  return await apiPost("uploadSignature", {
+    activityId: activityId,
+    image: base64Image // ข้อมูลจาก canvas.toDataURL()
+  });
+}
+
+/**
+ * 3. ฟังก์ชันยืนยันการสำรวจ (Confirm Survey)
+ * บันทึกชื่อผู้ตรวจและ Link รูปภาพลงใน Sheet Asset_On_Log
+ */
+async function confirmSurveyResult(activityId, signerName, signatureUrl) {
+  return await apiPost("confirmSurvey", {
+    activityId: activityId,
+    signer: signerName,
+    signature: signatureUrl
+  });
+}
+
+/**
+ * 4. ฟังก์ชันดึงข้อมูลหน่วยงานตาม ID (Get Dept Info)
+ */
+async function getDeptInfo(deptId) {
+  return await api("getDeptInfo", { deptId: deptId });
+}
