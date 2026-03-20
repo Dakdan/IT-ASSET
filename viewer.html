@@ -162,12 +162,12 @@ function highlight(text){
 
 /* ================= DEPARTMENT ================= */
 async function loadDepartments(){
-  let res = await api('getDepartmentsFast');
-  const data = normalize(res);
+  const res = await api('getDepartmentsFast');
+
+  const data = res.data || res; // 🔥 ตัวนี้สำคัญ
 
   renderDepartments(data);
 }
-
 function renderDepartments(data){
   const el = document.getElementById("deptList");
   el.innerHTML = "";
