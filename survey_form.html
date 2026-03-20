@@ -161,120 +161,150 @@
     </div>
 
     <script src="js/api.js"></script>
-    <script>
-        let sigPad;
-        let scannerRef = null;
-        let selectedAssets = [];
-        let currentDeptId = new URLSearchParams(window.location.search).get('deptId') || "D001";
+   <script>
+    let selectedAssets = [];
+    let currentDeptId = new URLSearchParams(window.location.search).get('deptId') || "";
+    let currentDeptName = "";
 
-        window.onload = async () => {
-            sigPad = new SignaturePad(document.getElementById('sigPad'));
-            
-            // โหลดข้อมูลหน่วยงาน
-            const dept = await getDeptInfo(currentDeptId);
-            if (dept) {
-                document.getElementById('displayDeptName').innerText = dept.deptName;
-                document.getElementById('displayDeptId').innerText = dept.deptId;
-                document.getElementById('displayBuilding').innerText = `ตึก: ${dept.building || '-'}`;
-            }
-        };
-
-        // --- ระบบสแกนเนอร์ ---
-        const startScanner = () => {
-            document.getElementById('scannerOverlay').classList.add('show');
-            setTimeout(async () => {
-                try {
-                    scannerRef = new Html5Qrcode("reader");
-                    await scannerRef.start(
-                        { facingMode: "environment" },
-                        { fps: 15, qrbox: 250 },
-                        (text) => {
-                            let id = text.includes('IcmAssetDetail/') ? text.split('IcmAssetDetail/')[1].split('/')[0] : text.trim();
-                            stopScanner();
-                            handleSearch(id);
-                        }
-                    );
-                } catch (e) { stopScanner(); }
-            }, 300);
-        };
-
-        const stopScanner = async () => {
-            if (scannerRef) { await scannerRef.stop(); scannerRef = null; }
-            document.getElementById('scannerOverlay').classList.remove('show');
-        };
-
-        // --- ค้นหาและแสดงรายละเอียด ---
-        async function handleSearch(manualId) {
-            const query = manualId || document.getElementById('assetSearchInput').value;
-            if (!query) return;
-
-            const res = await searchAssets(query);
-            if (res && res.length > 0) {
-                showAssetDetail(res[0]);
-            } else {
-                Swal.fire("ไม่พบข้อมูล", "รหัสครุภัณฑ์ไม่ถูกต้อง", "warning");
-            }
+    // 1. โหลดข้อมูลหน่วยงานเมื่อเปิดหน้า (ใช้ฟังก์ชัน getDeptInfo จาก api.js)
+    window.onload = async () => {
+        if (!currentDeptId) {
+            Swal.fire("ไม่พบรหัสหน่วยงาน", "กรุณาเข้าผ่านระบบคัดเลือกหน่วยงาน", "warning");
+            return;
         }
 
-        function showAssetDetail(item) {
-            document.getElementById('detailAssetID').innerText = item.AssetID;
-            document.getElementById('detailCategory').innerText = item.Category || "ทั่วไป";
-            document.getElementById('detailSerial').innerText = item.Serial || "-";
-            
-            const btn = document.getElementById('btnConfirmAdd');
-            btn.innerText = `เพิ่มเข้า ${document.getElementById('displayDeptName').innerText}`;
-            btn.onclick = () => {
-                if (!selectedAssets.find(a => a.AssetID === item.AssetID)) {
-                    selectedAssets.push(item);
-                    renderList();
-                }
-                closeAssetDetail();
-                document.getElementById('assetSearchInput').value = "";
-            };
-            document.getElementById('modalAssetDetail').classList.add('show');
+        const res = await getDeptInfo(currentDeptId); // เรียกจาก api.js
+        if (res && !res.error) {
+            currentDeptName = res.deptName;
+            document.getElementById('displayDeptName').innerText = res.deptName;
+            document.getElementById('displayDeptId').innerText = `ID: ${res.deptId}`;
+            document.getElementById('displayBuilding').innerText = `อาคาร: ${res.building || '-'}`;
+        }
+    };
+
+    // 2. ฟังก์ชันค้นหา (ใช้ฟังก์ชัน searchAssets จาก api.js)
+    async function handleSearch() {
+        const query = document.getElementById('assetSearch').value;
+        if (query.length < 3) return;
+        
+        const data = await searchAssets(query); // เรียกจาก api.js
+        
+        if (data.status === "error") {
+            Swal.fire("Error", data.message, "error");
+            return;
         }
 
-        function closeAssetDetail() { document.getElementById('modalAssetDetail').classList.remove('show'); }
-
-        function renderList() {
-            document.getElementById('assetList').innerHTML = selectedAssets.map((a, i) => `
-                <div class="flex justify-between items-center p-3 bg-white border border-pink-100 rounded-xl shadow-sm">
-                    <div><b class="text-pink-600">${a.AssetID}</b><br><small class="text-gray-400">${a.Category || ''}</small></div>
-                    <button onclick="selectedAssets.splice(${i},1);renderList();" class="text-red-300">ลบ</button>
+        let html = '';
+        data.forEach(item => {
+            // ส่ง Object item ทั้งหมดเข้าไปใน Modal
+            html += `
+            <div onclick='openModal(${JSON.stringify(item)})' class="bg-white p-4 rounded-2xl shadow-sm border border-pink-100 flex justify-between items-center active:scale-95 transition-transform cursor-pointer">
+                <div>
+                    <p class="font-bold text-pink-600">${item.AssetID}</p>
+                    <p class="text-sm text-gray-600">${item.ItemName || 'ไม่ระบุชื่อ'}</p>
                 </div>
-            `).join('');
+                <i class="fas fa-plus-circle text-pink-400 text-xl"></i>
+            </div>`;
+        });
+        document.getElementById('searchResult').innerHTML = html || '<p class="text-center text-gray-400 text-sm">ไม่พบข้อมูล</p>';
+    }
+
+    // 3. เปิด Modal แสดงรายละเอียด (Show ข้อมูลที่ได้จาก Search)
+    function openModal(item) {
+        document.getElementById('showAssetID').innerText = item.AssetID;
+        document.getElementById('showItemName').innerText = item.ItemName || '-';
+        document.getElementById('showSpec').innerText = item.Spec || '-';
+        document.getElementById('showReceiveDate').innerText = item.ReceiveDate || '-';
+        
+        // เมื่อกดปุ่ม "เพิ่มรายการ" ใน Modal
+        document.getElementById('btnConfirmAdd').onclick = () => {
+            const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(el => el.value);
+            
+            // เตรียมข้อมูลเพื่อบันทึกลง Log (ส่งค่าไปตามโครงสร้างที่ Code.gs รอรับ)
+            const newItem = {
+                AssetID: item.AssetID,
+                Priority: document.getElementById('inpPriority').value,
+                ShiftWork: shifts.join(','),
+                AssetType: item.Category || "ทั่วไป" 
+            };
+            
+            addToList(newItem);
+            closeModal();
+        };
+        document.getElementById('modalAssetDetail').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('modalAssetDetail').classList.remove('show');
+        // Reset checkbox และค่าใน Modal
+        document.querySelectorAll('input[name="shift"]').forEach(el => el.checked = false);
+        document.getElementById('inpPriority').value = "ปกติ";
+    }
+
+    function addToList(item) {
+        // ป้องกันการเลือกซ้ำ
+        if(selectedAssets.find(a => a.AssetID === item.AssetID)) {
+            Swal.fire("รายการซ้ำ", "คุณเลือกครุภัณฑ์นี้ไปแล้ว", "info");
+            return;
         }
+        selectedAssets.push(item);
+        renderList();
+    }
 
-        // --- บันทึกผล ---
-        function openSignatureModal() {
-            if (selectedAssets.length === 0) return Swal.fire("แจ้งเตือน", "กรุณาเพิ่มครุภัณฑ์", "info");
-            document.getElementById('modalSignature').classList.add('show');
+    function renderList() {
+        let html = '';
+        selectedAssets.forEach((item, index) => {
+            html += `
+            <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-pink-500 animate-fade-in">
+                <div>
+                    <p class="text-sm font-bold">${item.AssetID}</p>
+                    <p class="text-[10px] text-gray-500">${item.Priority} | ช่วงเวลา: ${item.ShiftWork || 'ไม่ได้ระบุ'}</p>
+                </div>
+                <button onclick="selectedAssets.splice(${index},1); renderList();" class="text-red-400 p-2">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>`;
+        });
+        document.getElementById('selectedList').innerHTML = html;
+        document.getElementById('count').innerText = selectedAssets.length;
+    }
+
+    // 4. บันทึกข้อมูล (ใช้ฟังก์ชัน saveAssetSurvey จาก api.js)
+    async function submitSurvey() {
+        if(selectedAssets.length === 0) {
+            Swal.fire("แจ้งเตือน", "กรุณาเลือกครุภัณฑ์ที่ต้องการสำรวจ", "warning");
+            return;
         }
+        
+        const payload = {
+            deptId: currentDeptId,
+            deptName: currentDeptName,
+            assets: selectedAssets,
+            newAssets: [] // กรณีครุภัณฑ์ไม่มีรหัส (ถ้ามี)
+        };
 
-        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-
-        async function finalSubmit() {
-            const name = document.getElementById('signerName').value;
-            if (!name || sigPad.isEmpty()) return Swal.fire("ไม่ครบถ้วน", "กรุณากรอกชื่อและเซ็นชื่อ", "error");
-
-            // 1. บันทึกข้อมูล
-            const survey = await saveAssetSurvey({
-                deptId: currentDeptId,
-                deptName: document.getElementById('displayDeptName').innerText,
-                assets: selectedAssets
+        const result = await saveAssetSurvey(payload); // เรียกจาก api.js
+        
+        if (result.success || result.activityId) {
+            Swal.fire({
+                title: "บันทึกสำเร็จ",
+                text: "ต้องการไปหน้าลงนามต่อเลยหรือไม่?",
+                icon: "success",
+                showCancelButton: true,
+                confirmButtonText: "ไปหน้าลงนาม",
+                cancelButtonText: "สำรวจต่อ"
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    // ส่ง ActivityID ไปหน้าลงนาม (อ้างอิงตาม Flow เดิมของคุณ)
+                    window.location.href = `signature_page.html?activityId=${result.activityId}`;
+                } else {
+                    location.reload();
+                }
             });
-
-            // 2. อัปโหลดรูป
-            const sig = await uploadSignatureImage(survey.activityId, sigPad.toDataURL());
-
-            // 3. ยืนยัน
-            const ok = await confirmSurveyResult(survey.activityId, name, sig.url);
-            if (ok) {
-                Swal.fire("บันทึกสำเร็จ", "", "success").then(() => {
-                    location.href = `asset_survey_detail.html?id=${survey.activityId}`;
-                });
-            }
+        } else {
+            Swal.fire("เกิดข้อผิดพลาด", result.message || "ไม่สามารถบันทึกได้", "error");
         }
-    </script>
+    }
+</script>
 </body>
 </html>
