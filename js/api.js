@@ -154,3 +154,13 @@ async function confirmSurveyResult(activityId, signerName, signatureUrl) {
 async function getSurveyDetail(activityId) {
   return await api("getSurveyDetail", { activityId: activityId });
 }
+// js/api.js
+
+async function searchAssets(query) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(reject)
+      .searchAssets(query); // เรียกชื่อฟังก์ชันใน Code.gs ของคุณเป๊ะๆ
+  });
+}
