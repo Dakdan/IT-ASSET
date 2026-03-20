@@ -146,27 +146,44 @@
     </div>
 
     <script src="js/api.js"></script>
-    <script>
+   <script>
+        let allAssets = []; // เก็บข้อมูลทั้งหมดไว้ Filter
         let selectedAssets = [];
         let scannerRef = null;
         let currentDeptId = new URLSearchParams(window.location.search).get('deptId') || "";
         let currentDeptName = "";
 
+        // โหลดข้อมูลครั้งเดียวตอนเปิดหน้า
         window.onload = async () => {
             if (!currentDeptId) {
                 Swal.fire("ผิดพลาด", "ไม่พบรหัสหน่วยงาน", "error");
                 return;
             }
-            const res = await getDeptInfo(currentDeptId);
-            if (res && !res.error) {
-                currentDeptName = res.deptName;
-                document.getElementById('displayDeptName').innerText = res.deptName;
-                document.getElementById('displayDeptId').innerText = `ID: ${res.deptId}`;
-                document.getElementById('displayBuilding').innerText = `อาคาร: ${res.building || '-'}`;
+            
+            // แสดง Loading เฉพาะตอนโหลด Data ครั้งแรก
+            document.getElementById('loadingOverlay').classList.add('show');
+            
+            try {
+                // 1. โหลดข้อมูลหน่วยงาน
+                const res = await getDeptInfo(currentDeptId);
+                if (res && !res.error) {
+                    currentDeptName = res.deptName;
+                    document.getElementById('displayDeptName').innerText = res.deptName;
+                    document.getElementById('displayDeptId').innerText = `ID: ${res.deptId}`;
+                    document.getElementById('displayBuilding').innerText = `อาคาร: ${res.building || '-'}`;
+                }
+
+                // 2. โหลดข้อมูลครุภัณฑ์ทั้งหมดมารอไว้ (เหมือน React)
+                allAssets = await getAllAssets(); 
+                
+            } catch (e) {
+                console.error("Load Error:", e);
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('show');
             }
         };
 
-        // --- 1. ระบบสแกนเนอร์ (Logic ตัด URL เป๊ะๆ จาก React) ---
+        // --- ระบบสแกนเนอร์ ---
         const startScanner = () => {
             document.getElementById('scannerSection').classList.remove('hidden');
             setTimeout(async () => {
@@ -177,21 +194,18 @@
                         { facingMode: "environment" },
                         { fps: 15, qrbox: { width: 250, height: 250 } },
                         (decodedText) => {
-                            // --- เรียกใช้ Logic ตัด URL เหมือน React ---
                             let rawId = decodedText.trim();
                             let targetId = rawId;
 
+                            // Logic ตัด URL NextGov
                             if (rawId.includes('IcmAssetDetail/')) {
                                 const parts = rawId.split('IcmAssetDetail/')[1];
-                                if (parts) {
-                                    targetId = parts.split('/')[0];
-                                }
+                                if (parts) targetId = parts.split('/')[0];
                             }
                             
-                            // ปิดสแกนเนอร์และส่งค่าไปค้นหาทันที
                             stopScanner();
                             document.getElementById('assetSearchInput').value = targetId;
-                            handleLiveSearch(targetId);
+                            handleLiveSearch(targetId); // สั่งกรองทันที
                         }
                     );
                 } catch (err) {
@@ -209,96 +223,76 @@
             document.getElementById('scannerSection').classList.add('hidden');
         };
 
-        // --- 2. ระบบค้นหา Live Search (Debounce 300ms) ---
-      let allAssets = []; // เก็บข้อมูลทั้งหมดไว้ที่นี่
-
-window.onload = async () => {
-    // 1. โหลดข้อมูลหน่วยงาน
-    if (!currentDeptId) return;
-    const res = await getDeptInfo(currentDeptId);
-    if (res) {
-        document.getElementById('displayDeptName').innerText = res.deptName;
-        // ... แสดงข้อมูลอื่นๆ ...
-    }
-
-    // 2. โหลดข้อมูลครุภัณฑ์ทั้งหมดมาเตรียมไว้ (เพื่อให้ค้นหาได้ทันทีไม่รอ Overlay)
-    allAssets = await getAllAssets(); // ฟังก์ชันใน api.js ที่ดึงข้อมูลทั้งหมด
-};
-
-// ฟังก์ชันกรองข้อมูล (Logic: endsWith จากขวาไปซ้าย ตาม React เป๊ะๆ)
-function filterAssets(value) {
-    const term = value.trim().toLowerCase();
-    const container = document.getElementById('assetSearchResult');
-    
-    if (!term) {
-        container.innerHTML = "";
-        return;
-    }
-
-    // ใช้ endsWith เหมือนใน React เป๊ะ: ค้นหาจากท้ายข้อความ
-    const filtered = allAssets.filter(asset => 
-        String(asset.AssetID || "").toLowerCase().endsWith(term)
-    ).slice(0, 30); // จำกัด 30 รายการตาม React
-
-    renderSearchResults(filtered, term);
-}
-
-function renderSearchResults(items, highlight) {
-    const container = document.getElementById('assetSearchResult');
-    let html = '';
-
-    if (items.length === 0) {
-        container.innerHTML = '<p class="text-center text-gray-400 py-2 text-xs">-- ไม่พบข้อมูลท้ายรหัสนี้ --</p>';
-        return;
-    }
-
-    items.forEach(item => {
-        // ทำ Highlight เฉพาะส่วนที่ตรงกับเลขท้ายที่พิมพ์
-        const text = String(item.AssetID);
-        const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
-        const highlightedHTML = parts.map(p => 
-            p.toLowerCase() === highlight.toLowerCase() 
-            ? `<span class="bg-yellow-200 text-pink-600 font-bold">${p}</span>` 
-            : p
-        ).join('');
-
-        html += `
-        <div onclick='openAssetModal(${JSON.stringify(item)})' 
-             class="bg-white p-3 rounded-xl border border-pink-50 hover:border-pink-200 mb-2 cursor-pointer shadow-sm">
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="text-[10px] text-gray-400 font-mono">KEY: ${item.KeyID}</p>
-                    <p class="text-sm text-gray-800 font-medium">${highlightedHTML}</p>
-                    <p class="text-[11px] text-gray-500">${item.ItemName || ''}</p>
-                </div>
-                <i class="fas fa-plus-circle text-pink-300"></i>
-            </div>
-        </div>`;
-    });
-    container.innerHTML = html;
-}
-        // --- 4. จัดการ Modal และการเลือกครุภัณฑ์ ---
-        function openAssetModal(item) {
-            // ล้างผลการค้นหา
-            document.getElementById('assetSearchResult').innerHTML = ""; 
+        // --- ระบบ Filter (Real-time ไม่ต้องรอ Overlay) ---
+        function handleLiveSearch(value) {
+            const term = value.trim().toLowerCase();
+            const container = document.getElementById('assetSearchResult');
             
-            // แสดงรายละเอียด (ใช้ AssetID ที่ส่งมาจาก Code.gs)
+            if (!term) {
+                container.innerHTML = "";
+                return;
+            }
+
+            // ค้นหาจากท้ายรหัส (endsWith) ตาม Logic React
+            const filtered = allAssets.filter(asset => 
+                String(asset.AssetID || "").toLowerCase().endsWith(term)
+            ).slice(0, 30);
+
+            renderSearchResults(filtered, term);
+        }
+
+        function renderSearchResults(items, highlight) {
+            const container = document.getElementById('assetSearchResult');
+            let html = '';
+
+            if (items.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 py-4 text-xs">-- ไม่พบข้อมูล --</p>';
+                return;
+            }
+
+            items.forEach(item => {
+                const text = String(item.AssetID || "");
+                const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+                const highlightedHTML = parts.map(p => 
+                    p.toLowerCase() === highlight.toLowerCase() 
+                    ? `<span class="bg-yellow-200 text-pink-600 font-bold px-0.5">${p}</span>` 
+                    : p
+                ).join('');
+
+                html += `
+                <div onclick='openAssetModal(${JSON.stringify(item)})' 
+                     class="bg-white p-3 rounded-xl border border-pink-50 hover:border-pink-200 mb-2 cursor-pointer shadow-sm animate-fade-in">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-mono font-bold">KEY: ${item.KeyID}</p>
+                            <p class="text-sm text-gray-800 font-medium">${highlightedHTML}</p>
+                            <p class="text-[11px] text-gray-500">${item.ItemName || ''}</p>
+                        </div>
+                        <i class="fas fa-plus-circle text-pink-300"></i>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function openAssetModal(item) {
+            document.getElementById('assetSearchResult').innerHTML = ""; 
+            document.getElementById('assetSearchInput').value = ""; 
+            
             document.getElementById('showAssetID').innerText = item.AssetID;
-            document.getElementById('showItemName').innerText = item.ItemName || 'ไม่ระบุชื่อรายการ';
+            document.getElementById('showItemName').innerText = item.ItemName || '-';
             document.getElementById('showSpec').innerText = item.Spec || '-';
             document.getElementById('showReceiveDate').innerText = item.ReceiveDate || '-';
             document.getElementById('showAge').innerText = item.Age || '-';
             
             document.getElementById('btnConfirmAdd').onclick = () => {
                 const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(el => el.value);
-                const assetData = {
+                addToList({
                     AssetID: item.AssetID,
                     KeyID: item.KeyID,
                     Priority: document.getElementById('inpPriority').value,
-                    ShiftWork: shifts.join(',') || 'ทุกช่วงเวลา',
-                    AssetType: item.Category || "ทั่วไป"
-                };
-                addToList(assetData);
+                    ShiftWork: shifts.join(',') || 'ทุกช่วงเวลา'
+                });
                 closeModal('modalAssetDetail');
             };
             document.getElementById('modalAssetDetail').classList.add('show');
@@ -308,7 +302,6 @@ function renderSearchResults(items, highlight) {
             document.getElementById(id).classList.remove('show');
             document.querySelectorAll('input[name="shift"]').forEach(el => el.checked = false);
             document.getElementById('inpPriority').value = "ปกติ";
-            document.getElementById('assetSearchInput').value = "";
         }
 
         function addToList(item) {
@@ -323,7 +316,7 @@ function renderSearchResults(items, highlight) {
             let html = '';
             selectedAssets.forEach((item, index) => {
                 html += `
-                <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-pink-500 animate-fade-in text-sm">
+                <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-pink-500 mb-2 text-sm">
                     <div>
                         <p class="font-bold text-gray-700">${item.AssetID}</p>
                         <p class="text-[10px] text-gray-400">${item.Priority} | ${item.ShiftWork}</p>
@@ -339,23 +332,14 @@ function renderSearchResults(items, highlight) {
 
         async function submitSurvey() {
             if (selectedAssets.length === 0) return Swal.fire("แจ้งเตือน", "กรุณาเลือกอย่างน้อย 1 รายการ", "warning");
-            
-            const payload = {
-                deptId: currentDeptId,
-                deptName: currentDeptName,
-                assets: selectedAssets
-            };
-
+            const payload = { deptId: currentDeptId, deptName: currentDeptName, assets: selectedAssets };
             document.getElementById('loadingOverlay').classList.add('show');
             const res = await saveAssetSurvey(payload);
             document.getElementById('loadingOverlay').classList.remove('show');
-
             if (res.success || res.activityId) {
                 Swal.fire("สำเร็จ", "บันทึกข้อมูลเรียบร้อย", "success").then(() => {
                     window.location.href = `signature_page.html?activityId=${res.activityId}`;
                 });
-            } else {
-                Swal.fire("ผิดพลาด", res.message || "ไม่สามารถบันทึกได้", "error");
             }
         }
     </script>
