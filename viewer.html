@@ -8,7 +8,7 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
 
-<!-- ใช้ style กลางของคุณ -->
+<!-- STYLE กลาง -->
 <link rel="stylesheet" href="style.css">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -43,9 +43,9 @@
   <div class="card p-4">
     <input id="searchInput" class="w-full p-3 border rounded-xl"
       placeholder="ค้นหา Asset ID...">
-      
+
     <button onclick="handleSearch()" class="btn-pink w-full mt-3 p-3">
-      ค้นหา
+      🔍 ค้นหา
     </button>
 
     <button onclick="startScanner()" class="btn-pink w-full mt-3 p-3">
@@ -76,15 +76,18 @@
   </div>
 </div>
 
+<!-- API -->
 <script src="js/api.js"></script>
 
 <script>
 let scanner = null;
 
+/* ================= LOADING ================= */
 function showLoading(show){
   document.getElementById('loading').classList.toggle('show', show);
 }
 
+/* ================= POPUP ================= */
 function showPopup(msg, type="error"){
   const box = document.getElementById("popupBox");
   box.className = "popup-box " + type;
@@ -120,10 +123,21 @@ function renderResult(data){
     const div = document.createElement("div");
     div.className = "card p-4";
     div.innerHTML = `
-      <div class="font-bold text-pink-700">${item.AssetID}</div>
+      <div class="font-bold text-pink-700">
+        ${highlight(item.AssetID)}
+      </div>
     `;
     el.appendChild(div);
   });
+}
+
+/* ================= HIGHLIGHT ================= */
+function highlight(text){
+  const q = document.getElementById("searchInput").value.trim();
+  if(!q) return text;
+
+  const reg = new RegExp(`(${q})`, 'gi');
+  return text.replace(reg, `<span class="search-highlight">$1</span>`);
 }
 
 /* ================= SCANNER ================= */
@@ -142,6 +156,7 @@ function startScanner(){
           let raw = decodedText.trim();
           let id = raw;
 
+          // รองรับ NextGov QR
           if(raw.includes('IcmAssetDetail/')){
             id = raw.split('IcmAssetDetail/')[1].split('/')[0];
           }
@@ -150,7 +165,7 @@ function startScanner(){
 
           stopScanner();
 
-          handleSearch(); // 🔥 ยิงค้นหาทันที
+          handleSearch(); // ยิงค้นหาทันที
         }
       );
 
@@ -169,6 +184,7 @@ async function stopScanner(){
       scanner = null;
     }
   }catch(e){}
+
   document.getElementById("scannerModal").classList.remove("show");
 }
 </script>
