@@ -7,7 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- เพิ่ม Library สำหรับสแกน QR Code -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body {
             font-family: 'Kanit', sans-serif;
@@ -55,16 +56,24 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffdae0; border-radius: 10px; }
         
-        /* สไตล์สำหรับ optgroup */
-        optgroup {
-            font-style: normal;
-            font-weight: 700;
-            color: #ff85a1;
-            background-color: #fff;
+        optgroup { font-style: normal; font-weight: 700; color: #ff85a1; background-color: #fff; }
+        option { color: #4a4a4a; font-weight: 400; }
+
+        /* สไตล์พิเศษสำหรับ Scanner */
+        #qr-reader {
+            border: none !important;
+            border-radius: 20px;
+            overflow: hidden;
         }
-        option {
-            color: #4a4a4a;
-            font-weight: 400;
+        #qr-reader__dashboard_section_csr button {
+            background: #ff85a1 !important;
+            color: white !important;
+            border: none !important;
+            padding: 8px 16px !important;
+            border-radius: 8px !important;
+            font-family: 'Kanit' !important;
+            font-size: 12px !important;
+            cursor: pointer;
         }
 
         @media print {
@@ -77,13 +86,13 @@
 
     <div id="loader" class="loader-overlay flex flex-col gap-4">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500"></div>
-        <p class="text-pink-600 font-medium">กำลังประมวลผล...</p>
+        <p class="text-pink-600 font-medium text-lg">กำลังประมวลผล...</p>
     </div>
 
     <header class="max-w-4xl mx-auto mb-8 text-center no-print">
         <div class="flex flex-col items-center gap-2">
             <div class="w-16 h-16 bg-white rounded-2xl shadow-sm p-2 mb-2">
-                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-full h-full object-contain" />
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-full h-full object-contain" alt="UDH Logo" />
             </div>
             <h1 class="text-2xl font-bold text-gray-800 leading-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
             <p class="text-pink-500 font-bold text-sm uppercase tracking-wider">โรงพยาบาลอุดรธานี</p>
@@ -109,8 +118,8 @@
                 </div>
             </div>
             <div id="dept-info" class="hidden bg-pink-50 p-4 rounded-3xl flex flex-col md:flex-row gap-4 items-center">
-                <div class="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <img id="dept-img" src="https://via.placeholder.com/100?text=IT+UDON" class="object-cover w-full h-full">
+                <div class="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0 text-pink-300">
+                    <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
                 </div>
                 <div class="flex-1 text-center md:text-left">
                     <h3 id="info-name" class="font-bold text-lg text-gray-800">ชื่อหน่วยงาน</h3>
@@ -125,38 +134,51 @@
         <!-- รายการครุภัณฑ์ -->
         <div id="step-2" class="glass-card p-6 md:p-8 space-y-6">
             <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold border-l-4 border-pink-500 pl-3">รายการครุภัณฑ์</h2>
+                <h2 class="text-xl font-bold border-l-4 border-pink-500 pl-3">รายการครุภัณฑ์ที่เลือก</h2>
                 <button onclick="openSearchModal()" class="px-5 py-2.5 btn-pink rounded-2xl text-sm font-bold flex items-center gap-2 shadow-md active:scale-95 transition-transform">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                     เพิ่มรายการ
                 </button>
             </div>
             <div id="asset-list" class="space-y-3 min-h-[100px]">
                 <p class="text-center text-gray-300 py-10 italic">ยังไม่มีรายการครุภัณฑ์ที่เลือก</p>
             </div>
-            <div class="pt-6 flex gap-3">
+            <div class="pt-6 flex flex-col sm:flex-row gap-3">
                 <button onclick="saveDraft()" class="flex-1 bg-white border-2 border-pink-100 text-pink-400 py-4 rounded-2xl font-black text-xs uppercase hover:bg-pink-50 transition-colors">บันทึกร่าง</button>
-                <button onclick="openVerifyModal()" class="flex-1 btn-pink py-4 rounded-2xl font-black text-xs uppercase shadow-lg tracking-widest">ยืนยันข้อมูล</button>
+                <button onclick="openVerifyModal()" class="flex-1 btn-pink py-4 rounded-2xl font-black text-xs uppercase shadow-lg tracking-widest">ยืนยันและลงลายมือชื่อ</button>
             </div>
         </div>
     </main>
 
-    <!-- Search Modal -->
+    <!-- Search & Scanner Modal -->
     <div id="search-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-[32px] p-6 space-y-4 shadow-2xl border-t-8 border-pink-500 animate-in zoom-in-95 duration-200">
+        <div class="bg-white w-full max-w-2xl rounded-[32px] p-6 space-y-4 shadow-2xl border-t-8 border-pink-500 animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh] custom-scrollbar">
             <div class="flex justify-between items-center">
                 <div>
-                    <h3 class="text-lg font-black text-slate-800">ค้นหาครุภัณฑ์</h3>
-                    <p class="text-[10px] text-pink-500 font-bold uppercase">Asset Database Search</p>
+                    <h3 class="text-lg font-black text-slate-800">ค้นหาหรือสแกนครุภัณฑ์</h3>
+                    <p class="text-[10px] text-pink-500 font-bold uppercase">Asset Search & QR Scanner</p>
                 </div>
-                <button onclick="closeSearchModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 text-xl font-bold">&times;</button>
+                <button onclick="closeSearchModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 text-xl font-bold hover:bg-red-50 hover:text-red-400 transition-colors">&times;</button>
             </div>
-            <div class="relative">
-                <input type="text" id="search-input" placeholder="พิมพ์เลขรหัสครุภัณฑ์ หรือชื่อรายการ..." oninput="handleSearch()" class="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none focus:border-pink-200 focus:bg-white transition-all font-bold">
-                <svg class="w-6 h-6 text-pink-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            
+            <!-- QR Scanner Container -->
+            <div id="qr-container" class="hidden space-y-2">
+                <div id="qr-reader" class="w-full"></div>
+                <button onclick="toggleScanner(false)" class="w-full py-2 text-xs font-bold text-slate-400 underline">ปิดกล้องสแกน</button>
             </div>
-            <div id="search-results" class="max-h-96 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                <p class="text-center text-slate-300 py-10 italic">พิมพ์รหัส หรือชื่อเพื่อค้นหา...</p>
+
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <input type="text" id="search-input" placeholder="รหัสครุภัณฑ์ หรือชื่อรายการ..." oninput="handleSearch()" class="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none focus:border-pink-200 focus:bg-white transition-all font-bold">
+                    <svg class="w-6 h-6 text-pink-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <button id="scan-btn" onclick="toggleScanner(true)" class="p-4 bg-pink-100 text-pink-500 rounded-2xl hover:bg-pink-200 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"></path><rect x="7" y="7" width="10" height="10" rx="1"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12h10"></path></svg>
+                </button>
+            </div>
+
+            <div id="search-results" class="max-h-72 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                <p class="text-center text-slate-300 py-10 italic">ค้นหาด้วยการพิมพ์รหัส หรือสแกน QR Code</p>
             </div>
         </div>
     </div>
@@ -190,13 +212,12 @@
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
-        let departments = [], allAssets = [], selectedAssets = [], signaturePad;
+        let departments = [], allAssets = [], selectedAssets = [], signaturePad, html5QrCode;
 
         window.onload = () => {
             initSignaturePad();
             loadInitialData();
             
-            // โหลด Draft เก่าถ้ามี
             const draft = localStorage.getItem('asset_survey_draft');
             if(draft) {
                 selectedAssets = JSON.parse(draft);
@@ -237,7 +258,6 @@
         function populateFilters() {
             const bSelect = document.getElementById('building-select');
             bSelect.innerHTML = '<option value="">-- เลือกอาคาร --</option>';
-            
             const uniqueBuildings = [...new Set(departments.map(d => d.LOCATION_NAME).filter(Boolean))].sort();
             uniqueBuildings.forEach(b => {
                 bSelect.innerHTML += `<option value="${b}">${b}</option>`;
@@ -245,50 +265,33 @@
             filterDepartments();
         }
 
-        // ฟังก์ชันแก้ไขใหม่: จัดกลุ่มหน่วยงานตามชั้น (Optgroup)
         function filterDepartments() {
             const bVal = document.getElementById('building-select').value;
             const dSelect = document.getElementById('dept-select');
             dSelect.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
-            
             if (!bVal) return;
-
-            // กรองตามอาคารที่เลือก
             let filteredDepts = departments.filter(d => d.LOCATION_NAME === bVal);
-
-            // จัดกลุ่มตามชั้น (FL)
             const groupedByFloor = filteredDepts.reduce((acc, dept) => {
                 const floor = dept.FL || "ไม่ระบุชั้น";
                 if (!acc[floor]) acc[floor] = [];
                 acc[floor].push(dept);
                 return acc;
             }, {});
-
-            // เรียงลำดับชั้นจากน้อยไปมาก
             const sortedFloors = Object.keys(groupedByFloor).sort((a, b) => {
-                const numA = parseInt(a);
-                const numB = parseInt(b);
+                const numA = parseInt(a), numB = parseInt(b);
                 if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
                 return a.localeCompare(b);
             });
-
-            // สร้าง HTML สำหรับ Optgroup
             sortedFloors.forEach(floor => {
                 const group = document.createElement('optgroup');
                 group.label = isNaN(parseInt(floor)) ? floor : `ชั้น ${floor}`;
-                
-                // เรียงหน่วยงานในชั้นนั้นๆ ตามชื่อ
-                const deptsInFloor = groupedByFloor[floor].sort((a, b) => 
-                    (a.DEPNAME || "").localeCompare(b.DEPNAME || "")
-                );
-
+                const deptsInFloor = groupedByFloor[floor].sort((a, b) => (a.DEPNAME || "").localeCompare(b.DEPNAME || ""));
                 deptsInFloor.forEach(d => {
                     const opt = document.createElement('option');
                     opt.value = d.DEP_ID;
                     opt.textContent = d.DEPNAME || d.DEP_NAME_LOC;
                     group.appendChild(opt);
                 });
-
                 dSelect.appendChild(group);
             });
         }
@@ -306,24 +309,29 @@
             }
         }
 
-        function getHighlightedHTML(text, highlight) {
-            if (!highlight.trim()) return text;
-            const textStr = String(text);
-            const parts = textStr.split(new RegExp(`(${highlight})`, 'gi'));
-            return parts.map(p => 
-                p.toLowerCase() === highlight.toLowerCase() 
-                ? `<span class="search-highlight">${p}</span>` 
-                : p
-            ).join('');
+        // Logic กรองข้อมูลที่รองรับหลายรูปแบบ
+        function processInput(input) {
+            // 1. ถ้าเป็น URL ให้ดึงเอาส่วนสุดท้ายมา (เลขรหัส)
+            if (input.includes('http')) {
+                const parts = input.split('/');
+                // ลองหาตัวเลขที่ดูเหมือนรหัสครุภัณฑ์ (มีขีด หรือมีความยาวระดับหนึ่ง)
+                return parts.find(p => p.includes('-') || p.length > 5) || input;
+            }
+            // 2. ถ้าเป็น String ที่มีคอมม่า ให้เอาตัวแรกที่ดูเหมือนรหัส
+            if (input.includes(',')) {
+                return input.split(',').map(s => s.trim()).find(s => s.includes('-') || s.length > 5) || input;
+            }
+            return input.trim();
         }
 
         function handleSearch() {
-            const query = document.getElementById('search-input').value.trim();
+            const rawQuery = document.getElementById('search-input').value;
+            const query = processInput(rawQuery);
             const resultsDiv = document.getElementById('search-results');
             resultsDiv.innerHTML = '';
 
             if(query.length < 2) {
-                resultsDiv.innerHTML = '<p class="text-center text-slate-300 py-10 italic">พิมพ์รหัส หรือชื่อเพื่อค้นหา...</p>';
+                resultsDiv.innerHTML = '<p class="text-center text-slate-300 py-10 italic">พิมพ์รหัส หรือสแกน QR Code</p>';
                 return;
             }
 
@@ -334,7 +342,7 @@
             ).slice(0, 30);
 
             if(filtered.length === 0) {
-                resultsDiv.innerHTML = '<p class="text-center text-slate-300 py-10">ไม่พบครุภัณฑ์ในระบบ</p>';
+                resultsDiv.innerHTML = '<p class="text-center text-slate-300 py-10">ไม่พบครุภัณฑ์ในฐานข้อมูล</p>';
                 return;
             }
 
@@ -342,14 +350,13 @@
                 const id = asset.AssetID || asset['รหัสครุภัณฑ์'] || "-";
                 const name = asset['ชื่อรายการครุภัณฑ์'] || asset.Detail || "ไม่ระบุชื่อ";
                 const sn = asset.Searail || "-";
-
                 const div = document.createElement('div');
                 div.className = "p-4 border-2 border-slate-50 rounded-2xl hover:border-pink-100 hover:bg-pink-50 cursor-pointer flex justify-between items-center transition-all active:scale-[0.98]";
                 div.innerHTML = `
                     <div class="min-w-0 pr-2">
-                        <p class="text-[11px] font-black text-pink-500">${getHighlightedHTML(id, query)}</p>
-                        <p class="font-bold text-slate-700 truncate">${getHighlightedHTML(name, query)}</p>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">S/N: ${getHighlightedHTML(sn, query)}</p>
+                        <p class="text-[11px] font-black text-pink-500">${id}</p>
+                        <p class="font-bold text-slate-700 truncate">${name}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">S/N: ${sn}</p>
                     </div>
                     <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-500 flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
@@ -368,6 +375,35 @@
             });
         }
 
+        // ระบบสแกน QR Code
+        async function toggleScanner(show) {
+            const container = document.getElementById('qr-container');
+            if (show) {
+                container.classList.remove('hidden');
+                html5QrCode = new Html5Qrcode("qr-reader");
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                
+                try {
+                    await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                        // เมื่อสแกนติด
+                        document.getElementById('search-input').value = decodedText;
+                        handleSearch();
+                        toggleScanner(false);
+                    });
+                } catch (err) {
+                    console.error("Camera error:", err);
+                    alert("ไม่สามารถเข้าถึงกล้องได้ กรุณาตรวจสอบสิทธิ์การใช้งานกล้อง");
+                    container.classList.add('hidden');
+                }
+            } else {
+                if (html5QrCode) {
+                    await html5QrCode.stop();
+                    html5QrCode = null;
+                }
+                container.classList.add('hidden');
+            }
+        }
+
         function renderSelectedList() {
             const container = document.getElementById('asset-list');
             if(selectedAssets.length === 0) {
@@ -375,12 +411,12 @@
                 return;
             }
             container.innerHTML = selectedAssets.map(a => `
-                <div class="flex justify-between items-center p-4 bg-white border-2 border-pink-50 rounded-[20px] shadow-sm animate-in fade-in duration-300">
+                <div class="flex justify-between items-center p-4 bg-white border-2 border-pink-50 rounded-[20px] shadow-sm">
                     <div class="min-w-0">
                         <p class="text-[11px] font-black text-pink-500">${a.AssetID || a['รหัสครุภัณฑ์']}</p>
                         <p class="font-bold text-slate-800 truncate">${a['ชื่อรายการครุภัณฑ์'] || a.Detail}</p>
                     </div>
-                    <button onclick="removeAsset('${a.AssetID || a['รหัสครุภัณฑ์']}')" class="text-slate-300 hover:text-red-400 p-2 transition-colors">
+                    <button onclick="removeAsset('${a.AssetID || a['รหัสครุภัณฑ์']}')" class="text-slate-300 hover:text-red-400 p-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 </div>
@@ -394,7 +430,10 @@
         }
 
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); document.getElementById('search-input').focus(); }
-        function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
+        async function closeSearchModal() { 
+            await toggleScanner(false);
+            document.getElementById('search-modal').classList.add('hidden'); 
+        }
         function openVerifyModal() { 
             if(selectedAssets.length === 0) return alert("กรุณาเลือกครุภัณฑ์อย่างน้อย 1 รายการ");
             document.getElementById('verify-modal').classList.remove('hidden'); 
@@ -406,7 +445,6 @@
         async function finalSubmit() {
             const name = document.getElementById('signer-name').value.trim();
             if(!name || signaturePad.isEmpty()) return alert("กรุณากรอกชื่อและลงลายมือชื่อ");
-            
             showLoader(true);
             try {
                 const response = await fetch(WEB_APP_URL, {
@@ -424,25 +462,16 @@
                 });
                 const res = await response.json();
                 if(res.success) {
-                    alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+                    alert("ส่งข้อมูลสำเร็จ!");
                     localStorage.removeItem('asset_survey_draft');
                     location.reload();
                 }
-            } catch (e) { 
-                console.error(e);
-                alert("เกิดข้อผิดพลาดในการส่งข้อมูล"); 
-            }
+            } catch (e) { alert("เกิดข้อผิดพลาดในการส่งข้อมูล"); }
             finally { showLoader(false); }
         }
 
-        function saveDraftLocally() {
-            localStorage.setItem('asset_survey_draft', JSON.stringify(selectedAssets));
-        }
-
-        function saveDraft() {
-            saveDraftLocally();
-            alert("บันทึกร่างรายการครุภัณฑ์แล้ว");
-        }
+        function saveDraftLocally() { localStorage.setItem('asset_survey_draft', JSON.stringify(selectedAssets)); }
+        function saveDraft() { saveDraftLocally(); alert("บันทึกร่างข้อมูลเรียบร้อย"); }
     </script>
 </body>
 </html>
