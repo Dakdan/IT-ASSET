@@ -137,4 +137,144 @@
                 <h3 id="detailAssetID" class="text-2xl font-bold text-pink-600"></h3>
                 <p id="detailCategory" class="text-pink-400 mb-4"></p>
                 <div class="bg-gray-50 p-4 rounded-xl text-left text-sm mb-6">
-                    <p class="flex justify-between border-b py-1"><span>ซีเรียล:</span> <span id="
+                    <p class="flex justify-between border-b py-1"><span>ซีเรียล:</span> <span id="detailSerial" class="font-bold">-</span></p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="closeAssetDetail()" class="flex-1 py-3 bg-gray-100 rounded-xl">ยกเลิก</button>
+                    <button id="btnConfirmAdd" class="flex-[2] btn-pink py-3 font-bold">เพิ่มเข้าหน่วยงาน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalSignature" class="modal-overlay">
+        <div class="modal-card">
+            <h3 class="text-xl font-bold text-pink-800 mb-4">ลงชื่อผู้รับรอง</h3>
+            <input type="text" id="signerName" class="w-full border-2 border-pink-50 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:border-pink-300" placeholder="ระบุชื่อ-นามสกุล">
+            <canvas id="sigPad"></canvas>
+            <div class="flex gap-2 mt-6">
+                <button onclick="closeModal('modalSignature')" class="flex-1 py-3 bg-gray-50 rounded-xl">ปิด</button>
+                <button onclick="sigPad.clear()" class="flex-1 py-3 bg-pink-50 text-pink-600 rounded-xl">ล้าง</button>
+                <button onclick="finalSubmit()" class="flex-[2] btn-pink py-3 font-bold">ยืนยันบันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        let sigPad;
+        let scannerRef = null;
+        let selectedAssets = [];
+        let currentDeptId = new URLSearchParams(window.location.search).get('deptId') || "D001";
+
+        window.onload = async () => {
+            sigPad = new SignaturePad(document.getElementById('sigPad'));
+            
+            // โหลดข้อมูลหน่วยงาน
+            const dept = await getDeptInfo(currentDeptId);
+            if (dept) {
+                document.getElementById('displayDeptName').innerText = dept.deptName;
+                document.getElementById('displayDeptId').innerText = dept.deptId;
+                document.getElementById('displayBuilding').innerText = `ตึก: ${dept.building || '-'}`;
+            }
+        };
+
+        // --- ระบบสแกนเนอร์ ---
+        const startScanner = () => {
+            document.getElementById('scannerOverlay').classList.add('show');
+            setTimeout(async () => {
+                try {
+                    scannerRef = new Html5Qrcode("reader");
+                    await scannerRef.start(
+                        { facingMode: "environment" },
+                        { fps: 15, qrbox: 250 },
+                        (text) => {
+                            let id = text.includes('IcmAssetDetail/') ? text.split('IcmAssetDetail/')[1].split('/')[0] : text.trim();
+                            stopScanner();
+                            handleSearch(id);
+                        }
+                    );
+                } catch (e) { stopScanner(); }
+            }, 300);
+        };
+
+        const stopScanner = async () => {
+            if (scannerRef) { await scannerRef.stop(); scannerRef = null; }
+            document.getElementById('scannerOverlay').classList.remove('show');
+        };
+
+        // --- ค้นหาและแสดงรายละเอียด ---
+        async function handleSearch(manualId) {
+            const query = manualId || document.getElementById('assetSearchInput').value;
+            if (!query) return;
+
+            const res = await searchAssets(query);
+            if (res && res.length > 0) {
+                showAssetDetail(res[0]);
+            } else {
+                Swal.fire("ไม่พบข้อมูล", "รหัสครุภัณฑ์ไม่ถูกต้อง", "warning");
+            }
+        }
+
+        function showAssetDetail(item) {
+            document.getElementById('detailAssetID').innerText = item.AssetID;
+            document.getElementById('detailCategory').innerText = item.Category || "ทั่วไป";
+            document.getElementById('detailSerial').innerText = item.Serial || "-";
+            
+            const btn = document.getElementById('btnConfirmAdd');
+            btn.innerText = `เพิ่มเข้า ${document.getElementById('displayDeptName').innerText}`;
+            btn.onclick = () => {
+                if (!selectedAssets.find(a => a.AssetID === item.AssetID)) {
+                    selectedAssets.push(item);
+                    renderList();
+                }
+                closeAssetDetail();
+                document.getElementById('assetSearchInput').value = "";
+            };
+            document.getElementById('modalAssetDetail').classList.add('show');
+        }
+
+        function closeAssetDetail() { document.getElementById('modalAssetDetail').classList.remove('show'); }
+
+        function renderList() {
+            document.getElementById('assetList').innerHTML = selectedAssets.map((a, i) => `
+                <div class="flex justify-between items-center p-3 bg-white border border-pink-100 rounded-xl shadow-sm">
+                    <div><b class="text-pink-600">${a.AssetID}</b><br><small class="text-gray-400">${a.Category || ''}</small></div>
+                    <button onclick="selectedAssets.splice(${i},1);renderList();" class="text-red-300">ลบ</button>
+                </div>
+            `).join('');
+        }
+
+        // --- บันทึกผล ---
+        function openSignatureModal() {
+            if (selectedAssets.length === 0) return Swal.fire("แจ้งเตือน", "กรุณาเพิ่มครุภัณฑ์", "info");
+            document.getElementById('modalSignature').classList.add('show');
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+        async function finalSubmit() {
+            const name = document.getElementById('signerName').value;
+            if (!name || sigPad.isEmpty()) return Swal.fire("ไม่ครบถ้วน", "กรุณากรอกชื่อและเซ็นชื่อ", "error");
+
+            // 1. บันทึกข้อมูล
+            const survey = await saveAssetSurvey({
+                deptId: currentDeptId,
+                deptName: document.getElementById('displayDeptName').innerText,
+                assets: selectedAssets
+            });
+
+            // 2. อัปโหลดรูป
+            const sig = await uploadSignatureImage(survey.activityId, sigPad.toDataURL());
+
+            // 3. ยืนยัน
+            const ok = await confirmSurveyResult(survey.activityId, name, sig.url);
+            if (ok) {
+                Swal.fire("บันทึกสำเร็จ", "", "success").then(() => {
+                    location.href = `asset_survey_detail.html?id=${survey.activityId}`;
+                });
+            }
+        }
+    </script>
+</body>
+</html>
