@@ -1,116 +1,174 @@
+<!-- ======================= asset_survey.html ======================= -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Asset Survey</title>
 <link rel="stylesheet" href="style.css">
-
-<script src="js/api.js"></script>
-
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="login-header">
-  <img src="logo.png" class="header-logo">
-  <h1>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-  <p>โรงพยาบาลอุดรธานี</p>
-</div>
-
-<div class="login-card">
-
-  <!-- SEARCH -->
-  <div class="form-group">
-    <input type="text" id="searchInput" placeholder="ค้นหา Asset ID..." onkeyup="search()">
-  </div>
-
-  <!-- RESULT -->
-  <div id="result"></div>
-
-</div>
-
-<!-- LOADING -->
-<div id="loading" class="loading-overlay">
+<div class="loading-overlay">
   <div class="loading-spinner"></div>
+  <div>กำลังโหลด...</div>
 </div>
 
-<!-- MODAL -->
-<div id="modal" class="modal-overlay">
-  <div class="modal-card modal-card-lg" id="modalContent"></div>
-</div>
+<div id="popup" class="popup-overlay"><div class="popup-box"></div></div>
 
+<main class="p-4">
+
+<section id="department" class="page"></section>
+<section id="survey" class="page hidden"></section>
+<section id="detail" class="page hidden"></section>
+
+</main>
+
+<script src="api.js"></script>
 <script>
+const state={deptId:null,deptName:null,activityId:null}
 
-async function search(){
-  const q = document.getElementById("searchInput").value;
-  if(!q) return;
+function showLoading(s){document.querySelector('.loading-overlay').classList.toggle('show',s)}
 
-  setLoading(true);
-
-  const data = await apiGet("searchAssets",{q});
-
-  setLoading(false);
-
-  if(data.error){
-    alert("โหลดข้อมูลไม่ได้");
-    return;
-  }
-
-  renderList(data);
+function showPage(p){
+ document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'))
+ document.getElementById(p).classList.remove('hidden')
+ if(p==='department')loadDepartments()
+ if(p==='detail')loadDetail()
 }
 
-function renderList(list){
-  const el = document.getElementById("result");
-
-  el.innerHTML = list.map(i=>`
-    <div class="card" style="padding:15px;margin-bottom:10px;cursor:pointer"
-      onclick="openDetail('${i.ASSETID}')">
-
-      <b>${i.ASSETID}</b><br>
-      <span>${i.NAME || '-'}</span><br>
-      <small>${i.DEPARTMENT || '-'}</small>
-
-    </div>
-  `).join('');
+function showPopup(type,msg){
+ const el=document.getElementById('popup')
+ const box=el.querySelector('.popup-box')
+ box.className='popup-box '+type
+ box.innerHTML=msg
+ el.classList.add('show')
+ setTimeout(()=>el.classList.remove('show'),2000)
 }
 
-async function openDetail(id){
-  setLoading(true);
-
-  const data = await apiGet("searchAssets",{q:id});
-
-  setLoading(false);
-
-  const item = data[0];
-
-  document.getElementById("modalContent").innerHTML = `
-    <h2>${item.ASSETID}</h2>
-    <p>${item.NAME || '-'}</p>
-    <p>${item.DEPARTMENT || '-'}</p>
-
-    <button class="btn-login" onclick="goEdit('${item.ASSETID}')">แก้ไข</button>
-    <button class="btn-login" onclick="closeModal()">ปิด</button>
-  `;
-
-  document.getElementById("modal").classList.add("show");
+async function loadDepartments(){
+ const res=await api('getDepartments')
+ const el=document.getElementById('department')
+ el.innerHTML=res.data.map(d=>`
+ <div class="card p-4 mb-3">
+ ${d.deptName}
+ <button class="btn-pink" onclick="openDept('${d.deptId}','${d.deptName}')">เลือก</button>
+ </div>`).join('')
 }
 
-function closeModal(){
-  document.getElementById("modal").classList.remove("show");
+function openDept(id,name){
+ state.deptId=id
+ state.deptName=name
+ showPage('survey')
+ renderSurvey()
 }
 
-function goEdit(id){
-  window.location.href = `edit.html?id=${id}`;
+function renderSurvey(){
+ document.getElementById('survey').innerHTML=`
+ <div class="card p-4">
+ <h2>${state.deptName}</h2>
+ <input id="searchInput" placeholder="ค้นหา">
+ <button class="btn-pink" onclick="searchAsset()">ค้นหา</button>
+ <div id="result"></div>
+ <button class="btn-pink" onclick="saveSurvey()">บันทึก</button>
+ </div>`
 }
 
-function setLoading(s){
-  document.getElementById("loading").classList.toggle("show",s);
+async function searchAsset(){
+ const q=document.getElementById('searchInput').value
+ const res=await api('searchAssets',{query:q})
+ document.getElementById('result').innerHTML=JSON.stringify(res.data)
 }
 
+async function saveSurvey(){
+ const res=await apiPost('saveSurvey',{deptId:state.deptId,deptName:state.deptName,assets:[]})
+ state.activityId=res.data.activityId
+ showPage('detail')
+}
+
+async function loadDetail(){
+ const res=await api('getSurveyDetail',{activityId:state.activityId})
+ document.getElementById('detail').innerHTML=`
+ <div class="card p-4">
+ <pre>${JSON.stringify(res.data,null,2)}</pre>
+ <button class="btn-pink" onclick="confirmSurvey()">ยืนยัน</button>
+ </div>`
+}
+
+async function confirmSurvey(){
+ await apiPost('confirmSurvey',{activityId:state.activityId,signer:'user',signature:'base64'})
+ showPopup('success','บันทึกสำเร็จ')
+}
+
+showPage('department')
 </script>
-
 </body>
 </html>
+
+
+// ======================= api.js =======================
+const API_URL="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec"
+
+async function api(action,params={}){
+ showLoading(true)
+ const url=new URL(API_URL)
+ url.searchParams.append('action',action)
+ Object.keys(params).forEach(k=>url.searchParams.append(k,params[k]))
+ const res=await fetch(url)
+ const j=await res.json()
+ showLoading(false)
+ return j
+}
+
+async function apiPost(action,data={}){
+ showLoading(true)
+ const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action,...data})})
+ const j=await res.json()
+ showLoading(false)
+ return j
+}
+
+
+// ======================= Code.gs =======================
+const ASSET_DB_ID="YOUR_ASSET_ID"
+const DEPT_DB_ID="YOUR_DEPT_ID"
+
+function jsonResponse(data,status="success"){
+ return ContentService.createTextOutput(JSON.stringify({status,data}))
+ .setMimeType(ContentService.MimeType.JSON)
+}
+
+function doGet(e){
+ const a=e.parameter.action
+ if(a==='getDepartments')return jsonResponse(getDepartments())
+ if(a==='searchAssets')return jsonResponse(searchAssets(e.parameter.query))
+ if(a==='getSurveyDetail')return jsonResponse(getSurveyDetail(e.parameter.activityId))
+}
+
+function doPost(e){
+ const d=JSON.parse(e.postData.contents)
+ if(d.action==='saveSurvey')return jsonResponse(saveSurvey(d))
+ if(d.action==='confirmSurvey')return jsonResponse(confirmSurvey(d))
+}
+
+function getDepartments(){
+ const sh=SpreadsheetApp.openById(DEPT_DB_ID).getSheets()[0]
+ const v=sh.getDataRange().getValues()
+ return v.slice(1).map(r=>({deptId:r[0],deptName:r[2]}))
+}
+
+function searchAssets(q){
+ if(!q)return []
+ const sh=SpreadsheetApp.openById(ASSET_DB_ID).getSheetByName('Asset_DB')
+ const v=sh.getDataRange().getValues()
+ return v.slice(1).filter(r=>String(r[3]).includes(q)).map(r=>({AssetID:r[3]}))
+}
+
+function saveSurvey(d){
+ const id='SV-'+Date.now()
+ return {activityId:id}
+}
+
+function confirmSurvey(d){return {success:true}}
+
+function getSurveyDetail(id){return {activityId:id,assets:[]}}
