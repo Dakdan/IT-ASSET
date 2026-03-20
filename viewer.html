@@ -8,7 +8,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
 
-<!-- STYLE กลาง -->
 <link rel="stylesheet" href="style.css">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -56,6 +55,12 @@
   <!-- RESULT -->
   <div id="result" class="space-y-3"></div>
 
+  <!-- 🔥 DEPARTMENT -->
+  <div class="card p-4">
+    <div class="font-bold text-pink-700 mb-2">หน่วยงาน</div>
+    <div id="deptList" class="space-y-2"></div>
+  </div>
+
 </div>
 
 <!-- MODAL SCANNER -->
@@ -76,7 +81,6 @@
   </div>
 </div>
 
-<!-- API -->
 <script src="js/api.js"></script>
 
 <script>
@@ -121,14 +125,24 @@ function renderResult(data){
 
   data.forEach(item=>{
     const div = document.createElement("div");
-    div.className = "card p-4";
+    div.className = "card p-4 cursor-pointer active:scale-95";
+
     div.innerHTML = `
       <div class="font-bold text-pink-700">
         ${highlight(item.AssetID)}
       </div>
+      <div class="text-sm text-gray-500 mt-1">กดเพื่อดูรายละเอียด</div>
     `;
+
+    div.onclick = () => handleViewDetail(item.AssetID);
+
     el.appendChild(div);
   });
+}
+
+/* ================= VIEW DETAIL ================= */
+function handleViewDetail(id){
+  showPopup("เลือก Asset: " + id, "success");
 }
 
 /* ================= HIGHLIGHT ================= */
@@ -138,6 +152,50 @@ function highlight(text){
 
   const reg = new RegExp(`(${q})`, 'gi');
   return text.replace(reg, `<span class="search-highlight">$1</span>`);
+}
+
+/* ================= DEPARTMENT ================= */
+async function loadDepartments(){
+  const data = await api('getDepartmentsFast');
+
+  renderDepartments(data);
+}
+
+function renderDepartments(data){
+  const el = document.getElementById("deptList");
+  el.innerHTML = "";
+
+  if(!data || data.length === 0){
+    el.innerHTML = `<div class="text-gray-500 text-center">ไม่พบหน่วยงาน</div>`;
+    return;
+  }
+
+  data.forEach(d=>{
+    const div = document.createElement("div");
+    div.className = "card p-3 cursor-pointer active:scale-95";
+
+    div.innerHTML = `
+      <div class="font-bold text-pink-700">${d.deptName}</div>
+      <div class="text-sm text-gray-500">
+        ${d.building || ''} ชั้น ${d.floor || ''}
+      </div>
+    `;
+
+    div.onclick = () => handleSelectDept(d.deptId);
+
+    el.appendChild(div);
+  });
+}
+
+async function handleSelectDept(deptId){
+  const data = await api('getSurveyDetailByDept', { deptId });
+
+  if(!data || data.error){
+    showPopup("ไม่พบข้อมูลหน่วยงาน");
+    return;
+  }
+
+  showPopup("เลือกหน่วยงาน: " + deptId, "success");
 }
 
 /* ================= SCANNER ================= */
@@ -156,7 +214,6 @@ function startScanner(){
           let raw = decodedText.trim();
           let id = raw;
 
-          // รองรับ NextGov QR
           if(raw.includes('IcmAssetDetail/')){
             id = raw.split('IcmAssetDetail/')[1].split('/')[0];
           }
@@ -165,7 +222,7 @@ function startScanner(){
 
           stopScanner();
 
-          handleSearch(); // ยิงค้นหาทันที
+          handleSearch();
         }
       );
 
@@ -187,6 +244,10 @@ async function stopScanner(){
 
   document.getElementById("scannerModal").classList.remove("show");
 }
+
+/* ================= INIT ================= */
+loadDepartments();
+
 </script>
 
 </body>
