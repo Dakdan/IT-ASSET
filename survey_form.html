@@ -183,32 +183,68 @@
     };
 
     // 2. ฟังก์ชันค้นหา (ใช้ฟังก์ชัน searchAssets จาก api.js)
-    async function handleSearch() {
-        const query = document.getElementById('assetSearch').value;
-        if (query.length < 3) return;
-        
-        const data = await searchAssets(query); // เรียกจาก api.js
-        
-        if (data.status === "error") {
-            Swal.fire("Error", data.message, "error");
-            return;
+let scannerRef = null;
+
+// 1. ฟังก์ชันเริ่มการทำงานของกล้อง (เหมือนใน React ที่คุณส่งมา)
+const startScanner = () => {
+    document.getElementById('scannerSection').classList.remove('hidden'); // แสดงพื้นที่กล้อง
+    
+    setTimeout(async () => {
+        try {
+            // ใช้ library Html5Qrcode เหมือนในโค้ดต้นฉบับ
+            const html5QrCode = new Html5Qrcode("reader");
+            scannerRef = html5QrCode;
+            
+            await html5QrCode.start(
+                { facingMode: "environment" }, // ใช้กล้องหลัง
+                { fps: 15, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    let rawId = decodedText.trim();
+                    let targetId = rawId;
+
+                    // --- Logic การตัด URL NextGov (ก๊อปมาจากโค้ดคุณเป๊ะๆ) ---
+                    if (rawId.includes('IcmAssetDetail/')) {
+                        const parts = rawId.split('IcmAssetDetail/')[1];
+                        if (parts) {
+                            targetId = parts.split('/')[0];
+                        }
+                    }
+
+                    // เมื่อได้ ID แล้ว ให้ทำตาม Flow เดิม
+                    stopScanner();            // ปิดกล้อง
+                    handleViewDetail(targetId); // เรียกฟังก์ชันดึงข้อมูลมาโชว์ใน Modal
+                }
+            );
+        } catch (err) {
+            Swal.fire("ข้อผิดพลาด", "กรุณาอนุญาตการเข้าถึงกล้อง", "error");
+            document.getElementById('scannerSection').classList.add('hidden');
         }
+    }, 300);
+};
 
-        let html = '';
-        data.forEach(item => {
-            // ส่ง Object item ทั้งหมดเข้าไปใน Modal
-            html += `
-            <div onclick='openModal(${JSON.stringify(item)})' class="bg-white p-4 rounded-2xl shadow-sm border border-pink-100 flex justify-between items-center active:scale-95 transition-transform cursor-pointer">
-                <div>
-                    <p class="font-bold text-pink-600">${item.AssetID}</p>
-                    <p class="text-sm text-gray-600">${item.ItemName || 'ไม่ระบุชื่อ'}</p>
-                </div>
-                <i class="fas fa-plus-circle text-pink-400 text-xl"></i>
-            </div>`;
-        });
-        document.getElementById('searchResult').innerHTML = html || '<p class="text-center text-gray-400 text-sm">ไม่พบข้อมูล</p>';
+// 2. ฟังก์ชันหยุดกล้อง
+const stopScanner = async () => {
+    if (scannerRef) {
+        try { 
+            await scannerRef.stop(); 
+            scannerRef = null; 
+        } catch (e) { console.error(e); }
     }
+    document.getElementById('scannerSection').classList.add('hidden');
+};
 
+// 3. ฟังก์ชันดึงรายละเอียด (เชื่อมกับ api.js)
+const handleViewDetail = async (id) => {
+    // ใช้ฟังก์ชัน searchAssets จาก api.js ที่คุณมีอยู่แล้ว
+    const data = await searchAssets(id); 
+    
+    if (data && data.length > 0) {
+        // ถ้าเจอข้อมูล ให้เปิด Modal ทันที (ฟังก์ชัน openModal ที่เราเตรียมไว้)
+        openModal(data[0]); 
+    } else {
+        Swal.fire("ไม่พบข้อมูล", `ไม่พบรหัสครุภัณฑ์: ${id} ในฐานข้อมูล`, "warning");
+    }
+};
     // 3. เปิด Modal แสดงรายละเอียด (Show ข้อมูลที่ได้จาก Search)
     function openModal(item) {
         document.getElementById('showAssetID').innerText = item.AssetID;
