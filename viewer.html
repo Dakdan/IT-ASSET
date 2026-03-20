@@ -1,109 +1,202 @@
-<!-- ======================= asset_survey.html ======================= -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Asset Survey</title>
+
 <link rel="stylesheet" href="style.css">
+
 </head>
 <body>
 
+<!-- Loading -->
 <div class="loading-overlay">
   <div class="loading-spinner"></div>
   <div>กำลังโหลด...</div>
 </div>
 
-<div id="popup" class="popup-overlay"><div class="popup-box"></div></div>
+<!-- Popup -->
+<div id="popup" class="popup-overlay">
+  <div class="popup-box"></div>
+</div>
 
-<main class="p-4">
+<main style="padding:16px">
 
-<section id="department" class="page"></section>
+<!-- ================= HEADER ================= -->
+<div class="pink-gradient-header" style="padding:16px;color:#fff;margin-bottom:16px">
+  <h2>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
+  <div>เลือกหน่วยงาน</div>
+</div>
+
+<!-- ================= DEPARTMENT ================= -->
+<section id="department" class="page">
+  <div id="deptList"></div>
+</section>
+
+<!-- ================= SURVEY ================= -->
 <section id="survey" class="page hidden"></section>
+
+<!-- ================= DETAIL ================= -->
 <section id="detail" class="page hidden"></section>
 
 </main>
 
 <script src="api.js"></script>
+
 <script>
-const state={deptId:null,deptName:null,activityId:null}
+const state = {
+  deptId: null,
+  deptName: null,
+  activityId: null,
+  assets: []
+};
 
-function showLoading(s){document.querySelector('.loading-overlay').classList.toggle('show',s)}
-
-function showPage(p){
- document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'))
- document.getElementById(p).classList.remove('hidden')
- if(p==='department')loadDepartments()
- if(p==='detail')loadDetail()
+// ===== CORE =====
+function showLoading(show){
+  document.querySelector('.loading-overlay')
+    .classList.toggle('show', show);
 }
 
 function showPopup(type,msg){
- const el=document.getElementById('popup')
- const box=el.querySelector('.popup-box')
- box.className='popup-box '+type
- box.innerHTML=msg
- el.classList.add('show')
- setTimeout(()=>el.classList.remove('show'),2000)
+  const el = document.getElementById('popup');
+  const box = el.querySelector('.popup-box');
+
+  box.className = 'popup-box ' + type;
+  box.innerHTML = msg;
+
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2000);
 }
 
+function showPage(page){
+  document.querySelectorAll('.page')
+    .forEach(p=>p.classList.add('hidden'));
+
+  document.getElementById(page)
+    .classList.remove('hidden');
+
+  if(page === 'department') loadDepartments();
+  if(page === 'detail') loadDetail();
+}
+
+// ===== LOAD DEPT =====
 async function loadDepartments(){
- const res=await api('getDepartments')
- const el=document.getElementById('department')
- el.innerHTML=res.data.map(d=>`
- <div class="card p-4 mb-3">
- ${d.deptName}
- <button class="btn-pink" onclick="openDept('${d.deptId}','${d.deptName}')">เลือก</button>
- </div>`).join('')
+  const res = await api('getDepartmentsFast');
+  renderDepartments(res.data);
 }
 
+function renderDepartments(list){
+  const el = document.getElementById('deptList');
+
+  el.innerHTML = list.map(d => `
+    <div class="card" style="padding:16px;margin-bottom:12px">
+      <div><b>${d.deptName}</b></div>
+      <div>${d.building || ''} ชั้น ${d.floor || ''}</div>
+
+      <button class="btn-pink" style="margin-top:10px"
+        onclick="openDept('${d.deptId}','${d.deptName}')">
+        เลือกหน่วยงาน
+      </button>
+    </div>
+  `).join('');
+}
+
+// ===== OPEN SURVEY =====
 function openDept(id,name){
- state.deptId=id
- state.deptName=name
- showPage('survey')
- renderSurvey()
+  state.deptId = id;
+  state.deptName = name;
+
+  showPage('survey');
+  renderSurvey();
 }
 
+// ===== SURVEY =====
 function renderSurvey(){
- document.getElementById('survey').innerHTML=`
- <div class="card p-4">
- <h2>${state.deptName}</h2>
- <input id="searchInput" placeholder="ค้นหา">
- <button class="btn-pink" onclick="searchAsset()">ค้นหา</button>
- <div id="result"></div>
- <button class="btn-pink" onclick="saveSurvey()">บันทึก</button>
- </div>`
+  document.getElementById('survey').innerHTML = `
+    <div class="card" style="padding:16px">
+      <h3>${state.deptName}</h3>
+
+      <input id="searchInput"
+        placeholder="ค้นหาครุภัณฑ์"
+        style="width:100%;padding:10px;margin-top:10px">
+
+      <button class="btn-pink" style="margin-top:10px"
+        onclick="searchAsset()">
+        ค้นหา
+      </button>
+
+      <div id="searchResult" style="margin-top:10px"></div>
+
+      <button class="btn-pink" style="margin-top:16px"
+        onclick="saveSurvey()">
+        บันทึก
+      </button>
+    </div>
+  `;
 }
 
+// ===== SEARCH =====
 async function searchAsset(){
- const q=document.getElementById('searchInput').value
- const res=await api('searchAssets',{query:q})
- document.getElementById('result').innerHTML=JSON.stringify(res.data)
+  const q = document.getElementById('searchInput').value;
+  const res = await api('searchAssetsSafe',{query:q});
+
+  document.getElementById('searchResult').innerHTML =
+    res.data.map(a=>`
+      <div class="card" style="padding:10px;margin-top:8px">
+        ${a.AssetID}
+      </div>
+    `).join('');
 }
 
+// ===== SAVE =====
 async function saveSurvey(){
- const res=await apiPost('saveSurvey',{deptId:state.deptId,deptName:state.deptName,assets:[]})
- state.activityId=res.data.activityId
- showPage('detail')
+  const res = await apiPost('saveSurvey',{
+    deptId: state.deptId,
+    deptName: state.deptName,
+    assets: state.assets
+  });
+
+  state.activityId = res.data.activityId;
+
+  showPopup('success','บันทึกสำเร็จ');
+  showPage('detail');
 }
 
+// ===== DETAIL =====
 async function loadDetail(){
- const res=await api('getSurveyDetail',{activityId:state.activityId})
- document.getElementById('detail').innerHTML=`
- <div class="card p-4">
- <pre>${JSON.stringify(res.data,null,2)}</pre>
- <button class="btn-pink" onclick="confirmSurvey()">ยืนยัน</button>
- </div>`
+  const res = await api('getSurveyDetail',{
+    activityId: state.activityId
+  });
+
+  document.getElementById('detail').innerHTML = `
+    <div class="card" style="padding:16px">
+      <h3>${res.data.deptName}</h3>
+
+      <pre>${JSON.stringify(res.data,null,2)}</pre>
+
+      <button class="btn-pink" style="margin-top:10px"
+        onclick="confirmSurvey()">
+        ยืนยัน
+      </button>
+    </div>
+  `;
 }
 
+// ===== CONFIRM =====
 async function confirmSurvey(){
- await apiPost('confirmSurvey',{activityId:state.activityId,signer:'user',signature:'base64'})
- showPopup('success','บันทึกสำเร็จ')
+  await apiPost('confirmSurvey',{
+    activityId: state.activityId,
+    signer: 'user',
+    signature: 'base64'
+  });
+
+  showPopup('success','ยืนยันสำเร็จ');
 }
 
-showPage('department')
+// ===== INIT =====
+showPage('department');
 </script>
+
 </body>
 </html>
-
-
-
