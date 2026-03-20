@@ -164,3 +164,58 @@ async function searchAssets(query) {
       .searchAssets(query); // เรียกชื่อฟังก์ชันใน Code.gs ของคุณเป๊ะๆ
   });
 }
+/**
+ * js/api.js
+ * สะพานเชื่อมต่อระหว่าง Frontend และ Google Apps Script (Backend)
+ * เรียกชื่อฟังก์ชันให้ตรงกับใน Code.gs 100%
+ */
+
+// 1. ค้นหาครุภัณฑ์ (เรียก searchAssets ใน Code.gs)
+async function searchAssetsApi(query) {
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .searchAssets(query); 
+    });
+}
+
+// 2. ดึงข้อมูลหน่วยงาน (เรียก getDeptInfo ใน Code.gs)
+async function getDeptInfoApi(deptId) {
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getDeptInfo(deptId);
+    });
+}
+
+// 3. บันทึกข้อมูลการสำรวจ (เรียก saveSurvey ใน Code.gs)
+async function saveSurveyApi(payload) {
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .saveSurvey(payload);
+    });
+}
+
+// 4. อัปโหลดลายเซ็น (เรียก uploadSignature ใน Code.gs)
+async function uploadSignatureApi(payload) {
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .uploadSignature(payload);
+    });
+}
+
+// 5. ดึงข้อมูล Dashboard (เรียก getDashboard ใน Code.gs)
+async function getDashboardApi() {
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getDashboard();
+    });
+}
