@@ -48,17 +48,20 @@
             </div>
         </div>
 
-        <div class="card p-6 mb-4">
-            <h2 class="font-semibold text-pink-800 mb-3 underline decoration-pink-200">ตรวจสอบครุภัณฑ์</h2>
-            <div class="flex gap-2">
-                <input type="text" id="assetSearchInput" placeholder="พิมพ์เลขครุภัณฑ์..." class="flex-1 border-2 border-pink-50 rounded-xl px-4 py-2 focus:outline-none focus:border-pink-300 text-sm">
-                <button onclick="startScanner()" class="bg-pink-100 text-pink-600 p-2 rounded-xl">
-                    <i class="fas fa-qrcode text-xl"></i>
-                </button>
-                <button onclick="handleSearchManual()" class="btn-pink px-4 py-2 font-medium">ค้นหา</button>
+      <div class="card p-6 mb-4">
+                <h2 class="font-semibold text-pink-800 mb-3 underline decoration-pink-200">ตรวจสอบครุภัณฑ์</h2>
+                <div class="flex gap-2">
+                    <input type="text" id="assetSearchInput" 
+                           oninput="handleLiveSearch(this.value)" 
+                           placeholder="พิมพ์เพื่อค้นหา (จากคอลัมน์ E)..." 
+                           class="flex-1 border-2 border-pink-50 rounded-xl px-4 py-2 focus:outline-none focus:border-pink-300 text-sm shadow-sm">
+                    
+                    <button onclick="startScanner()" class="bg-pink-100 text-pink-600 p-2 rounded-xl hover:bg-pink-200 transition-colors">
+                        <i class="fas fa-qrcode text-xl"></i>
+                    </button>
+                </div>
+                <div id="assetSearchResult" class="mt-4 space-y-2"></div>
             </div>
-            <div id="assetSearchResult" class="mt-4 space-y-2"></div>
-        </div>
 
         <div class="mb-4">
             <h3 class="px-2 font-bold text-gray-600 mb-2">รายการที่เลือก (<span id="count">0</span>)</h3>
@@ -199,55 +202,74 @@
 
         // --- ระบบค้นหาและแสดงผล ---
     // --- ระบบค้นหาและแสดงผล ---
-async function handleSearchManual() {
-    const query = document.getElementById('assetSearchInput').value.trim();
-    if (query.length < 3) return Swal.fire("แจ้งเตือน", "กรุณาระบุเลขอย่างน้อย 3 หลัก", "info");
-    handleFetchDetail(query);
+let searchTimeout;
+
+// ฟังก์ชันค้นหาอัตโนมัติ (Live Search)
+function handleLiveSearch(query) {
+    const container = document.getElementById('assetSearchResult');
+    query = query.trim();
+
+    // ล้างค่าเดิมถ้าลบจนว่าง
+    if (query.length === 0) {
+        container.innerHTML = "";
+        return;
+    }
+
+    // หน่วงเวลาเล็กน้อยเพื่อให้พิมพ์ลื่น (Debounce)
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        if (query.length < 2) return; // พิมพ์ 2 ตัวขึ้นไปถึงจะเริ่มหา
+
+        try {
+            const data = await searchAssets(query); // เรียก API
+            renderSearchResults(data, query);
+        } catch (err) {
+            console.error("Search Error:", err);
+        }
+    }, 300); 
 }
 
-// ฟังก์ชันทำ Highlight
+// ฟังก์ชันแสดงผลพร้อม Highlight
+function renderSearchResults(items, query) {
+    const container = document.getElementById('assetSearchResult');
+    let html = '';
+
+    if (!items || items.length === 0) {
+        container.innerHTML = '<p class="text-center text-xs text-gray-400 py-2">-- ไม่พบข้อมูล --</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        // ทำ Highlight ที่ข้อมูลจากคอลัมน์ E (SearchData)
+        const highlightedE = getHighlightedText(item.SearchData, query);
+        
+        html += `
+        <div onclick='openAssetModal(${JSON.stringify(item)})' 
+             class="bg-white p-3 rounded-xl border border-pink-100 hover:bg-pink-50 transition-all cursor-pointer shadow-sm mb-2 animate-fade-in">
+            <div class="flex justify-between items-center">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-800 font-bold">${highlightedE}</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[9px] bg-gray-700 text-white px-1 py-0.5 rounded font-mono">KEY: ${item.KeyID}</span>
+                        <span class="text-[10px] text-gray-400">${item.ItemName || ''}</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-pink-200 text-sm"></i>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+// ฟังก์ชัน Highlight
 function getHighlightedText(text, highlight) {
-    if (!highlight || !highlight.trim()) return text;
-    const stringText = String(text);
-    // ใช้ Regex แบบ Case-insensitive (gi)
-    const parts = stringText.split(new RegExp(`(${highlight})`, 'gi'));
-    
+    if (!highlight) return text;
+    const parts = String(text).split(new RegExp(`(${highlight})`, 'gi'));
     return parts.map(part => 
         part.toLowerCase() === highlight.toLowerCase() 
-        ? `<b class="text-pink-600 bg-yellow-100 px-0.5 rounded">${part}</b>` 
+        ? `<b class="text-pink-600 bg-yellow-100 rounded px-0.5 font-bold">${part}</b>` 
         : part
     ).join('');
-}
-
-// ฟังก์ชันแสดงรายการที่ค้นหาเจอ (แก้ไขให้รองรับ KeyID และ SearchData)
-function renderSearchResults(items) {
-    const query = document.getElementById('assetSearchInput').value;
-    let html = '<p class="text-[10px] text-gray-400 mb-2 italic px-2">พบรายการที่เกี่ยวข้อง:</p>';
-    
-    if (!items || items.length === 0) {
-        html = '<p class="text-center text-gray-400 text-sm py-4">-- ไม่พบข้อมูล --</p>';
-    } else {
-        items.forEach(item => {
-            // ทำ Highlight ข้อมูลที่มาจากคอลัมน์ E (SearchData)
-            const highlightedE = getHighlightedText(item.SearchData, query);
-            
-            html += `
-            <div onclick='openAssetModal(${JSON.stringify(item)})' 
-                 class="bg-white p-4 rounded-2xl border-2 border-pink-50 hover:border-pink-200 transition-all cursor-pointer shadow-sm mb-2">
-                <div class="flex justify-between items-center">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[9px] bg-pink-500 text-white px-1.5 py-0.5 rounded font-mono font-bold">KEY: ${item.KeyID}</span>
-                        </div>
-                        <p class="text-sm text-gray-700 leading-tight font-medium">${highlightedE}</p>
-                        <p class="text-[11px] text-gray-400 mt-1 italic">${item.ItemName || ''}</p>
-                    </div>
-                    <i class="fas fa-plus-circle text-pink-200 text-xl ml-2"></i>
-                </div>
-            </div>`;
-        });
-    }
-    document.getElementById('assetSearchResult').innerHTML = html;
 }
 
 async function handleFetchDetail(id) {
