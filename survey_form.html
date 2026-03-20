@@ -7,70 +7,25 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* ===== GLOBAL & STYLE กลาง ===== */
-        body {
-            font-family: 'Kanit', sans-serif;
-            background: linear-gradient(135deg, #fff, #fce4ec, #f8bbd0);
-            min-height: 100vh;
-        }
-
-        .loading-overlay {
-            position: fixed; inset: 0; background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(6px); display: none; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 9999;
-        }
+        body { font-family: 'Kanit', sans-serif; background: linear-gradient(135deg, #fff, #fce4ec, #f8bbd0); min-height: 100vh; }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(6px); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .loading-overlay.show { display: flex; }
-
-        .loading-spinner {
-            width: 50px; height: 50px; border: 4px solid rgba(233, 30, 99, 0.15);
-            border-top: 4px solid #e91e63; border-radius: 50%; animation: spin 0.8s linear infinite;
-        }
+        .loading-spinner { width: 50px; height: 50px; border: 4px solid rgba(233, 30, 99, 0.15); border-top: 4px solid #e91e63; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-            backdrop-filter: blur(5px); display: none; justify-content: center;
-            align-items: center; z-index: 10000; padding: 20px;
-        }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; }
         .modal-overlay.show { display: flex; }
-
-        .modal-card {
-            background: #fff; width: 100%; max-width: 480px; max-height: 90vh;
-            border-radius: 28px; padding: 24px; overflow-y: auto;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-        }
-
-        .btn-pink {
-            background: linear-gradient(135deg, #d81b60, #f06292);
-            color: #fff; border-radius: 16px; transition: all 0.2s ease;
-            box-shadow: 0 6px 15px rgba(216,27,96,0.25);
-        }
-        .btn-pink:active { transform: scale(0.95); }
-
-        .card {
-            background: rgba(255,255,255,0.95); border-radius: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); backdrop-filter: blur(8px);
-        }
-
-        .pink-gradient-header {
-            background: linear-gradient(135deg, #ad1457 0%, #f06292 100%);
-            border-bottom-left-radius: 40px; border-bottom-right-radius: 40px;
-        }
-
-        canvas {
-            border: 2px dashed #f8bbd0; background: #fff5f8;
-            border-radius: 16px; width: 100%; height: 200px;
-        }
-
-        body::after {
-            content: "IT UDON HOSP"; position: fixed; bottom: 20px; right: 20px;
-            font-size: 40px; color: rgba(233,30,99,0.05); pointer-events: none; font-weight: bold;
-        }
+        .modal-card { background: #fff; width: 100%; max-width: 480px; max-height: 90vh; border-radius: 28px; padding: 24px; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+        .btn-pink { background: linear-gradient(135deg, #d81b60, #f06292); color: #fff; border-radius: 16px; transition: all 0.2s ease; box-shadow: 0 6px 15px rgba(216,27,96,0.25); }
+        .card { background: rgba(255,255,255,0.95); border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .pink-gradient-header { background: linear-gradient(135deg, #ad1457 0%, #f06292 100%); border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; }
+        
+        /* สไตล์สำหรับเลือกกะ */
+        .shift-checkbox:checked + span { background-color: #d81b60; color: white; border-color: #d81b60; }
     </style>
 </head>
 <body>
@@ -87,270 +42,270 @@
 
     <main class="container mx-auto max-w-2xl p-4 -mt-6">
         <div class="card p-6 mb-4">
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-pink-800">หน่วยงานรับตรวจ</h2>
-                <span id="displayDeptId" class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-xs font-bold"></span>
+            <div class="flex justify-between items-center text-sm">
+                <span id="displayDeptId" class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full font-bold"></span>
+                <span id="displayBuilding" class="text-gray-500"></span>
             </div>
-            <p id="displayBuilding" class="text-sm text-gray-500 mt-1"></p>
         </div>
 
         <div class="card p-6 mb-4">
-            <h2 class="font-semibold text-pink-800 mb-3">ตรวจสอบครุภัณฑ์</h2>
+            <h2 class="font-semibold text-pink-800 mb-3 underline decoration-pink-200">ตรวจสอบครุภัณฑ์</h2>
             <div class="flex gap-2">
-                <input type="text" id="assetSearchInput" placeholder="พิมพ์เลขครุภัณฑ์..." 
-                    class="flex-1 border-2 border-pink-50 rounded-xl px-4 py-2 focus:outline-none focus:border-pink-300">
+                <input type="text" id="assetSearchInput" placeholder="พิมพ์เลขครุภัณฑ์..." class="flex-1 border-2 border-pink-50 rounded-xl px-4 py-2 focus:outline-none focus:border-pink-300 text-sm">
                 <button onclick="startScanner()" class="bg-pink-100 text-pink-600 p-2 rounded-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v-4m6 0h-2m4 0h-2m-4 11H8m0-4H6m4 0h2m0 4h2" />
-                    </svg>
+                    <i class="fas fa-qrcode text-xl"></i>
                 </button>
-                <button onclick="handleSearch()" class="btn-pink px-4 py-2 font-medium">ค้นหา</button>
+                <button onclick="handleSearchManual()" class="btn-pink px-4 py-2 font-medium">ค้นหา</button>
             </div>
-
-            <div id="assetList" class="mt-4 space-y-2"></div>
+            <div id="assetSearchResult" class="mt-4 space-y-2"></div>
         </div>
 
-        <button onclick="openSignatureModal()" class="btn-pink w-full py-4 text-lg font-bold shadow-xl">
-            ยืนยันและลงชื่อรับรอง
+        <div class="mb-4">
+            <h3 class="px-2 font-bold text-gray-600 mb-2">รายการที่เลือก (<span id="count">0</span>)</h3>
+            <div id="selectedList" class="space-y-2"></div>
+        </div>
+
+        <button onclick="submitSurvey()" class="btn-pink w-full py-4 text-lg font-bold shadow-xl mb-10">
+            บันทึกข้อมูลและไปหน้าลงนาม
         </button>
     </main>
 
-    <div id="scannerOverlay" class="modal-overlay">
-        <div class="modal-card">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-pink-800">สแกนรหัสครุภัณฑ์</h3>
-                <button onclick="stopScanner()" class="text-gray-400">ปิด</button>
-            </div>
-            <div id="reader" class="rounded-xl overflow-hidden"></div>
+    <div id="scannerSection" class="hidden fixed inset-0 bg-black z-[10001] flex flex-col">
+        <div class="p-4 flex justify-between items-center text-white bg-pink-800">
+            <span class="font-bold"><i class="fas fa-camera mr-2"></i>สแกนรหัสครุภัณฑ์</span>
+            <button onclick="stopScanner()" class="text-3xl">&times;</button>
         </div>
+        <div id="reader" class="w-full flex-grow bg-black"></div>
     </div>
 
     <div id="modalAssetDetail" class="modal-overlay">
         <div class="modal-card">
-            <div class="text-center">
-                <div class="w-full h-48 bg-pink-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center">
-                    <img id="detailImage" class="hidden object-cover w-full h-full">
-                    <div id="imagePlaceholder" class="text-pink-200">
-                        <svg class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg>
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-pink-700">รายละเอียดครุภัณฑ์</h3>
+                <button onclick="closeModal('modalAssetDetail')" class="text-gray-400 text-2xl">&times;</button>
+            </div>
+            
+            <div class="bg-pink-50 p-4 rounded-2xl mb-4 border border-pink-100">
+                <p class="text-xs text-pink-400 font-bold uppercase">Asset ID</p>
+                <p id="showAssetID" class="text-xl font-bold text-gray-800"></p>
+                <p id="showItemName" class="text-sm text-gray-600 mt-1"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-[11px] mb-6">
+                <div class="p-2 bg-gray-50 rounded-lg">
+                    <span class="text-gray-400 block">วันที่รับเข้า:</span>
+                    <span id="showReceiveDate" class="font-medium text-gray-700"></span>
+                </div>
+                <div class="p-2 bg-gray-50 rounded-lg">
+                    <span class="text-gray-400 block">อายุการใช้งาน:</span>
+                    <span id="showAge" class="font-medium text-gray-700"></span>
+                </div>
+                <div class="col-span-2 p-2 bg-gray-50 rounded-lg">
+                    <span class="text-gray-400 block">สเปค/รายละเอียด:</span>
+                    <span id="showSpec" class="font-medium text-gray-700"></span>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-bold text-gray-600 block mb-1">ความสำคัญ (Priority)</label>
+                    <select id="inpPriority" class="w-full border-2 border-gray-100 rounded-xl px-3 py-2 text-sm focus:border-pink-300 outline-none">
+                        <option value="ปกติ">ปกติ (ใช้งานทั่วไป)</option>
+                        <option value="ด่วน">ด่วน (ต้องการการบำรุงรักษา)</option>
+                        <option value="ส่งซ่อม">ส่งซ่อม (ใช้งานไม่ได้)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-sm font-bold text-gray-600 block mb-2">ช่วงเวลาที่ใช้งาน (Shift Work)</label>
+                    <div class="flex gap-2">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="checkbox" name="shift" value="เช้า" class="hidden shift-checkbox">
+                            <span class="block text-center py-2 border-2 border-gray-100 rounded-xl text-xs font-medium transition-all text-gray-500">เช้า</span>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="checkbox" name="shift" value="บ่าย" class="hidden shift-checkbox">
+                            <span class="block text-center py-2 border-2 border-gray-100 rounded-xl text-xs font-medium transition-all text-gray-500">บ่าย</span>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="checkbox" name="shift" value="ดึก" class="hidden shift-checkbox">
+                            <span class="block text-center py-2 border-2 border-gray-100 rounded-xl text-xs font-medium transition-all text-gray-500">ดึก</span>
+                        </label>
                     </div>
                 </div>
-                <h3 id="detailAssetID" class="text-2xl font-bold text-pink-600"></h3>
-                <p id="detailCategory" class="text-pink-400 mb-4"></p>
-                <div class="bg-gray-50 p-4 rounded-xl text-left text-sm mb-6">
-                    <p class="flex justify-between border-b py-1"><span>ซีเรียล:</span> <span id="detailSerial" class="font-bold">-</span></p>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="closeAssetDetail()" class="flex-1 py-3 bg-gray-100 rounded-xl">ยกเลิก</button>
-                    <button id="btnConfirmAdd" class="flex-[2] btn-pink py-3 font-bold">เพิ่มเข้าหน่วยงาน</button>
-                </div>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeModal('modalAssetDetail')" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold">ยกเลิก</button>
+                <button id="btnConfirmAdd" class="flex-[2] btn-pink py-3 font-bold">เพิ่มลงรายการสำรวจ</button>
             </div>
         </div>
     </div>
 
-    <div id="modalSignature" class="modal-overlay">
-        <div class="modal-card">
-            <h3 class="text-xl font-bold text-pink-800 mb-4">ลงชื่อผู้รับรอง</h3>
-            <input type="text" id="signerName" class="w-full border-2 border-pink-50 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:border-pink-300" placeholder="ระบุชื่อ-นามสกุล">
-            <canvas id="sigPad"></canvas>
-            <div class="flex gap-2 mt-6">
-                <button onclick="closeModal('modalSignature')" class="flex-1 py-3 bg-gray-50 rounded-xl">ปิด</button>
-                <button onclick="sigPad.clear()" class="flex-1 py-3 bg-pink-50 text-pink-600 rounded-xl">ล้าง</button>
-                <button onclick="finalSubmit()" class="flex-[2] btn-pink py-3 font-bold">ยืนยันบันทึก</button>
-            </div>
-        </div>
-    </div>
-    <button onclick="startScanner()" class="bg-pink-500 text-white p-4 rounded-2xl w-full mb-4">
-    <i class="fas fa-qrcode mr-2"></i> สแกน QR Code
-</button>
-
-<div id="scannerSection" class="hidden fixed inset-0 bg-black z-[100] flex flex-col">
-    <div class="p-4 flex justify-between items-center text-white">
-        <span class="font-bold">สแกนรหัสครุภัณฑ์</span>
-        <button onclick="stopScanner()" class="text-2xl">&times;</button>
-    </div>
-    <div id="reader" class="w-full flex-grow"></div>
-</div>
     <script src="js/api.js"></script>
-   <script>
-    let selectedAssets = [];
-    let currentDeptId = new URLSearchParams(window.location.search).get('deptId') || "";
-    let currentDeptName = "";
+    <script>
+        let selectedAssets = [];
+        let scannerRef = null;
+        let currentDeptId = new URLSearchParams(window.location.search).get('deptId') || "";
+        let currentDeptName = "";
 
-    // 1. โหลดข้อมูลหน่วยงานเมื่อเปิดหน้า (ใช้ฟังก์ชัน getDeptInfo จาก api.js)
-    window.onload = async () => {
-        if (!currentDeptId) {
-            Swal.fire("ไม่พบรหัสหน่วยงาน", "กรุณาเข้าผ่านระบบคัดเลือกหน่วยงาน", "warning");
-            return;
-        }
+        window.onload = async () => {
+            if (!currentDeptId) {
+                Swal.fire("ผิดพลาด", "ไม่พบรหัสหน่วยงาน", "error");
+                return;
+            }
+            const res = await getDeptInfo(currentDeptId);
+            if (res && !res.error) {
+                currentDeptName = res.deptName;
+                document.getElementById('displayDeptName').innerText = res.deptName;
+                document.getElementById('displayDeptId').innerText = `ID: ${res.deptId}`;
+                document.getElementById('displayBuilding').innerText = `อาคาร: ${res.building || '-'}`;
+            }
+        };
 
-        const res = await getDeptInfo(currentDeptId); // เรียกจาก api.js
-        if (res && !res.error) {
-            currentDeptName = res.deptName;
-            document.getElementById('displayDeptName').innerText = res.deptName;
-            document.getElementById('displayDeptId').innerText = `ID: ${res.deptId}`;
-            document.getElementById('displayBuilding').innerText = `อาคาร: ${res.building || '-'}`;
-        }
-    };
-
-    // 2. ฟังก์ชันค้นหา (ใช้ฟังก์ชัน searchAssets จาก api.js)
-let scannerRef = null;
-
-// 1. ฟังก์ชันเริ่มการทำงานของกล้อง (เหมือนใน React ที่คุณส่งมา)
-const startScanner = () => {
-    document.getElementById('scannerSection').classList.remove('hidden'); // แสดงพื้นที่กล้อง
-    
-    setTimeout(async () => {
-        try {
-            // ใช้ library Html5Qrcode เหมือนในโค้ดต้นฉบับ
-            const html5QrCode = new Html5Qrcode("reader");
-            scannerRef = html5QrCode;
-            
-            await html5QrCode.start(
-                { facingMode: "environment" }, // ใช้กล้องหลัง
-                { fps: 15, qrbox: { width: 250, height: 250 } },
-                (decodedText) => {
-                    let rawId = decodedText.trim();
-                    let targetId = rawId;
-
-                    // --- Logic การตัด URL NextGov (ก๊อปมาจากโค้ดคุณเป๊ะๆ) ---
-                    if (rawId.includes('IcmAssetDetail/')) {
-                        const parts = rawId.split('IcmAssetDetail/')[1];
-                        if (parts) {
-                            targetId = parts.split('/')[0];
+        // --- ระบบสแกนเนอร์ (Logic ตัด URL NextGov เหมือนเดิมเป๊ะ) ---
+        const startScanner = () => {
+            document.getElementById('scannerSection').classList.remove('hidden');
+            setTimeout(async () => {
+                try {
+                    const html5QrCode = new Html5Qrcode("reader");
+                    scannerRef = html5QrCode;
+                    await html5QrCode.start(
+                        { facingMode: "environment" },
+                        { fps: 15, qrbox: { width: 250, height: 250 } },
+                        (decodedText) => {
+                            let targetId = decodedText.trim();
+                            if (targetId.includes('IcmAssetDetail/')) {
+                                targetId = targetId.split('IcmAssetDetail/')[1].split('/')[0];
+                            }
+                            stopScanner();
+                            handleFetchDetail(targetId);
                         }
-                    }
-
-                    // เมื่อได้ ID แล้ว ให้ทำตาม Flow เดิม
-                    stopScanner();            // ปิดกล้อง
-                    handleViewDetail(targetId); // เรียกฟังก์ชันดึงข้อมูลมาโชว์ใน Modal
+                    );
+                } catch (err) {
+                    Swal.fire("กล้องทำงานไม่ได้", "กรุณาอนุญาตให้ใช้งานกล้อง", "error");
+                    stopScanner();
                 }
-            );
-        } catch (err) {
-            Swal.fire("ข้อผิดพลาด", "กรุณาอนุญาตการเข้าถึงกล้อง", "error");
+            }, 300);
+        };
+
+        const stopScanner = async () => {
+            if (scannerRef) {
+                try { await scannerRef.stop(); } catch (e) {}
+                scannerRef = null;
+            }
             document.getElementById('scannerSection').classList.add('hidden');
-        }
-    }, 300);
-};
-
-// 2. ฟังก์ชันหยุดกล้อง
-const stopScanner = async () => {
-    if (scannerRef) {
-        try { 
-            await scannerRef.stop(); 
-            scannerRef = null; 
-        } catch (e) { console.error(e); }
-    }
-    document.getElementById('scannerSection').classList.add('hidden');
-};
-
-// 3. ฟังก์ชันดึงรายละเอียด (เชื่อมกับ api.js)
-const handleViewDetail = async (id) => {
-    // ใช้ฟังก์ชัน searchAssets จาก api.js ที่คุณมีอยู่แล้ว
-    const data = await searchAssets(id); 
-    
-    if (data && data.length > 0) {
-        // ถ้าเจอข้อมูล ให้เปิด Modal ทันที (ฟังก์ชัน openModal ที่เราเตรียมไว้)
-        openModal(data[0]); 
-    } else {
-        Swal.fire("ไม่พบข้อมูล", `ไม่พบรหัสครุภัณฑ์: ${id} ในฐานข้อมูล`, "warning");
-    }
-};
-    // 3. เปิด Modal แสดงรายละเอียด (Show ข้อมูลที่ได้จาก Search)
-    function openModal(item) {
-        document.getElementById('showAssetID').innerText = item.AssetID;
-        document.getElementById('showItemName').innerText = item.ItemName || '-';
-        document.getElementById('showSpec').innerText = item.Spec || '-';
-        document.getElementById('showReceiveDate').innerText = item.ReceiveDate || '-';
-        
-        // เมื่อกดปุ่ม "เพิ่มรายการ" ใน Modal
-        document.getElementById('btnConfirmAdd').onclick = () => {
-            const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(el => el.value);
-            
-            // เตรียมข้อมูลเพื่อบันทึกลง Log (ส่งค่าไปตามโครงสร้างที่ Code.gs รอรับ)
-            const newItem = {
-                AssetID: item.AssetID,
-                Priority: document.getElementById('inpPriority').value,
-                ShiftWork: shifts.join(','),
-                AssetType: item.Category || "ทั่วไป" 
-            };
-            
-            addToList(newItem);
-            closeModal();
-        };
-        document.getElementById('modalAssetDetail').classList.add('show');
-    }
-
-    function closeModal() {
-        document.getElementById('modalAssetDetail').classList.remove('show');
-        // Reset checkbox และค่าใน Modal
-        document.querySelectorAll('input[name="shift"]').forEach(el => el.checked = false);
-        document.getElementById('inpPriority').value = "ปกติ";
-    }
-
-    function addToList(item) {
-        // ป้องกันการเลือกซ้ำ
-        if(selectedAssets.find(a => a.AssetID === item.AssetID)) {
-            Swal.fire("รายการซ้ำ", "คุณเลือกครุภัณฑ์นี้ไปแล้ว", "info");
-            return;
-        }
-        selectedAssets.push(item);
-        renderList();
-    }
-
-    function renderList() {
-        let html = '';
-        selectedAssets.forEach((item, index) => {
-            html += `
-            <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-pink-500 animate-fade-in">
-                <div>
-                    <p class="text-sm font-bold">${item.AssetID}</p>
-                    <p class="text-[10px] text-gray-500">${item.Priority} | ช่วงเวลา: ${item.ShiftWork || 'ไม่ได้ระบุ'}</p>
-                </div>
-                <button onclick="selectedAssets.splice(${index},1); renderList();" class="text-red-400 p-2">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>`;
-        });
-        document.getElementById('selectedList').innerHTML = html;
-        document.getElementById('count').innerText = selectedAssets.length;
-    }
-
-    // 4. บันทึกข้อมูล (ใช้ฟังก์ชัน saveAssetSurvey จาก api.js)
-    async function submitSurvey() {
-        if(selectedAssets.length === 0) {
-            Swal.fire("แจ้งเตือน", "กรุณาเลือกครุภัณฑ์ที่ต้องการสำรวจ", "warning");
-            return;
-        }
-        
-        const payload = {
-            deptId: currentDeptId,
-            deptName: currentDeptName,
-            assets: selectedAssets,
-            newAssets: [] // กรณีครุภัณฑ์ไม่มีรหัส (ถ้ามี)
         };
 
-        const result = await saveAssetSurvey(payload); // เรียกจาก api.js
-        
-        if (result.success || result.activityId) {
-            Swal.fire({
-                title: "บันทึกสำเร็จ",
-                text: "ต้องการไปหน้าลงนามต่อเลยหรือไม่?",
-                icon: "success",
-                showCancelButton: true,
-                confirmButtonText: "ไปหน้าลงนาม",
-                cancelButtonText: "สำรวจต่อ"
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    // ส่ง ActivityID ไปหน้าลงนาม (อ้างอิงตาม Flow เดิมของคุณ)
-                    window.location.href = `signature_page.html?activityId=${result.activityId}`;
+        // --- ระบบค้นหาและแสดงผล ---
+        async function handleSearchManual() {
+            const query = document.getElementById('assetSearchInput').value;
+            if (query.length < 3) return Swal.fire("แจ้งเตือน", "กรุณาระบุเลขอย่างน้อย 3 หลัก", "info");
+            handleFetchDetail(query);
+        }
+
+        async function handleFetchDetail(id) {
+            const data = await searchAssets(id);
+            if (data && data.length > 0) {
+                // หากค้นหาเจอหลายรายการ (กรณีพิมพ์เลขไม่ครบ) ให้แสดงตัวเลือก
+                if (data.length > 1) {
+                    renderSearchResults(data);
                 } else {
-                    location.reload();
+                    openAssetModal(data[0]);
                 }
-            });
-        } else {
-            Swal.fire("เกิดข้อผิดพลาด", result.message || "ไม่สามารถบันทึกได้", "error");
+            } else {
+                Swal.fire("ไม่พบข้อมูล", "ไม่พบรหัสครุภัณฑ์นี้ในระบบ", "warning");
+            }
         }
-    }
-</script>
+
+        function renderSearchResults(items) {
+            let html = '<p class="text-[10px] text-gray-400 mb-2">พบหลายรายการ โปรดเลือกหนึ่งรายการ:</p>';
+            items.forEach(item => {
+                html += `
+                <div onclick='openAssetModal(${JSON.stringify(item)})' class="bg-white p-3 rounded-xl border border-pink-50 flex justify-between items-center cursor-pointer active:bg-pink-50">
+                    <div>
+                        <p class="font-bold text-pink-600 text-sm">${item.AssetID}</p>
+                        <p class="text-xs text-gray-500">${item.ItemName || ''}</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300"></i>
+                </div>`;
+            });
+            document.getElementById('assetSearchResult').innerHTML = html;
+        }
+
+        function openAssetModal(item) {
+            document.getElementById('assetSearchResult').innerHTML = ""; // ล้างผลการค้นหา
+            document.getElementById('showAssetID').innerText = item.AssetID;
+            document.getElementById('showItemName').innerText = item.ItemName || 'ไม่ระบุชื่อรายการ';
+            document.getElementById('showSpec').innerText = item.Spec || '-';
+            document.getElementById('showReceiveDate').innerText = item.ReceiveDate || '-';
+            document.getElementById('showAge').innerText = item.Age || '-';
+            
+            document.getElementById('btnConfirmAdd').onclick = () => {
+                const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(el => el.value);
+                const assetData = {
+                    AssetID: item.AssetID,
+                    Priority: document.getElementById('inpPriority').value,
+                    ShiftWork: shifts.join(','),
+                    AssetType: item.Category || "ทั่วไป"
+                };
+                addToList(assetData);
+                closeModal('modalAssetDetail');
+            };
+            document.getElementById('modalAssetDetail').classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+            // ล้างค่าที่เคยเลือกไว้
+            document.querySelectorAll('input[name="shift"]').forEach(el => el.checked = false);
+            document.getElementById('inpPriority').value = "ปกติ";
+        }
+
+        function addToList(item) {
+            if (selectedAssets.find(a => a.AssetID === item.AssetID)) {
+                return Swal.fire("ซ้ำ", "รายการนี้อยู่ในรายการสำรวจแล้ว", "info");
+            }
+            selectedAssets.push(item);
+            renderSelectedList();
+        }
+
+        function renderSelectedList() {
+            let html = '';
+            selectedAssets.forEach((item, index) => {
+                html += `
+                <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-pink-500 animate-fade-in text-sm">
+                    <div>
+                        <p class="font-bold text-gray-700">${item.AssetID}</p>
+                        <p class="text-[10px] text-gray-400">${item.Priority} | ${item.ShiftWork || 'ทุกช่วงเวลา'}</p>
+                    </div>
+                    <button onclick="selectedAssets.splice(${index},1); renderSelectedList();" class="text-red-400 p-2">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>`;
+            });
+            document.getElementById('selectedList').innerHTML = html;
+            document.getElementById('count').innerText = selectedAssets.length;
+        }
+
+        async function submitSurvey() {
+            if (selectedAssets.length === 0) return Swal.fire("แจ้งเตือน", "กรุณาเลือกอย่างน้อย 1 รายการ", "warning");
+            
+            const payload = {
+                deptId: currentDeptId,
+                deptName: currentDeptName,
+                assets: selectedAssets
+            };
+
+            const res = await saveAssetSurvey(payload);
+            if (res.success || res.activityId) {
+                Swal.fire("สำเร็จ", "บันทึกข้อมูลเรียบร้อย", "success").then(() => {
+                    window.location.href = `signature_page.html?activityId=${res.activityId}`;
+                });
+            } else {
+                Swal.fire("ผิดพลาด", res.message || "ไม่สามารถบันทึกได้", "error");
+            }
+        }
+    </script>
 </body>
 </html>
