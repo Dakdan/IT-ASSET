@@ -3,202 +3,192 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Asset Survey</title>
 
+<title>IT Asset Survey</title>
+
+<!-- FONT -->
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- STYLE (ของคุณ) -->
 <link rel="stylesheet" href="style.css">
+
+<!-- 🔥 FIX สำคัญ -->
+<style>
+.hidden{display:none !important;}
+</style>
 
 </head>
 <body>
 
-<!-- Loading -->
-<div class="loading-overlay">
+<!-- LOADING -->
+<div id="loading" class="loading-overlay">
   <div class="loading-spinner"></div>
-  <div>กำลังโหลด...</div>
+  <p class="mt-4">กำลังโหลด...</p>
 </div>
 
-<!-- Popup -->
-<div id="popup" class="popup-overlay">
-  <div class="popup-box"></div>
+<!-- HEADER -->
+<div class="pink-gradient-header p-4 text-white text-center">
+  <h1 class="text-lg font-bold">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+  <p class="text-sm">IT UDON HOSP</p>
 </div>
 
-<main style="padding:16px">
-
-<!-- ================= HEADER ================= -->
-<div class="pink-gradient-header" style="padding:16px;color:#fff;margin-bottom:16px">
-  <h2>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
-  <div>เลือกหน่วยงาน</div>
+<!-- ================= PAGE: DEPARTMENT ================= -->
+<div id="page-dept" class="p-4">
+  <div id="deptList" class="space-y-3"></div>
 </div>
 
-<!-- ================= DEPARTMENT ================= -->
-<section id="department" class="page">
-  <div id="deptList"></div>
-</section>
+<!-- ================= PAGE: SURVEY ================= -->
+<div id="page-survey" class="p-4 hidden">
+  <button onclick="showPage('dept')" class="btn-pink px-4 py-2 mb-4">← กลับ</button>
 
-<!-- ================= SURVEY ================= -->
-<section id="survey" class="page hidden"></section>
+  <div class="card p-4 mb-4">
+    <h2 id="deptName" class="font-bold text-lg"></h2>
+    <p id="deptId" class="text-sm text-gray-500"></p>
+  </div>
 
-<!-- ================= DETAIL ================= -->
-<section id="detail" class="page hidden"></section>
+  <input id="searchBox" type="text" placeholder="ค้นหา AssetID..."
+    class="w-full p-3 rounded-xl border mb-3">
 
-</main>
+  <button onclick="searchAsset()" class="btn-pink w-full py-2 mb-4">
+    ค้นหา
+  </button>
 
+  <div id="searchResult" class="space-y-2"></div>
+
+  <button onclick="saveSurvey()" class="btn-pink w-full py-3 mt-4">
+    💾 บันทึก
+  </button>
+</div>
+
+<!-- ================= SCRIPT ================= -->
 <script src="js/api.js"></script>
 
 <script>
-const state = {
-  deptId: null,
-  deptName: null,
-  activityId: null,
-  assets: []
+let CURRENT_DEPT = null;
+let SELECTED_ASSETS = [];
+
+// ================= INIT =================
+window.onload = () => {
+  showPage('dept');
 };
 
-// ===== CORE =====
-function showLoading(show){
-  document.querySelector('.loading-overlay')
-    .classList.toggle('show', show);
-}
-
-function showPopup(type,msg){
-  const el = document.getElementById('popup');
-  const box = el.querySelector('.popup-box');
-
-  box.className = 'popup-box ' + type;
-  box.innerHTML = msg;
-
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),2000);
-}
-
+// ================= PAGE =================
 function showPage(page){
-  document.querySelectorAll('.page')
-    .forEach(p=>p.classList.add('hidden'));
+  document.querySelectorAll('[id^=page-]')
+    .forEach(p => p.classList.add('hidden'));
 
-  document.getElementById(page)
+  document.getElementById('page-' + page)
     .classList.remove('hidden');
 
-  if(page === 'department') loadDepartments();
-  if(page === 'detail') loadDetail();
+  if(page === 'dept') loadDepartments();
 }
 
-// ===== LOAD DEPT =====
+// ================= LOADING =================
+function showLoading(v=true){
+  document.getElementById('loading')
+    .classList.toggle('show', v);
+}
+
+// ================= LOAD DEPT =================
 async function loadDepartments(){
+  showLoading(true);
+
   const res = await api('getDepartmentsFast');
 
-  const data = res.data || res; // ✅ แก้ตรงนี้
+  const data = res.data || res; // 🔥 FIX รองรับ 2 แบบ
 
   renderDepartments(data);
+
+  showLoading(false);
 }
 
+// ================= RENDER DEPT =================
 function renderDepartments(list){
-  const el = document.getElementById('deptList');
+  const box = document.getElementById('deptList');
+  box.innerHTML = '';
 
-  el.innerHTML = list.map(d => `
-    <div class="card" style="padding:16px;margin-bottom:12px">
-      <div><b>${d.deptName}</b></div>
-      <div>${d.building || ''} ชั้น ${d.floor || ''}</div>
-
-      <button class="btn-pink" style="margin-top:10px"
+  list.forEach(d=>{
+    box.innerHTML += `
+      <div class="card p-4 cursor-pointer"
         onclick="openDept('${d.deptId}','${d.deptName}')">
-        เลือกหน่วยงาน
-      </button>
-    </div>
-  `).join('');
+
+        <h3 class="font-bold">${d.deptName}</h3>
+        <p class="text-sm text-gray-500">
+          ${d.building || '-'} ชั้น ${d.floor || '-'}
+        </p>
+      </div>
+    `;
+  });
 }
 
-// ===== OPEN SURVEY =====
+// ================= OPEN DEPT =================
 function openDept(id,name){
-  state.deptId = id;
-  state.deptName = name;
+  CURRENT_DEPT = {id,name};
+  SELECTED_ASSETS = [];
+
+  document.getElementById('deptName').innerText = name;
+  document.getElementById('deptId').innerText = id;
+
+  document.getElementById('searchResult').innerHTML = '';
 
   showPage('survey');
-  renderSurvey();
 }
 
-// ===== SURVEY =====
-function renderSurvey(){
-  document.getElementById('survey').innerHTML = `
-    <div class="card" style="padding:16px">
-      <h3>${state.deptName}</h3>
-
-      <input id="searchInput"
-        placeholder="ค้นหาครุภัณฑ์"
-        style="width:100%;padding:10px;margin-top:10px">
-
-      <button class="btn-pink" style="margin-top:10px"
-        onclick="searchAsset()">
-        ค้นหา
-      </button>
-
-      <div id="searchResult" style="margin-top:10px"></div>
-
-      <button class="btn-pink" style="margin-top:16px"
-        onclick="saveSurvey()">
-        บันทึก
-      </button>
-    </div>
-  `;
-}
-
-// ===== SEARCH =====
+// ================= SEARCH =================
 async function searchAsset(){
-  const q = document.getElementById('searchInput').value;
-  const res = await api('searchAssetsSafe',{query:q});
+  const q = document.getElementById('searchBox').value.trim();
+  if(!q) return;
 
-  document.getElementById('searchResult').innerHTML =
-    res.data.map(a=>`
-      <div class="card" style="padding:10px;margin-top:8px">
-        ${a.AssetID}
+  showLoading(true);
+
+  const res = await api('searchAssetsSafe&query='+q);
+
+  const data = res.data || res;
+
+  const box = document.getElementById('searchResult');
+  box.innerHTML = '';
+
+  data.forEach(a=>{
+    box.innerHTML += `
+      <div class="card p-3 flex justify-between items-center">
+        <span>${a.AssetID}</span>
+        <button class="btn-pink px-3 py-1"
+          onclick="addAsset('${a.AssetID}')">
+          +
+        </button>
       </div>
-    `).join('');
+    `;
+  });
+
+  showLoading(false);
 }
 
-// ===== SAVE =====
+// ================= ADD =================
+function addAsset(id){
+  if(!SELECTED_ASSETS.includes(id)){
+    SELECTED_ASSETS.push(id);
+    alert('เพิ่มแล้ว: ' + id);
+  }
+}
+
+// ================= SAVE =================
 async function saveSurvey(){
-  const res = await apiPost('saveSurvey',{
-    deptId: state.deptId,
-    deptName: state.deptName,
-    assets: state.assets
+  if(!CURRENT_DEPT) return;
+
+  showLoading(true);
+
+  await apiPost({
+    action:'saveSurvey',
+    deptId: CURRENT_DEPT.id,
+    deptName: CURRENT_DEPT.name,
+    assets: SELECTED_ASSETS.map(a=>({AssetID:a}))
   });
 
-  state.activityId = res.data.activityId;
+  showLoading(false);
 
-  showPopup('success','บันทึกสำเร็จ');
-  showPage('detail');
+  alert('บันทึกสำเร็จ');
+  showPage('dept');
 }
-
-// ===== DETAIL =====
-async function loadDetail(){
-  const res = await api('getSurveyDetail',{
-    activityId: state.activityId
-  });
-
-  document.getElementById('detail').innerHTML = `
-    <div class="card" style="padding:16px">
-      <h3>${res.data.deptName}</h3>
-
-      <pre>${JSON.stringify(res.data,null,2)}</pre>
-
-      <button class="btn-pink" style="margin-top:10px"
-        onclick="confirmSurvey()">
-        ยืนยัน
-      </button>
-    </div>
-  `;
-}
-
-// ===== CONFIRM =====
-async function confirmSurvey(){
-  await apiPost('confirmSurvey',{
-    activityId: state.activityId,
-    signer: 'user',
-    signature: 'base64'
-  });
-
-  showPopup('success','ยืนยันสำเร็จ');
-}
-
-// ===== INIT =====
-showPage('department');
 </script>
 
 </body>
