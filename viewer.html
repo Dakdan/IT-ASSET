@@ -85,8 +85,6 @@ body { font-family: 'Kanit', sans-serif; background:#f9f9f9; margin:0; padding:0
   </div>
 </div>
 
-<script src="js/api.js"></script>
-
 <script>
 let scanner = null;
 
@@ -108,8 +106,11 @@ function closePopup(){
 
 /* ================= NORMALIZE API ================= */
 function normalize(res){
-  if(res && res.data) return res.data;
-  return res;
+  if(!res) return [];
+  if(Array.isArray(res)) return res;       // รองรับ api() return array ตรง ๆ
+  if(res.data) return res.data;            // รองรับ data
+  if(res.result) return res.result;        // รองรับ result
+  return [];
 }
 
 /* ================= ESCAPE REGEX ================= */
@@ -145,15 +146,16 @@ function renderResult(data){
   }
 
   data.forEach(item=>{
+    const assetId = item.AssetID || item.assetID || item.id || "ไม่ระบุ";
     const div = document.createElement("div");
     div.className = "card p-4 cursor-pointer active:scale-95";
     div.innerHTML = `
       <div class="font-bold text-pink-700">
-        ${highlight(item.AssetID)}
+        ${highlight(assetId)}
       </div>
       <div class="text-sm text-gray-500 mt-1">กดเพื่อดูรายละเอียด</div>
     `;
-    div.onclick = () => handleViewDetail(item.AssetID);
+    div.onclick = () => handleViewDetail(assetId);
     el.appendChild(div);
   });
 }
@@ -192,13 +194,14 @@ function renderDepartments(data){
     return;
   }
   data.forEach(d=>{
+    const deptId = d.deptId || d.id || "ไม่ระบุ";
     const div = document.createElement("div");
     div.className = "card p-3 cursor-pointer active:scale-95";
     div.innerHTML = `
-      <div class="font-bold text-pink-700">${d.deptName}</div>
+      <div class="font-bold text-pink-700">${d.deptName || "ไม่ระบุ"}</div>
       <div class="text-sm text-gray-500">${d.building || ''} ชั้น ${d.floor || ''}</div>
     `;
-    div.onclick = () => handleSelectDept(d.deptId);
+    div.onclick = () => handleSelectDept(deptId);
     el.appendChild(div);
   });
 }
@@ -263,6 +266,32 @@ async function stopScanner(){
 window.onload = () => {
   loadDepartments();
 };
+
+/* ================= API ================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
+
+async function api(action, params = {}) {
+  try {
+    showLoading(true);
+    const url = new URL(API_URL);
+    url.searchParams.append("action", action);
+    Object.keys(params).forEach(k => {
+      if (params[k] !== undefined && params[k] !== null) {
+        url.searchParams.append(k, params[k]);
+      }
+    });
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP ERROR: " + res.status);
+    const json = await res.json();
+    return json; // ✅ return ทั้ง json ให้ normalize() จัดการ
+  } catch (err) {
+    console.error("API ERROR:", err);
+    alert("เกิดข้อผิดพลาดในการเชื่อมต่อ API");
+    return null;
+  } finally {
+    showLoading(false);
+  }
+}
 </script>
 
 </body>
