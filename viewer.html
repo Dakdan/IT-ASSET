@@ -83,7 +83,10 @@ function showPage(page){
 // ===== LOAD DEPT =====
 async function loadDepartments(){
   const res = await api('getDepartmentsFast');
-  renderDepartments(res.data);
+
+  const data = res.data || res; // ✅ แก้ตรงนี้
+
+  renderDepartments(data);
 }
 
 function renderDepartments(list){
