@@ -7,20 +7,33 @@
 <title>IT Asset Viewer</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-.search-highlight {
-  background: #ffe4ec;
-  padding: 2px 4px;
-  border-radius: 6px;
-}
+body { font-family: 'Kanit', sans-serif; background:#f9f9f9; margin:0; padding:0; }
+.pink-gradient-header { background: linear-gradient(90deg, #f43f5e, #ec4899); }
+.card { background:#fff; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+.btn-pink { background:#ec4899; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600; transition:transform 0.1s; }
+.btn-pink:hover { opacity:0.9; }
+.btn-pink:active { transform:scale(0.95); }
+.search-highlight { background: #ffe4ec; padding: 2px 4px; border-radius: 6px; }
+
+/* Overlay & Modal */
+.loading-overlay, .popup-overlay, .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; justify-content:center; align-items:center; z-index:999; }
+.loading-overlay.show, .popup-overlay.show, .modal-overlay.show { display:flex; }
+.loading-overlay { background: rgba(255,255,255,0.8); flex-direction:column; }
+.loading-spinner { border:6px solid #f3f3f3; border-top:6px solid #ec4899; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; }
+@keyframes spin { 100%{ transform:rotate(360deg); } }
+.modal-card, .popup-box { background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); max-width:400px; width:90%; }
+.popup-box.success { border-left:6px solid #22c55e; }
+.popup-box.error { border-left:6px solid #ef4444; }
+.modal-overlay { background: rgba(0,0,0,0.5); }
+
+/* Responsive */
+@media(max-width:500px){ .card { padding:12px; } .btn-pink { padding:10px; } }
 </style>
 
 </head>
-
 <body>
 
 <!-- LOADING -->
@@ -38,17 +51,11 @@
 <div class="p-4 space-y-4">
 
   <!-- SEARCH -->
-  <div class="card p-4">
+  <div class="card p-4 space-y-3">
     <input id="searchInput" class="w-full p-3 border rounded-xl"
       placeholder="ค้นหา Asset ID...">
-
-    <button onclick="handleSearch()" class="btn-pink w-full mt-3 p-3">
-      🔍 ค้นหา
-    </button>
-
-    <button onclick="startScanner()" class="btn-pink w-full mt-3 p-3">
-      📷 สแกน QR Code
-    </button>
+    <button onclick="handleSearch()" class="btn-pink w-full mt-2 p-3">🔍 ค้นหา</button>
+    <button onclick="startScanner()" class="btn-pink w-full mt-2 p-3">📷 สแกน QR Code</button>
   </div>
 
   <!-- RESULT -->
@@ -66,9 +73,7 @@
 <div id="scannerModal" class="modal-overlay">
   <div class="modal-card">
     <div id="reader"></div>
-    <button onclick="stopScanner()" class="btn-pink w-full mt-3 p-2">
-      ปิด
-    </button>
+    <button onclick="stopScanner()" class="btn-pink w-full mt-3 p-2">ปิด</button>
   </div>
 </div>
 
@@ -97,7 +102,6 @@ function showPopup(msg, type="error"){
   document.getElementById("popupText").innerText = msg;
   document.getElementById("popup").classList.add("show");
 }
-
 function closePopup(){
   document.getElementById("popup").classList.remove("show");
 }
@@ -108,15 +112,26 @@ function normalize(res){
   return res;
 }
 
+/* ================= ESCAPE REGEX ================= */
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /* ================= SEARCH ================= */
 async function handleSearch(){
   const q = document.getElementById("searchInput").value.trim();
   if(!q) return showPopup("กรุณากรอกคำค้น");
 
-  let res = await api('searchAssetsSafe', { query: q });
-  const data = normalize(res);
-
-  renderResult(data);
+  showLoading(true);
+  try {
+    let res = await api('searchAssetsSafe', { query: q });
+    const data = normalize(res);
+    renderResult(data);
+  } catch(err) {
+    showPopup("เกิดข้อผิดพลาดในการค้นหา");
+  } finally {
+    showLoading(false);
+  }
 }
 
 /* ================= RESULT ================= */
@@ -132,16 +147,13 @@ function renderResult(data){
   data.forEach(item=>{
     const div = document.createElement("div");
     div.className = "card p-4 cursor-pointer active:scale-95";
-
     div.innerHTML = `
       <div class="font-bold text-pink-700">
         ${highlight(item.AssetID)}
       </div>
       <div class="text-sm text-gray-500 mt-1">กดเพื่อดูรายละเอียด</div>
     `;
-
     div.onclick = () => handleViewDetail(item.AssetID);
-
     el.appendChild(div);
   });
 }
@@ -155,85 +167,80 @@ function handleViewDetail(id){
 function highlight(text){
   const q = document.getElementById("searchInput").value.trim();
   if(!q) return text;
-
-  const reg = new RegExp(`(${q})`, 'gi');
+  const reg = new RegExp(`(${escapeRegExp(q)})`, 'gi');
   return text.replace(reg, `<span class="search-highlight">$1</span>`);
 }
 
 /* ================= DEPARTMENT ================= */
 async function loadDepartments(){
-  const res = await api('getDepartments');
-
-  const data = res.data || res; // 🔥 ตัวนี้สำคัญ
-
-  renderDepartments(data);
+  showLoading(true);
+  try {
+    const res = await api('getDepartments');
+    const data = normalize(res);
+    renderDepartments(data);
+  } catch(err){
+    showPopup("ไม่สามารถโหลดหน่วยงานได้");
+  } finally {
+    showLoading(false);
+  }
 }
 function renderDepartments(data){
   const el = document.getElementById("deptList");
   el.innerHTML = "";
-
-  if(!data || data.length === 0){
+  if(!data || data.length===0){
     el.innerHTML = `<div class="text-gray-500 text-center">ไม่พบหน่วยงาน</div>`;
     return;
   }
-
   data.forEach(d=>{
     const div = document.createElement("div");
     div.className = "card p-3 cursor-pointer active:scale-95";
-
     div.innerHTML = `
       <div class="font-bold text-pink-700">${d.deptName}</div>
-      <div class="text-sm text-gray-500">
-        ${d.building || ''} ชั้น ${d.floor || ''}
-      </div>
+      <div class="text-sm text-gray-500">${d.building || ''} ชั้น ${d.floor || ''}</div>
     `;
-
     div.onclick = () => handleSelectDept(d.deptId);
-
     el.appendChild(div);
   });
 }
-
 async function handleSelectDept(deptId){
-  let res = await api('getSurveyDetailByDept', { deptId });
-  const data = normalize(res);
-
-  if(!data || data.error){
-    showPopup("ไม่พบข้อมูลหน่วยงาน");
-    return;
+  showLoading(true);
+  try {
+    let res = await api('getSurveyDetailByDept', { deptId });
+    const data = normalize(res);
+    if(!data || data.error){
+      showPopup("ไม่พบข้อมูลหน่วยงาน");
+      return;
+    }
+    showPopup("เลือกหน่วยงาน: " + deptId, "success");
+  } catch(err){
+    showPopup("เกิดข้อผิดพลาด");
+  } finally {
+    showLoading(false);
   }
-
-  showPopup("เลือกหน่วยงาน: " + deptId, "success");
 }
 
 /* ================= SCANNER ================= */
 function startScanner(){
+  if(scanner) return; // ป้องกันเปิดซ้ำ
   document.getElementById("scannerModal").classList.add("show");
 
   setTimeout(async ()=>{
     try{
       scanner = new Html5Qrcode("reader");
-
       await scanner.start(
         { facingMode: "environment" },
         { fps: 15, qrbox: 250 },
         (decodedText)=>{
-
           let raw = decodedText.trim();
           let id = raw;
-
           if(raw.includes('IcmAssetDetail/')){
             id = raw.split('IcmAssetDetail/')[1].split('/')[0];
           }
-
           document.getElementById("searchInput").value = id;
-
           stopScanner();
-
           handleSearch();
         }
       );
-
     }catch(err){
       showPopup("กรุณาอนุญาตกล้อง");
       stopScanner();
@@ -249,7 +256,6 @@ async function stopScanner(){
       scanner = null;
     }
   }catch(e){}
-
   document.getElementById("scannerModal").classList.remove("show");
 }
 
