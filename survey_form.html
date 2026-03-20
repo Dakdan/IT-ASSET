@@ -203,7 +203,49 @@
             if (query.length < 3) return Swal.fire("แจ้งเตือน", "กรุณาระบุเลขอย่างน้อย 3 หลัก", "info");
             handleFetchDetail(query);
         }
+            // ฟังก์ชันทำ Highlight (เน้นคำที่ค้นหา)
+function getHighlightedText(text, highlight) {
+    if (!highlight.trim()) return text;
+    const stringText = String(text);
+    const parts = stringText.split(new RegExp(`(${highlight})`, 'gi'));
+    
+    return parts.map(part => 
+        part.toLowerCase() === highlight.toLowerCase() 
+        ? `<b class="text-pink-600 bg-yellow-100 px-0.5 rounded">${part}</b>` 
+        : part
+    ).join('');
+}
 
+// ฟังก์ชันแสดงรายการที่ค้นหาเจอ
+function renderSearchResults(items) {
+    const query = document.getElementById('assetSearchInput').value;
+    let html = '';
+    
+    if (items.length === 0) {
+        html = '<p class="text-center text-gray-400 text-sm py-4">-- ไม่พบข้อมูล --</p>';
+    } else {
+        items.forEach(item => {
+            // ทำ Highlight เฉพาะข้อมูลจากคอลัมน์ E (item.SearchData)
+            const highlightedE = getHighlightedText(item.SearchData, query);
+            
+            html += `
+            <div onclick='openAssetModal(${JSON.stringify(item)})' 
+                 class="bg-white p-4 rounded-2xl border-2 border-pink-50 hover:border-pink-200 transition-all cursor-pointer shadow-sm mb-2 animate-fade-in">
+                <div class="flex justify-between items-center">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] bg-pink-500 text-white px-2 py-0.5 rounded-full font-bold">KEY: ${item.KeyID}</span>
+                        </div>
+                        <p class="text-sm text-gray-700 leading-tight">${highlightedE}</p>
+                        <p class="text-[11px] text-gray-400 mt-1 italic">${item.ItemName || ''}</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-pink-200 ml-2"></i>
+                </div>
+            </div>`;
+        });
+    }
+    document.getElementById('assetSearchResult').innerHTML = html;
+}
         async function handleFetchDetail(id) {
             const data = await searchAssets(id);
             if (data && data.length > 0) {
