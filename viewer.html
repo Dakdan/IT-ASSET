@@ -4,190 +4,172 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>IT Asset Survey</title>
+<title>IT Asset Viewer</title>
 
-<!-- FONT -->
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
 
-<!-- STYLE (ของคุณ) -->
+<!-- ใช้ style กลางของคุณ -->
 <link rel="stylesheet" href="style.css">
 
-<!-- 🔥 FIX สำคัญ -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+
 <style>
-.hidden{display:none !important;}
+.search-highlight {
+  background: #ffe4ec;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
 </style>
 
 </head>
+
 <body>
 
 <!-- LOADING -->
 <div id="loading" class="loading-overlay">
   <div class="loading-spinner"></div>
-  <p class="mt-4">กำลังโหลด...</p>
+  <div class="mt-3 text-pink-600">กำลังโหลด...</div>
 </div>
 
 <!-- HEADER -->
-<div class="pink-gradient-header p-4 text-white text-center">
-  <h1 class="text-lg font-bold">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-  <p class="text-sm">IT UDON HOSP</p>
+<div class="pink-gradient-header p-5 text-white text-center">
+  <h1 class="text-xl font-bold">ระบบตรวจสอบครุภัณฑ์</h1>
 </div>
 
-<!-- ================= PAGE: DEPARTMENT ================= -->
-<div id="page-dept" class="p-4">
-  <div id="deptList" class="space-y-3"></div>
-</div>
+<!-- CONTENT -->
+<div class="p-4 space-y-4">
 
-<!-- ================= PAGE: SURVEY ================= -->
-<div id="page-survey" class="p-4 hidden">
-  <button onclick="showPage('dept')" class="btn-pink px-4 py-2 mb-4">← กลับ</button>
+  <!-- SEARCH -->
+  <div class="card p-4">
+    <input id="searchInput" class="w-full p-3 border rounded-xl"
+      placeholder="ค้นหา Asset ID...">
+      
+    <button onclick="handleSearch()" class="btn-pink w-full mt-3 p-3">
+      ค้นหา
+    </button>
 
-  <div class="card p-4 mb-4">
-    <h2 id="deptName" class="font-bold text-lg"></h2>
-    <p id="deptId" class="text-sm text-gray-500"></p>
+    <button onclick="startScanner()" class="btn-pink w-full mt-3 p-3">
+      📷 สแกน QR Code
+    </button>
   </div>
 
-  <input id="searchBox" type="text" placeholder="ค้นหา AssetID..."
-    class="w-full p-3 rounded-xl border mb-3">
+  <!-- RESULT -->
+  <div id="result" class="space-y-3"></div>
 
-  <button onclick="searchAsset()" class="btn-pink w-full py-2 mb-4">
-    ค้นหา
-  </button>
-
-  <div id="searchResult" class="space-y-2"></div>
-
-  <button onclick="saveSurvey()" class="btn-pink w-full py-3 mt-4">
-    💾 บันทึก
-  </button>
 </div>
 
-<!-- ================= SCRIPT ================= -->
+<!-- MODAL SCANNER -->
+<div id="scannerModal" class="modal-overlay">
+  <div class="modal-card">
+    <div id="reader"></div>
+    <button onclick="stopScanner()" class="btn-pink w-full mt-3 p-2">
+      ปิด
+    </button>
+  </div>
+</div>
+
+<!-- POPUP -->
+<div id="popup" class="popup-overlay">
+  <div id="popupBox" class="popup-box">
+    <div id="popupText"></div>
+    <button onclick="closePopup()" class="btn-pink mt-3 p-2 w-full">ตกลง</button>
+  </div>
+</div>
+
 <script src="js/api.js"></script>
 
 <script>
-let CURRENT_DEPT = null;
-let SELECTED_ASSETS = [];
+let scanner = null;
 
-// ================= INIT =================
-window.onload = () => {
-  showPage('dept');
-};
-
-// ================= PAGE =================
-function showPage(page){
-  document.querySelectorAll('[id^=page-]')
-    .forEach(p => p.classList.add('hidden'));
-
-  document.getElementById('page-' + page)
-    .classList.remove('hidden');
-
-  if(page === 'dept') loadDepartments();
+function showLoading(show){
+  document.getElementById('loading').classList.toggle('show', show);
 }
 
-// ================= LOADING =================
-function showLoading(v=true){
-  document.getElementById('loading')
-    .classList.toggle('show', v);
+function showPopup(msg, type="error"){
+  const box = document.getElementById("popupBox");
+  box.className = "popup-box " + type;
+  document.getElementById("popupText").innerText = msg;
+  document.getElementById("popup").classList.add("show");
 }
 
-// ================= LOAD DEPT =================
-async function loadDepartments(){
-  showLoading(true);
-
-  const res = await api('getDepartmentsFast');
-
-  const data = res.data || res; // 🔥 FIX รองรับ 2 แบบ
-
-  renderDepartments(data);
-
-  showLoading(false);
+function closePopup(){
+  document.getElementById("popup").classList.remove("show");
 }
 
-// ================= RENDER DEPT =================
-function renderDepartments(list){
-  const box = document.getElementById('deptList');
-  box.innerHTML = '';
+/* ================= SEARCH ================= */
+async function handleSearch(){
+  const q = document.getElementById("searchInput").value.trim();
+  if(!q) return showPopup("กรุณากรอกคำค้น");
 
-  list.forEach(d=>{
-    box.innerHTML += `
-      <div class="card p-4 cursor-pointer"
-        onclick="openDept('${d.deptId}','${d.deptName}')">
+  const data = await api('searchAssetsSafe', { query: q });
 
-        <h3 class="font-bold">${d.deptName}</h3>
-        <p class="text-sm text-gray-500">
-          ${d.building || '-'} ชั้น ${d.floor || '-'}
-        </p>
-      </div>
-    `;
-  });
+  renderResult(data);
 }
 
-// ================= OPEN DEPT =================
-function openDept(id,name){
-  CURRENT_DEPT = {id,name};
-  SELECTED_ASSETS = [];
+/* ================= RESULT ================= */
+function renderResult(data){
+  const el = document.getElementById("result");
+  el.innerHTML = "";
 
-  document.getElementById('deptName').innerText = name;
-  document.getElementById('deptId').innerText = id;
-
-  document.getElementById('searchResult').innerHTML = '';
-
-  showPage('survey');
-}
-
-// ================= SEARCH =================
-async function searchAsset(){
-  const q = document.getElementById('searchBox').value.trim();
-  if(!q) return;
-
-  showLoading(true);
-
-  const res = await api('searchAssetsSafe&query='+q);
-
-  const data = res.data || res;
-
-  const box = document.getElementById('searchResult');
-  box.innerHTML = '';
-
-  data.forEach(a=>{
-    box.innerHTML += `
-      <div class="card p-3 flex justify-between items-center">
-        <span>${a.AssetID}</span>
-        <button class="btn-pink px-3 py-1"
-          onclick="addAsset('${a.AssetID}')">
-          +
-        </button>
-      </div>
-    `;
-  });
-
-  showLoading(false);
-}
-
-// ================= ADD =================
-function addAsset(id){
-  if(!SELECTED_ASSETS.includes(id)){
-    SELECTED_ASSETS.push(id);
-    alert('เพิ่มแล้ว: ' + id);
+  if(!data || data.length === 0){
+    el.innerHTML = `<div class="text-center text-gray-500">ไม่พบข้อมูล</div>`;
+    return;
   }
+
+  data.forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "card p-4";
+    div.innerHTML = `
+      <div class="font-bold text-pink-700">${item.AssetID}</div>
+    `;
+    el.appendChild(div);
+  });
 }
 
-// ================= SAVE =================
-async function saveSurvey(){
-  if(!CURRENT_DEPT) return;
+/* ================= SCANNER ================= */
+function startScanner(){
+  document.getElementById("scannerModal").classList.add("show");
 
-  showLoading(true);
+  setTimeout(async ()=>{
+    try{
+      scanner = new Html5Qrcode("reader");
 
-  await apiPost({
-    action:'saveSurvey',
-    deptId: CURRENT_DEPT.id,
-    deptName: CURRENT_DEPT.name,
-    assets: SELECTED_ASSETS.map(a=>({AssetID:a}))
-  });
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 15, qrbox: 250 },
+        (decodedText)=>{
 
-  showLoading(false);
+          let raw = decodedText.trim();
+          let id = raw;
 
-  alert('บันทึกสำเร็จ');
-  showPage('dept');
+          if(raw.includes('IcmAssetDetail/')){
+            id = raw.split('IcmAssetDetail/')[1].split('/')[0];
+          }
+
+          document.getElementById("searchInput").value = id;
+
+          stopScanner();
+
+          handleSearch(); // 🔥 ยิงค้นหาทันที
+        }
+      );
+
+    }catch(err){
+      showPopup("กรุณาอนุญาตกล้อง");
+      stopScanner();
+    }
+  },300);
+}
+
+async function stopScanner(){
+  try{
+    if(scanner){
+      await scanner.stop();
+      scanner.clear();
+      scanner = null;
+    }
+  }catch(e){}
+  document.getElementById("scannerModal").classList.remove("show");
 }
 </script>
 
