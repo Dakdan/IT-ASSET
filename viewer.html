@@ -162,7 +162,7 @@ function highlight(text){
 
 /* ================= DEPARTMENT ================= */
 async function loadDepartments(){
-  const res = await api('getDepartmentsFast');
+  const res = await api('getDepartments');
 
   const data = res.data || res; // 🔥 ตัวนี้สำคัญ
 
