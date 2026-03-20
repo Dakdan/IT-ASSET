@@ -210,60 +210,73 @@
         };
 
         // --- 2. ระบบค้นหา Live Search (Debounce 300ms) ---
-        let searchTimeout;
-        async function handleLiveSearch(value) {
-            const term = value.trim().toLowerCase();
-            const container = document.getElementById('assetSearchResult');
+      let allAssets = []; // เก็บข้อมูลทั้งหมดไว้ที่นี่
 
-            if (!term) {
-                container.innerHTML = "";
-                return;
-            }
+window.onload = async () => {
+    // 1. โหลดข้อมูลหน่วยงาน
+    if (!currentDeptId) return;
+    const res = await getDeptInfo(currentDeptId);
+    if (res) {
+        document.getElementById('displayDeptName').innerText = res.deptName;
+        // ... แสดงข้อมูลอื่นๆ ...
+    }
 
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(async () => {
-                // เรียก API ที่ฝั่ง Code.gs (ต้องใช้ .endsWith ตาม Logic React)
-                const data = await searchAssets(term); 
-                renderSearchResults(data, term);
-            }, 300);
-        }
+    // 2. โหลดข้อมูลครุภัณฑ์ทั้งหมดมาเตรียมไว้ (เพื่อให้ค้นหาได้ทันทีไม่รอ Overlay)
+    allAssets = await getAllAssets(); // ฟังก์ชันใน api.js ที่ดึงข้อมูลทั้งหมด
+};
 
-        // --- 3. แสดงผลและ Highlight (Logic จาก React) ---
-        function renderSearchResults(items, highlight) {
-            const container = document.getElementById('assetSearchResult');
-            let html = '';
+// ฟังก์ชันกรองข้อมูล (Logic: endsWith จากขวาไปซ้าย ตาม React เป๊ะๆ)
+function filterAssets(value) {
+    const term = value.trim().toLowerCase();
+    const container = document.getElementById('assetSearchResult');
+    
+    if (!term) {
+        container.innerHTML = "";
+        return;
+    }
 
-            if (!items || items.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400 py-4 text-xs">-- ไม่พบข้อมูล --</p>';
-                return;
-            }
+    // ใช้ endsWith เหมือนใน React เป๊ะ: ค้นหาจากท้ายข้อความ
+    const filtered = allAssets.filter(asset => 
+        String(asset.AssetID || "").toLowerCase().endsWith(term)
+    ).slice(0, 30); // จำกัด 30 รายการตาม React
 
-            items.forEach(item => {
-                // ไฮไลต์ข้อความ (Logic จาก getHighlightedText ใน React)
-                const text = String(item.AssetID || "");
-                const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
-                const highlightedHTML = parts.map(p => 
-                    p.toLowerCase() === highlight.toLowerCase() 
-                    ? `<span class="bg-yellow-200 text-pink-600 font-bold px-0.5">${p}</span>` 
-                    : p
-                ).join('');
+    renderSearchResults(filtered, term);
+}
 
-                html += `
-                <div onclick='openAssetModal(${JSON.stringify(item)})' 
-                     class="bg-white p-3 rounded-xl border border-pink-50 hover:border-pink-200 mb-2 cursor-pointer shadow-sm animate-fade-in">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <p class="text-[10px] text-gray-400 font-mono font-bold">KEY: ${item.KeyID}</p>
-                            <p class="text-sm text-gray-800 font-medium">${highlightedHTML}</p>
-                            <p class="text-[11px] text-gray-500">${item.ItemName || ''}</p>
-                        </div>
-                        <i class="fas fa-plus-circle text-pink-300 text-lg"></i>
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
+function renderSearchResults(items, highlight) {
+    const container = document.getElementById('assetSearchResult');
+    let html = '';
 
+    if (items.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-2 text-xs">-- ไม่พบข้อมูลท้ายรหัสนี้ --</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        // ทำ Highlight เฉพาะส่วนที่ตรงกับเลขท้ายที่พิมพ์
+        const text = String(item.AssetID);
+        const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+        const highlightedHTML = parts.map(p => 
+            p.toLowerCase() === highlight.toLowerCase() 
+            ? `<span class="bg-yellow-200 text-pink-600 font-bold">${p}</span>` 
+            : p
+        ).join('');
+
+        html += `
+        <div onclick='openAssetModal(${JSON.stringify(item)})' 
+             class="bg-white p-3 rounded-xl border border-pink-50 hover:border-pink-200 mb-2 cursor-pointer shadow-sm">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-gray-400 font-mono">KEY: ${item.KeyID}</p>
+                    <p class="text-sm text-gray-800 font-medium">${highlightedHTML}</p>
+                    <p class="text-[11px] text-gray-500">${item.ItemName || ''}</p>
+                </div>
+                <i class="fas fa-plus-circle text-pink-300"></i>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
         // --- 4. จัดการ Modal และการเลือกครุภัณฑ์ ---
         function openAssetModal(item) {
             // ล้างผลการค้นหา
