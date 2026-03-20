@@ -82,18 +82,3 @@ async function apiPost(action, data = {}) {
   }
 }
 
-/**
- * =========================
- * HELPER (OPTIONAL)
- * =========================
- */
-
-// ดึงข้อมูลให้รองรับทั้ง {data:[]} และ []
-function getData(res) {
-  return res?.data || res || [];
-}
-
-// เช็ค success
-function isSuccess(res) {
-  return res && (res.status === "success" || !res.error);
-}
