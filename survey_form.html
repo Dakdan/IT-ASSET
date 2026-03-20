@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แบบสำรวจครุภัณฑ์ - IT UDON HOSP</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    /* ใช้ Style กลางที่ส่งมา */
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: linear-gradient(135deg, #fff, #fce4ec, #f8bbd0);
+      min-height: 100vh;
+    }
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(6px); display: none; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 9999;
+    }
+    .loading-overlay.show { display: flex; }
+    .loading-spinner {
+      width: 50px; height: 50px; border: 4px solid rgba(233, 30, 99, 0.15);
+      border-top: 4px solid #e91e63; border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(5px); display: none; justify-content: center;
+      align-items: center; z-index: 10000; padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-card {
+      background: #fff; width: 100%; max-width: 480px; border-radius: 28px;
+      padding: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+    }
+    .btn-pink {
+      background: linear-gradient(135deg, #d81b60, #f06292);
+      color: #fff; border-radius: 16px; transition: all 0.2s ease;
+    }
+    .card { background: rgba(255,255,255,0.95); border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    .pink-gradient-header {
+      background: linear-gradient(135deg, #ad1457 0%, #f06292 100%);
+      border-bottom-left-radius: 40px; border-bottom-right-radius: 40px;
+    }
+    canvas { border: 2px dashed #f8bbd0; background: #fff5f8; border-radius: 16px; width: 100%; height: 200px; }
+    
+    body::after {
+      content: "IT UDON HOSP"; position: fixed; bottom: 20px; right: 20px;
+      font-size: 40px; color: rgba(233,30,99,0.05); pointer-events: none; font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p class="mt-4 text-pink-600">กำลังดำเนินการ...</p>
+  </div>
+
+  <header class="pink-gradient-header p-8 text-white text-center shadow-lg">
+    <h1 class="text-2xl font-bold">แบบบันทึกการสำรวจครุภัณฑ์</h1>
+    <p class="opacity-90" id="displayDeptName">กำลังโหลดข้อมูลหน่วยงาน...</p>
+  </header>
+
+  <main class="container mx-auto max-w-2xl p-4 -mt-6">
+    <div class="card p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-pink-800">ข้อมูลหน่วยงาน</h2>
+        <span id="displayDeptId" class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-sm"></span>
+      </div>
+      <p id="displayBuilding" class="text-gray-600"></p>
+    </div>
+
+    <div class="card p-6 mb-6">
+      <h2 class="text-lg font-semibold text-pink-800 mb-4">รายการครุภัณฑ์ที่พบ</h2>
+      
+      <div class="flex gap-2 mb-4">
+        <input type="text" id="assetSearchInput" placeholder="สแกน หรือ พิมพ์เลขครุภัณฑ์" 
+               class="flex-1 border-2 border-pink-50 rounded-xl px-4 py-2 focus:outline-none focus:border-pink-300">
+        <button onclick="handleSearch()" class="btn-pink px-6 py-2 shadow-md">เพิ่ม</button>
+      </div>
+
+      <div id="assetList" class="space-y-2">
+        </div>
+    </div>
+
+    <button onclick="openSignatureModal()" class="btn-pink w-full py-4 text-lg font-medium shadow-xl">
+      ยืนยันข้อมูลและลงชื่อ
+    </button>
+  </main>
+
+  <div id="modalSignature" class="modal-overlay">
+    <div class="modal-card">
+      <h3 class="text-xl font-bold text-pink-800 mb-4">ลงชื่อรับรองข้อมูล</h3>
+      <input type="text" id="signerName" class="w-full border-2 border-pink-50 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:border-pink-300" 
+             placeholder="ชื่อ-นามสกุล หัวหน้าหน่วยงาน/ผู้รับรอง">
+      
+      <canvas id="signature-pad"></canvas>
+      
+      <div class="flex gap-3 mt-6">
+        <button onclick="closeModal()" class="flex-1 py-3 bg-gray-100 rounded-xl text-gray-600">ยกเลิก</button>
+        <button onclick="clearSig()" class="flex-1 py-3 bg-pink-50 rounded-xl text-pink-600">ล้าง</button>
+        <button onclick="finalSubmit()" class="flex-[2] btn-pink py-3 font-bold">บันทึกสำเร็จ</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let signaturePad;
+    let selectedAssets = [];
+    let currentDeptId = new URLSearchParams(window.location.search).get('deptId') || "D001"; // รับจาก URL
+
+    window.onload = async () => {
+      // Setup Signature Pad
+      const canvas = document.getElementById('signature-pad');
+      signaturePad = new SignaturePad(canvas);
+
+      // Load Dept Info
+      const dept = await getDeptInfo(currentDeptId);
+      if (dept) {
+        document.getElementById('displayDeptName').innerText = dept.deptName;
+        document.getElementById('displayDeptId').innerText = dept.deptId;
+        document.getElementById('displayBuilding').innerText = `อาคาร: ${dept.building || '-'}`;
+      }
+    };
+
+    async function handleSearch() {
+      const query = document.getElementById('assetSearchInput').value;
+      if (!query) return;
+
+      const results = await searchAssets(query);
+      if (results && results.length > 0) {
+        const item = results[0];
+        if (!selectedAssets.find(a => a.AssetID === item.AssetID)) {
+          selectedAssets.push(item);
+          renderAssetList();
+        }
+        document.getElementById('assetSearchInput').value = "";
+      } else {
+        Swal.fire("ไม่พบข้อมูล", "ไม่พบเลขครุภัณฑ์นี้ในระบบ", "warning");
+      }
+    }
+
+    function renderAssetList() {
+      const container = document.getElementById('assetList');
+      container.innerHTML = selectedAssets.map((a, index) => `
+        <div class="flex justify-between items-center p-3 bg-pink-50 rounded-xl border border-pink-100">
+          <div>
+            <div class="font-bold text-pink-900">${a.AssetID}</div>
+            <div class="text-xs text-pink-400">${a.Category || 'ไม่ระบุประเภท'}</div>
+          </div>
+          <button onclick="removeItem(${index})" class="text-red-400 p-2">ลบ</button>
+        </div>
+      `).join('');
+    }
+
+    function removeItem(index) {
+      selectedAssets.splice(index, 1);
+      renderAssetList();
+    }
+
+    function openSignatureModal() {
+      if (selectedAssets.length === 0) {
+        return Swal.fire("แจ้งเตือน", "กรุณาเพิ่มครุภัณฑ์อย่างน้อย 1 รายการ", "info");
+      }
+      document.getElementById('modalSignature').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('modalSignature').classList.remove('show');
+    }
+
+    function clearSig() {
+      signaturePad.clear();
+    }
+
+    async function finalSubmit() {
+      const name = document.getElementById('signerName').value;
+      if (!name || signaturePad.isEmpty()) {
+        return Swal.fire("ข้อมูลไม่ครบ", "กรุณากรอกชื่อและลงลายเซ็น", "error");
+      }
+
+      // 1. บันทึก Survey
+      const payload = {
+        deptId: currentDeptId,
+        deptName: document.getElementById('displayDeptName').innerText,
+        assets: selectedAssets
+      };
+      
+      const surveyRes = await saveAssetSurvey(payload);
+      if (!surveyRes.activityId) return Swal.fire("Error", "บันทึกข้อมูลไม่สำเร็จ", "error");
+
+      // 2. อัปโหลดลายเซ็น
+      const sigUrl = await uploadSignatureImage(surveyRes.activityId, signaturePad.toDataURL());
+
+      // 3. Confirm ลง Sheet
+      const confirm = await confirmSurveyResult(surveyRes.activityId, name, sigUrl.url);
+
+      if (confirm) {
+        Swal.fire({
+          title: 'บันทึกสำเร็จ!',
+          text: 'ข้อมูลถูกส่งเข้าระบบเรียบร้อยแล้ว',
+          icon: 'success'
+        }).then(() => {
+          window.location.href = `asset_survey_detail.html?id=${surveyRes.activityId}`;
+        });
+      }
+    }
+  </script>
+</body>
+</html>
