@@ -1,9 +1,27 @@
+/**
+ * ============================================================
+ * API CONFIGURATION & CORE ENGINE
+ * ============================================================
+ */
 const API_URL = "https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
 
 /**
- * =========================
- * GET API
- * =========================
+ * ฟังก์ชันจัดการแสดง/ซ่อน Loading Overlay 
+ * อ้างอิงตาม class .loading-overlay ใน CSS กลาง
+ */
+function showLoading(isVisible) {
+  const loader = document.querySelector('.loading-overlay');
+  if (loader) {
+    if (isVisible) {
+      loader.classList.add('show');
+    } else {
+      loader.classList.remove('show');
+    }
+  }
+}
+
+/**
+ * GET API Method
  */
 async function api(action, params = {}) {
   try {
@@ -19,33 +37,27 @@ async function api(action, params = {}) {
     });
 
     const res = await fetch(url);
-
-    if (!res.ok) {
-      throw new Error("HTTP ERROR: " + res.status);
-    }
+    if (!res.ok) throw new Error("HTTP ERROR: " + res.status);
 
     const json = await res.json();
 
-    // 🔥 แก้ตรงนี้
+    // ตรวจสอบโครงสร้าง safeResponse {status: "success", data: ...}
     if (json.status === "success") {
       return json.data;
     }
-
     return json;
 
   } catch (err) {
-    console.error("API ERROR:", err);
-    alert("เกิดข้อผิดพลาดในการเชื่อมต่อ API");
-    return null;
+    console.error("API GET ERROR:", err);
+    // ใช้ Style การแจ้งเตือนที่เหมาะสม (เช่น Swal หรือ alert)
+    return { status: "error", message: err.toString() };
   } finally {
     showLoading(false);
   }
 }
 
 /**
- * =========================
- * POST API
- * =========================
+ * POST API Method
  */
 async function apiPost(action, data = {}) {
   try {
@@ -53,65 +65,79 @@ async function apiPost(action, data = {}) {
 
     const res = await fetch(API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      // หมายเหตุ: Apps Script ไม่รองรับ preflight OPTIONS ในบางกรณี 
+      // การใช้ fetch แบบธรรมดา (no-cors) อาจมีข้อจำกัดเรื่องการอ่าน Response 
+      // แต่โครงสร้างนี้ใช้สำหรับ Web App ที่ Deploy เป็น Public (Anyone)
       body: JSON.stringify({
         action,
         ...data
       })
     });
 
-    if (!res.ok) {
-      throw new Error("HTTP ERROR: " + res.status);
-    }
+    if (!res.ok) throw new Error("HTTP ERROR: " + res.status);
 
     const json = await res.json();
 
-    // 🔥 รองรับ safeResponse ด้วย (เผื่อใช้ในอนาคต)
     if (json.status === "success") {
       return json.data;
     }
-
     return json;
 
   } catch (err) {
     console.error("API POST ERROR:", err);
-    alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
-    return null;
+    return { status: "error", message: err.toString() };
   } finally {
     showLoading(false);
   }
 }
+
 /**
  * ============================================================
- * ฟังก์ชันเพิ่มเติมสำหรับระบบ Survey
+ * FUNCTIONS FOR ASSET SURVEY SYSTEM
  * ============================================================
  */
 
 /**
- * 1. ฟังก์ชันบันทึกข้อมูลการสำรวจ (Save Survey)
- * ส่งข้อมูล Assets และ DEPT_ID ไปที่ Backend
+ * 1. ดึงข้อมูลหน่วยงานตาม ID (Get Dept Info)
+ * @param {string} deptId 
+ */
+async function getDeptInfo(deptId) {
+  return await api("getDeptInfo", { deptId: deptId });
+}
+
+/**
+ * 2. ค้นหาครุภัณฑ์ในระบบ (Search Asset)
+ * @param {string} query เลขครุภัณฑ์
+ */
+async function searchAssets(query) {
+  return await api("searchAssets", { query: query });
+}
+
+/**
+ * 3. บันทึกข้อมูลการสำรวจ (Save Survey)
+ * @param {object} surveyData { deptId, deptName, assets:[], newAssets:[] }
  */
 async function saveAssetSurvey(surveyData) {
-  // surveyData ประกอบด้วย deptId, deptName, assets[], newAssets[]
   return await apiPost("saveSurvey", surveyData);
 }
 
 /**
- * 2. ฟังก์ชันอัปโหลดลายเซ็น (Upload Signature)
- * แปลง Canvas เป็น Base64 และส่งไปเก็บที่ Google Drive (Folder 1LIi...)
+ * 4. อัปโหลดลายเซ็น (Upload Signature)
+ * @param {string} activityId 
+ * @param {string} base64Image จาก canvas.toDataURL()
  */
 async function uploadSignatureImage(activityId, base64Image) {
   return await apiPost("uploadSignature", {
     activityId: activityId,
-    image: base64Image // ข้อมูลจาก canvas.toDataURL()
+    image: base64Image
   });
 }
 
 /**
- * 3. ฟังก์ชันยืนยันการสำรวจ (Confirm Survey)
- * บันทึกชื่อผู้ตรวจและ Link รูปภาพลงใน Sheet Asset_On_Log
+ * 5. ยืนยันการสำรวจและบันทึกข้อมูลลง Sheet (Confirm Survey)
+ * @param {string} activityId 
+ * @param {string} signerName ชื่อผู้ลงนาม
+ * @param {string} signatureUrl ลิงก์รูปภาพจาก Google Drive
  */
 async function confirmSurveyResult(activityId, signerName, signatureUrl) {
   return await apiPost("confirmSurvey", {
@@ -122,8 +148,9 @@ async function confirmSurveyResult(activityId, signerName, signatureUrl) {
 }
 
 /**
- * 4. ฟังก์ชันดึงข้อมูลหน่วยงานตาม ID (Get Dept Info)
+ * 6. ดึงข้อมูลรายละเอียดการสำรวจ (Get Survey Detail)
+ * @param {string} activityId 
  */
-async function getDeptInfo(deptId) {
-  return await api("getDeptInfo", { deptId: deptId });
+async function getSurveyDetail(activityId) {
+  return await api("getSurveyDetail", { activityId: activityId });
 }
