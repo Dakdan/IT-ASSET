@@ -167,135 +167,81 @@
         };
 
         // --- ระบบสแกนเนอร์ (Logic ตัด URL NextGov เหมือนเดิมเป๊ะ) ---
-        const startScanner = () => {
-            document.getElementById('scannerSection').classList.remove('hidden');
-            setTimeout(async () => {
-                try {
-                    const html5QrCode = new Html5Qrcode("reader");
-                    scannerRef = html5QrCode;
-                    await html5QrCode.start(
-                        { facingMode: "environment" },
-                        { fps: 15, qrbox: { width: 250, height: 250 } },
-                        (decodedText) => {
-                            let targetId = decodedText.trim();
-                            if (targetId.includes('IcmAssetDetail/')) {
-                                targetId = targetId.split('IcmAssetDetail/')[1].split('/')[0];
-                            }
-                            stopScanner();
-                            handleFetchDetail(targetId);
-                        }
-                    );
-                } catch (err) {
-                    Swal.fire("กล้องทำงานไม่ได้", "กรุณาอนุญาตให้ใช้งานกล้อง", "error");
-                    stopScanner();
-                }
-            }, 300);
-        };
+      // --- ส่วนการสแกน (Logic จาก React ของคุณเป๊ะๆ) ---
+const onScanSuccess = (decodedText) => {
+    let rawId = decodedText.trim();
+    let targetId = rawId;
 
-        const stopScanner = async () => {
-            if (scannerRef) {
-                try { await scannerRef.stop(); } catch (e) {}
-                scannerRef = null;
-            }
-            document.getElementById('scannerSection').classList.add('hidden');
-        };
+    // ดึงรหัสจาก NextGov URL (หยิบค่าที่อยู่หลัง IcmAssetDetail)
+    if (rawId.includes('IcmAssetDetail/')) {
+        const parts = rawId.split('IcmAssetDetail/')[1];
+        if (parts) {
+            targetId = parts.split('/')[0];
+        }
+    }
 
-        // --- ระบบค้นหาและแสดงผล ---
-    // --- ระบบค้นหาและแสดงผล ---
+    stopScanner();
+    // ใส่ค่าลงในช่องค้นหาและเริ่มหาทันที
+    const input = document.getElementById('assetSearchInput');
+    input.value = targetId;
+    handleLiveSearch(targetId); 
+};
+
+// --- ส่วนการค้นหาแบบ Live Search (ใช้แทน handleSearchManual) ---
 let searchTimeout;
-
-// ฟังก์ชันค้นหาอัตโนมัติ (Live Search)
-function handleLiveSearch(query) {
+async function handleLiveSearch(value) {
+    const term = value.trim().toLowerCase();
     const container = document.getElementById('assetSearchResult');
-    query = query.trim();
 
-    // ล้างค่าเดิมถ้าลบจนว่าง
-    if (query.length === 0) {
+    if (!term) {
         container.innerHTML = "";
         return;
     }
 
-    // หน่วงเวลาเล็กน้อยเพื่อให้พิมพ์ลื่น (Debounce)
+    // หน่วงเวลาพิมพ์ (Debounce)
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(async () => {
-        if (query.length < 2) return; // พิมพ์ 2 ตัวขึ้นไปถึงจะเริ่มหา
-
-        try {
-            const data = await searchAssets(query); // เรียก API
-            renderSearchResults(data, query);
-        } catch (err) {
-            console.error("Search Error:", err);
-        }
-    }, 300); 
+        // เรียก API ค้นหาที่ใช้ .endsWith()
+        const data = await searchAssets(term); 
+        renderSearchResults(data, term);
+    }, 300);
 }
 
-// ฟังก์ชันแสดงผลพร้อม Highlight
-function renderSearchResults(items, query) {
+// --- ส่วนการแสดงผลและไฮไลต์ (Logic จาก React ของคุณ) ---
+function renderSearchResults(items, highlight) {
     const container = document.getElementById('assetSearchResult');
     let html = '';
 
     if (!items || items.length === 0) {
-        container.innerHTML = '<p class="text-center text-xs text-gray-400 py-2">-- ไม่พบข้อมูล --</p>';
+        container.innerHTML = '<p class="text-center text-gray-400 py-4 text-xs">-- ไม่พบข้อมูล --</p>';
         return;
     }
 
     items.forEach(item => {
-        // ทำ Highlight ที่ข้อมูลจากคอลัมน์ E (SearchData)
-        const highlightedE = getHighlightedText(item.SearchData, query);
-        
+        // ไฮไลต์ข้อความ (Logic จาก getHighlightedText ใน React)
+        const text = String(item.AssetID);
+        const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+        const highlightedHTML = parts.map(p => 
+            p.toLowerCase() === highlight.toLowerCase() 
+            ? `<span class="bg-yellow-200 text-pink-600 font-bold px-0.5">${p}</span>` 
+            : p
+        ).join('');
+
         html += `
         <div onclick='openAssetModal(${JSON.stringify(item)})' 
-             class="bg-white p-3 rounded-xl border border-pink-100 hover:bg-pink-50 transition-all cursor-pointer shadow-sm mb-2 animate-fade-in">
+             class="bg-white p-3 rounded-xl border border-pink-50 hover:border-pink-200 mb-2 cursor-pointer shadow-sm">
             <div class="flex justify-between items-center">
-                <div class="flex-1">
-                    <p class="text-sm text-gray-800 font-bold">${highlightedE}</p>
-                    <div class="flex items-center gap-2 mt-1">
-                        <span class="text-[9px] bg-gray-700 text-white px-1 py-0.5 rounded font-mono">KEY: ${item.KeyID}</span>
-                        <span class="text-[10px] text-gray-400">${item.ItemName || ''}</span>
-                    </div>
+                <div>
+                    <p class="text-[10px] text-gray-400 font-mono">KEY: ${item.KeyID}</p>
+                    <p class="text-sm text-gray-800 font-medium">${highlightedHTML}</p>
+                    <p class="text-[11px] text-gray-500">${item.ItemName || ''}</p>
                 </div>
-                <i class="fas fa-chevron-right text-pink-200 text-sm"></i>
+                <i class="fas fa-plus-circle text-pink-200"></i>
             </div>
         </div>`;
     });
     container.innerHTML = html;
 }
-
-// ฟังก์ชัน Highlight
-function getHighlightedText(text, highlight) {
-    if (!highlight) return text;
-    const parts = String(text).split(new RegExp(`(${highlight})`, 'gi'));
-    return parts.map(part => 
-        part.toLowerCase() === highlight.toLowerCase() 
-        ? `<b class="text-pink-600 bg-yellow-100 rounded px-0.5 font-bold">${part}</b>` 
-        : part
-    ).join('');
-}
-
-async function handleFetchDetail(id) {
-    // แสดง Loading ระหว่างรอ
-    document.getElementById('loadingOverlay').classList.add('show');
-    
-    try {
-        const data = await searchAssets(id);
-        document.getElementById('loadingOverlay').classList.remove('show');
-        
-        if (data && data.length > 0) {
-            // ไม่ว่าเจอ 1 หรือหลายรายการ ให้ render เพื่อให้เห็น Highlight ก่อน
-            renderSearchResults(data);
-            
-            // ถ้าเจอรายการเดียวเป๊ะๆ อาจจะเลือกเปิด Modal เลยก็ได้ (Optional)
-            // if (data.length === 1) openAssetModal(data[0]); 
-        } else {
-            document.getElementById('assetSearchResult').innerHTML = "";
-            Swal.fire("ไม่พบข้อมูล", "ไม่พบข้อมูลที่ตรงกับ '" + id + "' ในระบบ", "warning");
-        }
-    } catch (err) {
-        document.getElementById('loadingOverlay').classList.remove('show');
-        Swal.fire("Error", "เกิดข้อผิดพลาดในการเชื่อมต่อ", "error");
-    }
-}
-
 function openAssetModal(item) {
     // ล้างรายการค้นหาทิ้งเมื่อเลือกแล้ว
     document.getElementById('assetSearchResult').innerHTML = ""; 
