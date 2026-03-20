@@ -7,7 +7,6 @@
 <title>IT Asset Viewer</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="style.css">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -55,7 +54,7 @@
   <!-- RESULT -->
   <div id="result" class="space-y-3"></div>
 
-  <!-- 🔥 DEPARTMENT -->
+  <!-- DEPARTMENT -->
   <div class="card p-4">
     <div class="font-bold text-pink-700 mb-2">หน่วยงาน</div>
     <div id="deptList" class="space-y-2"></div>
@@ -103,12 +102,19 @@ function closePopup(){
   document.getElementById("popup").classList.remove("show");
 }
 
+/* ================= NORMALIZE API ================= */
+function normalize(res){
+  if(res && res.data) return res.data;
+  return res;
+}
+
 /* ================= SEARCH ================= */
 async function handleSearch(){
   const q = document.getElementById("searchInput").value.trim();
   if(!q) return showPopup("กรุณากรอกคำค้น");
 
-  const data = await api('searchAssetsSafe', { query: q });
+  let res = await api('searchAssetsSafe', { query: q });
+  const data = normalize(res);
 
   renderResult(data);
 }
@@ -156,7 +162,8 @@ function highlight(text){
 
 /* ================= DEPARTMENT ================= */
 async function loadDepartments(){
-  const data = await api('getDepartmentsFast');
+  let res = await api('getDepartmentsFast');
+  const data = normalize(res);
 
   renderDepartments(data);
 }
@@ -188,7 +195,8 @@ function renderDepartments(data){
 }
 
 async function handleSelectDept(deptId){
-  const data = await api('getSurveyDetailByDept', { deptId });
+  let res = await api('getSurveyDetailByDept', { deptId });
+  const data = normalize(res);
 
   if(!data || data.error){
     showPopup("ไม่พบข้อมูลหน่วยงาน");
@@ -246,8 +254,9 @@ async function stopScanner(){
 }
 
 /* ================= INIT ================= */
-loadDepartments();
-
+window.onload = () => {
+  loadDepartments();
+};
 </script>
 
 </body>
