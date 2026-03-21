@@ -404,15 +404,22 @@
             `;
         }
 
-        function togglePacText() {
-            const isPac = document.getElementById('pac-mode').checked;
+       function togglePacText() {
+            const isPac = document.getElementById('pac-mode').checked; // เงื่อนไข: ติ๊กหรือไม่
             const select = document.getElementById('asset-type-select');
+            const option = select.options[select.selectedIndex]; // ตัวที่เลือกอยู่ขณะนั้น
             
-            for (let i = 0; i < select.options.length; i++) {
-                if (select.options[i].value.includes("All In One")) {
-                    const base = "เครื่องคอมพิวเตอร์ (All In One)";
-                    select.options[i].text = isPac ? `🖥️ ${base}/Pac` : `🖥️ ${base}`;
-                    break;
+            if (option) {
+                if (isPac) {
+                    // เงื่อนไข: ถ้าติ๊ก ให้เพิ่ม /Pacs ต่อท้าย
+                    if (!option.value.includes("/Pacs")) {
+                        option.text += "/Pacs";
+                        option.value += "/Pacs";
+                    }
+                } else {
+                    // เงื่อนไข: ถ้าไม่ติ๊ก ให้ลบ /Pacs ออก
+                    option.text = option.text.replace("/Pacs", "");
+                    option.value = option.value.replace("/Pacs", "");
                 }
             }
         }
