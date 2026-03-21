@@ -255,14 +255,7 @@
         let signPad, qrScanner, gpsCoords = null;
         let deptImages = [];
 
-        function loadDepartmentImages() {
-            fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'getDepartmentImages' })
-            })
-            .then(res => res.json())
-            .then(data => deptImages = data || []);
-        }
+      
        window.onload = async () => {
             initSignature();
             await loadInitialData();
