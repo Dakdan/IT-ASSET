@@ -604,6 +604,33 @@
                     .getDepartmentImages();
             }
 
+ 
+  
+        function openNonAssetForm() {
+            selectAsset({
+                AssetID: "NON-" + Date.now().toString().slice(-6),
+                'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ",
+                Searail: "N/A"
+            });
+        }
+
+        // ✅ ใช้ตัวแปรเดียว ไม่ต้องซ้ำ
+        let deptImages = [];
+
+        // ✅ ใช้ fetch (ให้ตรงกับระบบคุณ)
+        function loadDepartmentImages() {
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'getDepartmentImages' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                deptImages = data || [];
+                console.log("โหลดรูปหน่วยงานแล้ว", deptImages);
+            })
+            .catch(err => console.error("โหลดรูปไม่สำเร็จ", err));
+        }
+
     </script>
 </body>
 </html>
