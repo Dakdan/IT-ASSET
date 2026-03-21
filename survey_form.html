@@ -253,11 +253,22 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
         let departments = [], allAssets = [], selectedLogs = [], currentAsset = null;
         let signPad, qrScanner, gpsCoords = null;
+        let deptImages = [];
 
-        window.onload = async () => {
+        function loadDepartmentImages() {
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'getDepartmentImages' })
+            })
+            .then(res => res.json())
+            .then(data => deptImages = data || []);
+        }
+       window.onload = async () => {
             initSignature();
             await loadInitialData();
+            loadDepartmentImages(); // ✅ ต้องมี
             getGPS();
+        };
             
             const draft = localStorage.getItem('udh_asset_draft');
             if(draft) {
@@ -323,10 +334,25 @@
             const id = document.getElementById('dept-select').value;
             const box = document.getElementById('dept-preview');
             if(!id) { box.classList.add('hidden'); return; }
-
+        
             const dept = departments.find(d => d.DEP_ID == id);
+        
+            // ✅ หารูปจาก deptImages
+            const img = deptImages.find(i => i.DEP_ID == id);
+        
             document.getElementById('ui-dept-name').innerText = dept.DEPNAME;
             document.getElementById('ui-dept-loc').innerText = `${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}`;
+        
+            // ✅ เพิ่มรูปเข้าไป
+            box.innerHTML = `
+                <img src="${img?.IMG_URL || 'https://via.placeholder.com/80'}"
+                     class="w-16 h-16 rounded-xl object-cover border" />
+                <div>
+                    <p class="font-bold text-sm text-gray-800">${dept.DEPNAME}</p>
+                    <p class="text-[10px] text-gray-500">${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}</p>
+                </div>
+            `;
+        
             box.classList.remove('hidden');
         }
 
