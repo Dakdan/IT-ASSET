@@ -9,7 +9,13 @@
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Kanit', sans-serif; background: #fff5f7; min-height: 100vh; color: #4a4a4a; }
+       body { 
+            font-family: 'Kanit', sans-serif; 
+            background: linear-gradient(to bottom, #ffe4ec, #ffffff);
+            min-height: 100vh; 
+            color: #4a4a4a;
+            position: relative;
+        }
         .glass-card { 
             background: rgba(255, 255, 255, 0.95); 
             backdrop-filter: blur(10px); 
@@ -33,7 +39,27 @@
         .status-none { background: #f3f4f6; color: #9ca3af; }
         .status-active { background: #e0f2fe; color: #0369a1; }
         mark { background-color: #ff85a1; color: white; border-radius: 2px; padding: 0 1px; }
+        /* ลายน้ำ */
+        body::before {
+            content: "ช่างคอมๆ";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-20deg);
+            font-size: 8vw;
+            color: rgba(255, 133, 161, 0.08);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* กันเนื้อหาบัง */
+        main, header, section {
+            position: relative;
+            z-index: 1;
+        }
     </style>
+       
 </head>
 <body class="p-4 md:p-6 pb-20">
 
