@@ -10,15 +10,13 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: 'Kanit', sans-serif; background: #fff5f7; min-height: 100vh; color: #4a4a4a; }
-        /* เพิ่มมิติเส้นขอบและเงาให้ Card */
         .glass-card { 
             background: rgba(255, 255, 255, 0.95); 
             backdrop-filter: blur(10px); 
             border-radius: 24px; 
-            border: 2px solid #ffe4e8; /* เพิ่มความหนาของเส้นขอบ */
-            box-shadow: 0 4px 20px rgba(255, 182, 193, 0.2); /* ปรับเงาให้มีโทนชมพู */
+            border: 2px solid #ffe4e8;
+            box-shadow: 0 4px 20px rgba(255, 182, 193, 0.2);
         }
-        /* เพิ่มมิติให้ Modal */
         .modal-container {
             border: 1px solid rgba(255, 133, 161, 0.3);
             box-shadow: 0 25px 50px -12px rgba(255, 133, 161, 0.25);
@@ -29,13 +27,11 @@
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffdae0; border-radius: 10px; }
         .signature-pad { border: 2px dashed #ffb6c1; background: #fff; border-radius: 12px; cursor: crosshair; }
-        .form-input { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #ffe4e8; outline: none; transition: all 0.2s; }
+        .form-input { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #ffe4e8; outline: none; transition: all 0.2s; background: white; }
         .form-input:focus { border-color: #ff85a1; box-shadow: 0 0 0 3px rgba(255, 133, 161, 0.1); }
         .badge-info { padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; }
         .status-none { background: #f3f4f6; color: #9ca3af; }
         .status-active { background: #e0f2fe; color: #0369a1; }
-        .type-label { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid #ffe4e8; border-radius: 0.75rem; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; }
-        .type-label:has(input:checked) { background: #fff1f2; border-color: #ff85a1; color: #be123c; font-weight: 600; box-shadow: 0 4px 12px rgba(255, 133, 161, 0.1); }
         mark { background-color: #ff85a1; color: white; border-radius: 2px; padding: 0 1px; }
     </style>
 </head>
@@ -55,6 +51,7 @@
     </header>
 
     <main class="max-w-4xl mx-auto space-y-6">
+        <!-- Section 1: Department -->
         <section id="dept-section" class="glass-card p-6">
             <h2 class="text-lg font-bold border-l-4 border-pink-500 pl-3 mb-4 text-gray-700">1. ข้อมูลหน่วยงาน</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -82,6 +79,7 @@
             </div>
         </section>
 
+        <!-- Section 2: Assets -->
         <section id="asset-section" class="glass-card p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold border-l-4 border-pink-500 pl-3 text-gray-700">2. รายการครุภัณฑ์</h2>
@@ -90,7 +88,6 @@
                     ค้นหา/สแกน
                 </button>
             </div>
-
             <div id="selected-assets-container" class="space-y-4">
                 <p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>
             </div>
@@ -102,39 +99,43 @@
         </section>
     </main>
 
+    <!-- Search Modal -->
     <div id="search-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-xl rounded-[32px] p-6 space-y-4 max-h-[90vh] overflow-hidden flex flex-col modal-container border-2 border-pink-100">
             <div class="flex justify-between items-center">
                 <h3 class="font-bold text-gray-700">ค้นหาครุภัณฑ์</h3>
                 <button onclick="closeSearchModal()" class="text-gray-400 text-3xl hover:text-pink-500 transition-colors">&times;</button>
             </div>
-
             <div id="qr-box" class="hidden mb-4 overflow-hidden rounded-2xl bg-black border-4 border-white shadow-lg">
                 <div id="qr-reader" class="w-full"></div>
             </div>
-
             <div class="flex gap-2">
                 <input type="text" id="query-input" placeholder="พิมพ์รหัส หรือ สแกน QR..." class="form-input flex-1" oninput="runSearch()">
-                <button onclick="toggleQR()" class="p-3 bg-pink-100 text-pink-500 rounded-xl hover:bg-pink-200 shadow-sm border border-pink-200">
+                <button onclick="toggleQR()" class="p-3 bg-pink-100 text-pink-500 rounded-xl hover:bg-pink-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"></path></svg>
                 </button>
             </div>
-
+            
             <div id="search-results" class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2">
                 <p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>
             </div>
 
-            <div id="not-found-area" class="hidden text-center border-t border-pink-50 pt-4">
-                <p class="text-xs text-gray-400 mb-2">ไม่พบคุรุภัณฑ์ในฐานข้อมูล?</p>
-                <button onclick="openNonAssetForm()" class="text-pink-500 font-bold text-sm underline hover:text-pink-600">+ เพิ่มครุภัณฑ์นอกระบบ</button>
+            <!-- ส่วนปุ่มเพิ่มนอกระบบที่แสดงตลอดเวลา -->
+            <div class="text-center border-t border-pink-100 pt-4 pb-2">
+                <p class="text-[10px] text-gray-400 mb-3">ไม่พบครุภัณฑ์ในระบบหรือต้องการเพิ่มรายการพิเศษ?</p>
+                <button onclick="openNonAssetForm()" class="w-full py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all border border-slate-200 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    เพิ่มครุภัณฑ์นอกระบบ
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Asset Log Modal -->
     <div id="log-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-[32px] p-6 max-h-[90vh] overflow-y-auto custom-scrollbar modal-container border-2 border-pink-100">
             <div id="log-content" class="space-y-6">
-                <div class="bg-slate-50 p-4 rounded-2xl relative border border-slate-200 shadow-inner">
+                <div class="bg-slate-50 p-4 rounded-2xl relative border border-slate-200">
                     <div id="asset-detail-ui"></div>
                 </div>
 
@@ -142,7 +143,7 @@
                     <h3 class="font-bold border-l-4 border-blue-400 pl-2 text-gray-700">ข้อมูลการใช้งานหน้างาน</h3>                    
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">ความสำคัญของงาน (Priority)</label>
-                        <select id="log-priority" class="form-input mt-1 border-pink-100">
+                        <select id="log-priority" class="form-input mt-1">
                             <option value="" selected disabled>-----เลือก---------</option>
                             <option value="ตรวจรักษา(แพทย์)">ตรวจรักษา(แพทย์)</option>
                             <option value="ข้อมูลผู้ป่วย (พยาบาล)">ข้อมูลผู้ป่วย (พยาบาล)</option>
@@ -154,28 +155,26 @@
                     
                     <div>
                         <label class="text-xs font-bold text-gray-500">ประเภทอุปกรณ์</label>
-                        <div class="mt-1 relative">
-                            <select id="asset-type" name="asset-type" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <option value="" disabled selected>--- เลือกประเภทอุปกรณ์ ---</option>
-                                <option value="เครื่องคอมพิวเตอร์ (All In One)">🖥️ เครื่องคอมพิวเตอร์ (All In One)</option>
-                                <option value="เครื่องคอมพิวเตอร์ (Case)">🖥️ เครื่องคอมพิวเตอร์ (Case)</option>
-                                <option value="จอรับภาพ (Monitor)">📺 จอรับภาพ (Monitor)</option>
-                                <option value="UPS">🔋 UPS</option>
-                                <option value="Printer">🖨️ Printer</option>
-                                <option value="Scanner">📠 Scanner</option>
-                            </select>
-                        </div>
+                        <select id="asset-type-select" class="form-input mt-1" onchange="togglePacText()">
+                            <option value="" disabled selected>--- เลือกประเภทอุปกรณ์ ---</option>
+                            <option value="เครื่องคอมพิวเตอร์ (All In One)">🖥️ เครื่องคอมพิวเตอร์ (All In One)</option>
+                            <option value="เครื่องคอมพิวเตอร์ (Case)">🖥️ เครื่องคอมพิวเตอร์ (Case)</option>
+                            <option value="จอรับภาพ (Monitor)">📺 จอรับภาพ (Monitor)</option>
+                            <option value="UPS">🔋 UPS</option>
+                            <option value="Printer">🖨️ Printer</option>
+                            <option value="Scanner">📠 Scanner</option>
+                        </select>
                     </div>
-                        <div class="mt-4 p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between shadow-sm">
-                            <div>
-                                <span class="text-xs font-bold text-pink-600 block">โหมดเครื่อง Pac</span>
-                                <span class="text-[10px] text-pink-400 italic">เลือกหากมีป้ายหมายเลข 1, 2, 3 ติดอยู่</span>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="pac-mode" class="sr-only peer" onchange="togglePacText()">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500 shadow-inner"></div>
-                            </label>
+
+                    <div class="mt-4 p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-pink-600 block">โหมดเครื่อง Pac</span>
+                            <span class="text-[10px] text-pink-400 italic">เลือกหากมีป้ายหมายเลข 1, 2, 3 ติดอยู่</span>
                         </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="pac-mode" class="sr-only peer" onchange="togglePacText()">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+                        </label>
                     </div>
 
                     <div>
@@ -189,35 +188,34 @@
 
                     <div>
                         <label class="text-xs font-bold text-gray-500">หมายเหตุเพิ่มเติม (Note)</label>
-                        <textarea id="log-note" placeholder="ระบุอาการเสีย หรือข้อมูลเพิ่มเติม..." class="form-input h-24 mt-1 border-pink-100"></textarea>
+                        <textarea id="log-note" placeholder="ระบุอาการเสีย หรือข้อมูลเพิ่มเติม..." class="form-input h-24 mt-1"></textarea>
                     </div>
                 </div>
 
                 <div class="flex gap-3">
-                    <button onclick="closeLogModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm">ยกเลิก</button>
+                    <button onclick="closeLogModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold">ยกเลิก</button>
                     <button onclick="commitAssetLog()" class="flex-1 py-3 btn-pink rounded-xl font-bold shadow-md">ตกลง</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Final Submission Modal -->
     <div id="final-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-[32px] p-8 space-y-6 modal-container border-2 border-pink-100">
             <div class="text-center">
                 <h3 class="text-lg font-bold text-gray-700">ยืนยันความถูกต้อง</h3>
                 <p class="text-xs text-pink-400">กรุณาลงลายมือชื่อเพื่อส่งข้อมูล</p>
             </div>
-            
             <div class="space-y-4">
-                <input type="text" id="user-name" placeholder="ชื่อ-นามสกุล ผู้ตรวจสอบ" class="form-input font-bold text-center border-pink-200 shadow-inner">
+                <input type="text" id="user-name" placeholder="ชื่อ-นามสกุล ผู้ตรวจสอบ" class="form-input font-bold text-center border-pink-200">
                 <div class="space-y-1">
-                    <canvas id="sign-pad" class="signature-pad w-full h-40 shadow-inner"></canvas>
+                    <canvas id="sign-pad" class="signature-pad w-full h-40"></canvas>
                     <button onclick="clearSign()" class="text-[10px] text-gray-400 underline float-right hover:text-pink-500">ล้างลายเซ็น</button>
                 </div>
             </div>
-
             <div class="flex gap-3 pt-4">
-                <button onclick="closeFinalModal()" class="flex-1 text-gray-400 font-bold hover:text-gray-600">ปิด</button>
+                <button onclick="closeFinalModal()" class="flex-1 text-gray-400 font-bold">ปิด</button>
                 <button onclick="sendEverything()" class="flex-1 btn-pink py-3 rounded-2xl font-bold shadow-lg">ส่งรายงาน</button>
             </div>
         </div>
@@ -313,12 +311,10 @@
         function runSearch() {
             const query = document.getElementById('query-input').value.toLowerCase().trim();
             const resBox = document.getElementById('search-results');
-            const nfBox = document.getElementById('not-found-area');
             resBox.innerHTML = '';
             
             if(!query) {
                 resBox.innerHTML = '<p class="text-center text-gray-300 py-10 text-sm">พิมพ์รหัสคุรุภัณฑ์หรือ S/N เพื่อค้นหา...</p>';
-                nfBox.classList.add('hidden');
                 return;
             }
 
@@ -330,19 +326,16 @@
 
             if(hits.length === 0) {
                 resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูลในระบบ</p>';
-                nfBox.classList.remove('hidden');
                 return;
             }
 
-            nfBox.classList.add('hidden');
             hits.forEach(a => {
                 const div = document.createElement('div');
-                div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all hover:shadow-md hover:border-pink-200";
-                
+                div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
                 const status = a.CoStatus || '';
                 const statusHtml = status 
-                    ? `<span class="badge-info status-active shadow-sm">${highlightText(status, query)}</span>`
-                    : `<span class="badge-info status-none">${status}</span>`;
+                    ? `<span class="badge-info status-active">${highlightText(status, query)}</span>`
+                    : `<span class="badge-info status-none">N/A</span>`;
 
                 div.innerHTML = `
                     <div class="flex justify-between items-start">
@@ -387,58 +380,53 @@
 
         function togglePacText() {
             const isPac = document.getElementById('pac-mode').checked;
-            const aioRadio = document.querySelector('input[name="asset-type"][value^="เครื่องคอมพิวเตอร์ (All In One)"]');
+            const select = document.getElementById('asset-type-select');
             
-            if(aioRadio) {
-                const baseValue = "เครื่องคอมพิวเตอร์ (All In One)";
-                aioRadio.value = isPac ? `${baseValue}/Pac` : baseValue;
-                aioRadio.parentElement.childNodes[1].textContent = isPac ? `${baseValue}/Pac` : baseValue;
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value.includes("All In One")) {
+                    const base = "เครื่องคอมพิวเตอร์ (All In One)";
+                    select.options[i].text = isPac ? `🖥️ ${base}/Pac` : `🖥️ ${base}`;
+                    break;
+                }
             }
         }
 
         function commitAssetLog() {
-                    const deptId = document.getElementById('dept-select').value;
-                    if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
-                
-                    const priority = document.getElementById('log-priority').value;
-                    
-                    // --- แก้ไขจุดนี้ ---
-                    const assetTypeSelect = document.getElementById('asset-type-select');
-                    let assetType = assetTypeSelect.value;
-                    
-                    // ตรวจสอบว่าเลือกหรือยัง
-                    if (!assetType) {
-                        alert("กรุณาเลือกประเภทอุปกรณ์");
-                        return;
-                    }
-                
-                    // จัดการโหมด Pac (ถ้าเลือก All In One และเปิดโหมด Pac ให้ต่อท้ายชื่อ)
-                    const isPac = document.getElementById('pac-mode').checked;
-                    if (isPac && assetType.includes("All In One")) {
-                        assetType += "/Pac";
-                    }
-                    // ------------------
-                
-                    const shifts = Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value);
-                    const note = document.getElementById('log-note').value;
-                    
-                    const logEntry = {
-                        ...currentAsset,
-                        deptId: deptId,
-                        deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
-                        priority: priority,
-                        assetType: assetType, // ค่าที่ถูกเลือกจาก Dropdown
-                        shifts: shifts.join(','),
-                        note: note,
-                        gps: gpsCoords,
-                        timestamp: new Date().toISOString()
-                    };
-                
-                    selectedLogs.push(logEntry);
-                    saveDraftLocally();
-                    renderSelectedUI();
-                    closeLogModal();
-                }
+            const deptId = document.getElementById('dept-select').value;
+            if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
+        
+            const priority = document.getElementById('log-priority').value;
+            const assetTypeSelect = document.getElementById('asset-type-select');
+            let assetType = assetTypeSelect.value;
+            
+            if (!assetType) return alert("กรุณาเลือกประเภทอุปกรณ์");
+        
+            const isPac = document.getElementById('pac-mode').checked;
+            if (isPac && assetType.includes("All In One")) {
+                assetType += "/Pac";
+            }
+        
+            const shifts = Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value);
+            const note = document.getElementById('log-note').value;
+            
+            const logEntry = {
+                ...currentAsset,
+                deptId: deptId,
+                deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
+                priority: priority,
+                assetType: assetType,
+                shifts: shifts.join(','),
+                note: note,
+                gps: gpsCoords,
+                timestamp: new Date().toISOString()
+            };
+        
+            selectedLogs.push(logEntry);
+            saveDraftLocally();
+            renderSelectedUI();
+            closeLogModal();
+        }
+
         function renderSelectedUI() {
             const container = document.getElementById('selected-assets-container');
             if(selectedLogs.length === 0) {
@@ -447,17 +435,17 @@
             }
 
             container.innerHTML = selectedLogs.map((log, idx) => `
-                <div class="p-4 border-2 border-pink-100 rounded-2xl bg-white shadow-sm flex items-center justify-between animate-in slide-in-from-bottom-2 hover:shadow-md transition-shadow">
+                <div class="p-4 border-2 border-pink-100 rounded-2xl bg-white shadow-sm flex items-center justify-between">
                     <div class="flex-1">
                         <p class="text-[10px] font-bold text-pink-400">${log.AssetID}</p>
                         <p class="text-sm font-bold text-gray-700">${log['ชื่อรายการครุภัณฑ์'] || log.Detail}</p>
                         <div class="flex gap-2 mt-1">
-                            <span class="text-[9px] text-blue-500 font-bold">${log.priority}</span>
+                            <span class="text-[9px] text-blue-500 font-bold">${log.priority || '-'}</span>
                             <span class="text-[9px] text-pink-500 font-bold bg-pink-50 px-2 rounded-full border border-pink-100">${log.assetType}</span>
                         </div>
                         ${log.note ? `<p class="text-[10px] text-gray-400 mt-1 italic border-t border-pink-50 pt-1">หมายเหตุ: ${log.note}</p>` : ''}
                     </div>
-                    <button onclick="removeLog(${idx})" class="ml-4 text-gray-300 hover:text-red-400 transition-colors">
+                    <button onclick="removeLog(${idx})" class="ml-4 text-gray-300 hover:text-red-400">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 </div>
@@ -497,24 +485,28 @@
                     alert("เซิร์ฟเวอร์แจ้งข้อผิดพลาด: " + (res.message || "ไม่ทราบสาเหตุ"));
                 }
             } catch (e) {
-                alert("เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาบันทึกร่างและลองใหม่ภายหลัง");
+                alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
             } finally {
                 showLoader(false);
             }
         }
 
         function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-        function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
+        
+        function openSearchModal() { 
+            document.getElementById('query-input').value = '';
+            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>';
+            document.getElementById('search-modal').classList.remove('hidden'); 
+        }
+
         function closeSearchModal() { 
             stopQR();
             document.getElementById('search-modal').classList.add('hidden'); 
             document.getElementById('query-input').value = '';
             document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>';
         }
-        function closeLogModal() { 
-            document.getElementById('log-modal').classList.add('hidden');
-            resetLogForm(); 
-        }
+
+        function closeLogModal() { document.getElementById('log-modal').classList.add('hidden'); }
         function openFinalModal() { document.getElementById('final-modal').classList.remove('hidden'); }
         function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
         
@@ -535,31 +527,26 @@
         function saveDraftLocally() { localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs)); }
         function saveDraft() { saveDraftLocally(); alert("บันทึกร่างข้อมูลสำเร็จ"); }
 
-        // แก้ไขฟังก์ชันเดิมให้เป็นแบบนี้ครับ
         function resetLogForm() {
             document.getElementById('log-note').value = '';
             document.getElementById('pac-mode').checked = false;
             document.getElementById('log-priority').selectedIndex = 0;
             document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
-            
-            // ล้างค่า Dropdown
             document.getElementById('asset-type-select').selectedIndex = 0;
         }
-        
-        // แก้ไขฟังก์ชันนี้เพื่อให้แสดงผล UI ได้ถูกต้อง (ถ้ายังต้องการใช้)
-        function togglePacText() {
-            const isPac = document.getElementById('pac-mode').checked;
-            const select = document.getElementById('asset-type-select');
-            
-            // หา Option ที่เป็น All In One
-            for (let i = 0; i < select.options.length; i++) {
-                if (select.options[i].value.includes("All In One")) {
-                    const baseValue = "เครื่องคอมพิวเตอร์ (All In One)";
-                    select.options[i].text = isPac ? `🖥️ ${baseValue}/Pac` : `🖥️ ${baseValue}`;
-                    // หมายเหตุ: เราเปลี่ยนแค่ Text ที่โชว์ ส่วน Value จริงไปจัดการใน commitAssetLog
-                    break;
-                }
-            }
+
+        async function toggleQR() {
+            const box = document.getElementById('qr-box');
+            if(!box.classList.contains('hidden')) return stopQR();
+            box.classList.remove('hidden');
+            qrScanner = new Html5Qrcode("qr-reader");
+            try {
+                await qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                    document.getElementById('query-input').value = txt;
+                    runSearch();
+                    stopQR();
+                });
+            } catch(e) { alert("ไม่สามารถเปิดกล้องได้"); stopQR(); }
         }
 
         async function stopQR() {
@@ -571,13 +558,10 @@
         }
 
         function openNonAssetForm() {
-            const assetId = "NON-" + Date.now().toString().slice(-6);
             selectAsset({
-                AssetID: assetId,
-                'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ (ใหม่)",
-                Detail: "รอนำเข้าระบบอย่างเป็นทางการ",
-                Searail: "N/A",
-                CoStatus: "นอกระบบ"
+                AssetID: "NON-" + Date.now().toString().slice(-6),
+                'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ",
+                Searail: "N/A"
             });
         }
     </script>
