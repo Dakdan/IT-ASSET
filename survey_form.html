@@ -154,14 +154,18 @@
                     
                     <div>
                         <label class="text-xs font-bold text-gray-500">ประเภทอุปกรณ์</label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
-                            <label class="type-label"><input type="radio" name="asset-type" value="เครื่องคอมพิวเตอร์ (All In One)"> เครื่องคอมพิวเตอร์ (All In One)</label>
-                            <label class="type-label"><input type="radio" name="asset-type" value="เครื่องคอมพิวเตอร์ (Case)"> เครื่องคอมพิวเตอร์ (Case)</label>
-                            <label class="type-label"><input type="radio" name="asset-type" value="จอรับภาพ (Monitor)"> จอรับภาพ (Monitor)</label>
-                            <label class="type-label"><input type="radio" name="asset-type" value="UPS"> UPS</label>
-                            <label class="type-label"><input type="radio" name="asset-type" value="Pinter"> Printer</label>
-                            <label class="type-label"><input type="radio" name="asset-type" value="Scaner"> Scanner</label>
+                        <div class="mt-1 relative">
+                            <select id="asset-type" name="asset-type" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <option value="" disabled selected>--- เลือกประเภทอุปกรณ์ ---</option>
+                                <option value="เครื่องคอมพิวเตอร์ (All In One)">🖥️ เครื่องคอมพิวเตอร์ (All In One)</option>
+                                <option value="เครื่องคอมพิวเตอร์ (Case)">🖥️ เครื่องคอมพิวเตอร์ (Case)</option>
+                                <option value="จอรับภาพ (Monitor)">📺 จอรับภาพ (Monitor)</option>
+                                <option value="UPS">🔋 UPS</option>
+                                <option value="Printer">🖨️ Printer</option>
+                                <option value="Scanner">📠 Scanner</option>
+                            </select>
                         </div>
+                    </div>
                         <div class="mt-4 p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between shadow-sm">
                             <div>
                                 <span class="text-xs font-bold text-pink-600 block">โหมดเครื่อง Pac</span>
@@ -393,32 +397,48 @@
         }
 
         function commitAssetLog() {
-            const deptId = document.getElementById('dept-select').value;
-            if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
-
-            const priority = document.getElementById('log-priority').value;
-            let assetType = document.querySelector('input[name="asset-type"]:checked')?.value || "-";
-            const shifts = Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value);
-            const note = document.getElementById('log-note').value;
-            
-            const logEntry = {
-                ...currentAsset,
-                deptId: deptId,
-                deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
-                priority: priority,
-                assetType: assetType,
-                shifts: shifts.join(','),
-                note: note,
-                gps: gpsCoords,
-                timestamp: new Date().toISOString()
-            };
-
-            selectedLogs.push(logEntry);
-            saveDraftLocally();
-            renderSelectedUI();
-            closeLogModal();
-        }
-
+                    const deptId = document.getElementById('dept-select').value;
+                    if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
+                
+                    const priority = document.getElementById('log-priority').value;
+                    
+                    // --- แก้ไขจุดนี้ ---
+                    const assetTypeSelect = document.getElementById('asset-type-select');
+                    let assetType = assetTypeSelect.value;
+                    
+                    // ตรวจสอบว่าเลือกหรือยัง
+                    if (!assetType) {
+                        alert("กรุณาเลือกประเภทอุปกรณ์");
+                        return;
+                    }
+                
+                    // จัดการโหมด Pac (ถ้าเลือก All In One และเปิดโหมด Pac ให้ต่อท้ายชื่อ)
+                    const isPac = document.getElementById('pac-mode').checked;
+                    if (isPac && assetType.includes("All In One")) {
+                        assetType += "/Pac";
+                    }
+                    // ------------------
+                
+                    const shifts = Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value);
+                    const note = document.getElementById('log-note').value;
+                    
+                    const logEntry = {
+                        ...currentAsset,
+                        deptId: deptId,
+                        deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
+                        priority: priority,
+                        assetType: assetType, // ค่าที่ถูกเลือกจาก Dropdown
+                        shifts: shifts.join(','),
+                        note: note,
+                        gps: gpsCoords,
+                        timestamp: new Date().toISOString()
+                    };
+                
+                    selectedLogs.push(logEntry);
+                    saveDraftLocally();
+                    renderSelectedUI();
+                    closeLogModal();
+                }
         function renderSelectedUI() {
             const container = document.getElementById('selected-assets-container');
             if(selectedLogs.length === 0) {
@@ -515,34 +535,30 @@
         function saveDraftLocally() { localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs)); }
         function saveDraft() { saveDraftLocally(); alert("บันทึกร่างข้อมูลสำเร็จ"); }
 
+        // แก้ไขฟังก์ชันเดิมให้เป็นแบบนี้ครับ
         function resetLogForm() {
             document.getElementById('log-note').value = '';
             document.getElementById('pac-mode').checked = false;
             document.getElementById('log-priority').selectedIndex = 0;
             document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
-            document.querySelectorAll('input[name="asset-type"]').forEach(r => {
-                r.checked = false;
-                if(r.value.includes("เครื่องคอมพิวเตอร์ (All In One)")) {
-                    r.value = "เครื่องคอมพิวเตอร์ (All In One)";
-                    r.parentElement.childNodes[1].textContent = "เครื่องคอมพิวเตอร์ (All In One)";
-                }
-            });
+            
+            // ล้างค่า Dropdown
+            document.getElementById('asset-type-select').selectedIndex = 0;
         }
-
-        async function toggleQR() {
-            const box = document.getElementById('qr-box');
-            if(box.classList.contains('hidden')) {
-                box.classList.remove('hidden');
-                qrScanner = new Html5Qrcode("qr-reader");
-                try {
-                    await qrScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
-                        document.getElementById('query-input').value = text;
-                        runSearch();
-                        stopQR();
-                    });
-                } catch(e) { console.error("Camera Error:", e); alert("ไม่สามารถเข้าถึงกล้องได้"); }
-            } else {
-                stopQR();
+        
+        // แก้ไขฟังก์ชันนี้เพื่อให้แสดงผล UI ได้ถูกต้อง (ถ้ายังต้องการใช้)
+        function togglePacText() {
+            const isPac = document.getElementById('pac-mode').checked;
+            const select = document.getElementById('asset-type-select');
+            
+            // หา Option ที่เป็น All In One
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value.includes("All In One")) {
+                    const baseValue = "เครื่องคอมพิวเตอร์ (All In One)";
+                    select.options[i].text = isPac ? `🖥️ ${baseValue}/Pac` : `🖥️ ${baseValue}`;
+                    // หมายเหตุ: เราเปลี่ยนแค่ Text ที่โชว์ ส่วน Value จริงไปจัดการใน commitAssetLog
+                    break;
+                }
             }
         }
 
