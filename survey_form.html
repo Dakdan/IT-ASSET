@@ -484,54 +484,46 @@
             renderSelectedUI();
         }
 
-        async function sendEverything() {
-            async function sendEverything() {
-                        const name = document.getElementById('user-name').value;
-                        if(!name || signPad.isEmpty()) return alert("กรุณาระบุชื่อและลงนาม");
-                        if(selectedLogs.length === 0) return alert("ไม่มีข้อมูลครุภัณฑ์สำหรับส่ง");
-            
-                        showLoader(true);
-                        try {
-                            // Mapping ข้อมูลให้ตรงกับฟังก์ชัน saveSurvey ใน Backend
-                            const payload = {
-                                userName: name,
-                                signature: signPad.toDataURL(),
-                                deptId: document.getElementById('dept-select').value,
-                                deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
-                                assets: selectedLogs.map(log => ({
-                                    AssetID: log.AssetID,
-                                    AssetType: log.assetType,
-                                    // คุณสามารถส่งค่าอื่นๆ เพิ่มเติมไปใน Object นี้ได้
-                                    priority: log.priority,
-                                    shifts: log.shifts,
-                                    note: log.note
-                                }))
-                            };
-            
-                            const response = await fetch(API_URL, {
-                                method: 'POST',
-                                body: JSON.stringify({
-                                    action: 'submitSurvey', // ใช้ action ให้ตรงกับ switch case ใน doGet/doPost
-                                    payload: payload
-                                })
-                            });
-            
-                            const res = await response.json();
-                            
-                            if(res.success) {
-                                alert("บันทึกข้อมูลสำเร็จ!\nรหัสอ้างอิง: " + res.surveyId);
-                                localStorage.removeItem('udh_asset_draft');
-                                location.reload();
-                            } else {
-                                alert("เกิดข้อผิดพลาดจากระบบ: " + res.error);
-                            }
-                        } catch (e) {
-                            console.error(e);
-                            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ต");
-                        } finally {
-                            showLoader(false);
-                        }
-                    }
+       async function sendEverything() {
+            const name = document.getElementById('user-name').value;
+            if(!name || signPad.isEmpty()) return alert("กรุณาระบุชื่อและลงนาม");
+            if(selectedLogs.length === 0) return alert("ไม่มีข้อมูลครุภัณฑ์สำหรับส่ง");
+        
+            showLoader(true);
+            try {
+                // เตรียม Data ให้เป็นก้อนเดียวตามที่ Backend (GAS) รอรับ
+                const payload = {
+                    inspector: name,
+                    signature: signPad.toDataURL(),
+                    deptId: document.getElementById('dept-select').value,
+                    deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
+                    data: selectedLogs // ส่ง Array ของครุภัณฑ์ทั้งหมดไป
+                };
+        
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'submitFullSurvey', // *** ต้องชื่อเดียวกับใน switch case ของ Code.gs
+                        payload: payload
+                    })
+                });
+        
+                const res = await response.json();
+                
+                if(res.success || res.status === "success") {
+                    alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+                    localStorage.removeItem('udh_asset_draft');
+                    location.reload();
+                } else {
+                    alert("เซิร์ฟเวอร์ตอบกลับ: " + (res.message || "เกิดข้อผิดพลาด"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("เชื่อมต่อระบบไม่ได้: ตรวจสอบการ Deployment (Web App URL) หรือสิทธิ์การเข้าถึง");
+            } finally {
+                showLoader(false);
+            }
+        }
         function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
         
         function openSearchModal() { 
