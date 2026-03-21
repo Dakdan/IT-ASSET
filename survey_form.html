@@ -249,118 +249,361 @@
         </div>
     </div>
 
-   <!-- ❗ ตัดมาเฉพาะส่วนท้ายที่มีปัญหา เพื่อไม่ไปกระทบส่วนอื่นของคุณ -->
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
+        let departments = [], allAssets = [], selectedLogs = [], currentAsset = null;
+        let signPad, qrScanner, gpsCoords = null;
 
-<script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
-
-    let departments = [], allAssets = [], selectedLogs = [], currentAsset = null;
-    let signPad, qrScanner, gpsCoords = null;
-
-    // ✅ เหลืออันเดียวพอ
-    let deptImages = [];
-
-    window.onload = async () => {
-        initSignature();
-        await loadInitialData();
-        loadDepartmentImages(); // ✅ เพิ่มเรียกใช้งานตรงนี้
-        getGPS();
-
-        const draft = localStorage.getItem('udh_asset_draft');
-        if(draft) {
-            selectedLogs = JSON.parse(draft);
-            renderSelectedUI();
-        }
-    };
-
-    function loadDepartmentImages() {
-        fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'getDepartmentImages' })
-        })
-        .then(res => res.json())
-        .then(data => {
-            deptImages = data || [];
-            console.log("โหลดรูปหน่วยงานแล้ว", deptImages);
-        })
-        .catch(err => console.error("โหลดรูปไม่สำเร็จ", err));
-    }
-
-    function openNonAssetForm() {
-        selectAsset({
-            AssetID: "NON-" + Date.now().toString().slice(-6),
-            'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ",
-            Searail: "N/A"
-        });
-    }
-
-    function getGPS() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                gpsCoords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-            }, err => { console.warn("GPS Access Denied"); });
-        }
-    }
-
-    function showLoader(s) { 
-        document.getElementById('loader').style.display = s ? 'flex' : 'none'; 
-    }
-
-    function saveDraftLocally() { 
-        localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs)); 
-    }
-
-    function saveDraft() { 
-        saveDraftLocally(); 
-        alert("บันทึกร่างข้อมูลสำเร็จ"); 
-    }
-
-    function clearSign() { 
-        signPad.clear(); 
-    }
-
-    function closeLogModal() { 
-        document.getElementById('log-modal').classList.add('hidden'); 
-    }
-
-    function openFinalModal() { 
-        document.getElementById('final-modal').classList.remove('hidden'); 
-    }
-
-    function closeFinalModal() { 
-        document.getElementById('final-modal').classList.add('hidden'); 
-    }
-
-    function closeSearchModal() { 
-        stopQR();
-        document.getElementById('search-modal').classList.add('hidden'); 
-    }
-
-    async function stopQR() {
-        if(qrScanner) {
-            try { await qrScanner.stop(); } catch(e) {}
-            qrScanner = null;
-        }
-        document.getElementById('qr-box').classList.add('hidden');
-    }
-
-    function initSignature() {
-        const canvas = document.getElementById('sign-pad');
-        signPad = new SignaturePad(canvas);
-
-        const resize = () => {
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
+        window.onload = async () => {
+            initSignature();
+            await loadInitialData();
+            getGPS();
+            
+            const draft = localStorage.getItem('udh_asset_draft');
+            if(draft) {
+                selectedLogs = JSON.parse(draft);
+                renderSelectedUI();
+            }
         };
 
-        window.addEventListener("resize", resize);
-        resize();
-    }
-</script>
+        function getGPS() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    gpsCoords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+                }, err => { console.warn("GPS Access Denied"); });
+            }
+        }
 
-</body>
-</html>
+        async function loadInitialData() {
+            showLoader(true);
+            try {
+                const [dResp, aResp] = await Promise.all([
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDepartments' }) }),
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAssets' }) })
+                ]);
+                departments = await dResp.json();
+                allAssets = await aResp.json();
+                populateBuilding();
+            } catch (e) {
+                console.error("Load Error:", e);
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function populateBuilding() {
+            const select = document.getElementById('building-select');
+            const unique = [...new Set(departments.map(d => d.LOCATION_NAME).filter(Boolean))].sort();
+            select.innerHTML = '<option value="">-- เลือกอาคาร --</option>' + unique.map(b => `<option value="${b}">${b}</option>`).join('');
+        }
+
+        function filterDepartments() {
+            const bVal = document.getElementById('building-select').value;
+            const select = document.getElementById('dept-select');
+            select.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
+            if(!bVal) return;
+
+            const filtered = departments.filter(d => d.LOCATION_NAME === bVal);
+            const floors = [...new Set(filtered.map(d => d.FL || "ไม่ระบุชั้น"))].sort();
+
+            floors.forEach(f => {
+                const group = document.createElement('optgroup');
+                group.label = `ชั้น ${f}`;
+                filtered.filter(d => (d.FL || "ไม่ระบุชั้น") === f).forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.DEP_ID;
+                    opt.textContent = d.DEPNAME || d.DEP_NAME_LOC;
+                    group.appendChild(opt);
+                });
+                select.appendChild(group);
+            });
+        }
+
+        function updateDeptUI() {
+            const id = document.getElementById('dept-select').value;
+            const box = document.getElementById('dept-preview');
+            if(!id) { box.classList.add('hidden'); return; }
+
+            const dept = departments.find(d => d.DEP_ID == id);
+            document.getElementById('ui-dept-name').innerText = dept.DEPNAME;
+            document.getElementById('ui-dept-loc').innerText = `${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}`;
+            box.classList.remove('hidden');
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        function runSearch() {
+            const query = document.getElementById('query-input').value.toLowerCase().trim();
+            const resBox = document.getElementById('search-results');
+            resBox.innerHTML = '';
+            
+            if(!query) {
+                resBox.innerHTML = '<p class="text-center text-gray-300 py-10 text-sm">พิมพ์รหัสคุรุภัณฑ์หรือ S/N เพื่อค้นหา...</p>';
+                return;
+            }
+
+            const hits = allAssets.filter(a => 
+                String(a.AssetID).toLowerCase().includes(query) || 
+                String(a.Searail).toLowerCase().includes(query) ||
+                String(a['ชื่อรายการครุภัณฑ์']).toLowerCase().includes(query)
+            ).slice(0, 30);
+
+            if(hits.length === 0) {
+                resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูลในระบบ</p>';
+                return;
+            }
+
+            hits.forEach(a => {
+                const div = document.createElement('div');
+                div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
+                const status = a.CoStatus || '';
+                const statusHtml = status 
+                    ? `<span class="badge-info status-active">${highlightText(status, query)}</span>`
+                    : `<span class="badge-info status-none">N/A</span>`;
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-bold text-pink-600">${highlightText(String(a.AssetID), query)}</p>
+                            <p class="text-xs font-medium text-gray-700">${highlightText(String(a['ชื่อรายการครุภัณฑ์']), query)}</p>
+                            <p class="text-[10px] text-gray-400">S/N: ${highlightText(String(a.Searail || '-'), query)}</p>
+                        </div>
+                        ${statusHtml}
+                    </div>
+                `;
+                div.onclick = () => selectAsset(a);
+                resBox.appendChild(div);
+            });
+        }
+
+        function selectAsset(asset) {
+            currentAsset = asset;
+            closeSearchModal();
+            openLogModal(asset);
+        }
+
+        function openLogModal(a) {
+            resetLogForm(); 
+            document.getElementById('log-modal').classList.remove('hidden');
+            document.getElementById('asset-detail-ui').innerHTML = `
+                <div class="flex gap-4">
+                    <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 shadow-sm">
+                        <img src="${a.Ass_Img || 'https://via.placeholder.com/80?text=No+Img'}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
+                        <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์']}</p>
+                        <div class="flex gap-2 mt-2">
+                            <span class="text-[9px] bg-white px-2 rounded border border-slate-100 shadow-sm">อายุ: ${a['อายุ'] || '-'} ปี</span>
+                            <span class="text-[9px] bg-white px-2 rounded border border-slate-100 shadow-sm">รับเข้า: ${a['วันที่รับเข้า'] || '-'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function togglePacText() {
+            const isPac = document.getElementById('pac-mode').checked;
+            const select = document.getElementById('asset-type-select');
+            
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value.includes("All In One")) {
+                    const base = "เครื่องคอมพิวเตอร์ (All In One)";
+                    select.options[i].text = isPac ? `🖥️ ${base}/Pac` : `🖥️ ${base}`;
+                    break;
+                }
+            }
+        }
+
+        function commitAssetLog() {
+            const deptId = document.getElementById('dept-select').value;
+            if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
+        
+            const priority = document.getElementById('log-priority').value;
+            const assetTypeSelect = document.getElementById('asset-type-select');
+            let assetType = assetTypeSelect.value;
+            
+            if (!assetType) return alert("กรุณาเลือกประเภทอุปกรณ์");
+        
+            const isPac = document.getElementById('pac-mode').checked;
+            if (isPac && assetType.includes("All In One")) {
+                assetType += "/Pac";
+            }
+        
+            const shifts = Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value);
+            const note = document.getElementById('log-note').value;
+            
+            const logEntry = {
+                ...currentAsset,
+                deptId: deptId,
+                deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
+                priority: priority,
+                assetType: assetType,
+                shifts: shifts.join(','),
+                note: note,
+                gps: gpsCoords,
+                timestamp: new Date().toISOString()
+            };
+        
+            selectedLogs.push(logEntry);
+            saveDraftLocally();
+            renderSelectedUI();
+            closeLogModal();
+        }
+
+        function renderSelectedUI() {
+            const container = document.getElementById('selected-assets-container');
+            if(selectedLogs.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>';
+                return;
+            }
+
+            container.innerHTML = selectedLogs.map((log, idx) => `
+                <div class="p-4 border-2 border-pink-100 rounded-2xl bg-white shadow-sm flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-[10px] font-bold text-pink-400">${log.AssetID}</p>
+                        <p class="text-sm font-bold text-gray-700">${log['ชื่อรายการครุภัณฑ์'] || log.Detail}</p>
+                        <div class="flex gap-2 mt-1">
+                            <span class="text-[9px] text-blue-500 font-bold">${log.priority || '-'}</span>
+                            <span class="text-[9px] text-pink-500 font-bold bg-pink-50 px-2 rounded-full border border-pink-100">${log.assetType}</span>
+                        </div>
+                        ${log.note ? `<p class="text-[10px] text-gray-400 mt-1 italic border-t border-pink-50 pt-1">หมายเหตุ: ${log.note}</p>` : ''}
+                    </div>
+                    <button onclick="removeLog(${idx})" class="ml-4 text-gray-300 hover:text-red-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeLog(idx) {
+            selectedLogs.splice(idx, 1);
+            saveDraftLocally();
+            renderSelectedUI();
+        }
+
+        async function sendEverything() {
+            const name = document.getElementById('user-name').value;
+            if(!name || signPad.isEmpty()) return alert("กรุณาระบุชื่อและลงนาม");
+            if(selectedLogs.length === 0) return alert("ไม่มีข้อมูลครุภัณฑ์สำหรับส่ง");
+
+            showLoader(true);
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'submitFullSurvey',
+                        payload: {
+                            inspector: name,
+                            signature: signPad.toDataURL(),
+                            data: selectedLogs
+                        }
+                    })
+                });
+                const res = await response.json();
+                if(res.success) {
+                    alert("ส่งข้อมูลสำเร็จ ขอบคุณครับ");
+                    localStorage.removeItem('udh_asset_draft');
+                    location.reload();
+                } else {
+                    alert("เซิร์ฟเวอร์แจ้งข้อผิดพลาด: " + (res.message || "ไม่ทราบสาเหตุ"));
+                }
+            } catch (e) {
+                alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
+        
+        function openSearchModal() { 
+            document.getElementById('query-input').value = '';
+            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>';
+            document.getElementById('search-modal').classList.remove('hidden'); 
+        }
+
+        function closeSearchModal() { 
+            stopQR();
+            document.getElementById('search-modal').classList.add('hidden'); 
+            document.getElementById('query-input').value = '';
+            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>';
+        }
+
+        function closeLogModal() { document.getElementById('log-modal').classList.add('hidden'); }
+        function openFinalModal() { document.getElementById('final-modal').classList.remove('hidden'); }
+        function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
+        
+        function initSignature() {
+            const canvas = document.getElementById('sign-pad');
+            signPad = new SignaturePad(canvas);
+            const resize = () => {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+            };
+            window.addEventListener("resize", resize);
+            resize();
+        }
+
+        function clearSign() { signPad.clear(); }
+        function saveDraftLocally() { localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs)); }
+        function saveDraft() { saveDraftLocally(); alert("บันทึกร่างข้อมูลสำเร็จ"); }
+
+        function resetLogForm() {
+            document.getElementById('log-note').value = '';
+            document.getElementById('pac-mode').checked = false;
+            document.getElementById('log-priority').selectedIndex = 0;
+            document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
+            document.getElementById('asset-type-select').selectedIndex = 0;
+        }
+
+        async function toggleQR() {
+            const box = document.getElementById('qr-box');
+            if(!box.classList.contains('hidden')) return stopQR();
+            box.classList.remove('hidden');
+            qrScanner = new Html5Qrcode("qr-reader");
+            try {
+                await qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                    document.getElementById('query-input').value = txt;
+                    runSearch();
+                    stopQR();
+                });
+            } catch(e) { alert("ไม่สามารถเปิดกล้องได้"); stopQR(); }
+        }
+
+        async function stopQR() {
+            if(qrScanner) {
+                try { await qrScanner.stop(); } catch(e) {}
+                qrScanner = null;
+            }
+            document.getElementById('qr-box').classList.add('hidden');
+        }
+
+        function openNonAssetForm() {
+            selectAsset({
+                AssetID: "NON-" + Date.now().toString().slice(-6),
+                'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ",
+                Searail: "N/A"
+            });
+        }
+        <script>
+            let deptImages = [];
+            
+            // โหลดข้อมูลรูปจาก GAS
+            function loadDepartmentImages() {
+                google.script.run
+                    .withSuccessHandler(function(data) {
+                        deptImages = data || [];
+                    })
+                    .getDepartmentImages();
+            }
+</script>
+    </script>
 </body>
 </html>
