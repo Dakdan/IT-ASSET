@@ -70,9 +70,7 @@
 
     <header class="max-w-4xl mx-auto mb-6 text-center">
         <div class="flex flex-col items-center">
-            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" 
-     class="w-14 h-14 mb-2 rounded-full border-2 border-pink-200 object-cover" 
-     alt="UDH Logo" onerror="this.src='https://via.placeholder.com/60?text=IT'"/>
+            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png"class="w-14 h-14 mb-2 rounded-full border-2 border-pink-200 object-cover" alt="UDH Logo" onerror="this.src='https://via.placeholder.com/60?text=IT'"/>
             <h1 class="text-xl font-bold text-gray-800">ตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
             <p class="text-pink-500 font-bold text-[10px] tracking-widest uppercase">IT Udonthani Hospital</p>
         </div>
@@ -253,15 +251,11 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
         let departments = [], allAssets = [], selectedLogs = [], currentAsset = null;
         let signPad, qrScanner, gpsCoords = null;
-     
 
-      
-       window.onload = async () => {
+        window.onload = async () => {
             initSignature();
             await loadInitialData();
-            loadDepartmentImages(); // ✅ ต้องมี
             getGPS();
-        };
             
             const draft = localStorage.getItem('udh_asset_draft');
             if(draft) {
@@ -327,25 +321,10 @@
             const id = document.getElementById('dept-select').value;
             const box = document.getElementById('dept-preview');
             if(!id) { box.classList.add('hidden'); return; }
-        
+
             const dept = departments.find(d => d.DEP_ID == id);
-        
-            // ✅ หารูปจาก deptImages
-            const img = deptImages.find(i => i.DEP_ID == id);
-        
             document.getElementById('ui-dept-name').innerText = dept.DEPNAME;
             document.getElementById('ui-dept-loc').innerText = `${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}`;
-        
-            // ✅ เพิ่มรูปเข้าไป
-            box.innerHTML = `
-                <img src="${img?.IMG_URL || 'https://via.placeholder.com/80'}"
-                     class="w-16 h-16 rounded-xl object-cover border" />
-                <div>
-                    <p class="font-bold text-sm text-gray-800">${dept.DEPNAME}</p>
-                    <p class="text-[10px] text-gray-500">${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}</p>
-                </div>
-            `;
-        
             box.classList.remove('hidden');
         }
 
