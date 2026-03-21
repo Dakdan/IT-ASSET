@@ -10,20 +10,32 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: 'Kanit', sans-serif; background: #fff5f7; min-height: 100vh; color: #4a4a4a; }
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 24px; border: 1px solid rgba(255, 192, 203, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+        /* เพิ่มมิติเส้นขอบและเงาให้ Card */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px); 
+            border-radius: 24px; 
+            border: 2px solid #ffe4e8; /* เพิ่มความหนาของเส้นขอบ */
+            box-shadow: 0 4px 20px rgba(255, 182, 193, 0.2); /* ปรับเงาให้มีโทนชมพู */
+        }
+        /* เพิ่มมิติให้ Modal */
+        .modal-container {
+            border: 1px solid rgba(255, 133, 161, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(255, 133, 161, 0.25);
+        }
         .btn-pink { background: linear-gradient(90deg, #ff85a1 0%, #ffb6c1 100%); color: white; transition: all 0.3s ease; }
         .btn-pink:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(255, 133, 161, 0.3); }
         .loader-overlay { background: rgba(255, 255, 255, 0.85); display: none; position: fixed; inset: 0; z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffdae0; border-radius: 10px; }
         .signature-pad { border: 2px dashed #ffb6c1; background: #fff; border-radius: 12px; cursor: crosshair; }
-        .form-input { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #ffe4e8; outline: none; transition: border-color 0.2s; }
-        .form-input:focus { border-color: #ff85a1; ring: 2px; ring-color: #ffdae0; }
+        .form-input { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #ffe4e8; outline: none; transition: all 0.2s; }
+        .form-input:focus { border-color: #ff85a1; box-shadow: 0 0 0 3px rgba(255, 133, 161, 0.1); }
         .badge-info { padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; }
         .status-none { background: #f3f4f6; color: #9ca3af; }
         .status-active { background: #e0f2fe; color: #0369a1; }
         .type-label { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid #ffe4e8; border-radius: 0.75rem; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; }
-        .type-label:has(input:checked) { background: #fff1f2; border-color: #ff85a1; color: #be123c; font-weight: 600; }
+        .type-label:has(input:checked) { background: #fff1f2; border-color: #ff85a1; color: #be123c; font-weight: 600; box-shadow: 0 4px 12px rgba(255, 133, 161, 0.1); }
         mark { background-color: #ff85a1; color: white; border-radius: 2px; padding: 0 1px; }
     </style>
 </head>
@@ -43,7 +55,6 @@
     </header>
 
     <main class="max-w-4xl mx-auto space-y-6">
-        <!-- Section 1: Agency Info -->
         <section id="dept-section" class="glass-card p-6">
             <h2 class="text-lg font-bold border-l-4 border-pink-500 pl-3 mb-4 text-gray-700">1. ข้อมูลหน่วยงาน</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -60,8 +71,8 @@
                     </select>
                 </div>
             </div>
-            <div id="dept-preview" class="mt-4 hidden p-3 bg-pink-50 rounded-2xl flex items-center gap-4">
-                <div class="p-2 bg-white rounded-xl text-pink-400">
+            <div id="dept-preview" class="mt-4 hidden p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center gap-4">
+                <div class="p-2 bg-white rounded-xl text-pink-400 shadow-sm border border-pink-50">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2z"/></svg>
                 </div>
                 <div class="flex-1">
@@ -71,7 +82,6 @@
             </div>
         </section>
 
-        <!-- Section 2: Asset Management -->
         <section id="asset-section" class="glass-card p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold border-l-4 border-pink-500 pl-3 text-gray-700">2. รายการครุภัณฑ์</h2>
@@ -87,26 +97,25 @@
         </section>
 
         <section class="flex flex-col gap-3">
-            <button onclick="saveDraft()" class="w-full bg-white text-pink-400 py-3 rounded-2xl font-bold border-2 border-pink-100">บันทึกร่างข้อมูล</button>
+            <button onclick="saveDraft()" class="w-full bg-white text-pink-400 py-3 rounded-2xl font-bold border-2 border-pink-100 hover:bg-pink-50 transition-colors shadow-sm">บันทึกร่างข้อมูล</button>
             <button onclick="openFinalModal()" class="w-full btn-pink py-4 rounded-2xl font-black text-sm shadow-lg tracking-widest uppercase">ยืนยันและส่งรายงาน</button>
         </section>
     </main>
 
-    <!-- Modal: Search & Scan -->
     <div id="search-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xl rounded-[32px] p-6 space-y-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white w-full max-w-xl rounded-[32px] p-6 space-y-4 max-h-[90vh] overflow-hidden flex flex-col modal-container border-2 border-pink-100">
             <div class="flex justify-between items-center">
-                <h3 class="font-bold">ค้นหาครุภัณฑ์</h3>
-                <button onclick="closeSearchModal()" class="text-gray-400 text-2xl">&times;</button>
+                <h3 class="font-bold text-gray-700">ค้นหาครุภัณฑ์</h3>
+                <button onclick="closeSearchModal()" class="text-gray-400 text-3xl hover:text-pink-500 transition-colors">&times;</button>
             </div>
 
-            <div id="qr-box" class="hidden mb-4 overflow-hidden rounded-2xl bg-black">
+            <div id="qr-box" class="hidden mb-4 overflow-hidden rounded-2xl bg-black border-4 border-white shadow-lg">
                 <div id="qr-reader" class="w-full"></div>
             </div>
 
             <div class="flex gap-2">
                 <input type="text" id="query-input" placeholder="พิมพ์รหัส หรือ สแกน QR..." class="form-input flex-1" oninput="runSearch()">
-                <button onclick="toggleQR()" class="p-3 bg-pink-100 text-pink-500 rounded-xl hover:bg-pink-200">
+                <button onclick="toggleQR()" class="p-3 bg-pink-100 text-pink-500 rounded-xl hover:bg-pink-200 shadow-sm border border-pink-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"></path></svg>
                 </button>
             </div>
@@ -115,18 +124,17 @@
                 <p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>
             </div>
 
-            <div id="not-found-area" class="hidden text-center border-t pt-4">
+            <div id="not-found-area" class="hidden text-center border-t border-pink-50 pt-4">
                 <p class="text-xs text-gray-400 mb-2">ไม่พบคุรุภัณฑ์ในฐานข้อมูล?</p>
-                <button onclick="openNonAssetForm()" class="text-pink-500 font-bold text-sm underline">+ เพิ่มครุภัณฑ์นอกระบบ</button>
+                <button onclick="openNonAssetForm()" class="text-pink-500 font-bold text-sm underline hover:text-pink-600">+ เพิ่มครุภัณฑ์นอกระบบ</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Log Form -->
     <div id="log-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-[32px] p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div class="bg-white w-full max-w-2xl rounded-[32px] p-6 max-h-[90vh] overflow-y-auto custom-scrollbar modal-container border-2 border-pink-100">
             <div id="log-content" class="space-y-6">
-                <div class="bg-slate-50 p-4 rounded-2xl relative">
+                <div class="bg-slate-50 p-4 rounded-2xl relative border border-slate-200 shadow-inner">
                     <div id="asset-detail-ui"></div>
                 </div>
 
@@ -134,7 +142,7 @@
                     <h3 class="font-bold border-l-4 border-blue-400 pl-2 text-gray-700">ข้อมูลการใช้งานหน้างาน</h3>                    
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">ความสำคัญของงาน (Priority)</label>
-                        <select id="log-priority" class="form-input">
+                        <select id="log-priority" class="form-input mt-1 border-pink-100">
                             <option value="" selected disabled>-----เลือก---------</option>
                             <option value="ตรวจรักษา(แพทย์)">ตรวจรักษา(แพทย์)</option>
                             <option value="ข้อมูลผู้ป่วย (พยาบาล)">ข้อมูลผู้ป่วย (พยาบาล)</option>
@@ -142,8 +150,8 @@
                             <option value="งานเอกสาร งานธุรการ">งานเอกสาร งานธุรการ</option>
                             <option value="บริการทั่วไป ซ่อมบำรุง">บริการทั่วไป ซ่อมบำรุง</option>
                         </select>
-                    </div>                
-                    <div>
+                    </div>        
+                    
                     <div>
                         <label class="text-xs font-bold text-gray-500">ประเภทอุปกรณ์</label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
@@ -154,14 +162,14 @@
                             <label class="type-label"><input type="radio" name="asset-type" value="Pinter"> Printer</label>
                             <label class="type-label"><input type="radio" name="asset-type" value="Scaner"> Scanner</label>
                         </div>
-                        <div class="mt-4 p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between">
+                        <div class="mt-4 p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between shadow-sm">
                             <div>
                                 <span class="text-xs font-bold text-pink-600 block">โหมดเครื่อง Pac</span>
                                 <span class="text-[10px] text-pink-400 italic">เลือกหากมีป้ายหมายเลข 1, 2, 3 ติดอยู่</span>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="pac-mode" class="sr-only peer" onchange="togglePacText()">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500 shadow-inner"></div>
                             </label>
                         </div>
                     </div>
@@ -169,45 +177,44 @@
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">ช่วงเวลาทำงาน (Shift Work)</label>
                         <div class="flex gap-4 mt-1">
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" value="เช้า" class="shift-check"> เช้า</label>
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" value="บ่าย" class="shift-check"> บ่าย</label>
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" value="ดึก" class="shift-check"> ดึก</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="เช้า" class="shift-check accent-pink-500"> เช้า</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="บ่าย" class="shift-check accent-pink-500"> บ่าย</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="ดึก" class="shift-check accent-pink-500"> ดึก</label>
                         </div>
                     </div>
 
                     <div>
                         <label class="text-xs font-bold text-gray-500">หมายเหตุเพิ่มเติม (Note)</label>
-                        <textarea id="log-note" placeholder="ระบุอาการเสีย หรือข้อมูลเพิ่มเติม..." class="form-input h-24"></textarea>
+                        <textarea id="log-note" placeholder="ระบุอาการเสีย หรือข้อมูลเพิ่มเติม..." class="form-input h-24 mt-1 border-pink-100"></textarea>
                     </div>
                 </div>
 
                 <div class="flex gap-3">
-                    <button onclick="closeLogModal()" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold">ยกเลิก</button>
-                    <button onclick="commitAssetLog()" class="flex-1 py-3 btn-pink rounded-xl font-bold">ตกลง</button>
+                    <button onclick="closeLogModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm">ยกเลิก</button>
+                    <button onclick="commitAssetLog()" class="flex-1 py-3 btn-pink rounded-xl font-bold shadow-md">ตกลง</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Final -->
     <div id="final-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[32px] p-8 space-y-6">
+        <div class="bg-white w-full max-w-md rounded-[32px] p-8 space-y-6 modal-container border-2 border-pink-100">
             <div class="text-center">
-                <h3 class="text-lg font-bold">ยืนยันความถูกต้อง</h3>
+                <h3 class="text-lg font-bold text-gray-700">ยืนยันความถูกต้อง</h3>
                 <p class="text-xs text-pink-400">กรุณาลงลายมือชื่อเพื่อส่งข้อมูล</p>
             </div>
             
             <div class="space-y-4">
-                <input type="text" id="user-name" placeholder="ชื่อ-นามสกุล ผู้ตรวจสอบ" class="form-input font-bold text-center">
+                <input type="text" id="user-name" placeholder="ชื่อ-นามสกุล ผู้ตรวจสอบ" class="form-input font-bold text-center border-pink-200 shadow-inner">
                 <div class="space-y-1">
-                    <canvas id="sign-pad" class="signature-pad w-full h-40"></canvas>
-                    <button onclick="clearSign()" class="text-[10px] text-gray-400 underline float-right">ล้างลายเซ็น</button>
+                    <canvas id="sign-pad" class="signature-pad w-full h-40 shadow-inner"></canvas>
+                    <button onclick="clearSign()" class="text-[10px] text-gray-400 underline float-right hover:text-pink-500">ล้างลายเซ็น</button>
                 </div>
             </div>
 
             <div class="flex gap-3 pt-4">
-                <button onclick="closeFinalModal()" class="flex-1 text-gray-400 font-bold">ปิด</button>
-                <button onclick="sendEverything()" class="flex-1 btn-pink py-3 rounded-2xl font-bold">ส่งรายงาน</button>
+                <button onclick="closeFinalModal()" class="flex-1 text-gray-400 font-bold hover:text-gray-600">ปิด</button>
+                <button onclick="sendEverything()" class="flex-1 btn-pink py-3 rounded-2xl font-bold shadow-lg">ส่งรายงาน</button>
             </div>
         </div>
     </div>
@@ -326,12 +333,12 @@
             nfBox.classList.add('hidden');
             hits.forEach(a => {
                 const div = document.createElement('div');
-                div.className = "p-3 border rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-colors";
+                div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all hover:shadow-md hover:border-pink-200";
                 
                 const status = a.CoStatus || '';
                 const statusHtml = status 
-                    ? `<span class="badge-info status-active">${highlightText(status, query)}</span>`
-                    : `<span class="badge-info status-none">ไม่มีบันทึกสถานะ</span>`;
+                    ? `<span class="badge-info status-active shadow-sm">${highlightText(status, query)}</span>`
+                    : `<span class="badge-info status-none">${status}</span>`;
 
                 div.innerHTML = `
                     <div class="flex justify-between items-start">
@@ -355,19 +362,19 @@
         }
 
         function openLogModal(a) {
-            resetLogForm(); // เคลียร์ฟอร์มก่อนเปิดใหม่
+            resetLogForm(); 
             document.getElementById('log-modal').classList.remove('hidden');
             document.getElementById('asset-detail-ui').innerHTML = `
                 <div class="flex gap-4">
-                    <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border shrink-0">
+                    <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 shadow-sm">
                         <img src="${a.Ass_Img || 'https://via.placeholder.com/80?text=No+Img'}" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1">
                         <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
                         <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์']}</p>
                         <div class="flex gap-2 mt-2">
-                            <span class="text-[9px] bg-white px-2 rounded border">อายุ: ${a['อายุ'] || '-'} ปี</span>
-                            <span class="text-[9px] bg-white px-2 rounded border">รับเข้า: ${a['วันที่รับเข้า'] || '-'}</span>
+                            <span class="text-[9px] bg-white px-2 rounded border border-slate-100 shadow-sm">อายุ: ${a['อายุ'] || '-'} ปี</span>
+                            <span class="text-[9px] bg-white px-2 rounded border border-slate-100 shadow-sm">รับเข้า: ${a['วันที่รับเข้า'] || '-'}</span>
                         </div>
                     </div>
                 </div>
@@ -420,7 +427,7 @@
             }
 
             container.innerHTML = selectedLogs.map((log, idx) => `
-                <div class="p-4 border-2 border-pink-50 rounded-2xl bg-white shadow-sm flex items-center justify-between animate-in slide-in-from-bottom-2">
+                <div class="p-4 border-2 border-pink-100 rounded-2xl bg-white shadow-sm flex items-center justify-between animate-in slide-in-from-bottom-2 hover:shadow-md transition-shadow">
                     <div class="flex-1">
                         <p class="text-[10px] font-bold text-pink-400">${log.AssetID}</p>
                         <p class="text-sm font-bold text-gray-700">${log['ชื่อรายการครุภัณฑ์'] || log.Detail}</p>
@@ -428,7 +435,7 @@
                             <span class="text-[9px] text-blue-500 font-bold">${log.priority}</span>
                             <span class="text-[9px] text-pink-500 font-bold bg-pink-50 px-2 rounded-full border border-pink-100">${log.assetType}</span>
                         </div>
-                        ${log.note ? `<p class="text-[10px] text-gray-400 mt-1 italic border-t pt-1">หมายเหตุ: ${log.note}</p>` : ''}
+                        ${log.note ? `<p class="text-[10px] text-gray-400 mt-1 italic border-t border-pink-50 pt-1">หมายเหตุ: ${log.note}</p>` : ''}
                     </div>
                     <button onclick="removeLog(${idx})" class="ml-4 text-gray-300 hover:text-red-400 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -515,7 +522,6 @@
             document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
             document.querySelectorAll('input[name="asset-type"]').forEach(r => {
                 r.checked = false;
-                // รีเซ็ตค่า All in One Label กรณีโดน Pac เปลี่ยนไป
                 if(r.value.includes("เครื่องคอมพิวเตอร์ (All In One)")) {
                     r.value = "เครื่องคอมพิวเตอร์ (All In One)";
                     r.parentElement.childNodes[1].textContent = "เครื่องคอมพิวเตอร์ (All In One)";
