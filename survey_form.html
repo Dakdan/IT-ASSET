@@ -592,6 +592,18 @@
                 Searail: "N/A"
             });
         }
+        <script>
+            let deptImages = [];
+            
+            // โหลดข้อมูลรูปจาก GAS
+            function loadDepartmentImages() {
+                google.script.run
+                    .withSuccessHandler(function(data) {
+                        deptImages = data || [];
+                    })
+                    .getDepartmentImages();
+            }
+</script>
     </script>
 </body>
 </html>
