@@ -395,29 +395,21 @@
                     <div class="flex-1">
                         <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
                         <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์']}</p>
-                        <div class="flex gap-2 mt-2">
-                            <span class="text-[9px] bg-white px-2 rounded border border-slate-100 shadow-sm">อายุ: ${a['อายุ'] || '-'}</span>
-                            <span class="text-[9px] bg-white px-2 rounded border border-slate-100 shadow-sm">รับเข้า: ${a['วันที่รับเข้า'] || '-'}</span>
-                        </div>
                     </div>
                 </div>
             `;
         }
 
-       function togglePacText() {
-            const isPac = document.getElementById('pac-mode').checked; // เงื่อนไข: ติ๊กหรือไม่
+        function togglePacText() {
+            const isPac = document.getElementById('pac-mode').checked;
             const select = document.getElementById('asset-type-select');
-            const option = select.options[select.selectedIndex]; // ตัวที่เลือกอยู่ขณะนั้น
+            const option = select.options[select.selectedIndex];
             
             if (option) {
-                if (isPac) {
-                    // เงื่อนไข: ถ้าติ๊ก ให้เพิ่ม /Pacs ต่อท้าย
-                    if (!option.value.includes("/Pacs")) {
-                        option.text += "/Pacs";
-                        option.value += "/Pacs";
-                    }
-                } else {
-                    // เงื่อนไข: ถ้าไม่ติ๊ก ให้ลบ /Pacs ออก
+                if (isPac && !option.value.includes("/Pacs")) {
+                    option.text += "/Pacs";
+                    option.value += "/Pacs";
+                } else if (!isPac) {
                     option.text = option.text.replace("/Pacs", "");
                     option.value = option.value.replace("/Pacs", "");
                 }
@@ -427,33 +419,17 @@
         function commitAssetLog() {
             const deptId = document.getElementById('dept-select').value;
             if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
-        
-            const priority = document.getElementById('log-priority').value;
-            const assetTypeSelect = document.getElementById('asset-type-select');
-            let assetType = assetTypeSelect.value;
-            
+
+            const assetType = document.getElementById('asset-type-select').value;
             if (!assetType) return alert("กรุณาเลือกประเภทอุปกรณ์");
-        
-            const isPac = document.getElementById('pac-mode').checked;
-            if (isPac && assetType.includes("All In One")) {
-                assetType += "/Pac";
-            }
-        
-            const shifts = Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value);
-            const note = document.getElementById('log-note').value;
-            
+
             const logEntry = {
                 ...currentAsset,
-                deptId: deptId,
-                deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
-                priority: priority,
-                assetType: assetType,
-                shifts: shifts.join(','),
-                note: note,
-                gps: gpsCoords,
-                timestamp: new Date().toISOString()
+                deptId,
+                assetType,
+                gps: gpsCoords
             };
-        
+
             selectedLogs.push(logEntry);
             saveDraftLocally();
             renderSelectedUI();
@@ -463,26 +439,10 @@
         function renderSelectedUI() {
             const container = document.getElementById('selected-assets-container');
             if(selectedLogs.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>';
+                container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูล</p>';
                 return;
             }
-
-            container.innerHTML = selectedLogs.map((log, idx) => `
-                <div class="p-4 border-2 border-pink-100 rounded-2xl bg-white shadow-sm flex items-center justify-between">
-                    <div class="flex-1">
-                        <p class="text-[10px] font-bold text-pink-400">${log.AssetID}</p>
-                        <p class="text-sm font-bold text-gray-700">${log['ชื่อรายการครุภัณฑ์'] || log.Detail}</p>
-                        <div class="flex gap-2 mt-1">
-                            <span class="text-[9px] text-blue-500 font-bold">${log.priority || '-'}</span>
-                            <span class="text-[9px] text-pink-500 font-bold bg-pink-50 px-2 rounded-full border border-pink-100">${log.assetType}</span>
-                        </div>
-                        ${log.note ? `<p class="text-[10px] text-gray-400 mt-1 italic border-t border-pink-50 pt-1">หมายเหตุ: ${log.note}</p>` : ''}
-                    </div>
-                    <button onclick="removeLog(${idx})" class="ml-4 text-gray-300 hover:text-red-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                </div>
-            `).join('');
+            container.innerHTML = selectedLogs.map(log => `<div>${log.AssetID}</div>`).join('');
         }
 
         function removeLog(idx) {
@@ -491,109 +451,88 @@
             renderSelectedUI();
         }
 
-       async function sendEverything() {
-            const name = document.getElementById('user-name').value;
-            if(!name || signPad.isEmpty()) return alert("กรุณาระบุชื่อและลงนาม");
-            if(selectedLogs.length === 0) return alert("ไม่มีข้อมูลครุภัณฑ์สำหรับส่ง");
-        
-            showLoader(true);
-            try {
-                // เตรียม Data ให้เป็นก้อนเดียวตามที่ Backend (GAS) รอรับ
-                const payload = {
-                    inspector: name,
-                    signature: signPad.toDataURL(),
-                    deptId: document.getElementById('dept-select').value,
-                    deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
-                    data: selectedLogs // ส่ง Array ของครุภัณฑ์ทั้งหมดไป
-                };
-        
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'submitFullSurvey', // *** ต้องชื่อเดียวกับใน switch case ของ Code.gs
-                        payload: payload
-                    })
-                });
-        
-                const res = await response.json();
-                
-                if(res.success || res.status === "success") {
-                    alert("บันทึกข้อมูลเรียบร้อยแล้ว");
-                    localStorage.removeItem('udh_asset_draft');
-                    location.reload();
-                } else {
-                    alert("เซิร์ฟเวอร์ตอบกลับ: " + (res.message || "เกิดข้อผิดพลาด"));
-                }
-            } catch (e) {
-                console.error(e);
-                alert("เชื่อมต่อระบบไม่ได้: ตรวจสอบการ Deployment (Web App URL) หรือสิทธิ์การเข้าถึง");
-            } finally {
-                showLoader(false);
-            }
+        async function sendEverything() {
+            alert("ส่งข้อมูล (mock)");
         }
+
         function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-        
-        function openSearchModal() { 
-            document.getElementById('query-input').value = '';
-            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>';
-            document.getElementById('search-modal').classList.remove('hidden'); 
-        }
 
-        function closeSearchModal() { 
-            stopQR();
-            document.getElementById('search-modal').classList.add('hidden'); 
-            document.getElementById('query-input').value = '';
-            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>';
-        }
-
+        function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
+        function closeSearchModal() { stopQR(); document.getElementById('search-modal').classList.add('hidden'); }
         function closeLogModal() { document.getElementById('log-modal').classList.add('hidden'); }
         function openFinalModal() { document.getElementById('final-modal').classList.remove('hidden'); }
         function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
-        
+
         function initSignature() {
             const canvas = document.getElementById('sign-pad');
             signPad = new SignaturePad(canvas);
-            const resize = () => {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-            };
-            window.addEventListener("resize", resize);
-            resize();
         }
 
         function clearSign() { signPad.clear(); }
         function saveDraftLocally() { localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs)); }
-        function saveDraft() { saveDraftLocally(); alert("บันทึกร่างข้อมูลสำเร็จ"); }
+
+        function saveDraft() { 
+            saveDraftLocally(); 
+            alert("บันทึกร่างข้อมูลสำเร็จ"); 
+        }
 
         function resetLogForm() {
             document.getElementById('log-note').value = '';
             document.getElementById('pac-mode').checked = false;
             document.getElementById('log-priority').selectedIndex = 0;
             document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
-            document.getElementById('asset-type-select').selectedIndex = 0;
+
+            const select = document.getElementById('asset-type-select');
+            if (select) {
+                select.selectedIndex = 0;
+                select.value = select.value.replace("/Pac", "");
+            }
         }
 
         async function toggleQR() {
             const box = document.getElementById('qr-box');
-            if(!box.classList.contains('hidden')) return stopQR();
+
+            if (!box.classList.contains('hidden')) {
+                return stopQR();
+            }
+
             box.classList.remove('hidden');
-            qrScanner = new Html5Qrcode("qr-reader");
+
             try {
-                await qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                    document.getElementById('query-input').value = txt;
-                    runSearch();
-                    stopQR();
-                });
-            } catch(e) { alert("ไม่สามารถเปิดกล้องได้"); stopQR(); }
+                if (qrScanner) {
+                    await stopQR();
+                }
+
+                qrScanner = new Html5Qrcode("qr-reader");
+
+                await qrScanner.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: 250 },
+                    (txt) => {
+                        document.getElementById('query-input').value = txt;
+                        runSearch();
+                        stopQR();
+                    }
+                );
+
+            } catch (e) {
+                console.error(e);
+                alert("ไม่สามารถเปิดกล้องได้");
+                stopQR();
+            }
         }
 
         async function stopQR() {
-            if(qrScanner) {
-                try { await qrScanner.stop(); } catch(e) {}
-                qrScanner = null;
+            try {
+                if (qrScanner) {
+                    await qrScanner.stop();
+                    await qrScanner.clear();
+                }
+            } catch (e) {
+                console.warn("QR stop error:", e);
             }
+
+            qrScanner = null;
             document.getElementById('qr-box').classList.add('hidden');
         }
 
@@ -601,9 +540,10 @@
             selectAsset({
                 AssetID: "NON-" + Date.now().toString().slice(-6),
                 'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ",
+                Detail: "ครุภัณฑ์นอกระบบ",
                 Searail: "N/A"
             });
         }
-    </script>
+</script>
 </body>
 </html>
