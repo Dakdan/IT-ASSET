@@ -540,6 +540,56 @@
                 Searail: "N/A"
             });
         }
+        /* ================= FIX SEND ================= */
+async function sendEverything() {
+    const name = document.getElementById('user-name').value;
+
+    if (!name || signPad.isEmpty()) {
+        return alert("กรุณาระบุชื่อและลงนาม");
+    }
+
+    if (selectedLogs.length === 0) {
+        return alert("ไม่มีข้อมูลครุภัณฑ์สำหรับส่ง");
+    }
+
+    showLoader(true);
+
+    try {
+        const payload = {
+            inspector: name,
+            signature: signPad.toDataURL(),
+            deptId: document.getElementById('dept-select').value,
+            deptName: document.getElementById('dept-select').options[
+                document.getElementById('dept-select').selectedIndex
+            ].text,
+            data: selectedLogs
+        };
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'submitFullSurvey',
+                payload: payload
+            })
+        });
+
+        const res = await response.json();
+
+        if (res.success || res.status === "success") {
+            alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+            localStorage.removeItem('udh_asset_draft');
+            location.reload();
+        } else {
+            alert("เซิร์ฟเวอร์ตอบกลับ: " + (res.message || "เกิดข้อผิดพลาด"));
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("เชื่อมต่อระบบไม่ได้");
+    } finally {
+        showLoader(false);
+    }
+}
 </script>
 </body>
 </html>
