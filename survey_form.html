@@ -479,21 +479,7 @@
             closeLogModal();
         }
 
-        function renderSelectedUI() {
-            const container = document.getElementById('selected-assets-container');
-            if(selectedLogs.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูล</p>';
-                return;
-            }
-            container.innerHTML = selectedLogs.map(log => `<div>${log.AssetID}</div>`).join('');
-        }
-
-        function removeLog(idx) {
-            selectedLogs.splice(idx, 1);
-            saveDraftLocally();
-            renderSelectedUI();
-        }
-
+       
         function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
 
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
