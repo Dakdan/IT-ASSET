@@ -375,14 +375,15 @@ function runSearch(isQR = false) {
         resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูล</p>';
         return;
     }
+hits.forEach(a => {
+                const div = document.createElement('div');
+                div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
+                const status = a.CoStatus || '';
+                const statusHtml = status 
+                    ? `<span class="badge-info status-active">${highlightText(status, query)}</span>`
+                    : `<span class="badge-info status-none">N/A</span>`;
 
-    hits.forEach(a => {
-        const div = document.createElement('div');
-        div.className = "p-3 border rounded-xl cursor-pointer";
-        div.innerHTML = `
-            <p class="font-bold text-pink-600">${a.AssetID}</p>
-            <p class="text-xs text-gray-600">${a['ชื่อรายการครุภัณฑ์']}</p>
-        `;
+
         div.onclick = () => selectAsset(a);
         resBox.appendChild(div);
     });
