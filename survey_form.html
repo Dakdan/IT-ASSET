@@ -61,6 +61,16 @@
     </style>
        
 </head>
+    <div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
+        <h3 id="alert-title" class="font-bold text-gray-700 text-lg mb-2">แจ้งเตือน</h3>
+        <p id="alert-message" class="text-sm text-gray-500 mb-6">-</p>
+        <div class="flex gap-3 justify-center">
+            <button id="alert-cancel" class="px-4 py-2 bg-gray-100 rounded-xl text-gray-500 hidden">ยกเลิก</button>
+            <button id="alert-ok" class="px-6 py-2 btn-pink rounded-xl font-bold text-white">ตกลง</button>
+        </div>
+    </div>
+</div>
 <body class="p-4 md:p-6 pb-20">
 
     <div id="loader" class="loader-overlay">
