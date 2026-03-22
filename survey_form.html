@@ -201,7 +201,7 @@
 
                     <div class="mt-4 p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between">
                         <div>
-                            <span class="text-xs font-bold text-pink-600 block">โหมดเครื่อง Pac</span>
+                            <span class="text-xs font-bold text-pink-600 block">เครื่องระบบ Pac</span>
                            
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
@@ -381,7 +381,7 @@
                                 <p class="text-[11px] text-gray-500">${highlightText(a['ชื่อรายการครุภัณฑ์'], query)}</p>
                             </div>
                             <span class="badge-info ${a.CoStatus ? 'status-active' : 'status-none'}">
-                                ${highlightText(a.CoStatus || 'N/A', query)}
+                                ${highlightText(a.CoStatus || 'ไม่พบการบันทึกสถานะ', query)}
                             </span>
                         </div>
                     `;
