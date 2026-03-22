@@ -144,7 +144,7 @@
             </div>
             <div class="flex gap-2">
                 <input type="text" id="query-input" placeholder="พิมพ์รหัส หรือ สแกน QR..." class="form-input flex-1" oninput="runSearch()">
-                <button onclick="toggleQR()" class="p-3 bg-pink-100 text-pink-500 rounded-xl hover:bg-pink-200">
+                <button onclick="toggleQR(true)" class="p-3 bg-pink-100 text-pink-500 rounded-xl hover:bg-pink-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"></path></svg>
                 </button>
             </div>
@@ -341,49 +341,52 @@
             return text.replace(regex, '<mark>$1</mark>');
         }
 
-        function runSearch() {
-            const query = document.getElementById('query-input').value.toLowerCase().trim();
-            const resBox = document.getElementById('search-results');
-            resBox.innerHTML = '';
-            
-            if(!query) {
-                resBox.innerHTML = '<p class="text-center text-gray-300 py-10 text-sm">พิมพ์รหัสคุรุภัณฑ์หรือ S/N เพื่อค้นหา...</p>';
-                return;
-            }
+function runSearch(isQR = false) {
+    const query = document.getElementById('query-input').value.trim().toLowerCase();
+    const resBox = document.getElementById('search-results');
+    resBox.innerHTML = '';
 
-            const hits = allAssets.filter(a => 
-                String(a.AssetID).toLowerCase().includes(query) || 
-                String(a.Searail).toLowerCase().includes(query) ||
-                String(a['ชื่อรายการครุภัณฑ์']).toLowerCase().includes(query)
-            ).slice(0, 30);
+    if (!query) {
+        resBox.innerHTML = '<p class="text-center text-gray-300 py-10 text-sm">พิมพ์รหัสครุภัณฑ์...</p>';
+        return;
+    }
 
-            if(hits.length === 0) {
-                resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูลในระบบ</p>';
-                return;
-            }
+    // ====== QR MODE ======
+    if (isQR) {
+        const found = allAssets.find(a =>
+            String(a.AssetID).toLowerCase() === query
+        );
 
-            hits.forEach(a => {
-                const div = document.createElement('div');
-                div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
-                const status = a.CoStatus || '';
-                const statusHtml = status 
-                    ? `<span class="badge-info status-active">${highlightText(status, query)}</span>`
-                    : `<span class="badge-info status-none">N/A</span>`;
-
-                div.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="font-bold text-pink-600">${highlightText(String(a.AssetID), query)}</p>
-                            <p class="text-xs font-medium text-gray-700">${highlightText(String(a['ชื่อรายการครุภัณฑ์']), query)}</p>
-                            <p class="text-[10px] text-gray-400">S/N: ${highlightText(String(a.Searail || '-'), query)}</p>
-                        </div>
-                        ${statusHtml}
-                    </div>
-                `;
-                div.onclick = () => selectAsset(a);
-                resBox.appendChild(div);
-            });
+        if (found) {
+            selectAsset(found);
+            return;
+        } else {
+            resBox.innerHTML = '<p class="text-center text-red-400 py-10">QR นี้ไม่มีในระบบ</p>';
+            return;
         }
+    }
+
+    // ====== TYPING MODE ======
+    const hits = allAssets.filter(a =>
+        String(a.AssetID).toLowerCase().endsWith(query)
+    ).slice(0, 30);
+
+    if (hits.length === 0) {
+        resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูล</p>';
+        return;
+    }
+
+    hits.forEach(a => {
+        const div = document.createElement('div');
+        div.className = "p-3 border rounded-xl cursor-pointer";
+        div.innerHTML = `
+            <p class="font-bold text-pink-600">${a.AssetID}</p>
+            <p class="text-xs text-gray-600">${a['ชื่อรายการครุภัณฑ์']}</p>
+        `;
+        div.onclick = () => selectAsset(a);
+        resBox.appendChild(div);
+    });
+}
 
         function selectAsset(asset) {
             currentAsset = asset;
@@ -513,7 +516,7 @@
                     { fps: 10, qrbox: 250 },
                     (txt) => {
                         document.getElementById('query-input').value = txt;
-                        runSearch();
+                        runSearch(true);  // ✅ บังคับ QR mode
                         stopQR();
                     }
                 );
