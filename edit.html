@@ -1,171 +1,119 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Udon Hospital - Asset Survey V2</title>
 
-<title>Editor</title>
-<link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 
+    <style>
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background: linear-gradient(to bottom, #ffe4ec, #ffffff);
+            min-height: 100vh; 
+        }
+
+        .loader-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(255,255,255,0.85);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+    </style>
 </head>
-<body>
 
-<div class="login-wrapper">
+<body class="p-4">
 
-  <!-- HEADER -->
-  <div class="login-header">
-    <h1>บันทึกข้อมูล</h1>
-    <p>Asset Survey</p>
-  </div>
-
-  <!-- CARD -->
-  <div class="login-card">
-
-    <!-- SEARCH -->
-    <div class="form-group">
-      <label>ค้นหา Asset</label>
-      <input id="search" placeholder="พิมพ์ AssetID">
+<!-- ALERT -->
+<div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
+    <div class="bg-white p-6 rounded-xl text-center">
+        <p id="alert-message">-</p>
+        <button id="alert-ok">ตกลง</button>
     </div>
-
-    <button class="btn-login" onclick="search()">ค้นหา</button>
-
-    <!-- RESULT -->
-    <div id="results"></div>
-
-    <!-- SELECTED -->
-    <h3 style="margin-top:15px;">รายการที่เลือก</h3>
-    <div id="selected"></div>
-
-    <!-- SAVE -->
-    <button class="btn-login" onclick="save()">บันทึก</button>
-
-  </div>
 </div>
 
-<!-- LOADER -->
-<div class="loader-overlay" id="loader">
-  <div class="spinner"></div>
+<!-- LOADER (เหลืออันเดียว) -->
+<div id="loader" class="loader-overlay">
+    <div>Loading...</div>
 </div>
 
-<!-- POPUP -->
-<div class="popup-overlay" id="popup">
-  <div class="popup-box" id="popupBox">
-    <h3 id="popupTitle"></h3>
-    <p id="popupMsg"></p>
-    <button class="btn-login" onclick="closePopup()">ตกลง</button>
-  </div>
-</div>
+<button onclick="openSearchModal()">เปิดค้นหา</button>
 
-<script src="js/api.js"></script>
+<!-- SEARCH -->
+<div id="search-modal" class="hidden">
+    <input id="query-input" oninput="runSearch()">
+    <div id="search-results"></div>
+</div>
 
 <script>
-let selected = [];
+const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
 
-/* ===== SEARCH ===== */
-async function search(){
-  const q = document.getElementById("search").value;
+let allAssets = [];
+let qrScanner = null;
 
-  if(!q){
-    showPopup("warning","แจ้งเตือน","กรุณากรอกคำค้นหา");
-    return;
-  }
-
-  showLoader();
-
-  try{
-    const data = await API.searchAssets(q);
-
-    document.getElementById("results").innerHTML = data.map(item => `
-      <div class="form-group">
-        <button class="btn-login" onclick='add(${JSON.stringify(item)})'>
-          ${item.AssetID}
-        </button>
-      </div>
-    `).join("");
-
-  }catch(err){
-    showPopup("error","Error","ค้นหาไม่สำเร็จ");
-  }
-
-  hideLoader();
+function showLoader(s){
+    document.getElementById('loader').style.display = s ? 'flex' : 'none';
 }
 
-/* ===== ADD ===== */
-function add(item){
-  if(selected.find(x => x.AssetID === item.AssetID)){
-    showPopup("warning","ซ้ำ","มีรายการนี้แล้ว");
-    return;
-  }
-
-  selected.push(item);
-  render();
+function openSearchModal(){
+    document.getElementById('search-modal').classList.remove('hidden');
 }
 
-/* ===== RENDER ===== */
-function render(){
-  document.getElementById("selected").innerHTML =
-    selected.map(x => `
-      <div class="form-group">
-        <input value="${x.AssetID}" disabled>
-      </div>
-    `).join("");
+function runSearch(){
+    const q = document.getElementById('query-input').value.toLowerCase();
+    const box = document.getElementById('search-results');
+
+    const hits = allAssets.filter(a =>
+        String(a.AssetID).toLowerCase().includes(q)
+    );
+
+    box.innerHTML = hits.map(a => `<div>${a.AssetID}</div>`).join('');
 }
 
-/* ===== SAVE ===== */
-async function save(){
-  if(selected.length === 0){
-    showPopup("warning","แจ้งเตือน","ยังไม่มีรายการ");
-    return;
-  }
+/* ✅ แก้ QR ให้ถูก */
+async function toggleQR(){
+    try {
+        qrScanner = new Html5Qrcode("qr-reader");
 
-  showLoader();
-
-  try{
-    await API.saveSurvey({
-      deptId: getDeptId(),
-      assets: selected
-    });
-
-    selected = [];
-    render();
-
-    showPopup("success","สำเร็จ","บันทึกข้อมูลเรียบร้อย");
-
-  }catch(err){
-    showPopup("error","Error","บันทึกไม่สำเร็จ");
-  }
-
-  hideLoader();
+        await qrScanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            (txt) => {
+                document.getElementById('query-input').value = txt;
+                runSearch();
+                stopQR();
+            }
+        );
+    } catch (e){
+        showAlert("เปิดกล้องไม่ได้");
+    }
 }
 
-/* ===== UTIL ===== */
-function getDeptId(){
-  const url = new URLSearchParams(window.location.search);
-  return url.get("deptId");
+/* ✅ ต้องอยู่นอก function */
+async function stopQR(){
+    if(qrScanner){
+        try { await qrScanner.stop(); } catch(e){}
+        qrScanner = null;
+    }
 }
 
-/* ===== UI ===== */
-function showLoader(){
-  document.getElementById("loader").style.display = "flex";
-}
+function showAlert(msg){
+    const modal = document.getElementById('alert-modal');
+    document.getElementById('alert-message').innerText = msg;
 
-function hideLoader(){
-  document.getElementById("loader").style.display = "none";
-}
+    modal.classList.remove('hidden');
 
-function showPopup(type,title,msg){
-  const popup = document.getElementById("popup");
-  const box = document.getElementById("popupBox");
-
-  box.className = "popup-box " + type;
-  document.getElementById("popupTitle").innerText = title;
-  document.getElementById("popupMsg").innerText = msg;
-
-  popup.style.display = "flex";
-}
-
-function closePopup(){
-  document.getElementById("popup").style.display = "none";
+    document.getElementById('alert-ok').onclick = ()=>{
+        modal.classList.add('hidden');
+    }
 }
 </script>
 
