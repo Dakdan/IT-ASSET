@@ -69,7 +69,13 @@
        
 </head>
 <body class="p-4 md:p-6 pb-20">
-
+  <!-- Custom Alert Modal -->
+<div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
+        <p id="alert-text" class="text-gray-700 font-bold mb-4"></p>
+        <button onclick="closeAlert()" class="px-6 py-2 btn-pink rounded-xl font-bold">ตกลง</button>
+    </div>
+</div>
     <div id="loader" class="loader-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-pink-500"></div>
         <p class="text-pink-600 font-medium">กำลังโหลดข้อมูล...</p>
@@ -392,20 +398,28 @@
             
             function renderSelectedUI() {
                 const container = document.getElementById('selected-assets-container');
+            
                 if(selectedLogs.length === 0) {
                     container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>';
                     return;
                 }
+            
                 container.innerHTML = selectedLogs.map((log, idx) => `
-                    <div class="flex justify-between items-center p-3 border border-pink-50 rounded-xl mb-2 shadow-sm">
-                        <div>
-                            <p class="font-bold text-gray-700">${log.AssetID}</p>
-                            <p class="text-[11px] text-gray-500">${log['ชื่อรายการครุภัณฑ์']}</p>
+                    <div class="flex justify-between items-center p-3 border border-pink-50 rounded-xl mb-2 shadow-sm hover:bg-pink-50 cursor-pointer" onclick='openLogModal(selectedLogs[${idx}])'>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shadow-sm">
+                                <img src="${log.Ass_Img || 'https://via.placeholder.com/48?text=No+Img'}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-700">${log.AssetID}</p>
+                                <p class="text-[11px] text-gray-500">${log['ชื่อรายการครุภัณฑ์']}</p>
+                                <p class="text-[10px] text-gray-400">${log.assetType || ''}</p>
+                            </div>
                         </div>
-                        <button onclick="removeLog(${idx})" class="text-red-400 font-bold hover:text-red-600">ลบ</button>
+                        <button onclick="event.stopPropagation(); removeLog(${idx})" class="text-red-400 font-bold hover:text-red-600">ลบ</button>
                     </div>
                 `).join('');
-            }
+            }}
 
         function selectAsset(asset) {
             currentAsset = asset;
@@ -628,18 +642,32 @@ function showAlert(message) {
 function closeAlert() {
     document.getElementById('alert-modal').classList.add('hidden');
 }
+         function openLogModal(a) {
+        // รีเซ็ตฟอร์มก่อน
+        resetLogForm(); 
+        
+        // แสดง modal
+        document.getElementById('log-modal').classList.remove('hidden');
+        
+        // แสดงรายละเอียด asset ใน container
+        document.getElementById('asset-detail-ui').innerHTML = `
+            <div class="flex gap-4">
+                <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 shadow-sm">
+                    <img src="${a.Ass_Img || 'https://via.placeholder.com/80?text=No+Img'}" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
+                    <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์']}</p>
+                </div>
+            </div>
+        `;
+    }
 
 // override alert เดิม
 window.alert = function(message) {
     showAlert(message);
 };
 </script>
-    <!-- Custom Alert Modal -->
-<div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
-        <p id="alert-text" class="text-gray-700 font-bold mb-4"></p>
-        <button onclick="closeAlert()" class="px-6 py-2 btn-pink rounded-xl font-bold">ตกลง</button>
-    </div>
-</div>
+  
 </body>
 </html>
