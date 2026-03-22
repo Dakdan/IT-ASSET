@@ -335,59 +335,77 @@
             box.classList.remove('hidden');
         }
 
-        function highlightText(text, query) {
-            if (!query) return text;
-            const regex = new RegExp(`(${query})`, 'gi');
-            return text.replace(regex, '<mark>$1</mark>');
-        }
-
-function runSearch(isQR = false) {
-    const query = document.getElementById('query-input').value.trim().toLowerCase();
-    const resBox = document.getElementById('search-results');
-    resBox.innerHTML = '';
-
-    if (!query) {
-        resBox.innerHTML = '<p class="text-center text-gray-300 py-10 text-sm">พิมพ์รหัสครุภัณฑ์...</p>';
-        return;
-    }
-
-    // ====== QR MODE ======
-    if (isQR) {
-        const found = allAssets.find(a =>
-            String(a.AssetID).toLowerCase() === query
-        );
-
-        if (found) {
-            selectAsset(found);
-            return;
-        } else {
-            resBox.innerHTML = '<p class="text-center text-red-400 py-10">QR นี้ไม่มีในระบบ</p>';
-            return;
-        }
-    }
-
-    // ====== TYPING MODE ======
-    const hits = allAssets.filter(a =>
-        String(a.AssetID).toLowerCase().endsWith(query)
-    ).slice(0, 30);
-
-    if (hits.length === 0) {
-        resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูล</p>';
-        return;
-    }
-hits.forEach(a => {
-                const div = document.createElement('div');
-                div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
-                const status = a.CoStatus || '';
-                const statusHtml = status 
-                    ? `<span class="badge-info status-active">${highlightText(status, query)}</span>`
-                    : `<span class="badge-info status-none">N/A</span>`;
-
-
-        div.onclick = () => selectAsset(a);
-        resBox.appendChild(div);
-    });
-}
+       function highlightText(text, query) {
+                if (!query) return text;
+                const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                return text.replace(regex, '<mark>$1</mark>');
+            }
+            
+            function runSearch(isQR = false) {
+                const query = document.getElementById('query-input').value.trim().toLowerCase();
+                const resBox = document.getElementById('search-results');
+                resBox.innerHTML = '';
+            
+                if (!query) {
+                    resBox.innerHTML = '<p class="text-center text-gray-300 py-10 text-sm">พิมพ์รหัสครุภัณฑ์...</p>';
+                    return;
+                }
+            
+                // QR Mode
+                if (isQR) {
+                    const found = allAssets.find(a => String(a.AssetID).toLowerCase() === query);
+                    if (found) {
+                        selectAsset(found);
+                        return;
+                    } else {
+                        resBox.innerHTML = '<p class="text-center text-red-400 py-10">QR นี้ไม่มีในระบบ</p>';
+                        return;
+                    }
+                }
+            
+                // Typing Mode
+                const hits = allAssets.filter(a => String(a.AssetID).toLowerCase().includes(query)).slice(0, 30);
+            
+                if (hits.length === 0) {
+                    resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูล</p>';
+                    return;
+                }
+            
+                hits.forEach((a, idx) => {
+                    const div = document.createElement('div');
+                    div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-gray-700">${highlightText(a.AssetID, query)}</p>
+                                <p class="text-[11px] text-gray-500">${highlightText(a['ชื่อรายการครุภัณฑ์'], query)}</p>
+                            </div>
+                            <span class="badge-info ${a.CoStatus ? 'status-active' : 'status-none'}">
+                                ${highlightText(a.CoStatus || 'N/A', query)}
+                            </span>
+                        </div>
+                    `;
+                    div.onclick = () => selectAsset(a);
+                    resBox.appendChild(div);
+                });
+            }
+            
+            function renderSelectedUI() {
+                const container = document.getElementById('selected-assets-container');
+                if(selectedLogs.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>';
+                    return;
+                }
+                container.innerHTML = selectedLogs.map((log, idx) => `
+                    <div class="flex justify-between items-center p-3 border border-pink-50 rounded-xl mb-2 shadow-sm">
+                        <div>
+                            <p class="font-bold text-gray-700">${log.AssetID}</p>
+                            <p class="text-[11px] text-gray-500">${log['ชื่อรายการครุภัณฑ์']}</p>
+                        </div>
+                        <button onclick="removeLog(${idx})" class="text-red-400 font-bold hover:text-red-600">ลบ</button>
+                    </div>
+                `).join('');
+            }
 
         function selectAsset(asset) {
             currentAsset = asset;
