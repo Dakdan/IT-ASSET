@@ -61,18 +61,25 @@
     </style>
        
 </head>
+
+<body class="p-4 md:p-6 pb-20">
+    </head>
+
+<body>
+
+    <!-- ✅ วางตรงนี้ -->
     <div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
-        <h3 id="alert-title" class="font-bold text-gray-700 text-lg mb-2">แจ้งเตือน</h3>
-        <p id="alert-message" class="text-sm text-gray-500 mb-6">-</p>
-        <div class="flex gap-3 justify-center">
-            <button id="alert-cancel" class="px-4 py-2 bg-gray-100 rounded-xl text-gray-500 hidden">ยกเลิก</button>
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
+            <h3 class="font-bold text-gray-700 text-lg mb-2">แจ้งเตือน</h3>
+            <p id="alert-message" class="text-sm text-gray-500 mb-6">-</p>
             <button id="alert-ok" class="px-6 py-2 btn-pink rounded-xl font-bold text-white">ตกลง</button>
         </div>
     </div>
-</div>
-<body class="p-4 md:p-6 pb-20">
 
+    <!-- loader -->
+    <div id="loader" class="loader-overlay">...</div>
+
+    <!-- ที่เหลือ -->
     <div id="loader" class="loader-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-pink-500"></div>
         <p class="text-pink-600 font-medium">กำลังโหลดข้อมูล...</p>
@@ -503,9 +510,15 @@
 
        async function sendEverything() {
             const name = document.getElementById('user-name').value;
-            if(!name || signPad.isEmpty()) return alert("กรุณาระบุชื่อและลงนาม");
-            if(selectedLogs.length === 0) return alert("ไม่มีข้อมูลครุภัณฑ์สำหรับส่ง");
-        
+           if(!name || signPad.isEmpty()) {
+                showAlert("กรุณาระบุชื่อและลงนาม");
+                return;
+            }
+            
+            if(selectedLogs.length === 0) {
+                showAlert("ไม่มีข้อมูลครุภัณฑ์สำหรับส่ง");
+                return;
+            }
             showLoader(true);
             try {
                 // เตรียม Data ให้เป็นก้อนเดียวตามที่ Backend (GAS) รอรับ
@@ -596,9 +609,10 @@
                     runSearch();
                     stopQR();
                 });
-            } catch(e) { alert("ไม่สามารถเปิดกล้องได้"); stopQR(); }
-        }
-
+            } catchcatch(e) { 
+                showAlert("ไม่สามารถเปิดกล้องได้"); 
+                stopQR(); 
+            }
         async function stopQR() {
             if(qrScanner) {
                 try { await qrScanner.stop(); } catch(e) {}
@@ -614,6 +628,21 @@
                 Searail: "N/A"
             });
         }
-    </script>
+        function saveDraft() { 
+            saveDraftLocally(); 
+            showAlert("บันทึกร่างข้อมูลสำเร็จ"); 
+        }
+        function showAlert(message, callback = null) {
+            const modal = document.getElementById('alert-modal');
+            document.getElementById('alert-message').innerText = message;
+        
+            modal.classList.remove('hidden');
+        
+            document.getElementById('alert-ok').onclick = () => {
+                modal.classList.add('hidden');
+                if (callback) callback();
+            };
+        }
+     </script>
 </body>
 </html>
