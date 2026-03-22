@@ -58,6 +58,13 @@
             position: relative;
             z-index: 1;
         }
+        #alert-modal > div {
+            animation: pop 0.25s ease;
+        }
+        @keyframes pop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
        
 </head>
@@ -590,6 +597,27 @@ async function sendEverything() {
         showLoader(false);
     }
 }
+        // ===== REPLACE ALERT =====
+function showAlert(message) {
+    document.getElementById('alert-text').innerText = message;
+    document.getElementById('alert-modal').classList.remove('hidden');
+}
+
+function closeAlert() {
+    document.getElementById('alert-modal').classList.add('hidden');
+}
+
+// override alert เดิม
+window.alert = function(message) {
+    showAlert(message);
+};
 </script>
+    <!-- Custom Alert Modal -->
+<div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
+        <p id="alert-text" class="text-gray-700 font-bold mb-4"></p>
+        <button onclick="closeAlert()" class="px-6 py-2 btn-pink rounded-xl font-bold">ตกลง</button>
+    </div>
+</div>
 </body>
 </html>
