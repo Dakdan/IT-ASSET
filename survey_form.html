@@ -69,12 +69,7 @@
        
 </head>
 <body class="p-4 md:p-6 pb-20">
-  <!-- Custom Alert Modal -->
-<div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
-        <p id="alert-text" class="text-gray-700 font-bold mb-4"></p>
-        <button onclick="closeAlert()" class="px-6 py-2 btn-pink rounded-xl font-bold">ตกลง</button>
-    </div>
+
 </div>
     <div id="loader" class="loader-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-pink-500"></div>
@@ -419,7 +414,7 @@
                         <button onclick="event.stopPropagation(); removeLog(${idx})" class="text-red-400 font-bold hover:text-red-600">ลบ</button>
                     </div>
                 `).join('');
-            }}
+            }
 
         function selectAsset(asset) {
             currentAsset = asset;
@@ -654,6 +649,11 @@ window.alert = function(message) {
     showAlert(message);
 };
 </script>
-  
+    <!-- Custom Alert Modal -->
+<div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
+        <p id="alert-text" class="text-gray-700 font-bold mb-4"></p>
+        <button onclick="closeAlert()" class="px-6 py-2 btn-pink rounded-xl font-bold">ตกลง</button>
+    </div>
 </body>
 </html>
