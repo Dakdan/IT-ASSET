@@ -127,9 +127,9 @@
                         <option value="">-- เลือกความสำคัญ --</option>
                         <option value="PIO-001">PIO-001 ตรวจรักษา(แพทย์)</option>
                         <option value="PIO-002">PIO-002 ข้อมูลผู้ป่วย (พยาบาล)</option>
-                        <option value="PIO-003">PIO-003 บริการ การเงิน ห้องบัตร ห้องยา Lab</option>
+                        <option value="PIO-003">PIO-003 บริการ การเงิน ห้องบัตร ห้องยา Lab Support</option>
                         <option value="PIO-004">PIO-004 งานเอกสาร งานธุรการ</option>
-                        <option value="PIO-005">PIO-005 บริการทั่วไป ซ่อมบำรุง</option>
+                        <option value="PIO-005">PIO-005 บริการทั่วไป ซ่อมบำรุง ช่าง โรงรถ</option>
                     </select>
                 </div>
                 <div>
@@ -272,12 +272,14 @@
     }
 
     function selectAsset(asset) {
-        activeAsset = { ...asset, isNonumber: false, NOID: asset.NOID || Date.now() }; 
+        // Mapping: NOID สำหรับจับคู่รูปภาพ
+        activeAsset = { ...asset, isNonumber: false, NOID: asset.NOID || "ID-" + Date.now() }; 
         closeSearchModal();
         openDetailModal();
     }
 
     function addNonSystem() {
+        // Mapping: NOID สำหรับเครื่องนอกระบบ (Asset_On_Nonumber_Log)
         activeAsset = { AssetID: "", "ชื่อรายการครุภัณฑ์": "", isNonumber: true, NOID: "NON-" + Date.now() };
         closeSearchModal();
         openDetailModal();
@@ -337,7 +339,7 @@
 
         selectedItems.push({
             ...finalAsset,
-            priority: prio, // Mapping: PiorytyJobe
+            priority: prio, // Mapping: PiorytyJobe (PIO-001 - PIO-005)
             assetType: type, // Mapping: Asset_Type
             isPacs: document.getElementById('chk-pacs').checked ? 'YES' : 'NO',
             shifts: Array.from(document.querySelectorAll('.shift-cb:checked')).map(x => x.value).join(','), // Mapping: Shift_Work
@@ -360,9 +362,10 @@
                     <div>
                         <span class="text-[10px] font-bold text-blue-500">${x.AssetID}</span>
                         <p class="text-xs font-bold text-gray-700">${x['ชื่อรายการครุภัณฑ์']}</p>
+                        <p class="text-[9px] text-pink-400 font-bold">${x.priority}</p>
                     </div>
                 </div>
-                <button onclick="removeSelected(${i})" class="text-red-400 text-xs">ลบ</button>
+                <button onclick="removeSelected(${i})" class="text-red-400 text-xs p-2">ลบ</button>
             </div>
         `).join('');
     }
@@ -379,22 +382,22 @@
         const name = document.getElementById('inspector-name').value.trim();
         if(!name || signaturePad.isEmpty()) return showAlert("กรุณากรอกชื่อและลงลายเซ็น");
 
-        toggleLoader(true, "กำลังส่งข้อมูล (Mapping: Act_No & NOID)...");
+        toggleLoader(true, "กำลังประมวลผลข้อมูลลงชีท...");
         try {
-            // Step 1: สร้าง Action Log (Act_No)
-            const logRes = await callAPI('saveActionLog', { actName: 'Survey 2026', itLogin: name });
+            // Step 1: สร้าง Action Log เพื่อเอา Act_No (ใช้คุมทั้งชุด)
+            const logRes = await callAPI('saveActionLog', { actName: 'Asset Survey 2026', itLogin: name });
             const actNo = logRes.actNo;
 
-            // Step 2: วนลูปส่งแต่ละรายการ
+            // Step 2: วนลูปส่งข้อมูลรายบรรทัด
             for(let item of selectedItems) {
-                // อัปโหลดรูปภาพก่อนเพื่อเอา URL (Mapping: Asset_Image)
                 let imageUrl = "";
+                // ส่งรูปภาพก่อนเพื่อใช้ Mapping ใน Asset_Image
                 if(item.imageBase64) {
                     const imgRes = await callAPI('saveAssetImage', { NOID: item.NOID, imageBase64: item.imageBase64, actNo: actNo });
                     imageUrl = imgRes.url;
                 }
 
-                // เตรียม Data ตามโครงสร้างชีท (Mapping: Asset_On_Log / Asset_On_Nonumber_Log)
+                // เตรียม Payload ให้ตรงกับคอลัมน์ใน Sheet (Asset_On_Log / Asset_On_Nonumber_Log)
                 const payload = {
                     actNo: actNo,
                     noid: item.NOID,
@@ -413,14 +416,16 @@
                 await callAPI('submitSurveyRow', payload);
             }
 
-            // Step 3: บันทึกการยืนยัน (Mapping: Asset_Conferm)
+            // Step 3: บันทึกลายเซ็นลง Asset_Conferm
             await callAPI('saveConfirmation', { actNo: actNo, actName: name, signature: signaturePad.toDataURL() });
 
-            showAlert("ส่งข้อมูลและเชื่อมโยงระบบเรียบร้อยแล้ว");
+            showAlert("บันทึกข้อมูลและเชื่อมโยงรูปภาพเรียบร้อยแล้ว");
             selectedItems = []; renderSelectedList();
             document.getElementById('final-modal').classList.add('hidden');
-        } catch (e) { showAlert("เกิดข้อผิดพลาดในการส่งข้อมูล"); }
-        finally { toggleLoader(false); }
+        } catch (e) { 
+            console.error(e);
+            showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่"); 
+        } finally { toggleLoader(false); }
     }
 
     async function callAPI(action, payload = null) {
@@ -431,6 +436,29 @@
     function showAlert(m) { document.getElementById('alert-msg').innerText = m; document.getElementById('alert-box').classList.remove('hidden'); }
     function clearSignature() { signaturePad.clear(); }
     function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
+
+    // Scanner Utility
+    function startScanner(targetId) {
+        document.getElementById('scanner-modal').classList.remove('hidden');
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+                document.getElementById(targetId).value = decodedText;
+                stopScanner();
+                if(targetId === 'search-input') doSearch();
+            }
+        ).catch(err => { console.error(err); stopScanner(); });
+    }
+
+    function stopScanner() {
+        if(html5QrCode) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('scanner-modal').classList.add('hidden');
+            }).catch(err => console.error(err));
+        } else {
+            document.getElementById('scanner-modal').classList.add('hidden');
+        }
+    }
 </script>
 </body>
 </html>
