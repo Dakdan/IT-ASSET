@@ -7,105 +7,49 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-       body { 
+        body { 
             font-family: 'Kanit', sans-serif; 
             background: linear-gradient(to bottom, #ffe4ec, #ffffff);
-            min-height: 100vh; 
-            color: #4a4a4a;
-            position: relative;
+            min-height: 100vh; color: #4a4a4a;
         }
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px); 
-            border-radius: 24px; 
-            border: 2px solid #ffe4e8;
-            box-shadow: 0 4px 20px rgba(255, 182, 193, 0.2);
-        }
-        .modal-container {
-            border: 1px solid rgba(255, 133, 161, 0.3);
-            box-shadow: 0 25px 50px -12px rgba(255, 133, 161, 0.25);
-        }
+        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border-radius: 24px; border: 2px solid #ffe4e8; box-shadow: 0 4px 20px rgba(255, 182, 193, 0.2); }
         .btn-pink { background: linear-gradient(90deg, #ff85a1 0%, #ffb6c1 100%); color: white; transition: all 0.3s ease; }
-        .btn-pink:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(255, 133, 161, 0.3); }
         .loader-overlay { background: rgba(255, 255, 255, 0.85); display: none; position: fixed; inset: 0; z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffdae0; border-radius: 10px; }
-        .signature-pad { border: 2px dashed #ffb6c1; background: #fff; border-radius: 12px; cursor: crosshair; }
-        .form-input { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #ffe4e8; outline: none; transition: all 0.2s; background: white; }
-        .form-input:focus { border-color: #ff85a1; box-shadow: 0 0 0 3px rgba(255, 133, 161, 0.1); }
+        .signature-pad { border: 2px dashed #ffb6c1; background: #fff; border-radius: 12px; }
+        .form-input { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #ffe4e8; outline: none; background: white; }
         .badge-info { padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; }
-        .status-none { background: #f3f4f6; color: #9ca3af; }
         .status-active { background: #e0f2fe; color: #0369a1; }
-        mark { background-color: #ff85a1; color: white; border-radius: 2px; padding: 0 1px; }
-        /* ลายน้ำ */
+        .status-none { background: #f3f4f6; color: #9ca3af; }
+        mark { background-color: #ff85a1; color: white; border-radius: 2px; }
         body::before {
-            content: "ช่างคอมๆ  IT UDH App  ";
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-20deg);
-            font-size: 8vw;
-            color: rgba(255, 133, 161, 0.08);
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 0;
+            content: "ช่างคอมๆ IT UDH App"; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-20deg);
+            font-size: 8vw; color: rgba(255, 133, 161, 0.05); pointer-events: none; z-index: 0;
         }
-        
-        /* กันเนื้อหาบัง */
-        main, header, section {
-            position: relative;
-            z-index: 1;
-        }
-        #alert-modal > div {
-            animation: pop 0.25s ease;
-        }
-        @keyframes pop {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
+        main, header, #alert-modal, #log-modal, #search-modal, #final-modal { position: relative; z-index: 10; }
     </style>
-       
 </head>
 <body class="p-4 md:p-6 pb-20">
 
-</div>
     <div id="loader" class="loader-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-pink-500"></div>
         <p class="text-pink-600 font-medium">กำลังโหลดข้อมูล...</p>
     </div>
 
     <header class="max-w-4xl mx-auto mb-6 text-center">
-        <div class="flex flex-col items-center">
-            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png"class="w-14 h-14 mb-2 rounded-full border-2 border-pink-200 object-cover" alt="UDH Logo" onerror="this.src='https://via.placeholder.com/60?text=IT'"/>
-            <h1 class="text-xl font-bold text-gray-800">ตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-            <p class="text-pink-500 font-bold text-[10px] tracking-widest uppercase">IT Udonthani Hospital</p>
-        </div>
+        <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-14 h-14 mx-auto mb-2 rounded-full border-2 border-pink-200 object-cover">
+        <h1 class="text-xl font-bold text-gray-800">ตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+        <p class="text-pink-500 font-bold text-[10px] tracking-widest uppercase">IT Udonthani Hospital</p>
     </header>
 
     <main class="max-w-4xl mx-auto space-y-6">
-        <!-- Section 1: Department -->
-        <section id="dept-section" class="glass-card p-6">
+        <section class="glass-card p-6">
             <h2 class="text-lg font-bold border-l-4 border-pink-500 pl-3 mb-4 text-gray-700">1. ข้อมูลหน่วยงาน</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[10px] font-bold text-pink-400">อาคาร</label>
-                    <select id="building-select" onchange="filterDepartments()" class="form-input bg-pink-50/50">
-                        <option value="">-- กำลังโหลด --</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-pink-400">หน่วยงาน (ระบุชั้น)</label>
-                    <select id="dept-select" onchange="updateDeptUI()" class="form-input bg-pink-50/50">
-                        <option value="">-- เลือกอาคาร --</option>
-                    </select>
-                </div>
+                <select id="building-select" onchange="filterDepartments()" class="form-input bg-pink-50/50"><option value="">-- โหลดข้อมูลอาคาร --</option></select>
+                <select id="dept-select" onchange="updateDeptUI()" class="form-input bg-pink-50/50"><option value="">-- เลือกหน่วยงาน --</option></select>
             </div>
             <div id="dept-preview" class="mt-4 hidden p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center gap-4">
-                <div class="p-2 bg-white rounded-xl text-pink-400 shadow-sm border border-pink-50">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2z"/></svg>
-                </div>
                 <div class="flex-1">
                     <p id="ui-dept-name" class="font-bold text-sm text-gray-800">-</p>
                     <p id="ui-dept-loc" class="text-[10px] text-gray-500">-</p>
@@ -113,186 +57,115 @@
             </div>
         </section>
 
-        <!-- Section 2: Assets -->
-        <section id="asset-section" class="glass-card p-6">
+        <section class="glass-card p-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold border-l-4 border-pink-500 pl-3 text-gray-700">2. รายการครุภัณฑ์</h2>
-                <button onclick="openSearchModal()" class="px-4 py-2 btn-pink rounded-xl text-xs font-bold flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
-           
+                <h2 class="text-lg font-bold border-l-4 border-pink-500 pl-3 text-gray-700">2. รายการครุภัณฑ์ที่เลือก</h2>
+                <button onclick="openSearchModal()" class="px-4 py-2 btn-pink rounded-xl text-xs font-bold">เพิ่มครุภัณฑ์ +</button>
+            </div>
+            <div id="selected-assets-container" class="space-y-2">
+                <p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>
+            </div>
+        </section>
 
         <section class="flex flex-col gap-3">
-            <button onclick="saveDraft()" class="w-full bg-white text-pink-400 py-3 rounded-2xl font-bold border-2 border-pink-100 hover:bg-pink-50 transition-colors shadow-sm">บันทึกร่างข้อมูล</button>
-            <button onclick="openFinalModal()" class="w-full btn-pink py-4 rounded-2xl font-black text-sm shadow-lg tracking-widest uppercase">ยืนยันและส่งรายงาน</button>
+            <button onclick="openFinalModal()" class="w-full btn-pink py-4 rounded-2xl font-black text-sm shadow-lg tracking-widest">ยืนยันและส่งรายงาน</button>
         </section>
     </main>
 
-    <!-- Search Modal -->
-    <div id="search-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xl rounded-[32px] p-6 space-y-4 max-h-[90vh] overflow-hidden flex flex-col modal-container border-2 border-pink-100">
+    <div id="search-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xl rounded-[32px] p-6 space-y-4 max-h-[90vh] flex flex-col border-2 border-pink-100">
             <div class="flex justify-between items-center">
                 <h3 class="font-bold text-gray-700">ค้นหาครุภัณฑ์</h3>
-                <button onclick="closeSearchModal()" class="text-gray-400 text-3xl hover:text-pink-500 transition-colors">&times;</button>
+                <button onclick="closeSearchModal()" class="text-gray-400 text-3xl">&times;</button>
             </div>
-            <div id="qr-box" class="hidden mb-4 overflow-hidden rounded-2xl bg-black border-4 border-white shadow-lg">
-                <div id="qr-reader" class="w-full"></div>
-            </div>
-            <div class="flex gap-2">
-                <input type="text" id="query-input" placeholder="พิมพ์รหัส หรือ สแกน QR..." class="form-input flex-1" oninput="runSearch()">
-                <button onclick="toggleQR(true)" class="p-3 bg-pink-100 text-pink-500 rounded-xl hover:bg-pink-200">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"></path></svg>
-                </button>
-            </div>
-            
-            <div id="search-results" class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2">
-                <p class="text-center text-gray-300 py-20 text-sm">เริ่มพิมพ์เพื่อค้นหาข้อมูล...</p>
-            </div>
-
-            <!-- ส่วนปุ่มเพิ่มนอกระบบที่แสดงตลอดเวลา -->
-            <div class="text-center border-t border-pink-100 pt-4 pb-2">
-                <p class="text-[10px] text-gray-400 mb-3">ไม่พบครุภัณฑ์ในระบบหรือต้องการเพิ่มรายการพิเศษ?</p>
-                <button onclick="openNonAssetForm()" class="w-full py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all border border-slate-200 flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    เพิ่มครุภัณฑ์นอกระบบ
-                </button>
+            <input type="text" id="query-input" placeholder="พิมพ์รหัสครุภัณฑ์..." class="form-input" oninput="runSearch()">
+            <div id="search-results" class="flex-1 overflow-y-auto space-y-2 min-h-[200px]"></div>
+            <div class="border-t pt-4">
+                <button onclick="openNonAssetForm()" class="w-full py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm border border-slate-200">เพิ่มครุภัณฑ์นอกระบบ</button>
             </div>
         </div>
     </div>
 
-    <!-- Asset Log Modal -->
-    <div id="log-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-[32px] p-6 max-h-[90vh] overflow-y-auto custom-scrollbar modal-container border-2 border-pink-100">
-            <div id="log-content" class="space-y-6">
-                <div class="bg-slate-50 p-4 rounded-2xl relative border border-slate-200">
-                    <div id="asset-detail-ui"></div>
-                </div>
-
+    <div id="log-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-[32px] p-6 max-h-[90vh] overflow-y-auto border-2 border-pink-100">
+            <div class="space-y-6">
+                <div id="asset-detail-ui" class="bg-slate-50 p-4 rounded-2xl border border-slate-200"></div>
                 <div class="space-y-4">
-                    <h3 class="font-bold border-l-4 border-blue-400 pl-2 text-gray-700">ข้อมูลการใช้งานหน้างาน</h3>                    
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase">ความสำคัญของงาน (Priority)</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase">ความสำคัญ (Priority)</label>
                         <select id="log-priority" class="form-input mt-1">
-                            <option value="" selected disabled>-----เลือก---------</option>
+                            <option value="">-- เลือกความสำคัญ --</option>
                             <option value="ตรวจรักษา(แพทย์)">ตรวจรักษา(แพทย์)</option>
                             <option value="ข้อมูลผู้ป่วย (พยาบาล)">ข้อมูลผู้ป่วย (พยาบาล)</option>
                             <option value="บริการ การเงิน ห้องบัตร ห้องยา Lab">บริการ การเงิน ห้องบัตร ห้องยา Lab</option>
                             <option value="งานเอกสาร งานธุรการ">งานเอกสาร งานธุรการ</option>
                             <option value="บริการทั่วไป ซ่อมบำรุง">บริการทั่วไป ซ่อมบำรุง</option>
                         </select>
-                    </div>        
-                    
+                    </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500">ประเภทอุปกรณ์</label>
-                        <select id="asset-type-select" class="form-input mt-1" onchange="togglePacText()">
-                            <option value="" disabled selected>--- เลือกประเภทอุปกรณ์ ---</option>
-                            <option value="เครื่องคอมพิวเตอร์ (All In One)">🖥️ เครื่องคอมพิวเตอร์ (All In One)</option>
-                            <option value="เครื่องคอมพิวเตอร์ (Case)">🖥 เครื่องคอมพิวเตอร์ (Case)</option>
-                            <option value="จอรับภาพ (Monitor)">📺 จอรับภาพ (Monitor)</option>
+                        <select id="asset-type-select" class="form-input mt-1">
+                            <option value="">-- เลือกประเภท --</option>
+                            <option value="เครื่องคอมพิวเตอร์ (All In One)">🖥️ All In One</option>
+                            <option value="เครื่องคอมพิวเตอร์ (Case)">🖥 Case</option>
+                            <option value="จอรับภาพ (Monitor)">📺 Monitor</option>
                             <option value="UPS">🔋 UPS</option>
                             <option value="Printer">🖨️ Printer</option>
                             <option value="Scanner">📠 Scanner</option>
                         </select>
                     </div>
-
-                    <div class="mt-4 p-3 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between">
-                        <div>
-                            <span class="text-xs font-bold text-pink-600 block">เครื่องระบบ Pac</span>
-                           
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="pac-mode" class="sr-only peer" onchange="togglePacText()">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
-                        </label>
+                    <div class="flex items-center justify-between p-3 bg-pink-50 rounded-2xl">
+                        <span class="text-xs font-bold text-pink-600">เครื่องระบบ Pacs</span>
+                        <input type="checkbox" id="pac-mode" class="w-5 h-5 accent-pink-500">
                     </div>
-
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase">ช่วงเวลาทำงาน (Shift Work)</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase">ช่วงเวลาทำงาน</label>
                         <div class="flex gap-4 mt-1">
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="เช้า" class="shift-check accent-pink-500"> เช้า</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="บ่าย" class="shift-check accent-pink-500"> บ่าย</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" value="ดึก" class="shift-check accent-pink-500"> ดึก</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" value="เช้า" class="shift-check"> เช้า</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" value="บ่าย" class="shift-check"> บ่าย</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" value="ดึก" class="shift-check"> ดึก</label>
                         </div>
                     </div>
-
-                    <div>
-                        <label class="text-xs font-bold text-gray-500">หมายเหตุเพิ่มเติม (Note)</label>
-                        <textarea id="log-note" placeholder="ระบุข้อมูลเพิ่มเติม..." class="form-input h-24 mt-1"></textarea>
-                    </div>
+                    <textarea id="log-note" placeholder="ระบุหมายเหตุ..." class="form-input h-24"></textarea>
                 </div>
-
                 <div class="flex gap-3">
                     <button onclick="closeLogModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold">ยกเลิก</button>
-                    <button onclick="commitAssetLog()" class="flex-1 py-3 btn-pink rounded-xl font-bold shadow-md">ตกลง</button>
+                    <button onclick="commitAssetLog()" class="flex-1 py-3 btn-pink rounded-xl font-bold">ตกลง</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Final Submission Modal -->
-    <div id="final-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[32px] p-8 space-y-6 modal-container border-2 border-pink-100">
-            <div class="text-center">
-                <h3 class="text-lg font-bold text-gray-700">ยืนยันความถูกต้อง</h3>
-                <p class="text-xs text-pink-400">กรุณาลงลายมือชื่อเพื่อส่งข้อมูล</p>
-            </div>
-            <div class="space-y-4">
-                <input type="text" id="user-name" placeholder="ชื่อ-นามสกุล ผู้ตรวจสอบ" class="form-input font-bold text-center border-pink-200">
-                <div class="space-y-1">
-                    <canvas id="sign-pad" class="signature-pad w-full h-40"></canvas>
-                    <button onclick="clearSign()" class="text-[10px] text-gray-400 underline float-right hover:text-pink-500">ล้างลายเซ็น</button>
-                </div>
-            </div>
-            <div class="flex gap-3 pt-4">
+    <div id="final-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[32px] p-8 space-y-6 border-2 border-pink-100 text-center">
+            <h3 class="text-lg font-bold">ยืนยันส่งข้อมูล</h3>
+            <input type="text" id="user-name" placeholder="ชื่อผู้ตรวจสอบ" class="form-input text-center">
+            <canvas id="sign-pad" class="signature-pad w-full h-40"></canvas>
+            <button onclick="clearSign()" class="text-xs text-gray-400 underline">ล้างลายเซ็น</button>
+            <div class="flex gap-3">
                 <button onclick="closeFinalModal()" class="flex-1 text-gray-400 font-bold">ปิด</button>
-                <button onclick="sendEverything()" class="flex-1 btn-pink py-3 rounded-2xl font-bold shadow-lg">ส่งรายงาน</button>
+                <button onclick="sendEverything()" class="flex-1 btn-pink py-3 rounded-2xl font-bold">ส่งรายงาน</button>
             </div>
         </div>
     </div>
+
+    <div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl">
+            <p id="alert-text" class="text-gray-700 font-bold mb-4"></p>
+            <button onclick="closeAlert()" class="px-6 py-2 btn-pink rounded-xl font-bold">ตกลง</button>
+        </div>
+    </div>
+
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
-    let departments = [], allAssets = [], selectedLogs = [], currentAsset = null;
-    let signPad, qrScanner, gpsCoords = null;
-    let currentActNo = null; // สำหรับเก็บ Act_No (Note8)
+    let departments = [], allAssets = [], selectedLogs = [], currentAsset = null, signPad;
 
     window.onload = async () => {
-        initSignature();
+        signPad = new SignaturePad(document.getElementById('sign-pad'));
         await loadInitialData();
-        await startNewActivity(); // สร้าง Act_No ทันทีเมื่อเปิดหน้า
-        getGPS();
-        
         const draft = localStorage.getItem('udh_asset_draft');
-        if(draft) {
-            selectedLogs = JSON.parse(draft);
-            renderSelectedUI();
-        }
+        if(draft) { selectedLogs = JSON.parse(draft); renderSelectedUI(); }
     };
-
-    // --- ฟังก์ชันสร้าง Act_No (Uneqid) สำหรับ Note8 ---
-    async function startNewActivity() {
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'saveActionLog',
-                    payload: { 
-                        actId: "SURVEY-" + Date.now(), 
-                        actName: "ประจำปี 2026", 
-                        itLogin: document.getElementById('user-name')?.value || "System" 
-                    }
-                })
-            });
-            const res = await response.json();
-            if (res.actNo) currentActNo = res.actNo;
-        } catch (e) { console.error("Activity Start Error:", e); }
-    }
-
-    function getGPS() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                gpsCoords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-            }, err => { console.warn("GPS Access Denied"); });
-        }
-    }
 
     async function loadInitialData() {
         showLoader(true);
@@ -304,17 +177,12 @@
             departments = await dResp.json();
             allAssets = await aResp.json();
             populateBuilding();
-        } catch (e) {
-            console.error("Load Error:", e);
-        } finally {
-            showLoader(false);
-        }
+        } catch (e) { console.error(e); } finally { showLoader(false); }
     }
 
     function populateBuilding() {
-        const select = document.getElementById('building-select');
         const unique = [...new Set(departments.map(d => d.LOCATION_NAME).filter(Boolean))].sort();
-        select.innerHTML = '<option value="">-- เลือกอาคาร --</option>' + unique.map(b => `<option value="${b}">${b}</option>`).join('');
+        document.getElementById('building-select').innerHTML = '<option value="">-- เลือกอาคาร --</option>' + unique.map(b => `<option value="${b}">${b}</option>`).join('');
     }
 
     function filterDepartments() {
@@ -322,321 +190,98 @@
         const select = document.getElementById('dept-select');
         select.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
         if(!bVal) return;
-
-        const filtered = departments.filter(d => d.LOCATION_NAME === bVal);
-        const floors = [...new Set(filtered.map(d => d.FL || "ไม่ระบุชั้น"))].sort();
-
-        floors.forEach(f => {
-            const group = document.createElement('optgroup');
-            group.label = `ชั้น ${f}`;
-            filtered.filter(d => (d.FL || "ไม่ระบุชั้น") === f).forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.DEP_ID;
-                opt.textContent = d.DEPNAME || d.DEP_NAME_LOC;
-                group.appendChild(opt);
-            });
-            select.appendChild(group);
+        departments.filter(d => d.LOCATION_NAME === bVal).forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.DEP_ID; opt.textContent = d.DEPNAME;
+            select.appendChild(opt);
         });
     }
 
     function updateDeptUI() {
         const id = document.getElementById('dept-select').value;
-        const box = document.getElementById('dept-preview');
-        if(!id) { box.classList.add('hidden'); return; }
-
         const dept = departments.find(d => d.DEP_ID == id);
-        document.getElementById('ui-dept-name').innerText = dept.DEPNAME;
-        document.getElementById('ui-dept-loc').innerText = `${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}`;
-        box.classList.remove('hidden');
+        if(dept) {
+            document.getElementById('ui-dept-name').innerText = dept.DEPNAME;
+            document.getElementById('ui-dept-loc').innerText = `${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}`;
+            document.getElementById('dept-preview').classList.remove('hidden');
+        }
     }
 
-    // --- ฟังก์ชันค้นหา (คงเดิมตามความต้องการ) ---
-    function highlightText(text, query) {
-        if (!query) return text;
-        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        return text.replace(regex, '<mark>$1</mark>');
-    }
-    
-    function runSearch(isQR = false) {
+    function runSearch() {
         const query = document.getElementById('query-input').value.trim().toLowerCase();
         const resBox = document.getElementById('search-results');
         resBox.innerHTML = '';
-        if (!query) return;
-
-        if (isQR) {
-            const found = allAssets.find(a => String(a.AssetID).toLowerCase() === query);
-            if (found) { selectAsset(found); return; }
-        }
-
-        const hits = allAssets.filter(a => String(a.AssetID).toLowerCase().includes(query)).slice(0, 30);
-        if (hits.length === 0) {
-            resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูล</p>';
-            return;
-        }
-
-        hits.forEach((a) => {
+        if(!query) return;
+        const hits = allAssets.filter(a => String(a.AssetID).toLowerCase().includes(query)).slice(0, 20);
+        hits.forEach(a => {
             const div = document.createElement('div');
-            div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
-            div.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-gray-700">${highlightText(a.AssetID, query)}</p>
-                    </div>
-                    <span class="badge-info ${a.CoStatus ? 'status-active' : 'status-none'}">
-                        ${highlightText(a.CoStatus || 'ใช้งานอยู่', query)}
-                    </span>
-                </div>
-            `;
-            div.onclick = () => selectAsset(a);
+            div.className = "p-3 border rounded-xl mb-2 cursor-pointer hover:bg-pink-50";
+            div.innerHTML = `<p class="font-bold">${a.AssetID}</p><p class="text-xs text-gray-500">${a['ชื่อรายการครุภัณฑ์']}</p>`;
+            div.onclick = () => { currentAsset = a; closeSearchModal(); openLogModal(a); };
             resBox.appendChild(div);
         });
     }
 
-    function selectAsset(asset) {
-        currentAsset = asset;
-        closeSearchModal();
-        openLogModal(asset);
+    // --- ส่วนล้างข้อมูล (สำคัญ) ---
+    function resetLogForm() {
+        document.getElementById('log-priority').value = "";
+        document.getElementById('asset-type-select').value = "";
+        document.getElementById('pac-mode').checked = false;
+        document.getElementById('log-note').value = "";
+        document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
+        document.getElementById('query-input').value = "";
+        document.getElementById('search-results').innerHTML = "";
     }
 
     function openLogModal(a) {
-        resetLogForm(); 
+        resetLogForm();
         document.getElementById('log-modal').classList.remove('hidden');
-        document.getElementById('asset-detail-ui').innerHTML = `
-            <div class="flex gap-4">
-                <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 shadow-sm">
-                    <img src="${a.Ass_Img || 'https://via.placeholder.com/80?text=No+Img'}" class="w-full h-full object-cover">
-                </div>
-                <div class="flex-1">
-                    <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
-                    <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์'] || 'ครุภัณฑ์นอกระบบ'}</p>
-                </div>
-            </div>
-        `;
+        document.getElementById('asset-detail-ui').innerHTML = `<p class="font-bold text-blue-600">${a.AssetID}</p><p class="text-xs">${a['ชื่อรายการครุภัณฑ์'] || 'นอกระบบ'}</p>`;
     }
 
-    // --- บันทึกรายการลงรายการที่เลือก (Mapping คอลัมน์ตาม Dictionary) ---
+    function closeLogModal() {
+        document.getElementById('log-modal').classList.add('hidden');
+        resetLogForm();
+    }
+
     function commitAssetLog() {
         const deptId = document.getElementById('dept-select').value;
-        if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
-
-        const assetType = document.getElementById('asset-type-select').value;
-        if (!assetType) return alert("กรุณาเลือกประเภทอุปกรณ์");
-
-        const shifts = Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value).join(',');
+        if(!deptId) return alert("เลือกหน่วยงานก่อน");
         
-        const logEntry = {
+        selectedLogs.push({
             ...currentAsset,
-            noid: currentAsset.AssetID, // NOID (FK)
-            deptId: deptId,
-            deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
-            assetType: assetType,
-            isPac: document.getElementById('pac-mode').checked, // ส่งไป Backend เพื่อเติม /Pacs
+            assetType: document.getElementById('asset-type-select').value,
+            isPac: document.getElementById('pac-mode').checked,
             priority: document.getElementById('log-priority').value,
-            shifts: shifts,
             note4: document.getElementById('log-note').value,
-            gps: gpsCoords,
-            activityId: "2026", 
-            isNonumber: currentAsset.isNonumber || false // ใช้แยก Sheet
-        };
-
-        selectedLogs.push(logEntry);
-        saveDraftLocally();
+            shifts: Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value).join(',')
+        });
+        localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs));
         renderSelectedUI();
         closeLogModal();
     }
 
     function renderSelectedUI() {
         const container = document.getElementById('selected-assets-container');
-        if(selectedLogs.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>';
-            return;
-        }
+        if(selectedLogs.length === 0) { container.innerHTML = '<p class="text-center text-gray-300 py-10">ไม่มีข้อมูล</p>'; return; }
         container.innerHTML = selectedLogs.map((log, idx) => `
-            <div class="flex justify-between items-center p-3 border border-pink-50 rounded-xl mb-2 shadow-sm hover:bg-pink-50 cursor-pointer">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border">
-                        <img src="${log.Ass_Img || 'https://via.placeholder.com/48?text=Img'}" class="w-full h-full object-cover">
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-700 text-xs">${log.AssetID}</p>
-                        <p class="text-[10px] text-gray-400">${log.assetType} ${log.isPac ? '/Pacs' : ''}</p>
-                    </div>
-                </div>
-                <button onclick="event.stopPropagation(); removeLog(${idx})" class="text-red-400 text-xs font-bold">ลบ</button>
+            <div class="flex justify-between items-center p-3 border rounded-xl">
+                <div><p class="font-bold text-xs">${log.AssetID}</p><p class="text-[10px]">${log.assetType}</p></div>
+                <button onclick="removeLog(${idx})" class="text-red-400 text-xs">ลบ</button>
             </div>
         `).join('');
     }
 
-    function removeLog(idx) {
-        selectedLogs.splice(idx, 1);
-        saveDraftLocally();
-        renderSelectedUI();
-    }
-
-    // --- ฟังก์ชันบันทึกรูปครุภัณฑ์ (Asset_Image) ---
-    async function uploadAssetImage(file, noid) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async () => {
-            await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'saveAssetImage',
-                    payload: { 
-                        noid: noid, 
-                        actNo: currentActNo, 
-                        imageBase64: reader.result 
-                    }
-                })
-            });
-        };
-    }
-
-    // --- ฟังก์ชันส่งข้อมูลทั้งหมด (พร้อมแยก Sheet และบันทึกยืนยัน) ---
-    async function sendEverything() {
-        const name = document.getElementById('user-name').value;
-        if (!name || signPad.isEmpty()) return alert("กรุณาระบุชื่อและลงนาม");
-        if (selectedLogs.length === 0) return alert("ไม่มีข้อมูลครุภัณฑ์");
-
-        showLoader(true);
-        try {
-            // 1. ส่งข้อมูล Log (ใน/นอกระบบ)
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'submitFullSurvey',
-                    payload: {
-                        actNo: currentActNo,
-                        itUserMail: name,
-                        data: selectedLogs
-                    }
-                })
-            });
-            const res = await response.json();
-
-            if (res.success) {
-                // 2. ส่งลายเซ็นยืนยัน (Asset_Conferm)
-                await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'saveConfirmation',
-                        payload: {
-                            actionId: currentActNo,
-                            activityId: "2026",
-                            actName: name,
-                            signature: signPad.toDataURL()
-                        }
-                    })
-                });
-
-                alert("บันทึกข้อมูลเรียบร้อยแล้ว");
-                localStorage.removeItem('udh_asset_draft');
-                location.reload();
-            } else {
-                alert("ผิดพลาด: " + res.error);
-            }
-        } catch (e) {
-            console.error(e);
-            alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-        } finally {
-            showLoader(false);
-        }
-    }
-
-    // --- ระบบอื่นๆ ---
-    function openNonAssetForm() {
-        const tempId = "NON-" + Date.now().toString().slice(-6);
-        selectAsset({
-            AssetID: tempId,
-            'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ",
-            isNonumber: true 
-        });
-    }
-
-    function initSignature() {
-        const canvas = document.getElementById('sign-pad');
-        signPad = new SignaturePad(canvas);
-    }
-
+    function removeLog(idx) { selectedLogs.splice(idx, 1); renderSelectedUI(); }
+    function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
+    function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); resetLogForm(); }
+    function openFinalModal() { document.getElementById('final-modal').classList.remove('hidden'); }
+    function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
     function clearSign() { signPad.clear(); }
     function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-    function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
-    function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
-    function closeLogModal() { document.getElementById('log-modal').classList.add('hidden'); }
-    function saveDraftLocally() { localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs)); }
-    function resetLogForm() {
-        document.getElementById('log-note').value = '';
-        document.getElementById('pac-mode').checked = false;
-        document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
-    }
-
-    // override alert เดิม
-    window.alert = function(message) {
-        const alertModal = document.getElementById('alert-modal');
-        if(alertModal) {
-            document.getElementById('alert-text').innerText = message;
-            alertModal.classList.remove('hidden');
-        } else {
-            console.log("Alert:", message);
-        }
-    };
-    // 1. ฟังก์ชันล้างค่าแบบละเอียด (Clear All Inputs)
-function resetLogForm() {
-    // ล้างค่า Priority Dropdown
-    const priority = document.getElementById('log-priority');
-    if(priority) priority.selectedIndex = 0;
-
-    // ล้างค่าประเภทอุปกรณ์
-    const assetType = document.getElementById('asset-type-select');
-    if(assetType) assetType.selectedIndex = 0;
-
-    // ปิดสวิตช์เครื่องระบบ Pac
-    const pacMode = document.getElementById('pac-mode');
-    if(pacMode) pacMode.checked = false;
-
-    // ล้าง Checkbox ช่วงเวลาทำงาน (Shift) ทุกตัว
-    document.querySelectorAll('.shift-check').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-
-    // ล้างช่องหมายเหตุ (Note)
-    const note = document.getElementById('log-note');
-    if(note) note.value = '';
-
-    console.log("Log Form Cleared"); // ไว้เช็คใน Console
-}
-
-// 2. ปรับฟังก์ชันปิด Modal ให้ล้างค่าด้วย
-function closeLogModal() {
-    document.getElementById('log-modal').classList.add('hidden');
-    resetLogForm(); // ล้างข้อมูลทันทีที่กดปิด หรือ ยกเลิก
-}
-
-// 3. ปรับฟังก์ชันเปิด Modal ให้มั่นใจว่าเริ่มจากค่าว่าง
-function openLogModal(a) {
-    resetLogForm(); // ล้างของเก่าทิ้งก่อนแสดงของใหม่
-    document.getElementById('log-modal').classList.remove('hidden');
-    
-    // แสดงรายละเอียด Asset ด้านบน
-    document.getElementById('asset-detail-ui').innerHTML = `
-        <div class="flex gap-4">
-            <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 shadow-sm">
-                <img src="${a.Ass_Img || 'https://via.placeholder.com/80?text=No+Img'}" class="w-full h-full object-cover">
-            </div>
-            <div class="flex-1">
-                <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
-                <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์'] || 'ครุภัณฑ์นอกระบบ'}</p>
-            </div>
-        </div>
-    `;
-}
+    window.alert = function(m) { document.getElementById('alert-text').innerText = m; document.getElementById('alert-modal').classList.remove('hidden'); };
     function closeAlert() { document.getElementById('alert-modal').classList.add('hidden'); }
+    function openNonAssetForm() { currentAsset = { AssetID: "NON-"+Date.now().toString().slice(-5), isNonumber: true }; closeSearchModal(); openLogModal(currentAsset); }
 </script>
-    <!-- Custom Alert Modal -->
-<div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl border border-pink-100">
-        <p id="alert-text" class="text-gray-700 font-bold mb-4"></p>
-        <button onclick="closeAlert()" class="px-6 py-2 btn-pink rounded-xl font-bold">ตกลง</button>
-    </div>
 </body>
 </html>
