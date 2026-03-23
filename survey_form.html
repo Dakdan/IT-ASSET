@@ -254,383 +254,159 @@
             </div>
         </div>
     </div>
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
+    let departments = [], allAssets = [], selectedLogs = [], currentAsset = null;
+    let signPad, qrScanner, gpsCoords = null;
+    let currentActNo = null; // สำหรับเก็บ Act_No (Note8)
 
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
-        let departments = [], allAssets = [], selectedLogs = [], currentAsset = null;
-        let signPad, qrScanner, gpsCoords = null;
-
-        window.onload = async () => {
-            initSignature();
-            await loadInitialData();
-            getGPS();
-            
-            const draft = localStorage.getItem('udh_asset_draft');
-            if(draft) {
-                selectedLogs = JSON.parse(draft);
-                renderSelectedUI();
-            }
-        };
-
-        function getGPS() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    gpsCoords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-                }, err => { console.warn("GPS Access Denied"); });
-            }
+    window.onload = async () => {
+        initSignature();
+        await loadInitialData();
+        await startNewActivity(); // สร้าง Act_No ทันทีเมื่อเปิดหน้า
+        getGPS();
+        
+        const draft = localStorage.getItem('udh_asset_draft');
+        if(draft) {
+            selectedLogs = JSON.parse(draft);
+            renderSelectedUI();
         }
+    };
 
-        async function loadInitialData() {
-            showLoader(true);
-            try {
-                const [dResp, aResp] = await Promise.all([
-                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDepartments' }) }),
-                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAssets' }) })
-                ]);
-                departments = await dResp.json();
-                allAssets = await aResp.json();
-                populateBuilding();
-            } catch (e) {
-                console.error("Load Error:", e);
-            } finally {
-                showLoader(false);
-            }
-        }
-
-        function populateBuilding() {
-            const select = document.getElementById('building-select');
-            const unique = [...new Set(departments.map(d => d.LOCATION_NAME).filter(Boolean))].sort();
-            select.innerHTML = '<option value="">-- เลือกอาคาร --</option>' + unique.map(b => `<option value="${b}">${b}</option>`).join('');
-        }
-
-        function filterDepartments() {
-            const bVal = document.getElementById('building-select').value;
-            const select = document.getElementById('dept-select');
-            select.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
-            if(!bVal) return;
-
-            const filtered = departments.filter(d => d.LOCATION_NAME === bVal);
-            const floors = [...new Set(filtered.map(d => d.FL || "ไม่ระบุชั้น"))].sort();
-
-            floors.forEach(f => {
-                const group = document.createElement('optgroup');
-                group.label = `ชั้น ${f}`;
-                filtered.filter(d => (d.FL || "ไม่ระบุชั้น") === f).forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.DEP_ID;
-                    opt.textContent = d.DEPNAME || d.DEP_NAME_LOC;
-                    group.appendChild(opt);
-                });
-                select.appendChild(group);
-            });
-        }
-
-        function updateDeptUI() {
-            const id = document.getElementById('dept-select').value;
-            const box = document.getElementById('dept-preview');
-            if(!id) { box.classList.add('hidden'); return; }
-
-            const dept = departments.find(d => d.DEP_ID == id);
-            document.getElementById('ui-dept-name').innerText = dept.DEPNAME;
-            document.getElementById('ui-dept-loc').innerText = `${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}`;
-            box.classList.remove('hidden');
-        }
-
-       function highlightText(text, query) {
-                if (!query) return text;
-                const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                return text.replace(regex, '<mark>$1</mark>');
-            }
-            
-            function runSearch(isQR = false) {
-                const query = document.getElementById('query-input').value.trim().toLowerCase();
-                const resBox = document.getElementById('search-results');
-                resBox.innerHTML = '';
-            
-                if (!query) {
-                    resBox.innerHTML = '<p class="text-center text-gray-300 py-10 text-sm">พิมพ์รหัสครุภัณฑ์...</p>';
-                    return;
-                }
-            
-                // QR Mode
-                if (isQR) {
-                    const found = allAssets.find(a => String(a.AssetID).toLowerCase() === query);
-                    if (found) {
-                        selectAsset(found);
-                        return;
-                    } else {
-                        resBox.innerHTML = '<p class="text-center text-red-400 py-10">QR นี้ไม่มีในระบบ</p>';
-                        return;
+    // --- ฟังก์ชันสร้าง Act_No (Uneqid) สำหรับ Note8 ---
+    async function startNewActivity() {
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'saveActionLog',
+                    payload: { 
+                        actId: "SURVEY-" + Date.now(), 
+                        actName: "ประจำปี 2026", 
+                        itLogin: document.getElementById('user-name')?.value || "System" 
                     }
-                }
-            
-                // Typing Mode
-                const hits = allAssets.filter(a => String(a.AssetID).toLowerCase().includes(query)).slice(0, 30);
-            
-                if (hits.length === 0) {
-                    resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูล</p>';
-                    return;
-                }
-            
-                hits.forEach((a, idx) => {
-                    const div = document.createElement('div');
-                    div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-bold text-gray-700">${highlightText(a.AssetID, query)}</p>
-                               
-                            </div>
-                            <span class="badge-info ${a.CoStatus ? 'status-active' : 'status-none'}">
-                                ${highlightText(a.CoStatus || 'ไม่พบการบันทึกสถานะ', query)}
-                            </span>
-                        </div>
-                    `;
-                    div.onclick = () => selectAsset(a);
-                    resBox.appendChild(div);
-                });
-            }
-            
-            function renderSelectedUI() {
-                const container = document.getElementById('selected-assets-container');
-            
-                if(selectedLogs.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>';
-                    return;
-                }
-            
-                container.innerHTML = selectedLogs.map((log, idx) => `
-                    <div class="flex justify-between items-center p-3 border border-pink-50 rounded-xl mb-2 shadow-sm hover:bg-pink-50 cursor-pointer" onclick='openLogModal(selectedLogs[${idx}])'>
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shadow-sm">
-                                <img src="${log.Ass_Img || 'https://via.placeholder.com/48?text=No+Img'}" class="w-full h-full object-cover">
-                            </div>
-                            <div>
-                                <p class="font-bold text-gray-700">${log.AssetID}</p>
-                                <p class="text-[11px] text-gray-500">${log['ชื่อรายการครุภัณฑ์']}</p>
-                                <p class="text-[10px] text-gray-400">${log.assetType || ''}</p>
-                            </div>
-                        </div>
-                        <button onclick="event.stopPropagation(); removeLog(${idx})" class="text-red-400 font-bold hover:text-red-600">ลบ</button>
-                    </div>
-                `).join('');
-            }
+                })
+            });
+            const res = await response.json();
+            if (res.actNo) currentActNo = res.actNo;
+        } catch (e) { console.error("Activity Start Error:", e); }
+    }
 
-        function selectAsset(asset) {
-            currentAsset = asset;
-            closeSearchModal();
-            openLogModal(asset);
+    function getGPS() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                gpsCoords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+            }, err => { console.warn("GPS Access Denied"); });
+        }
+    }
+
+    async function loadInitialData() {
+        showLoader(true);
+        try {
+            const [dResp, aResp] = await Promise.all([
+                fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDepartments' }) }),
+                fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAssets' }) })
+            ]);
+            departments = await dResp.json();
+            allAssets = await aResp.json();
+            populateBuilding();
+        } catch (e) {
+            console.error("Load Error:", e);
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    function populateBuilding() {
+        const select = document.getElementById('building-select');
+        const unique = [...new Set(departments.map(d => d.LOCATION_NAME).filter(Boolean))].sort();
+        select.innerHTML = '<option value="">-- เลือกอาคาร --</option>' + unique.map(b => `<option value="${b}">${b}</option>`).join('');
+    }
+
+    function filterDepartments() {
+        const bVal = document.getElementById('building-select').value;
+        const select = document.getElementById('dept-select');
+        select.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
+        if(!bVal) return;
+
+        const filtered = departments.filter(d => d.LOCATION_NAME === bVal);
+        const floors = [...new Set(filtered.map(d => d.FL || "ไม่ระบุชั้น"))].sort();
+
+        floors.forEach(f => {
+            const group = document.createElement('optgroup');
+            group.label = `ชั้น ${f}`;
+            filtered.filter(d => (d.FL || "ไม่ระบุชั้น") === f).forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.DEP_ID;
+                opt.textContent = d.DEPNAME || d.DEP_NAME_LOC;
+                group.appendChild(opt);
+            });
+            select.appendChild(group);
+        });
+    }
+
+    function updateDeptUI() {
+        const id = document.getElementById('dept-select').value;
+        const box = document.getElementById('dept-preview');
+        if(!id) { box.classList.add('hidden'); return; }
+
+        const dept = departments.find(d => d.DEP_ID == id);
+        document.getElementById('ui-dept-name').innerText = dept.DEPNAME;
+        document.getElementById('ui-dept-loc').innerText = `${dept.LOCATION_NAME} ชั้น ${dept.FL || '-'}`;
+        box.classList.remove('hidden');
+    }
+
+    // --- ฟังก์ชันค้นหา (คงเดิมตามความต้องการ) ---
+    function highlightText(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+    }
+    
+    function runSearch(isQR = false) {
+        const query = document.getElementById('query-input').value.trim().toLowerCase();
+        const resBox = document.getElementById('search-results');
+        resBox.innerHTML = '';
+        if (!query) return;
+
+        if (isQR) {
+            const found = allAssets.find(a => String(a.AssetID).toLowerCase() === query);
+            if (found) { selectAsset(found); return; }
         }
 
-        function openLogModal(a) {
-            resetLogForm(); 
-            document.getElementById('log-modal').classList.remove('hidden');
-            document.getElementById('asset-detail-ui').innerHTML = `
-                <div class="flex gap-4">
-                    <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 shadow-sm">
-                        <img src="${a.Ass_Img || 'https://via.placeholder.com/80?text=No+Img'}" class="w-full h-full object-cover">
+        const hits = allAssets.filter(a => String(a.AssetID).toLowerCase().includes(query)).slice(0, 30);
+        if (hits.length === 0) {
+            resBox.innerHTML = '<p class="text-center text-gray-400 py-10">ไม่พบข้อมูล</p>';
+            return;
+        }
+
+        hits.forEach((a) => {
+            const div = document.createElement('div');
+            div.className = "p-3 border border-pink-50 rounded-xl hover:bg-pink-50 cursor-pointer text-sm mb-2 shadow-sm transition-all";
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-gray-700">${highlightText(a.AssetID, query)}</p>
                     </div>
-                    <div class="flex-1">
-                        <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
-                        <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์']}</p>
-                    </div>
+                    <span class="badge-info ${a.CoStatus ? 'status-active' : 'status-none'}">
+                        ${highlightText(a.CoStatus || 'ใช้งานอยู่', query)}
+                    </span>
                 </div>
             `;
-        }
-
-        function togglePacText() {
-            const isPac = document.getElementById('pac-mode').checked;
-            const select = document.getElementById('asset-type-select');
-            const option = select.options[select.selectedIndex];
-            
-            if (option) {
-                if (isPac && !option.value.includes("/Pacs")) {
-                    option.text += "/Pacs";
-                    option.value += "/Pacs";
-                } else if (!isPac) {
-                    option.text = option.text.replace("/Pacs", "");
-                    option.value = option.value.replace("/Pacs", "");
-                }
-            }
-        }
-
-        function commitAssetLog() {
-            const deptId = document.getElementById('dept-select').value;
-            if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
-
-            const assetType = document.getElementById('asset-type-select').value;
-            if (!assetType) return alert("กรุณาเลือกประเภทอุปกรณ์");
-
-            const logEntry = {
-                ...currentAsset,
-                deptId,
-                assetType,
-                gps: gpsCoords
-            };
-
-            selectedLogs.push(logEntry);
-            saveDraftLocally();
-            renderSelectedUI();
-            closeLogModal();
-        }
-
-       
-        function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-
-        function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
-        function closeSearchModal() { stopQR(); document.getElementById('search-modal').classList.add('hidden'); }
-        function closeLogModal() { document.getElementById('log-modal').classList.add('hidden'); }
-        function openFinalModal() { document.getElementById('final-modal').classList.remove('hidden'); }
-        function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
-
-        function initSignature() {
-            const canvas = document.getElementById('sign-pad');
-            signPad = new SignaturePad(canvas);
-        }
-
-        function clearSign() { signPad.clear(); }
-        function saveDraftLocally() { localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs)); }
-
-        function saveDraft() { 
-            saveDraftLocally(); 
-            alert("บันทึกร่างข้อมูลสำเร็จ"); 
-        }
-
-        function resetLogForm() {
-            document.getElementById('log-note').value = '';
-            document.getElementById('pac-mode').checked = false;
-            document.getElementById('log-priority').selectedIndex = 0;
-            document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
-
-            const select = document.getElementById('asset-type-select');
-            if (select) {
-                select.selectedIndex = 0;
-                select.value = select.value.replace("/Pac", "");
-            }
-        }
-
-        async function toggleQR() {
-            const box = document.getElementById('qr-box');
-
-            if (!box.classList.contains('hidden')) {
-                return stopQR();
-            }
-
-            box.classList.remove('hidden');
-
-            try {
-                if (qrScanner) {
-                    await stopQR();
-                }
-
-                qrScanner = new Html5Qrcode("qr-reader");
-
-                await qrScanner.start(
-                    { facingMode: "environment" },
-                    { fps: 10, qrbox: 250 },
-                    (txt) => {
-                        document.getElementById('query-input').value = txt;
-                        runSearch(true);  // ✅ บังคับ QR mode
-                        stopQR();
-                    }
-                );
-
-            } catch (e) {
-                console.error(e);
-                alert("ไม่สามารถเปิดกล้องได้");
-                stopQR();
-            }
-        }
-
-        async function stopQR() {
-            try {
-                if (qrScanner) {
-                    await qrScanner.stop();
-                    await qrScanner.clear();
-                }
-            } catch (e) {
-                console.warn("QR stop error:", e);
-            }
-
-            qrScanner = null;
-            document.getElementById('qr-box').classList.add('hidden');
-        }
-
-        function openNonAssetForm() {
-            selectAsset({
-                AssetID: "NON-" + Date.now().toString().slice(-6),
-                'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ",
-                Detail: "ครุภัณฑ์นอกระบบ",
-                Searail: "N/A"
-            });
-        }
-        /* ================= FIX SEND ================= */
-async function sendEverything() {
-    const name = document.getElementById('user-name').value;
-
-    if (!name || signPad.isEmpty()) {
-        return alert("กรุณาระบุชื่อและลงนาม");
-    }
-
-    if (selectedLogs.length === 0) {
-        return alert("ไม่มีข้อมูลครุภัณฑ์สำหรับส่ง");
-    }
-
-    showLoader(true);
-
-    try {
-        const payload = {
-            inspector: name,
-            signature: signPad.toDataURL(),
-            deptId: document.getElementById('dept-select').value,
-            deptName: document.getElementById('dept-select').options[
-                document.getElementById('dept-select').selectedIndex
-            ].text,
-            data: selectedLogs
-        };
-
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'submitFullSurvey',
-                payload: payload
-            })
+            div.onclick = () => selectAsset(a);
+            resBox.appendChild(div);
         });
-
-        const res = await response.json();
-
-        if (res.success || res.status === "success") {
-            alert("บันทึกข้อมูลเรียบร้อยแล้ว");
-            localStorage.removeItem('udh_asset_draft');
-            location.reload();
-        } else {
-            alert("เซิร์ฟเวอร์ตอบกลับ: " + (res.message || "เกิดข้อผิดพลาด"));
-        }
-
-    } catch (e) {
-        console.error(e);
-        alert("เชื่อมต่อระบบไม่ได้");
-    } finally {
-        showLoader(false);
     }
-}
-        // ===== REPLACE ALERT =====
-function showAlert(message) {
-    document.getElementById('alert-text').innerText = message;
-    document.getElementById('alert-modal').classList.remove('hidden');
-}
 
-function closeAlert() {
-    document.getElementById('alert-modal').classList.add('hidden');
-}
-         function openLogModal(a) {
-        // รีเซ็ตฟอร์มก่อน
+    function selectAsset(asset) {
+        currentAsset = asset;
+        closeSearchModal();
+        openLogModal(asset);
+    }
+
+    function openLogModal(a) {
         resetLogForm(); 
-        
-        // แสดง modal
         document.getElementById('log-modal').classList.remove('hidden');
-        
-        // แสดงรายละเอียด asset ใน container
         document.getElementById('asset-detail-ui').innerHTML = `
             <div class="flex gap-4">
                 <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 shadow-sm">
@@ -638,16 +414,179 @@ function closeAlert() {
                 </div>
                 <div class="flex-1">
                     <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
-                    <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์']}</p>
+                    <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์'] || 'ครุภัณฑ์นอกระบบ'}</p>
                 </div>
             </div>
         `;
     }
 
-// override alert เดิม
-window.alert = function(message) {
-    showAlert(message);
-};
+    // --- บันทึกรายการลงรายการที่เลือก (Mapping คอลัมน์ตาม Dictionary) ---
+    function commitAssetLog() {
+        const deptId = document.getElementById('dept-select').value;
+        if(!deptId) return alert("กรุณาเลือกหน่วยงานก่อน");
+
+        const assetType = document.getElementById('asset-type-select').value;
+        if (!assetType) return alert("กรุณาเลือกประเภทอุปกรณ์");
+
+        const shifts = Array.from(document.querySelectorAll('.shift-check:checked')).map(c => c.value).join(',');
+        
+        const logEntry = {
+            ...currentAsset,
+            noid: currentAsset.AssetID, // NOID (FK)
+            deptId: deptId,
+            deptName: document.getElementById('dept-select').options[document.getElementById('dept-select').selectedIndex].text,
+            assetType: assetType,
+            isPac: document.getElementById('pac-mode').checked, // ส่งไป Backend เพื่อเติม /Pacs
+            priority: document.getElementById('log-priority').value,
+            shifts: shifts,
+            note4: document.getElementById('log-note').value,
+            gps: gpsCoords,
+            activityId: "2026", 
+            isNonumber: currentAsset.isNonumber || false // ใช้แยก Sheet
+        };
+
+        selectedLogs.push(logEntry);
+        saveDraftLocally();
+        renderSelectedUI();
+        closeLogModal();
+    }
+
+    function renderSelectedUI() {
+        const container = document.getElementById('selected-assets-container');
+        if(selectedLogs.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-300 py-10 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่ถูกเลือก</p>';
+            return;
+        }
+        container.innerHTML = selectedLogs.map((log, idx) => `
+            <div class="flex justify-between items-center p-3 border border-pink-50 rounded-xl mb-2 shadow-sm hover:bg-pink-50 cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border">
+                        <img src="${log.Ass_Img || 'https://via.placeholder.com/48?text=Img'}" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-700 text-xs">${log.AssetID}</p>
+                        <p class="text-[10px] text-gray-400">${log.assetType} ${log.isPac ? '/Pacs' : ''}</p>
+                    </div>
+                </div>
+                <button onclick="event.stopPropagation(); removeLog(${idx})" class="text-red-400 text-xs font-bold">ลบ</button>
+            </div>
+        `).join('');
+    }
+
+    function removeLog(idx) {
+        selectedLogs.splice(idx, 1);
+        saveDraftLocally();
+        renderSelectedUI();
+    }
+
+    // --- ฟังก์ชันบันทึกรูปครุภัณฑ์ (Asset_Image) ---
+    async function uploadAssetImage(file, noid) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'saveAssetImage',
+                    payload: { 
+                        noid: noid, 
+                        actNo: currentActNo, 
+                        imageBase64: reader.result 
+                    }
+                })
+            });
+        };
+    }
+
+    // --- ฟังก์ชันส่งข้อมูลทั้งหมด (พร้อมแยก Sheet และบันทึกยืนยัน) ---
+    async function sendEverything() {
+        const name = document.getElementById('user-name').value;
+        if (!name || signPad.isEmpty()) return alert("กรุณาระบุชื่อและลงนาม");
+        if (selectedLogs.length === 0) return alert("ไม่มีข้อมูลครุภัณฑ์");
+
+        showLoader(true);
+        try {
+            // 1. ส่งข้อมูล Log (ใน/นอกระบบ)
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'submitFullSurvey',
+                    payload: {
+                        actNo: currentActNo,
+                        itUserMail: name,
+                        data: selectedLogs
+                    }
+                })
+            });
+            const res = await response.json();
+
+            if (res.success) {
+                // 2. ส่งลายเซ็นยืนยัน (Asset_Conferm)
+                await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'saveConfirmation',
+                        payload: {
+                            actionId: currentActNo,
+                            activityId: "2026",
+                            actName: name,
+                            signature: signPad.toDataURL()
+                        }
+                    })
+                });
+
+                alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+                localStorage.removeItem('udh_asset_draft');
+                location.reload();
+            } else {
+                alert("ผิดพลาด: " + res.error);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    // --- ระบบอื่นๆ ---
+    function openNonAssetForm() {
+        const tempId = "NON-" + Date.now().toString().slice(-6);
+        selectAsset({
+            AssetID: tempId,
+            'ชื่อรายการครุภัณฑ์': "ครุภัณฑ์นอกระบบ",
+            isNonumber: true 
+        });
+    }
+
+    function initSignature() {
+        const canvas = document.getElementById('sign-pad');
+        signPad = new SignaturePad(canvas);
+    }
+
+    function clearSign() { signPad.clear(); }
+    function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
+    function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
+    function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
+    function closeLogModal() { document.getElementById('log-modal').classList.add('hidden'); }
+    function saveDraftLocally() { localStorage.setItem('udh_asset_draft', JSON.stringify(selectedLogs)); }
+    function resetLogForm() {
+        document.getElementById('log-note').value = '';
+        document.getElementById('pac-mode').checked = false;
+        document.querySelectorAll('.shift-check').forEach(c => c.checked = false);
+    }
+
+    // override alert เดิม
+    window.alert = function(message) {
+        const alertModal = document.getElementById('alert-modal');
+        if(alertModal) {
+            document.getElementById('alert-text').innerText = message;
+            alertModal.classList.remove('hidden');
+        } else {
+            console.log("Alert:", message);
+        }
+    };
+    function closeAlert() { document.getElementById('alert-modal').classList.add('hidden'); }
 </script>
     <!-- Custom Alert Modal -->
 <div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
