@@ -11,7 +11,6 @@
     <style>
         body { 
             font-family: 'Kanit', sans-serif; 
-            /* ปรับแต่งสีพื้นหลังไล่ระดับ ชมพู -> ขาว จากบนลงล่าง */
             background: linear-gradient(180deg, #ffe4ec 0%, #ffffff 100%); 
             min-height: 100vh; 
             color: #4a4a4a; 
@@ -36,43 +35,48 @@
             box-shadow: 0 4px 12px rgba(255, 133, 161, 0.3);
         }
         .loader-overlay { background: rgba(255, 255, 255, 0.9); display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
-        .modal-backdrop { background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(6px); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
-        .modal-content { background: white; width: 100%; max-width: 550px; border-radius: 32px; max-height: 92vh; overflow-y: auto; }
+        .modal-backdrop { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(6px); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+        
+        .modal-content { 
+            background: white; 
+            width: 100%; 
+            max-width: 550px; 
+            border-radius: 32px; 
+            max-height: 92vh; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(255, 133, 161, 0.25);
+        }
+        
+        .modal-header {
+            background: linear-gradient(90deg, #ff85a1 0%, #ffb6c1 100%);
+            padding: 1.25rem 2rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-scroll-area {
+            padding: 2rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
         .form-input { width: 100%; padding: 0.85rem 1.25rem; border-radius: 16px; border: 2px solid #ffdeeb; outline: none; transition: all 0.2s; font-size: 15px; background: white; color: #555; -webkit-appearance: none; }
         .form-input:focus { border-color: #ff85a1; box-shadow: 0 0 0 4px rgba(255, 133, 161, 0.1); }
-        
         .asset-card-header { background: #fffaff; border-radius: 20px; padding: 20px; border: 1px solid #ffe4ec; position: relative; }
         .badge-orange { background: #fff4e6; color: #fd7e14; font-size: 11px; padding: 4px 12px; border-radius: 10px; font-weight: 600; }
         .label-gray { color: #adb5bd; font-size: 12px; font-weight: 600; }
-        
-        .highlight { background-color: #ffdae3; color: #d63384; font-weight: bold; border-radius: 4px; padding: 0 2px; }
-        
-        /* สไตล์ Signature Pad */
         .signature-wrapper { position: relative; width: 100%; height: 220px; background: #fff; border: 2px dashed #ffb6c1; border-radius: 20px; touch-action: none; overflow: hidden; }
         .signature-pad { position: absolute; left: 0; top: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
-        
         .img-preview { width: 100%; height: 200px; object-fit: cover; border-radius: 16px; border: 1px solid #ffdeeb; }
         #reader { width: 100%; border-radius: 20px; overflow: hidden; border: 2px solid #ff85a1; }
-        
-        optgroup { font-style: normal; font-weight: bold; color: #ff85a1; background: #fffaff; }
-        option { font-weight: normal; color: #4a4a4a; padding: 8px; }
-
-        .logo-container {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .logo-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
+        .highlight { background-color: #ffdae3; color: #d63384; font-weight: bold; border-radius: 4px; padding: 0 2px; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 pb-32">
 
     <div id="loader" class="loader-overlay">
         <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-pink-500"></div>
@@ -80,17 +84,17 @@
     </div>
 
     <header class="max-w-4xl mx-auto mb-8 flex flex-row items-center justify-center gap-4">
-        <div class="logo-container">
-            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="logo-img" onerror="this.src='https://via.placeholder.com/50?text=IT'">
+        <div class="w-12 h-12 flex items-center justify-center overflow-hidden">
+            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-full h-full object-contain" onerror="this.src='https://via.placeholder.com/50?text=IT'">
         </div>
         <div class="text-left">
-            <h1 class="text-2xl font-bold text-gray-800 leading-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-            <p class="text-pink-500 text-sm font-bold tracking-widest uppercase">IT Udonthani Hospital</p>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+            <p class="text-pink-500 text-xs md:text-sm font-bold tracking-widest uppercase">IT Udonthani Hospital</p>
         </div>
     </header>
 
     <main class="max-w-4xl mx-auto space-y-6">
-        <section class="glass-card p-8">
+        <section class="glass-card p-6 md:p-8">
             <h2 class="text-gray-700 font-bold mb-4 flex items-center gap-2">
                 <span class="w-8 h-8 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center text-sm">1</span>
                 ข้อมูลสถานที่และหน่วยงาน
@@ -105,13 +109,13 @@
             </div>
         </section>
 
-        <section class="glass-card p-8 pb-28">
+        <section class="glass-card p-6 md:p-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-gray-700 font-bold flex items-center gap-2">
                     <span class="w-8 h-8 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center text-sm">2</span>
                     รายการครุภัณฑ์ที่เลือก
                 </h2>
-                <button onclick="openSearchModal()" class="btn-pink px-6 py-2.5 rounded-2xl text-sm font-bold shadow-lg shadow-pink-200">เพิ่มครุภัณฑ์ +</button>
+                <button onclick="openSearchModal()" class="btn-pink px-5 py-2 rounded-2xl text-sm font-bold shadow-md shadow-pink-100">เพิ่มครุภัณฑ์ +</button>
             </div>
             <div id="selected-list" class="space-y-4">
                 <div class="py-16 text-center text-gray-300 italic text-sm bg-white/50 rounded-2xl border-2 border-dashed border-pink-100">ยังไม่มีข้อมูลครุภัณฑ์ที่เลือก</div>
@@ -127,29 +131,35 @@
 
     <!-- Modal ค้นหา -->
     <div id="search-modal" class="modal-backdrop hidden">
-        <div class="modal-content p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-xl text-gray-800">ค้นหาทะเบียนครุภัณฑ์</h3>
-                <button onclick="closeSearchModal()" class="text-gray-400 text-4xl">&times;</button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold text-xl">ค้นหาทะเบียนครุภัณฑ์</h3>
+                <button onclick="closeSearchModal()" class="text-3xl">&times;</button>
             </div>
-            <div class="flex gap-3 mb-6">
-                <input type="text" id="search-input" placeholder="พิมพ์รหัส หรือ ชื่อครุภัณฑ์..." class="form-input" oninput="doSearch()">
-                <button onclick="startScanner('search-input')" class="bg-pink-50 px-4 rounded-2xl border border-pink-100 text-pink-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <div class="modal-scroll-area">
+                <div class="flex gap-3 mb-6">
+                    <input type="text" id="search-input" placeholder="พิมพ์รหัส หรือ ชื่อครุภัณฑ์..." class="form-input" oninput="doSearch()">
+                    <button onclick="startScanner('search-input')" class="bg-pink-50 px-4 rounded-2xl border border-pink-100 text-pink-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </button>
+                </div>
+                <div id="search-results" class="space-y-3 max-h-[350px] overflow-y-auto pr-2"></div>
+                <button onclick="addNonSystem()" class="w-full mt-6 py-4 bg-pink-50 text-pink-500 rounded-2xl text-sm font-bold border-2 border-dashed border-pink-200 hover:bg-pink-100 transition-all">
+                    + กรณีไม่มีในทะเบียน (นอกระบบ)
                 </button>
             </div>
-            <div id="search-results" class="space-y-3 max-h-[380px] overflow-y-auto"></div>
-            <button onclick="addNonSystem()" class="w-full mt-6 py-4 bg-pink-50 text-pink-500 rounded-2xl text-sm font-bold border-2 border-dashed border-pink-200 hover:bg-pink-100 transition-all">
-                + กรณีไม่มีในทะเบียน (นอกระบบ)
-            </button>
         </div>
     </div>
 
     <!-- Modal รายละเอียด -->
     <div id="detail-modal" class="modal-backdrop hidden">
-        <div class="modal-content p-8">
-            <div id="asset-header-container"></div>
-            <div class="space-y-5 mt-6">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold text-xl text-white">รายละเอียดครุภัณฑ์</h3>
+                <button onclick="closeDetailModal()" class="text-3xl">&times;</button>
+            </div>
+            <div class="modal-scroll-area space-y-5">
+                <div id="asset-header-container"></div>
                 <div>
                     <label class="label-gray uppercase mb-2 block">ความสำคัญ (PRIORITY)</label>
                     <select id="sel-priority" class="form-input">
@@ -195,30 +205,36 @@
                         <button onclick="removeImage()" class="absolute top-3 right-3 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center">×</button>
                     </div>
                 </div>
-            </div>
-            <div class="flex gap-4 mt-8">
-                <button onclick="closeDetailModal()" class="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl font-bold hover:bg-gray-100 transition-all">ยกเลิก</button>
-                <button onclick="saveAssetToSelected()" class="flex-1 py-4 btn-pink rounded-2xl font-bold shadow-md">บันทึกข้อมูล</button>
+                <div class="flex gap-4 mt-4">
+                    <button onclick="closeDetailModal()" class="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl font-bold hover:bg-gray-100 transition-all">ยกเลิก</button>
+                    <button onclick="saveAssetToSelected()" class="flex-1 py-4 btn-pink rounded-2xl font-bold shadow-md">บันทึกข้อมูล</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Modal ลายเซ็น -->
     <div id="final-modal" class="modal-backdrop hidden">
-        <div class="modal-content p-8">
-            <h3 class="font-bold text-xl text-center mb-6 text-gray-800">ผู้ยืนยันการตรวจสอบ</h3>
-            <input type="text" id="inspector-name" placeholder="ชื่อ-นามสกุล ช่าง IT" class="form-input text-center font-bold mb-6">
-            <div class="signature-wrapper">
-                <canvas id="sign-canvas" class="signature-pad"></canvas>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold text-xl">ผู้ยืนยันการตรวจสอบ</h3>
+                <button onclick="closeFinalModal()" class="text-3xl">&times;</button>
             </div>
-            <button onclick="clearSignature()" class="text-xs text-pink-400 font-bold mt-3 block mx-auto underline">ล้างลายเซ็น</button>
-            <div class="flex gap-4 mt-8">
-                <button onclick="closeFinalModal()" class="flex-1 py-4 text-gray-400 border border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all">ปิด</button>
-                <button onclick="processSubmit()" class="flex-1 py-4 btn-pink rounded-2xl font-bold shadow-md">ส่งรายงาน</button>
+            <div class="modal-scroll-area">
+                <input type="text" id="inspector-name" placeholder="ชื่อ-นามสกุล ช่าง IT" class="form-input text-center font-bold mb-6">
+                <div class="signature-wrapper">
+                    <canvas id="sign-canvas" class="signature-pad"></canvas>
+                </div>
+                <button onclick="clearSignature()" class="text-xs text-pink-400 font-bold mt-3 block mx-auto underline">ล้างลายเซ็น</button>
+                <div class="flex gap-4 mt-8">
+                    <button onclick="closeFinalModal()" class="flex-1 py-4 text-gray-400 border border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all">ปิด</button>
+                    <button onclick="processSubmit()" class="flex-1 py-4 btn-pink rounded-2xl font-bold shadow-md">ส่งรายงาน</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Scanner & Alert -->
     <div id="scanner-modal" class="modal-backdrop hidden" style="z-index: 60;">
         <div class="modal-content p-4"><div id="reader"></div><button onclick="stopScanner()" class="w-full mt-4 py-3 bg-gray-100 rounded-xl font-bold text-gray-500">ยกเลิกสแกน</button></div>
     </div>
@@ -242,11 +258,7 @@
 
     function initSignature() {
         const canvas = document.getElementById('sign-canvas');
-        signaturePad = new SignaturePad(canvas, {
-            backgroundColor: 'rgba(255, 255, 255, 0)',
-            penColor: 'rgb(0, 0, 0)'
-        });
-
+        signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgba(255, 255, 255, 0)', penColor: 'rgb(0, 0, 0)' });
         function resizeCanvas() {
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
             canvas.width = canvas.offsetWidth * ratio;
@@ -254,7 +266,6 @@
             canvas.getContext("2d").scale(ratio, ratio);
             signaturePad.clear(); 
         }
-
         window.addEventListener("resize", resizeCanvas);
         setTimeout(resizeCanvas, 500);
     }
@@ -281,32 +292,17 @@
         const select = document.getElementById('dept-select');
         select.innerHTML = '<option value="">-- เลือกหน่วยงาน (แยกตามชั้น) --</option>';
         if(!building) return;
-
-        // กรองข้อมูลตามอาคารที่เลือก
         const filteredDepts = departments.filter(d => String(d.LOCATION_NAME) === building);
-        
-        // ดึงรายการชั้นที่มีอยู่จริงในอาคารนั้น (ใช้ฟิลด์ FL ตามโครงสร้างข้อมูล)
-        const floors = [...new Set(filteredDepts.map(d => String(d.FL || "ไม่ระบุชั้น")))].sort((a, b) => {
-            return a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'});
-        });
-
+        const floors = [...new Set(filteredDepts.map(d => String(d.FL || "ไม่ระบุชั้น")))].sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
         floors.forEach(floor => {
             const group = document.createElement('optgroup');
             group.label = `📍 ชั้น: ${floor}`;
-            
-            // กรองหน่วยงานที่อยู่ในอาคารและชั้นนี้
-            filteredDepts
-                .filter(d => String(d.FL || "ไม่ระบุชั้น") === floor)
-                .forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.DEP_ID;
-                    opt.textContent = d.DEPNAME;
-                    group.appendChild(opt);
-                });
-            
-            if (group.children.length > 0) {
-                select.appendChild(group);
-            }
+            filteredDepts.filter(d => String(d.FL || "ไม่ระบุชั้น") === floor).forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.DEP_ID; opt.textContent = d.DEPNAME;
+                group.appendChild(opt);
+            });
+            if (group.children.length > 0) select.appendChild(group);
         });
     }
 
@@ -320,12 +316,7 @@
         const q = document.getElementById('search-input').value.trim();
         const container = document.getElementById('search-results');
         if(q.length < 2) { container.innerHTML = ""; return; }
-        
-        const filtered = allAssets.filter(x => 
-            String(x.AssetID).toLowerCase().includes(q.toLowerCase()) || 
-            String(x['ชื่อรายการครุภัณฑ์']).toLowerCase().includes(q.toLowerCase())
-        ).slice(0, 15);
-        
+        const filtered = allAssets.filter(x => String(x.AssetID).toLowerCase().includes(q.toLowerCase()) || String(x['ชื่อรายการครุภัณฑ์']).toLowerCase().includes(q.toLowerCase())).slice(0, 15);
         container.innerHTML = filtered.map(x => `
             <div onclick='selectAsset(${JSON.stringify(x).replace(/'/g, "&apos;")})' class="p-4 bg-white border border-gray-100 rounded-2xl cursor-pointer hover:bg-pink-50 transition-all shadow-sm">
                 <span class="text-[11px] font-bold text-pink-500 uppercase tracking-wider">${highlightMatch(String(x.AssetID), q)}</span>
@@ -338,8 +329,8 @@
     function addNonSystem() { activeAsset = { AssetID: "NON-" + Date.now().toString().slice(-5), "ชื่อรายการครุภัณฑ์": "รายการนอกทะเบียน", isNonumber: true }; closeSearchModal(); openDetailModal(); }
 
     function openDetailModal() {
+        clearDetailForm();
         const container = document.getElementById('asset-header-container');
-        removeImage();
         if(activeAsset.isNonumber) {
             container.innerHTML = `<div class="p-4 bg-pink-50 rounded-2xl border border-pink-100 mb-4"><p class="text-xs font-bold text-pink-500 mb-2 uppercase">ระบุข้อมูลครุภัณฑ์ใหม่</p><input type="text" id="manual-asset-id" placeholder="รหัสครุภัณฑ์..." class="form-input font-bold text-pink-600 mb-2"><input type="text" id="manual-asset-name" placeholder="ชื่อเรียกครุภัณฑ์..." class="form-input"></div>`;
         } else {
@@ -368,7 +359,6 @@
             activeAsset['ชื่อรายการครุภัณฑ์'] = document.getElementById('manual-asset-name').value; 
         }
         if(!activeAsset.AssetID) return showAlert("กรุณาระบุรหัสครุภัณฑ์");
-        
         selectedItems.push({ 
             ...activeAsset, 
             priority: document.getElementById('sel-priority').value, 
@@ -402,6 +392,15 @@
         `).join('');
     }
 
+    function clearDetailForm() {
+        document.getElementById('sel-priority').value = "";
+        document.getElementById('sel-type').value = "";
+        document.getElementById('chk-pacs').checked = false;
+        document.querySelectorAll('.shift-cb').forEach(cb => cb.checked = false);
+        document.getElementById('txt-note').value = "";
+        removeImage();
+    }
+
     async function processSubmit() {
         const name = document.getElementById('inspector-name').value;
         if(!name || signaturePad.isEmpty()) return showAlert("กรุณาระบุชื่อและเซ็นชื่อผู้ตรวจสอบ");
@@ -416,12 +415,8 @@
             }
             await callAPI('submitFullSurvey', { actNo, itUserMail: name, data: selectedItems });
             await callAPI('saveConfirmation', { actionId: actNo, actName: name, signature: signaturePad.toDataURL() });
-            
-            selectedItems = []; 
-            localStorage.removeItem('survey_v3_draft');
-            renderSelectedList(); 
-            showAlert("✅ ส่งรายงานการตรวจสอบเรียบร้อยแล้ว"); 
-            closeFinalModal();
+            selectedItems = []; localStorage.removeItem('survey_v3_draft');
+            renderSelectedList(); showAlert("✅ ส่งรายงานการตรวจสอบเรียบร้อยแล้ว"); closeFinalModal();
         } catch (e) { showAlert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล"); }
         finally { toggleLoader(false); }
     }
@@ -435,18 +430,12 @@
                 if(targetId === 'search-input') doSearch(); 
                 stopScanner(); 
             }); 
-        } catch (e) { 
-            showAlert("ไม่สามารถเข้าถึงกล้องได้"); 
-            stopScanner(); 
-        }
+        } catch (e) { showAlert("ไม่สามารถเข้าถึงกล้องได้"); stopScanner(); }
     }
 
     async function stopScanner() { 
-        if (html5QrCode) {
-            try { await html5QrCode.stop(); } catch(e) {}
-        }
-        html5QrCode = null; 
-        document.getElementById('scanner-modal').classList.add('hidden'); 
+        if (html5QrCode) { try { await html5QrCode.stop(); } catch(e) {} }
+        html5QrCode = null; document.getElementById('scanner-modal').classList.add('hidden'); 
     }
 
     function openFinalModal() { 
@@ -462,10 +451,10 @@
         }, 300);
     }
 
+    function openSearchModal() { document.getElementById('search-input').value = ""; document.getElementById('search-results').innerHTML = ""; document.getElementById('search-modal').classList.remove('hidden'); }
     function closeDetailModal() { document.getElementById('detail-modal').classList.add('hidden'); }
     function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
     function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
-    function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
     async function callAPI(action, payload) { const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }); return res.json(); }
     function saveLocalDraft() { localStorage.setItem('survey_v3_draft', JSON.stringify(selectedItems)); }
     function loadLocalDraft() { const d = localStorage.getItem('survey_v3_draft'); if(d) { selectedItems = JSON.parse(d); renderSelectedList(); } }
