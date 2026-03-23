@@ -1,583 +1,238 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IT Asset Survey Pro - Smart Checklist</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        body { 
-            font-family: 'Kanit', sans-serif; 
-            background-color: #f0f2f5; 
-            -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden;
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  signInWithCustomToken, 
+  signInAnonymously, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  onSnapshot,
+  query
+} from 'firebase/firestore';
+import { 
+  Plus, 
+  Trash2, 
+  Loader2, 
+  Database, 
+  User, 
+  Globe,
+  AlertCircle 
+} from 'lucide-react';
+
+// --- การตั้งค่า Firebase ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [newItemText, setNewItemText] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+
+  // 1. จัดการ Authentication (ตามกฎข้อที่ 3)
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
         }
-        .app-container {
-            max-width: 500px;
-            margin: 0 auto;
-            min-height: 100vh;
-            background: #f8f9fa;
-            position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        .gradient-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
-        }
-        .page { display: none; }
-        .page.active { display: block; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        canvas#sig-pad { 
-            border: 2px dashed #cbd5e1; 
-            background: #ffffff; 
-            border-radius: 12px; 
-            width: 100%; 
-            height: 180px; 
-            touch-action: none; 
-        }
-        .custom-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .btn-primary {
-            background: #1e40af;
-            color: white;
-            transition: all 0.2s;
-        }
-        .btn-primary:active { transform: scale(0.97); }
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(255,255,255,0.9);
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-        @media print {
-            .no-print { display: none !important; }
-            .app-container { box-shadow: none; max-width: 100%; width: 100%; margin: 0; }
-            body { background: white; }
-            .page.active { display: block; }
-        }
-    </style>
-</head>
-<body>
-    <div id="loader" class="loading-overlay">
-        <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p class="mt-4 text-blue-900 font-medium">กำลังเตรียมข้อมูล...</p>
-        </div>
-    </div>
+      } catch (err) {
+        console.error("Auth Error:", err);
+        setError("ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้");
+      }
+    };
 
-    <div class="app-container">
-        <!-- Header -->
-        <header class="gradient-header pt-10 pb-16 px-6 text-white no-print">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3">
-                    <div class="bg-white/20 p-2 rounded-xl backdrop-blur-md">
-                        <i data-lucide="shield-check" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold leading-tight">ระบบสำรวจพัสดุไอที</h1>
-                        <p class="text-xs text-blue-100 opacity-80">ฝ่ายเทคโนโลยีสารสนเทศ</p>
-                    </div>
-                </div>
-                <button onclick="resetSystem()" class="p-2 hover:bg-white/10 rounded-full transition-colors">
-                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
-                </button>
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 2. จัดการการดึงข้อมูลจาก Firestore (ตามกฎข้อที่ 1 และ 2)
+  useEffect(() => {
+    if (!user) return;
+
+    setLoading(true);
+    
+    // กำหนด Path ตามกฎข้อที่ 1
+    const collectionPath = isPublic 
+      ? ['artifacts', appId, 'public', 'data', 'items']
+      : ['artifacts', appId, 'users', user.uid, 'items'];
+
+    const q = query(collection(db, ...collectionPath));
+
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        // กรองข้อมูลในหน่วยความจำแทนการใช้ complex query (ตามกฎข้อที่ 2)
+        setItems(data.sort((a, b) => b.createdAt - a.createdAt));
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Firestore Error:", err);
+        setError("ไม่สามารถเข้าถึงข้อมูลได้ (Permission Denied)");
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user, isPublic]);
+
+  const handleAddItem = async (e) => {
+    e.preventDefault();
+    if (!newItemText.trim() || !user) return;
+
+    try {
+      const collectionPath = isPublic 
+        ? ['artifacts', appId, 'public', 'data', 'items']
+        : ['artifacts', appId, 'users', user.uid, 'items'];
+
+      await addDoc(collection(db, ...collectionPath), {
+        text: newItemText,
+        ownerId: user.uid,
+        createdAt: Date.now(),
+        isPublic: isPublic
+      });
+      setNewItemText('');
+    } catch (err) {
+      setError("เพิ่มข้อมูลไม่สำเร็จ");
+    }
+  };
+
+  const handleDeleteItem = async (id) => {
+    try {
+      const collectionPath = isPublic 
+        ? ['artifacts', appId, 'public', 'data', 'items']
+        : ['artifacts', appId, 'users', user.uid, 'items'];
+        
+      await deleteDoc(doc(db, ...collectionPath, id));
+    } catch (err) {
+      setError("ลบข้อมูลไม่สำเร็จ");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        {/* ส่วนหัว */}
+        <div className="bg-slate-900 p-6 text-white">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <Database className="w-6 h-6 text-blue-400" />
+              ระบบจัดการข้อมูลจริง
+            </h1>
+            <div className="text-xs bg-slate-800 px-3 py-1 rounded-full text-slate-400 flex items-center gap-2">
+              <User className="w-3 h-3" />
+              {user ? user.uid.substring(0, 8) + '...' : 'กำลังเชื่อมต่อ...'}
             </div>
-        </header>
+          </div>
 
-        <!-- Page: Dashboard -->
-        <main id="page-dashboard" class="page active px-4 -mt-10 pb-24 no-print">
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="custom-card p-4 border-l-4 border-blue-500">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">เป้าหมายสำรวจ</p>
-                    <h2 id="stat-goal" class="text-2xl font-bold text-blue-700 mt-1">0</h2>
-                </div>
-                <div class="custom-card p-4 border-l-4 border-green-500">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">สำเร็จแล้ว</p>
-                    <h2 id="stat-done" class="text-2xl font-bold text-green-600 mt-1">0</h2>
-                </div>
-            </div>
-
-            <div class="custom-card overflow-hidden mb-6">
-                <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 class="font-bold text-gray-700 flex items-center gap-2">
-                        <i data-lucide="list-checks" class="w-4 h-4 text-blue-600"></i>
-                        สถานะรายหน่วยงาน
-                    </h3>
-                </div>
-                <div id="dept-list" class="divide-y divide-gray-50 max-h-[350px] overflow-y-auto">
-                    <!-- Dynamic List -->
-                </div>
-            </div>
-
-            <div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-[500px] px-6">
-                <button onclick="prepareForm()" class="w-full py-4 btn-primary rounded-2xl shadow-xl shadow-blue-200 flex items-center justify-center gap-3 font-bold text-lg">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    เริ่มการสำรวจใหม่
-                </button>
-            </div>
-        </main>
-
-        <!-- Page: Form -->
-        <main id="page-form" class="page px-4 -mt-10 pb-10 no-print">
-            <div class="custom-card p-5 mb-4 border-t-4 border-blue-600">
-                <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-red-500"></i> ระบุสถานที่และหน่วยงาน
-                </h3>
-                <div class="space-y-3">
-                    <select id="select-bldg" onchange="filterDeptByBldg()" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                        <option value="">-- เลือกอาคาร --</option>
-                    </select>
-                    <select id="select-dept" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                        <option value="">-- เลือกหน่วยงาน --</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="custom-card p-5 mb-4">
-                <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-                    <i data-lucide="search" class="w-4 h-4 text-blue-500"></i> ค้นหาพัสดุในระบบ
-                </h3>
-                <div class="flex gap-2 mb-2">
-                    <input type="text" id="asset-search" placeholder="พิมพ์ชื่อหรือรหัสครุภัณฑ์..." class="flex-1 p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-500">
-                    <button onclick="searchAsset()" class="bg-blue-600 text-white px-4 rounded-xl active:scale-95 transition-transform">
-                        <i data-lucide="search" class="w-5 h-5"></i>
-                    </button>
-                </div>
-                <div id="search-result-box" class="space-y-2 max-h-48 overflow-y-auto">
-                    <!-- Search results here -->
-                </div>
-            </div>
-
-            <div class="custom-card p-5 mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-gray-700">รายการพัสดุที่ตรวจสอบพบ</h3>
-                    <button onclick="showModal('modal-new-asset')" class="text-[11px] text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors border border-blue-200">
-                        + เพิ่มนอกระบบ
-                    </button>
-                </div>
-                <div id="selected-assets" class="space-y-2">
-                    <div class="text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl">
-                        <p class="text-gray-300 text-xs italic">ยังไม่มีรายการที่เลือก</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex gap-3 sticky bottom-4">
-                <button onclick="showPage('page-dashboard')" class="flex-1 py-4 bg-white text-gray-500 border border-gray-200 rounded-2xl font-bold shadow-sm">ยกเลิก</button>
-                <button onclick="goToConfirm()" class="flex-[2] py-4 btn-primary rounded-2xl font-bold shadow-lg shadow-blue-200">ตรวจสอบความถูกต้อง</button>
-            </div>
-        </main>
-
-        <!-- Page: Confirmation / Print -->
-        <main id="page-confirm" class="page px-4 -mt-10 pb-10">
-            <div id="printable-area" class="custom-card p-6 overflow-hidden">
-                <div class="flex justify-between items-start mb-6">
-                    <div class="text-left">
-                        <h2 class="text-xl font-bold text-blue-900 leading-tight">ใบยืนยันการสำรวจ</h2>
-                        <p class="text-[10px] text-gray-400 font-mono mt-1">LOG ID: <span id="conf-id" class="text-blue-600">---</span></p>
-                    </div>
-                    <div id="qrcode" class="bg-white p-1 border rounded-lg"></div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 border-t border-b border-gray-100 py-4 mb-4 text-left">
-                    <div>
-                        <p class="text-[10px] text-gray-400 uppercase font-bold">หน่วยงาน/สถานที่</p>
-                        <p id="conf-dept" class="text-sm font-bold text-gray-800">---</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] text-gray-400 uppercase font-bold">วันที่สำรวจ</p>
-                        <p id="conf-date" class="text-sm font-bold text-gray-800">---</p>
-                    </div>
-                </div>
-
-                <div class="text-left mb-8">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase mb-3">รายการพัสดุที่ตรวจสอบ</p>
-                    <div id="conf-list" class="space-y-2">
-                        <!-- Items list -->
-                    </div>
-                </div>
-
-                <div id="signature-display" class="hidden mt-6 bg-blue-50/50 p-4 rounded-2xl border border-blue-100 border-dashed">
-                    <img id="sig-img" class="mx-auto max-h-24 mb-2 mix-blend-multiply" src="" alt="Signature">
-                    <p id="signer-name" class="font-bold text-sm text-blue-900"></p>
-                    <p class="text-[10px] text-blue-400">( ผู้รับรองข้อมูล )</p>
-                </div>
-            </div>
-
-            <div class="mt-6 space-y-3 no-print">
-                <button id="btn-sign" onclick="showModal('modal-sign')" class="w-full py-4 btn-primary rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-100">
-                    <i data-lucide="pen-tool" class="w-5 h-5"></i> ลงลายเซ็นรับรอง
-                </button>
-                <div class="flex gap-2">
-                    <button onclick="window.print()" class="flex-1 py-3 bg-white border border-gray-200 rounded-xl text-gray-600 text-sm font-bold flex items-center justify-center gap-2">
-                        <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์ใบยืนยัน
-                    </button>
-                    <button onclick="finishSurvey()" class="flex-1 py-3 bg-green-600 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-                        <i data-lucide="check-circle" class="w-4 h-4"></i> บันทึกเสร็จสิ้น
-                    </button>
-                </div>
-                <button onclick="showPage('page-form')" class="w-full py-3 text-gray-400 text-xs font-medium">แก้ไขข้อมูลสำรวจ</button>
-            </div>
-        </main>
-    </div>
-
-    <!-- Modal: Signature -->
-    <div id="modal-sign" class="fixed inset-0 bg-blue-900/40 z-[100] hidden items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-gray-800">ลงลายเซ็นรับรอง</h3>
-                <button onclick="closeModal('modal-sign')" class="text-gray-300"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <p class="text-xs text-gray-400 mb-4">กรุณาระบุชื่อและเซ็นชื่อภายในกรอบด้านล่าง</p>
-            <input type="text" id="signer-input" placeholder="พิมพ์ชื่อ-นามสกุล..." class="w-full p-3.5 bg-gray-50 border rounded-xl mb-4 outline-none focus:border-blue-500 font-medium">
-            <div class="bg-gray-50 rounded-2xl p-1 mb-2">
-                <canvas id="sig-pad"></canvas>
-            </div>
-            <button onclick="signaturePad.clear()" class="text-[10px] text-red-500 font-bold flex items-center gap-1 mx-auto mb-6">
-                <i data-lucide="trash-2" class="w-3 h-3"></i> ล้างลายเซ็น
+          {/* สลับโหมด Public/Private */}
+          <div className="flex bg-slate-800 p-1 rounded-lg">
+            <button 
+              onClick={() => setIsPublic(true)}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md transition-all ${isPublic ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Globe className="w-4 h-4" /> สาธารณะ
             </button>
-            <button onclick="saveSignature()" class="w-full py-4 btn-primary rounded-2xl font-bold text-lg">ยืนยันลายเซ็น</button>
+            <button 
+              onClick={() => setIsPublic(false)}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md transition-all ${!isPublic ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            >
+              <User className="w-4 h-4" /> ส่วนตัว
+            </button>
+          </div>
         </div>
-    </div>
 
-    <!-- Modal: Add New Asset -->
-    <div id="modal-new-asset" class="fixed inset-0 bg-blue-900/40 z-[100] hidden items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-gray-800">เพิ่มพัสดุนอกระบบ</h3>
-                <button onclick="closeModal('modal-new-asset')" class="text-gray-300"><i data-lucide="x" class="w-5 h-5"></i></button>
+        {/* ส่วนฟอร์ม */}
+        <div className="p-6 border-b border-slate-100">
+          <form onSubmit={handleAddItem} className="flex gap-2">
+            <input 
+              type="text"
+              value={newItemText}
+              onChange={(e) => setNewItemText(e.target.value)}
+              placeholder={isPublic ? "พิมพ์ข้อความแชร์ให้ทุกคน..." : "จดบันทึกส่วนตัวของคุณ..."}
+              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+            <button 
+              disabled={!user || !newItemText.trim()}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-colors"
+            >
+              <Plus className="w-5 h-5" /> เพิ่ม
+            </button>
+          </form>
+          {error && (
+            <div className="mt-3 flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+              <AlertCircle className="w-4 h-4" /> {error}
             </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">ชื่อพัสดุ</label>
-                    <input type="text" id="new-asset-name" placeholder="เช่น เครื่องคอมพิวเตอร์, ปริ้นเตอร์" class="w-full p-3.5 bg-gray-50 border rounded-xl outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">เลขครุภัณฑ์ / S/N</label>
-                    <input type="text" id="new-asset-sn" placeholder="ระบุรหัสประจำตัวพัสดุ" class="w-full p-3.5 bg-gray-50 border rounded-xl outline-none focus:border-blue-500">
-                </div>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeModal('modal-new-asset')" class="flex-1 py-3.5 text-gray-400 font-bold">ยกเลิก</button>
-                <button onclick="addNewAsset()" class="flex-[2] py-3.5 btn-primary rounded-xl font-bold">เพิ่มรายการ</button>
-            </div>
+          )}
         </div>
+
+        {/* ส่วนแสดงรายการ */}
+        <div className="p-6">
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+            รายการปัจจุบัน ({items.length})
+          </h2>
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+              <Loader2 className="w-10 h-10 animate-spin mb-2" />
+              <p>กำลังดึงข้อมูลจาก Cloud...</p>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-2xl">
+              <p className="text-slate-400">ไม่พบข้อมูลในฐานข้อมูล</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {items.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="group flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-slate-700 font-medium">{item.text}</span>
+                    <span className="text-[10px] text-slate-400 mt-1">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  {item.ownerId === user?.uid && (
+                    <button 
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-white transition-all shadow-none hover:shadow-sm"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="mt-8 text-center text-slate-400 text-sm">
+        <p>เชื่อมต่อกับระบบฐานข้อมูล Cloud Firestore เรียบร้อยแล้ว</p>
+        <p className="mt-1">User ID: <span className="font-mono text-slate-500">{user?.uid || 'Authenticating...'}</span></p>
+      </div>
     </div>
-
-    <script>
-        // Mock DB
-        const ASSET_DATABASE = [
-            { id: 'IT-66-001', name: 'PC Dell Optiplex 7000', sn: 'DELL-X123' },
-            { id: 'IT-66-002', name: 'Monitor HP 24 inch', sn: 'HP-M556' },
-            { id: 'IT-66-003', name: 'Laptop MacBook Air M2', sn: 'APPLE-L990' },
-            { id: 'IT-66-004', name: 'Printer Brother L2370', sn: 'BR-P001' },
-            { id: 'IT-66-005', name: 'iPad Air 5th Gen', sn: 'IPAD-A442' }
-        ];
-
-        let masterData = {
-            depts: [
-                { id: 1, name: 'แผนกเทคโนโลยีสารสนเทศ', bldg: 'อาคารเฉลิมพระเกียรติ', status: 'pending' },
-                { id: 2, name: 'กองการคลัง', bldg: 'อาคารอำนวยการ', status: 'pending' },
-                { id: 3, name: 'งานประชาสัมพันธ์', bldg: 'อาคารอำนวยการ', status: 'pending' },
-                { id: 4, name: 'แผนกฉุกเฉิน (ER)', bldg: 'อาคารผู้ป่วยนอก', status: 'pending' },
-                { id: 5, name: 'ห้องปฏิบัติการ LAB', bldg: 'อาคารผู้ป่วยนอก', status: 'pending' }
-            ],
-            buildings: []
-        };
-
-        let selectedAssets = [];
-        let signaturePad = null;
-        let currentActivityId = null;
-
-        window.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            initSignature();
-            initApp();
-            window.addEventListener('resize', resizeCanvas);
-        });
-
-        function showLoading(status) {
-            document.getElementById('loader').style.display = status ? 'flex' : 'none';
-        }
-
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            window.scrollTo(0, 0);
-        }
-
-        function showModal(id) {
-            document.getElementById(id).style.display = 'flex';
-            if(id === 'modal-sign') setTimeout(resizeCanvas, 200);
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-
-        function initSignature() {
-            const canvas = document.getElementById('sig-pad');
-            signaturePad = new SignaturePad(canvas, {
-                penColor: 'rgb(0, 0, 128)'
-            });
-        }
-
-        function resizeCanvas() {
-            const canvas = document.getElementById('sig-pad');
-            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            signaturePad.clear();
-        }
-
-        function initApp() {
-            showLoading(true);
-            setTimeout(() => {
-                masterData.buildings = [...new Set(masterData.depts.map(d => d.bldg))];
-                renderDashboard();
-                populateBldgSelect();
-                showLoading(false);
-            }, 800);
-        }
-
-        function renderDashboard() {
-            const list = document.getElementById('dept-list');
-            list.innerHTML = '';
-            
-            let doneCount = 0;
-            masterData.depts.forEach(d => {
-                const isDone = d.status === 'done';
-                if(isDone) doneCount++;
-                list.innerHTML += `
-                    <div class="p-4 flex justify-between items-center bg-white border-b border-gray-50">
-                        <div>
-                            <p class="font-bold text-gray-800 text-sm">${d.name}</p>
-                            <div class="flex items-center gap-1.5 mt-0.5">
-                                <i data-lucide="building-2" class="w-3 h-3 text-gray-400"></i>
-                                <p class="text-[10px] text-gray-400 font-medium uppercase">${d.bldg}</p>
-                            </div>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-[10px] font-bold ${isDone ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}">
-                            ${isDone ? 'สำรวจแล้ว' : 'รอสำรวจ'}
-                        </span>
-                    </div>
-                `;
-            });
-            lucide.createIcons();
-            document.getElementById('stat-goal').innerText = masterData.depts.length;
-            document.getElementById('stat-done').innerText = doneCount;
-        }
-
-        function populateBldgSelect() {
-            const bSelect = document.getElementById('select-bldg');
-            bSelect.innerHTML = '<option value="">-- เลือกอาคาร --</option>';
-            masterData.buildings.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b; opt.textContent = b;
-                bSelect.appendChild(opt);
-            });
-        }
-
-        function filterDeptByBldg() {
-            const b = document.getElementById('select-bldg').value;
-            const dSelect = document.getElementById('select-dept');
-            dSelect.innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
-            masterData.depts.filter(d => d.bldg === b).forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id; opt.textContent = d.name;
-                dSelect.appendChild(opt);
-            });
-        }
-
-        function prepareForm() {
-            selectedAssets = [];
-            renderSelected();
-            document.getElementById('select-bldg').value = "";
-            document.getElementById('select-dept').innerHTML = '<option value="">-- เลือกหน่วยงาน --</option>';
-            document.getElementById('asset-search').value = "";
-            document.getElementById('search-result-box').innerHTML = "";
-            showPage('page-form');
-        }
-
-        function searchAsset() {
-            const query = document.getElementById('asset-search').value.toLowerCase();
-            if(!query) return;
-            
-            const results = ASSET_DATABASE.filter(a => 
-                a.name.toLowerCase().includes(query) || 
-                a.id.toLowerCase().includes(query) || 
-                a.sn.toLowerCase().includes(query)
-            );
-
-            const box = document.getElementById('search-result-box');
-            if(results.length === 0) {
-                box.innerHTML = '<p class="text-center text-xs text-gray-400 py-2">ไม่พบข้อมูลในระบบ</p>';
-                return;
-            }
-
-            box.innerHTML = results.map(r => `
-                <div onclick='addAsset(${JSON.stringify(r)})' class="p-3 bg-blue-50/50 rounded-xl flex justify-between items-center cursor-pointer border border-blue-100 hover:bg-blue-50">
-                    <div class="text-xs">
-                        <p class="font-bold text-blue-900">${r.id}</p>
-                        <p class="text-gray-500">${r.name}</p>
-                    </div>
-                    <i data-lucide="plus" class="w-4 h-4 text-blue-500"></i>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function addAsset(asset) {
-            if(selectedAssets.find(a => a.id === asset.id)) {
-                return Swal.fire({ title: 'รายการซ้ำ', text: 'พัสดุนี้ถูกเลือกไปแล้ว', icon: 'info', confirmButtonColor: '#3b82f6' });
-            }
-            selectedAssets.push(asset);
-            renderSelected();
-        }
-
-        function renderSelected() {
-            const container = document.getElementById('selected-assets');
-            if(selectedAssets.length === 0) {
-                container.innerHTML = '<div class="text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl"><p class="text-gray-300 text-xs italic">ยังไม่มีรายการที่เลือก</p></div>';
-                return;
-            }
-            container.innerHTML = selectedAssets.map((a, index) => `
-                <div class="flex justify-between items-center bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-right-4 duration-200">
-                    <div class="text-xs">
-                        <p class="font-bold text-gray-800">${a.id || 'นอกระบบ'}</p>
-                        <p class="text-gray-500">${a.name}</p>
-                    </div>
-                    <button onclick="removeAsset(${index})" class="p-2 text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function removeAsset(index) {
-            selectedAssets.splice(index, 1);
-            renderSelected();
-        }
-
-        function addNewAsset() {
-            const name = document.getElementById('new-asset-name').value;
-            const sn = document.getElementById('new-asset-sn').value;
-            if(!name || !sn) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อพัสดุและเลขเครื่อง', 'warning');
-            
-            selectedAssets.push({ id: sn, name: name + ' [นอกระบบ]', sn: sn });
-            renderSelected();
-            closeModal('modal-new-asset');
-            document.getElementById('new-asset-name').value = '';
-            document.getElementById('new-asset-sn').value = '';
-        }
-
-        function goToConfirm() {
-            const deptId = document.getElementById('select-dept').value;
-            if(!deptId || selectedAssets.length === 0) {
-                return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกหน่วยงานและเพิ่มรายการพัสดุ', 'warning');
-            }
-
-            currentActivityId = 'SURV-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-            document.getElementById('conf-id').innerText = currentActivityId;
-            document.getElementById('conf-dept').innerText = document.getElementById('select-dept').options[document.getElementById('select-dept').selectedIndex].text;
-            document.getElementById('conf-date').innerText = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
-            
-            document.getElementById('conf-list').innerHTML = selectedAssets.map(a => `
-                <div class="flex justify-between items-center text-xs border-b border-gray-50 pb-1">
-                    <span class="text-gray-600">${a.name}</span>
-                    <span class="font-mono font-bold text-gray-400">${a.id}</span>
-                </div>
-            `).join('');
-            
-            // Generate QR
-            document.getElementById('qrcode').innerHTML = '';
-            new QRCode(document.getElementById("qrcode"), {
-                text: currentActivityId,
-                width: 60, height: 60,
-                colorDark : "#1e3a8a"
-            });
-
-            // Reset signature if any
-            document.getElementById('signature-display').classList.add('hidden');
-            document.getElementById('btn-sign').classList.remove('hidden');
-
-            showPage('page-confirm');
-        }
-
-        function saveSignature() {
-            const name = document.getElementById('signer-input').value;
-            if(!name || signaturePad.isEmpty()) {
-                return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อผู้เซ็นและลงลายมือชื่อ', 'warning');
-            }
-
-            const dataUrl = signaturePad.toDataURL();
-            document.getElementById('sig-img').src = dataUrl;
-            document.getElementById('signer-name').innerText = name;
-            document.getElementById('signature-display').classList.remove('hidden');
-            document.getElementById('btn-sign').classList.add('hidden');
-            closeModal('modal-sign');
-        }
-
-        function finishSurvey() {
-            if(document.getElementById('signature-display').classList.contains('hidden')) {
-                return Swal.fire('รอก่อน', 'กรุณาลงลายเซ็นรับรองข้อมูลก่อนบันทึก', 'info');
-            }
-
-            showLoading(true);
-            setTimeout(() => {
-                // Update Master Data
-                const deptId = parseInt(document.getElementById('select-dept').value);
-                const dept = masterData.depts.find(d => d.id === deptId);
-                if(dept) dept.status = 'done';
-
-                showLoading(false);
-                Swal.fire({
-                    title: 'บันทึกสำเร็จ!',
-                    text: 'ข้อมูลการสำรวจถูกจัดเก็บเรียบร้อยแล้ว',
-                    icon: 'success',
-                    confirmButtonText: 'กลับหน้าหลัก',
-                    confirmButtonColor: '#16a34a'
-                }).then(() => {
-                    renderDashboard();
-                    showPage('page-dashboard');
-                });
-            }, 1000);
-        }
-
-        function resetSystem() {
-            Swal.fire({
-                title: 'รีเซ็ตข้อมูล?',
-                text: "สถานะการสำรวจทั้งหมดจะกลับไปเริ่มต้นใหม่",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'ใช่, รีเซ็ตเลย',
-                cancelButtonText: 'ยกเลิก'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    masterData.depts.forEach(d => d.status = 'pending');
-                    renderDashboard();
-                    Swal.fire('รีเซ็ตแล้ว!', 'ข้อมูลกลับสู่ค่าเริ่มต้น', 'success');
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+  );
+}
