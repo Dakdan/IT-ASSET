@@ -39,6 +39,7 @@
     </header>
 
     <main class="max-w-4xl mx-auto space-y-6">
+        <!-- Section 1: Location -->
         <section class="glass-card p-6">
             <h2 class="section-header">1. ข้อมูลสถานที่และหน่วยงาน</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -51,6 +52,7 @@
             </div>
         </section>
 
+        <!-- Section 2: Selected Assets -->
         <section class="glass-card p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="section-header mb-0">2. รายการครุภัณฑ์ที่เลือก</h2>
@@ -107,7 +109,7 @@
             <div id="asset-info-container"></div>
             <div class="space-y-4 mt-6">
                 <div>
-                    <label class="text-xs font-bold text-gray-400 ml-1">รูปภาพครุภัณฑ์</label>
+                    <label class="text-xs font-bold text-gray-400 ml-1">รูปภาพครุภัณฑ์ (Mapping: NOID)</label>
                     <div class="mt-1">
                         <input type="file" id="asset-image-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageChange(this)">
                         <button id="btn-camera" onclick="document.getElementById('asset-image-input').click()" class="w-full py-3 bg-white border-2 border-dashed border-pink-200 rounded-xl text-pink-400 text-sm font-bold flex items-center justify-center gap-2">
@@ -125,9 +127,9 @@
                         <option value="">-- เลือกความสำคัญ --</option>
                         <option value="PIO-001">PIO-001 ตรวจรักษา(แพทย์)</option>
                         <option value="PIO-002">PIO-002 ข้อมูลผู้ป่วย (พยาบาล)</option>
-                        <option value="PIO-003">PIO-003 บริการ การเงิน ห้องบัตร ห้องยา Lab Support</option>
+                        <option value="PIO-003">PIO-003 บริการ การเงิน ห้องบัตร ห้องยา Lab</option>
                         <option value="PIO-004">PIO-004 งานเอกสาร งานธุรการ</option>
-                        <option value="PIO-005">PIO-005 บริการทั่วไป ซ่อมบำรุง ช่าง โรงรถ</option>
+                        <option value="PIO-005">PIO-005 บริการทั่วไป ซ่อมบำรุง</option>
                     </select>
                 </div>
                 <div>
@@ -174,7 +176,7 @@
                     <button onclick="clearSignature()" class="text-xs text-pink-400 underline mt-2">ล้างลายเซ็น</button>
                 </div>
             </div>
-            <button onclick="processSubmit()" class="w-full mt-8 py-4 btn-pink rounded-xl font-bold shadow-lg">ยืนยันและส่งรายงาน</button>
+            <button onclick="processSubmit(true)" class="w-full mt-8 py-4 btn-pink rounded-xl font-bold shadow-lg">ยืนยันและส่งรายงาน</button>
             <button onclick="closeFinalModal()" class="w-full py-3 text-gray-400 font-bold">ย้อนกลับ</button>
         </div>
     </div>
@@ -270,14 +272,12 @@
     }
 
     function selectAsset(asset) {
-        // ใช้ NOID เดิมหรือสร้างใหม่เพื่อ Map รูปภาพ
-        activeAsset = { ...asset, isNonumber: false, NOID: asset.NOID || "ID-" + Date.now() }; 
+        activeAsset = { ...asset, isNonumber: false, NOID: asset.NOID || Date.now() }; 
         closeSearchModal();
         openDetailModal();
     }
 
     function addNonSystem() {
-        // สร้าง NOID สำหรับเครื่องนอกระบบ
         activeAsset = { AssetID: "", "ชื่อรายการครุภัณฑ์": "", isNonumber: true, NOID: "NON-" + Date.now() };
         closeSearchModal();
         openDetailModal();
@@ -337,10 +337,10 @@
 
         selectedItems.push({
             ...finalAsset,
-            priority: prio, // PIO-XXX
-            assetType: type, 
+            priority: prio, // Mapping: PiorytyJobe
+            assetType: type, // Mapping: Asset_Type
             isPacs: document.getElementById('chk-pacs').checked ? 'YES' : 'NO',
-            shifts: Array.from(document.querySelectorAll('.shift-cb:checked')).map(x => x.value).join(','),
+            shifts: Array.from(document.querySelectorAll('.shift-cb:checked')).map(x => x.value).join(','), // Mapping: Shift_Work
             imageBase64: currentBase64,
             deptId: document.getElementById('dept-select').value,
             deptName: departments.find(d => d.DEP_ID == document.getElementById('dept-select').value)?.DEPNAME
@@ -360,10 +360,9 @@
                     <div>
                         <span class="text-[10px] font-bold text-blue-500">${x.AssetID}</span>
                         <p class="text-xs font-bold text-gray-700">${x['ชื่อรายการครุภัณฑ์']}</p>
-                        <p class="text-[9px] text-pink-400 font-bold">${x.priority}</p>
                     </div>
                 </div>
-                <button onclick="removeSelected(${i})" class="text-red-400 text-xs p-2">ลบ</button>
+                <button onclick="removeSelected(${i})" class="text-red-400 text-xs">ลบ</button>
             </div>
         `).join('');
     }
@@ -380,20 +379,22 @@
         const name = document.getElementById('inspector-name').value.trim();
         if(!name || signaturePad.isEmpty()) return showAlert("กรุณากรอกชื่อและลงลายเซ็น");
 
-        toggleLoader(true, "กำลังส่งข้อมูลลงระบบ...");
+        toggleLoader(true, "กำลังส่งข้อมูล (Mapping: Act_No & NOID)...");
         try {
-            // ดึงเลข Act_No ชุดใหม่
-            const logRes = await callAPI('saveActionLog', { actName: 'Asset Survey 2026', itLogin: name });
+            // Step 1: สร้าง Action Log (Act_No)
+            const logRes = await callAPI('saveActionLog', { actName: 'Survey 2026', itLogin: name });
             const actNo = logRes.actNo;
 
+            // Step 2: วนลูปส่งแต่ละรายการ
             for(let item of selectedItems) {
+                // อัปโหลดรูปภาพก่อนเพื่อเอา URL (Mapping: Asset_Image)
                 let imageUrl = "";
-                // ส่งรูปภาพไปเก็บก่อนเพื่อเอา URL และ Map กับ NOID
                 if(item.imageBase64) {
                     const imgRes = await callAPI('saveAssetImage', { NOID: item.NOID, imageBase64: item.imageBase64, actNo: actNo });
                     imageUrl = imgRes.url;
                 }
 
+                // เตรียม Data ตามโครงสร้างชีท (Mapping: Asset_On_Log / Asset_On_Nonumber_Log)
                 const payload = {
                     actNo: actNo,
                     noid: item.NOID,
@@ -401,7 +402,7 @@
                     assetName: item['ชื่อรายการครุภัณฑ์'],
                     deptId: item.deptId,
                     deptName: item.deptName,
-                    priority: item.priority, // ส่ง PIO-XXX
+                    priority: item.priority, // PIO-XXX
                     assetType: item.assetType,
                     shifts: item.shifts,
                     isPacs: item.isPacs,
@@ -412,36 +413,14 @@
                 await callAPI('submitSurveyRow', payload);
             }
 
-            // บันทึกลายเซ็นทับท้าย
+            // Step 3: บันทึกการยืนยัน (Mapping: Asset_Conferm)
             await callAPI('saveConfirmation', { actNo: actNo, actName: name, signature: signaturePad.toDataURL() });
 
-            showAlert("บันทึกข้อมูลสำเร็จเรียบร้อยแล้ว");
+            showAlert("ส่งข้อมูลและเชื่อมโยงระบบเรียบร้อยแล้ว");
             selectedItems = []; renderSelectedList();
             document.getElementById('final-modal').classList.add('hidden');
-        } catch (e) { showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูล"); }
+        } catch (e) { showAlert("เกิดข้อผิดพลาดในการส่งข้อมูล"); }
         finally { toggleLoader(false); }
-    }
-
-    function startScanner(targetId) {
-        document.getElementById('scanner-modal').classList.remove('hidden');
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-            (decodedText) => {
-                document.getElementById(targetId).value = decodedText;
-                stopScanner();
-                if(targetId === 'search-input') doSearch();
-            }
-        ).catch(err => { console.error(err); stopScanner(); });
-    }
-
-    function stopScanner() {
-        if(html5QrCode) {
-            html5QrCode.stop().then(() => {
-                document.getElementById('scanner-modal').classList.add('hidden');
-            }).catch(err => console.error(err));
-        } else {
-            document.getElementById('scanner-modal').classList.add('hidden');
-        }
     }
 
     async function callAPI(action, payload = null) {
