@@ -39,7 +39,6 @@
     </header>
 
     <main class="max-w-4xl mx-auto space-y-6">
-        <!-- Section 1: Location -->
         <section class="glass-card p-6">
             <h2 class="section-header">1. ข้อมูลสถานที่และหน่วยงาน</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -52,7 +51,6 @@
             </div>
         </section>
 
-        <!-- Section 2: Selected Assets -->
         <section class="glass-card p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="section-header mb-0">2. รายการครุภัณฑ์ที่เลือก</h2>
@@ -109,7 +107,7 @@
             <div id="asset-info-container"></div>
             <div class="space-y-4 mt-6">
                 <div>
-                    <label class="text-xs font-bold text-gray-400 ml-1">รูปภาพครุภัณฑ์ (Mapping: NOID)</label>
+                    <label class="text-xs font-bold text-gray-400 ml-1">รูปภาพครุภัณฑ์</label>
                     <div class="mt-1">
                         <input type="file" id="asset-image-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageChange(this)">
                         <button id="btn-camera" onclick="document.getElementById('asset-image-input').click()" class="w-full py-3 bg-white border-2 border-dashed border-pink-200 rounded-xl text-pink-400 text-sm font-bold flex items-center justify-center gap-2">
@@ -176,7 +174,7 @@
                     <button onclick="clearSignature()" class="text-xs text-pink-400 underline mt-2">ล้างลายเซ็น</button>
                 </div>
             </div>
-            <button onclick="processSubmit(true)" class="w-full mt-8 py-4 btn-pink rounded-xl font-bold shadow-lg">ยืนยันและส่งรายงาน</button>
+            <button onclick="processSubmit()" class="w-full mt-8 py-4 btn-pink rounded-xl font-bold shadow-lg">ยืนยันและส่งรายงาน</button>
             <button onclick="closeFinalModal()" class="w-full py-3 text-gray-400 font-bold">ย้อนกลับ</button>
         </div>
     </div>
@@ -272,14 +270,14 @@
     }
 
     function selectAsset(asset) {
-        // Mapping: NOID สำหรับจับคู่รูปภาพ
+        // ใช้ NOID เดิมหรือสร้างใหม่เพื่อ Map รูปภาพ
         activeAsset = { ...asset, isNonumber: false, NOID: asset.NOID || "ID-" + Date.now() }; 
         closeSearchModal();
         openDetailModal();
     }
 
     function addNonSystem() {
-        // Mapping: NOID สำหรับเครื่องนอกระบบ (Asset_On_Nonumber_Log)
+        // สร้าง NOID สำหรับเครื่องนอกระบบ
         activeAsset = { AssetID: "", "ชื่อรายการครุภัณฑ์": "", isNonumber: true, NOID: "NON-" + Date.now() };
         closeSearchModal();
         openDetailModal();
@@ -339,10 +337,10 @@
 
         selectedItems.push({
             ...finalAsset,
-            priority: prio, // Mapping: PiorytyJobe (PIO-001 - PIO-005)
-            assetType: type, // Mapping: Asset_Type
+            priority: prio, // PIO-XXX
+            assetType: type, 
             isPacs: document.getElementById('chk-pacs').checked ? 'YES' : 'NO',
-            shifts: Array.from(document.querySelectorAll('.shift-cb:checked')).map(x => x.value).join(','), // Mapping: Shift_Work
+            shifts: Array.from(document.querySelectorAll('.shift-cb:checked')).map(x => x.value).join(','),
             imageBase64: currentBase64,
             deptId: document.getElementById('dept-select').value,
             deptName: departments.find(d => d.DEP_ID == document.getElementById('dept-select').value)?.DEPNAME
@@ -382,22 +380,20 @@
         const name = document.getElementById('inspector-name').value.trim();
         if(!name || signaturePad.isEmpty()) return showAlert("กรุณากรอกชื่อและลงลายเซ็น");
 
-        toggleLoader(true, "กำลังประมวลผลข้อมูลลงชีท...");
+        toggleLoader(true, "กำลังส่งข้อมูลลงระบบ...");
         try {
-            // Step 1: สร้าง Action Log เพื่อเอา Act_No (ใช้คุมทั้งชุด)
+            // ดึงเลข Act_No ชุดใหม่
             const logRes = await callAPI('saveActionLog', { actName: 'Asset Survey 2026', itLogin: name });
             const actNo = logRes.actNo;
 
-            // Step 2: วนลูปส่งข้อมูลรายบรรทัด
             for(let item of selectedItems) {
                 let imageUrl = "";
-                // ส่งรูปภาพก่อนเพื่อใช้ Mapping ใน Asset_Image
+                // ส่งรูปภาพไปเก็บก่อนเพื่อเอา URL และ Map กับ NOID
                 if(item.imageBase64) {
                     const imgRes = await callAPI('saveAssetImage', { NOID: item.NOID, imageBase64: item.imageBase64, actNo: actNo });
                     imageUrl = imgRes.url;
                 }
 
-                // เตรียม Payload ให้ตรงกับคอลัมน์ใน Sheet (Asset_On_Log / Asset_On_Nonumber_Log)
                 const payload = {
                     actNo: actNo,
                     noid: item.NOID,
@@ -405,7 +401,7 @@
                     assetName: item['ชื่อรายการครุภัณฑ์'],
                     deptId: item.deptId,
                     deptName: item.deptName,
-                    priority: item.priority, // PIO-XXX
+                    priority: item.priority, // ส่ง PIO-XXX
                     assetType: item.assetType,
                     shifts: item.shifts,
                     isPacs: item.isPacs,
@@ -416,28 +412,16 @@
                 await callAPI('submitSurveyRow', payload);
             }
 
-            // Step 3: บันทึกลายเซ็นลง Asset_Conferm
+            // บันทึกลายเซ็นทับท้าย
             await callAPI('saveConfirmation', { actNo: actNo, actName: name, signature: signaturePad.toDataURL() });
 
-            showAlert("บันทึกข้อมูลและเชื่อมโยงรูปภาพเรียบร้อยแล้ว");
+            showAlert("บันทึกข้อมูลสำเร็จเรียบร้อยแล้ว");
             selectedItems = []; renderSelectedList();
             document.getElementById('final-modal').classList.add('hidden');
-        } catch (e) { 
-            console.error(e);
-            showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่"); 
-        } finally { toggleLoader(false); }
+        } catch (e) { showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูล"); }
+        finally { toggleLoader(false); }
     }
 
-    async function callAPI(action, payload = null) {
-        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, payload }) });
-        return res.json();
-    }
-    function toggleLoader(s, t) { document.getElementById('loader-text').innerText = t; document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-    function showAlert(m) { document.getElementById('alert-msg').innerText = m; document.getElementById('alert-box').classList.remove('hidden'); }
-    function clearSignature() { signaturePad.clear(); }
-    function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
-
-    // Scanner Utility
     function startScanner(targetId) {
         document.getElementById('scanner-modal').classList.remove('hidden');
         html5QrCode = new Html5Qrcode("reader");
@@ -459,6 +443,15 @@
             document.getElementById('scanner-modal').classList.add('hidden');
         }
     }
+
+    async function callAPI(action, payload = null) {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, payload }) });
+        return res.json();
+    }
+    function toggleLoader(s, t) { document.getElementById('loader-text').innerText = t; document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
+    function showAlert(m) { document.getElementById('alert-msg').innerText = m; document.getElementById('alert-box').classList.remove('hidden'); }
+    function clearSignature() { signaturePad.clear(); }
+    function closeFinalModal() { document.getElementById('final-modal').classList.add('hidden'); }
 </script>
 </body>
 </html>
