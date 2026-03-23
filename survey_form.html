@@ -207,21 +207,46 @@
         }
     }
 
-    function runSearch() {
-        const query = document.getElementById('query-input').value.trim().toLowerCase();
-        const resBox = document.getElementById('search-results');
-        resBox.innerHTML = '';
-        if(!query) return;
-        const hits = allAssets.filter(a => String(a.AssetID).toLowerCase().includes(query)).slice(0, 20);
+   function runSearch() {
+    const query = document.getElementById('query-input').value.toLowerCase(); // ไม่ใช้ trim() ตามสั่ง
+    const resBox = document.getElementById('search-results');
+    const currentYear = 2026; // ปีปัจจุบันตามระบบ
+    resBox.innerHTML = '';
+    
+    if (!query) return;
+
+    // กรองข้อมูลจาก allAssets
+    const hits = allAssets.filter(a => String(a.AssetID).toLowerCase().includes(query)).slice(0, 20);
+
         hits.forEach(a => {
+            // คำนวณอายุครุภัณฑ์ (สมมติว่าคอลัมน์ปีคือ a.Year)
+            const assetYear = parseInt(a.Year) || currentYear;
+            const age = currentYear - assetYear;
+            
             const div = document.createElement('div');
-            div.className = "p-3 border rounded-xl mb-2 cursor-pointer hover:bg-pink-50";
-            div.innerHTML = `<p class="font-bold">${a.AssetID}</p><p class="text-xs text-gray-500">${a['ชื่อรายการครุภัณฑ์']}</p>`;
-            div.onclick = () => { currentAsset = a; closeSearchModal(); openLogModal(a); };
+            div.className = "p-4 border-2 border-pink-50 rounded-2xl mb-3 cursor-pointer hover:bg-pink-50 transition-all bg-white shadow-sm";
+            div.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <p class="font-bold text-blue-600 text-sm">${a.AssetID}</p>
+                        <p class="text-xs text-gray-700 font-medium mt-1">${a['ชื่อรายการครุภัณฑ์'] || 'ไม่ระบุชื่อรายการ'}</p>
+                        <p class="text-[10px] text-gray-400 mt-1 italic">สเปก: ${a.Spec || '-'}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block px-2 py-1 rounded-lg bg-pink-100 text-pink-600 text-[10px] font-bold">
+                            อายุ: ${age} ปี
+                        </span>
+                    </div>
+                </div>
+            `;
+            div.onclick = () => { 
+                currentAsset = a; 
+                closeSearchModal(); 
+                openLogModal(a); 
+            };
             resBox.appendChild(div);
         });
     }
-
     // --- ส่วนล้างข้อมูล (สำคัญ) ---
     function resetLogForm() {
         document.getElementById('log-priority').value = "";
