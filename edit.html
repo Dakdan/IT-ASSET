@@ -1,121 +1,181 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Udon Hospital - Asset Survey V2</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-
-    <style>
-        body { 
-            font-family: 'Kanit', sans-serif; 
-            background: linear-gradient(to bottom, #ffe4ec, #ffffff);
-            min-height: 100vh; 
-        }
-
-        .loader-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: rgba(255,255,255,0.85);
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT Asset Survey - View Only</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+body { font-family: 'Kanit', sans-serif; background-color: #f8f9fa; margin:0; }
+.pink-gradient-header { background: linear-gradient(180deg, #330033 0%, #ff3399 30%, #ff99cc 100%); border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; }
+.stat-card { background: white; border-radius: 20px; padding: 12px 6px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-bottom: 4px solid transparent; }
+.page { display: none; transition: all 0.3s ease; }
+.page.active { display: block; }
+.custom-scroll::-webkit-scrollbar { width: 4px; }
+.custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #f48fb1; border-radius: 10px; }
+@media (min-width: 640px) { .max-w-md { max-width: 640px; } }
+@media (min-width: 1024px) { .max-w-md { max-width: 960px; } }
+</style>
 </head>
+<body class="flex justify-center">
 
-<body class="p-4">
+<div class="w-full max-w-md sm:max-w-lg lg:max-w-3xl bg-[#f8f9fa] min-h-screen relative flex flex-col shadow-2xl overflow-x-hidden">
+    <header class="pink-gradient-header pt-6 pb-10 px-6 text-white shrink-0 relative z-10 no-print flex items-center gap-4">
+        <div class="bg-white p-2 rounded-2xl shadow-lg shrink-0 cursor-pointer" onclick="location.reload()">
+            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-10 h-10 object-contain">
+        </div>
+        <div class="text-left flex-1">
+            <h1 class="text-lg font-bold">ตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+            <p class="text-[9px] font-light opacity-90 uppercase tracking-widest">โรงพยาบาลอุดรธานี : กลุ่มงาน เทคโนโลยีสารสนเทศทางการแพทย์</p>
+        </div>
+    </header>
 
-<!-- ALERT -->
-<div id="alert-modal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center">
-    <div class="bg-white p-6 rounded-xl text-center">
-        <p id="alert-message">-</p>
-        <button id="alert-ok">ตกลง</button>
+    <div id="page-dashboard" class="page active px-4 -mt-8 relative z-20 pb-24 no-print">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+            <div class="stat-card border-blue-400">
+                <p class="text-[9px] text-blue-400 font-bold uppercase mb-1">เป้าหมาย (R)</p>
+                <h2 id="dash-goal" class="text-base font-black text-blue-400">0</h2>
+            </div>
+            <div class="stat-card border-emerald-400">
+                <p class="text-[9px] text-emerald-400 font-bold uppercase mb-1 leading-tight">ในทะเบียน</p>
+                <h2 id="dash-in" class="text-base font-black text-emerald-400">0</h2>
+            </div>
+            <div class="stat-card border-amber-400">
+                <p class="text-[9px] text-amber-400 font-bold uppercase mb-1 leading-tight">ไม่มีทะเบียน</p>
+                <h2 id="dash-out" class="text-base font-black text-amber-400">0</h2>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mb-4">
+            <div class="stat-card border-pink-400">
+                <p class="text-[9px] text-pink-400 font-bold uppercase mb-1">รวมสำรวจ (Sum)</p>
+                <h2 id="dash-sum" class="text-base font-black text-pink-400">0</h2>
+            </div>
+            <div class="stat-card border-purple-500">
+                <p class="text-[9px] text-purple-500 font-bold uppercase mb-1">ความสำเร็จ</p>
+                <h2 id="dash-percent" class="text-base font-black text-purple-600">0%</h2>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[28px] shadow-sm overflow-hidden border border-gray-100">
+            <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+                <h3 class="font-bold text-xs text-gray-600 flex items-center gap-2">
+                    <i data-lucide="list-checks" class="w-4 h-4 text-pink-500"></i>📋 หน่วยงานที่ตรวจสอบแล้ว
+                </h3>
+                <button onclick="initApp()" class="text-[10px] text-pink-500 font-bold">♻️ รีเฟรช</button>
+            </div>
+            <div id="dept-list-container" class="max-h-[380px] sm:max-h-[480px] md:max-h-[600px] overflow-y-auto text-sm custom-scroll"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal สำหรับรายละเอียดหน่วยงาน -->
+<div id="modal-dept-detail" class="hidden fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl w-80 sm:w-96 p-6 relative">
+        <button onclick="closeModal('modal-dept-detail')" class="absolute top-2 right-2 text-gray-500">✖️</button>
+        <h3 class="font-bold text-lg mb-2" id="md-note">ชื่อหน่วยงาน</h3>
+        <p>อาคาร: <span id="md-name">-</span></p>
+        <p>ชั้น: <span id="md-floor">-</span></p>
+        <p>ระบบงาน: <span id="md-system">-</span></p>
+        <p>โทร: <span id="md-tel">-</span></p>
+        <p>GPS: <span id="md-gps">-</span></p>
     </div>
 </div>
 
-<!-- LOADER (เหลืออันเดียว) -->
-<div id="loader" class="loader-overlay">
-    <div>Loading...</div>
-</div>
-
-<button onclick="openSearchModal()">เปิดค้นหา</button>
-
-<!-- SEARCH -->
-<div id="search-modal" class="hidden">
-    <input id="query-input" oninput="runSearch()">
-    <div id="search-results"></div>
-</div>
-
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
+const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
+let masterDepts=[];
 
-let allAssets = [];
-let qrScanner = null;
+window.addEventListener('DOMContentLoaded',()=>{ lucide.createIcons(); setTimeout(initApp,100); });
 
-function showLoader(s){
-    document.getElementById('loader').style.display = s ? 'flex' : 'none';
-}
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+function showModal(id){ document.getElementById(id).classList.remove('hidden'); }
 
-function openSearchModal(){
-    document.getElementById('search-modal').classList.remove('hidden');
-}
-
-function runSearch(){
-    const q = document.getElementById('query-input').value.toLowerCase();
-    const box = document.getElementById('search-results');
-
-    const hits = allAssets.filter(a =>
-        String(a.AssetID).toLowerCase().includes(q)
-    );
-
-    box.innerHTML = hits.map(a => `<div>${a.AssetID}</div>`).join('');
-}
-
-/* ✅ แก้ QR ให้ถูก */
-async function toggleQR(){
+async function initApp(){
     try {
-        qrScanner = new Html5Qrcode("qr-reader");
+        const dashRes = await fetch(`${API}?action=getDashboard&t=${Date.now()}`);
+        const deptRes = await fetch(`${API}?action=getFilteredDepartments&t=${Date.now()}`);
+        
+        if(!dashRes.ok || !deptRes.ok){ throw new Error('API response not OK'); }
 
-        await qrScanner.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            (txt) => {
-                document.getElementById('query-input').value = txt;
-                runSearch();
-                stopQR();
-            }
-        );
-    } catch (e){
-        showAlert("เปิดกล้องไม่ได้");
+        const dash = await dashRes.json();
+        const filteredDetails = await deptRes.json();
+
+        if(!Array.isArray(filteredDetails)){ console.error('Filtered departments response invalid', filteredDetails); return; }
+
+        masterDepts = filteredDetails.map(d=>({
+            deptId: d.deptId || d.DEPID || '',
+            deptName: d.deptName || d.DEPT_NAME_LOC || '-',
+            building: d.building || '-',
+            floor: d.floor || '-',
+            jobSystem: d.jobSystem || '-',
+            tel: d.tel || '-',
+            gps: d.gps || d.GPS || '0',
+            deptPhoto: d.deptPhoto || d.DEPT_PHO || ''
+        }));
+
+        updateDashboard(dash, masterDepts);
+    } catch(e){
+        console.error(e);
+        const container = document.getElementById('dept-list-container');
+        container.innerHTML='<p class="text-center text-red-500 py-10 text-[10px] italic">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบ API หรือเครือข่าย</p>';
     }
 }
 
-/* ✅ ต้องอยู่นอก function */
-async function stopQR(){
-    if(qrScanner){
-        try { await qrScanner.stop(); } catch(e){}
-        qrScanner = null;
+function updateDashboard(data, filteredDetails){
+    document.getElementById('dash-goal').innerText = data.goal || 0;
+    document.getElementById('dash-in').innerText = data.totalIn || 0;
+    document.getElementById('dash-out').innerText = data.totalOut || 0;
+    document.getElementById('dash-sum').innerText = data.totalSum || 0;
+    document.getElementById('dash-percent').innerText = (data.percent||0)+"%";
+
+    const container = document.getElementById('dept-list-container');
+    if(!filteredDetails || filteredDetails.length===0){
+        container.innerHTML='<p class="text-center text-gray-400 py-10 text-[10px] italic">ไม่พบข้อมูลหน่วยงานที่สำรวจแล้ว</p>';
+        return;
     }
+
+    let html="", currentBldg="";
+    const sorted = [...filteredDetails].sort((a,b)=>(a.building||"-").localeCompare(b.building||"-"));
+    sorted.forEach(item=>{
+        if(item.building !== currentBldg){
+            currentBldg = item.building;
+            html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg}</div>`;
+        }
+        let imgTag = (item.deptPhoto && item.deptPhoto!="") 
+            ? `<img src="${item.deptPhoto}" class="w-full h-full object-cover">` 
+            : `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
+        html += `<div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" onclick="showDeptDetail('${item.deptId}')">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">${imgTag}</div>
+                <div>
+                    <p class="font-semibold text-gray-800 text-sm leading-tight">${item.deptName}</p>
+                    <p class="text-[10px] text-pink-500 font-bold uppercase">☎️ ${item.tel} | ชั้น ${item.floor} | GPS: ${item.gps}</p>
+                </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+    if(window.lucide) lucide.createIcons();
 }
 
-function showAlert(msg){
-    const modal = document.getElementById('alert-modal');
-    document.getElementById('alert-message').innerText = msg;
+function showDeptDetail(id){
+    const dept = masterDepts.find(x=>x.deptId==id);
+    if(!dept) return;
 
-    modal.classList.remove('hidden');
-
-    document.getElementById('alert-ok').onclick = ()=>{
-        modal.classList.add('hidden');
-    }
+    document.getElementById('md-note').innerText = `หน่วยงาน: ${dept.deptName}`;
+    document.getElementById('md-name').innerText = dept.building;
+    document.getElementById('md-floor').innerText = dept.floor;
+    document.getElementById('md-system').innerText = dept.jobSystem;
+    document.getElementById('md-tel').innerText = dept.tel;
+    document.getElementById('md-gps').innerText = dept.gps;
+    showModal('modal-dept-detail');
 }
 </script>
-
 </body>
 </html>
