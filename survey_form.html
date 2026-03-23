@@ -611,25 +611,35 @@
         document.getElementById('btn-camera').classList.remove('hidden'); 
     }
 
-    function saveAssetToSelected() {
-        if(activeAsset.isNonumber) { 
-            activeAsset.AssetID = document.getElementById('manual-asset-id').value || "N/A"; 
-            activeAsset['ชื่อรายการครุภัณฑ์'] = document.getElementById('manual-asset-name').value || "รายการไม่ระบุชื่อ"; 
-        }
-        if(!activeAsset.AssetID) return showAlert("กรุณาระบุรหัสครุภัณฑ์");
-        selectedItems.push({ 
-            ...activeAsset, 
-            priority: document.getElementById('sel-priority').value, 
-            assetType: document.getElementById('sel-type').value, 
-            isPac: document.getElementById('chk-pacs').checked, 
-            shifts: Array.from(document.querySelectorAll('.shift-cb:checked')).map(x => x.value).join(','), 
-            note: document.getElementById('txt-note').value, 
-            imageBase64: currentBase64, 
-            deptId: document.getElementById('dept-select').value,
-            noid: activeAsset.noid || Date.now()
-        });
-        saveLocalDraft(); renderSelectedList(); closeDetailModal();
+function saveAssetToSelected() {
+
+    if (!document.getElementById('dept-select').value) {
+        return showAlert("กรุณาเลือกหน่วยงานก่อน");
     }
+
+    if(activeAsset.isNonumber) { 
+        activeAsset.AssetID = document.getElementById('manual-asset-id').value || "N/A"; 
+        activeAsset['ชื่อรายการครุภัณฑ์'] = document.getElementById('manual-asset-name').value || "รายการไม่ระบุชื่อ"; 
+    }
+
+    if(!activeAsset.AssetID) return showAlert("กรุณาระบุรหัสครุภัณฑ์");
+
+    selectedItems.push({ 
+        ...activeAsset, 
+        priority: document.getElementById('sel-priority').value, 
+        assetType: document.getElementById('sel-type').value, 
+        isPac: document.getElementById('chk-pacs').checked, 
+        shifts: Array.from(document.querySelectorAll('.shift-cb:checked')).map(x => x.value).join(','), 
+        note: document.getElementById('txt-note').value, 
+        imageBase64: currentBase64, 
+        deptId: document.getElementById('dept-select').value,
+        noid: activeAsset.noid || Date.now()
+    });
+
+    saveLocalDraft(); 
+    renderSelectedList(); 
+    closeDetailModal();
+}
 
     function renderSelectedList() {
         const container = document.getElementById('selected-list');
