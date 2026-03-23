@@ -296,7 +296,23 @@
             </div>
         `).join('');
     }
-
+    function openNonAssetForm() {
+    // ล้างค่าเก่าใน Modal ก่อนเริ่มใหม่
+    resetLogForm(); 
+    
+    // สร้าง ID ชั่วคราวสำหรับของนอกระบบ
+    const tempId = "NON-" + Date.now().toString().slice(-6);
+    
+    currentAsset = { 
+        AssetID: tempId, 
+        'ชื่อรายการครุภัณฑ์': "เพิ่มรายการนอกทะเบียน", 
+        isNonumber: true 
+    };
+    
+    // ปิดหน้าค้นหาและเปิดหน้ากรอกข้อมูลทันที
+    closeSearchModal(); 
+    openLogModal(currentAsset); 
+}
     function removeLog(idx) { selectedLogs.splice(idx, 1); renderSelectedUI(); }
     function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
     function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); resetLogForm(); }
