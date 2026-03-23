@@ -442,7 +442,7 @@ async function showDeptDetail(id) {
         if(!data.error) {
             // แสดงรายการในระบบ (High Contrast)
             logContainer.innerHTML = (data.assets && data.assets.length) 
-                ? data.assets.map(a => `<div class="p-3 bg-white border-2 border-emerald-100 text-slate-950 text-[11px] rounded-xl font-black shadow-sm">📌 ${a.AssetID}</div>`).join('')
+                ? data.assets.map(a => `<div class="p-3 bg-white border-2 border-emerald-100 text-slate-950 text-[11px] rounded-xl font-black shadow-sm">📌 ${a.AssetID}(: ${a.Asset_Type})(/ ${a.PiorytyJobe})</div>`).join('')
                 : '<p class="text-[10px] text-slate-400 italic py-2">ไม่มีข้อมูลในระบบ</p>';
             
             // แสดงรายการนอกระบบ (High Contrast)
