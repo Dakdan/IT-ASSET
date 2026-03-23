@@ -33,10 +33,12 @@
     </style>
 </head>
 <body class="flex justify-center">
-
-    <div id="loading" class="loading-overlay hidden">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mb-4"></div>
-        <p class="text-pink-600 font-bold">กำลังโหลดข้อมูล...</p>
+        <div id="loader" class="loader-overlay">
+        <div class="relative flex items-center justify-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500"></div>
+            <div class="absolute h-8 w-8 bg-pink-100 rounded-full animate-pulse"></div>
+        </div>
+        <p class="text-pink-600 font-medium mt-6 tracking-wide">กำลังเตรียมข้อมูล...</p>
     </div>
 
     <div class="w-full max-w-md bg-[#f8f9fa] min-h-screen relative flex flex-col shadow-2xl overflow-x-hidden">
@@ -291,19 +293,19 @@
 
     <script>
 const API="https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec";
-
-let masterDepts=[];
-let globalFilteredDepts=[]; 
-let selectedAssets=[];
-let sigPad=null;
-let currentActivityId=null;
-
 window.onload=()=>{
     lucide.createIcons();
     const canvas=document.getElementById('sig-pad');
     sigPad=new SignaturePad(canvas);
     initApp();
 };
+let masterDepts=[];
+let globalFilteredDepts=[]; 
+let selectedAssets=[];
+let sigPad=null;
+let currentActivityId=null;
+
+
 
 function setLoading(s){ document.getElementById('loading').classList.toggle('hidden',!s); }
 function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
