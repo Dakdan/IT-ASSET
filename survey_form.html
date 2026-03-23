@@ -580,6 +580,56 @@
             console.log("Alert:", message);
         }
     };
+    // 1. ฟังก์ชันล้างค่าแบบละเอียด (Clear All Inputs)
+function resetLogForm() {
+    // ล้างค่า Priority Dropdown
+    const priority = document.getElementById('log-priority');
+    if(priority) priority.selectedIndex = 0;
+
+    // ล้างค่าประเภทอุปกรณ์
+    const assetType = document.getElementById('asset-type-select');
+    if(assetType) assetType.selectedIndex = 0;
+
+    // ปิดสวิตช์เครื่องระบบ Pac
+    const pacMode = document.getElementById('pac-mode');
+    if(pacMode) pacMode.checked = false;
+
+    // ล้าง Checkbox ช่วงเวลาทำงาน (Shift) ทุกตัว
+    document.querySelectorAll('.shift-check').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // ล้างช่องหมายเหตุ (Note)
+    const note = document.getElementById('log-note');
+    if(note) note.value = '';
+
+    console.log("Log Form Cleared"); // ไว้เช็คใน Console
+}
+
+// 2. ปรับฟังก์ชันปิด Modal ให้ล้างค่าด้วย
+function closeLogModal() {
+    document.getElementById('log-modal').classList.add('hidden');
+    resetLogForm(); // ล้างข้อมูลทันทีที่กดปิด หรือ ยกเลิก
+}
+
+// 3. ปรับฟังก์ชันเปิด Modal ให้มั่นใจว่าเริ่มจากค่าว่าง
+function openLogModal(a) {
+    resetLogForm(); // ล้างของเก่าทิ้งก่อนแสดงของใหม่
+    document.getElementById('log-modal').classList.remove('hidden');
+    
+    // แสดงรายละเอียด Asset ด้านบน
+    document.getElementById('asset-detail-ui').innerHTML = `
+        <div class="flex gap-4">
+            <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 shadow-sm">
+                <img src="${a.Ass_Img || 'https://via.placeholder.com/80?text=No+Img'}" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-1">
+                <h4 class="font-bold text-blue-600 text-sm">${a.AssetID}</h4>
+                <p class="text-[11px] font-bold text-gray-700">${a['ชื่อรายการครุภัณฑ์'] || 'ครุภัณฑ์นอกระบบ'}</p>
+            </div>
+        </div>
+    `;
+}
     function closeAlert() { document.getElementById('alert-modal').classList.add('hidden'); }
 </script>
     <!-- Custom Alert Modal -->
