@@ -9,32 +9,67 @@
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Kanit', sans-serif; background: #fff0f3; min-height: 100vh; color: #4a4a4a; overflow-x: hidden; }
-        .glass-card { background: white; border-radius: 24px; border: 1px solid #ffdeeb; box-shadow: 0 4px 16px rgba(255, 133, 161, 0.08); }
-        .btn-pink { background: #ff85a1; color: white; transition: all 0.2s ease; }
-        .btn-pink:hover { background: #ff6b8d; }
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            /* ปรับแต่งสีพื้นหลังไล่ระดับ ชมพู -> ขาว จากบนลงล่าง */
+            background: linear-gradient(180deg, #ffe4ec 0%, #ffffff 100%); 
+            min-height: 100vh; 
+            color: #4a4a4a; 
+            overflow-x: hidden; 
+            background-attachment: fixed;
+        }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.9); 
+            border-radius: 24px; 
+            border: 1px solid #ffdeeb; 
+            box-shadow: 0 8px 32px rgba(255, 133, 161, 0.1); 
+            backdrop-filter: blur(4px);
+        }
+        .btn-pink { 
+            background: linear-gradient(135deg, #ff85a1 0%, #ff5c8d 100%); 
+            color: white; 
+            transition: all 0.3s ease; 
+        }
+        .btn-pink:hover { 
+            background: linear-gradient(135deg, #ff6b8d 0%, #ff3d77 100%); 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 133, 161, 0.3);
+        }
         .loader-overlay { background: rgba(255, 255, 255, 0.9); display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
         .modal-backdrop { background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(6px); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
         .modal-content { background: white; width: 100%; max-width: 550px; border-radius: 32px; max-height: 92vh; overflow-y: auto; }
-        .form-input { width: 100%; padding: 0.85rem 1.25rem; border-radius: 16px; border: 1px solid #ffdeeb; outline: none; transition: all 0.2s; font-size: 15px; background: white; color: #555; -webkit-appearance: none; }
+        .form-input { width: 100%; padding: 0.85rem 1.25rem; border-radius: 16px; border: 2px solid #ffdeeb; outline: none; transition: all 0.2s; font-size: 15px; background: white; color: #555; -webkit-appearance: none; }
         .form-input:focus { border-color: #ff85a1; box-shadow: 0 0 0 4px rgba(255, 133, 161, 0.1); }
         
-        .asset-card-header { background: #f8faff; border-radius: 20px; padding: 20px; border: 1px solid #eef2ff; position: relative; }
+        .asset-card-header { background: #fffaff; border-radius: 20px; padding: 20px; border: 1px solid #ffe4ec; position: relative; }
         .badge-orange { background: #fff4e6; color: #fd7e14; font-size: 11px; padding: 4px 12px; border-radius: 10px; font-weight: 600; }
         .label-gray { color: #adb5bd; font-size: 12px; font-weight: 600; }
         
         .highlight { background-color: #ffdae3; color: #d63384; font-weight: bold; border-radius: 4px; padding: 0 2px; }
         
-        /* สไตล์ Signature Pad ปรับปรุงใหม่ */
+        /* สไตล์ Signature Pad */
         .signature-wrapper { position: relative; width: 100%; height: 220px; background: #fff; border: 2px dashed #ffb6c1; border-radius: 20px; touch-action: none; overflow: hidden; }
         .signature-pad { position: absolute; left: 0; top: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
         
         .img-preview { width: 100%; height: 200px; object-fit: cover; border-radius: 16px; border: 1px solid #ffdeeb; }
         #reader { width: 100%; border-radius: 20px; overflow: hidden; border: 2px solid #ff85a1; }
         
-        /* สไตล์สำหรับ optgroup */
         optgroup { font-style: normal; font-weight: bold; color: #ff85a1; background: #fffaff; }
         option { font-weight: normal; color: #4a4a4a; padding: 8px; }
+
+        .logo-container {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -44,9 +79,14 @@
         <p class="text-pink-500 font-bold mt-4">กำลังดำเนินการ...</p>
     </div>
 
-    <header class="max-w-4xl mx-auto mb-8 text-center">
-        <h1 class="text-2xl font-bold text-gray-800">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-        <p class="text-pink-400 text-sm font-bold tracking-widest mt-1 uppercase">IT Udonthani Hospital</p>
+    <header class="max-w-4xl mx-auto mb-8 flex flex-row items-center justify-center gap-4">
+        <div class="logo-container">
+            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="logo-img" onerror="this.src='https://via.placeholder.com/50?text=IT'">
+        </div>
+        <div class="text-left">
+            <h1 class="text-2xl font-bold text-gray-800 leading-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+            <p class="text-pink-500 text-sm font-bold tracking-widest uppercase">IT Udonthani Hospital</p>
+        </div>
     </header>
 
     <main class="max-w-4xl mx-auto space-y-6">
@@ -74,13 +114,13 @@
                 <button onclick="openSearchModal()" class="btn-pink px-6 py-2.5 rounded-2xl text-sm font-bold shadow-lg shadow-pink-200">เพิ่มครุภัณฑ์ +</button>
             </div>
             <div id="selected-list" class="space-y-4">
-                <div class="py-16 text-center text-gray-300 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่เลือก</div>
+                <div class="py-16 text-center text-gray-300 italic text-sm bg-white/50 rounded-2xl border-2 border-dashed border-pink-100">ยังไม่มีข้อมูลครุภัณฑ์ที่เลือก</div>
             </div>
         </section>
 
-        <div class="fixed bottom-0 left-0 right-0 p-6 bg-white/70 backdrop-blur-xl border-t border-pink-50 z-40">
+        <div class="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-pink-50 z-40">
             <div class="max-w-4xl mx-auto">
-                <button onclick="openFinalModal()" class="w-full btn-pink py-4.5 rounded-2xl font-bold text-lg shadow-xl shadow-pink-200">ยืนยันการตรวจสอบและส่งรายงาน</button>
+                <button onclick="openFinalModal()" class="w-full btn-pink py-4 rounded-2xl font-bold text-lg shadow-xl shadow-pink-200">ยืนยันการตรวจสอบและส่งรายงาน</button>
             </div>
         </div>
     </main>
@@ -99,7 +139,7 @@
                 </button>
             </div>
             <div id="search-results" class="space-y-3 max-h-[380px] overflow-y-auto"></div>
-            <button onclick="addNonSystem()" class="w-full mt-6 py-4 bg-pink-50 text-pink-500 rounded-2xl text-sm font-bold border-2 border-dashed border-pink-200">
+            <button onclick="addNonSystem()" class="w-full mt-6 py-4 bg-pink-50 text-pink-500 rounded-2xl text-sm font-bold border-2 border-dashed border-pink-200 hover:bg-pink-100 transition-all">
                 + กรณีไม่มีในทะเบียน (นอกระบบ)
             </button>
         </div>
@@ -141,15 +181,15 @@
                 <div>
                     <label class="label-gray uppercase mb-2 block">ช่วงเวลาทำงาน</label>
                     <div class="flex gap-6 mt-2">
-                        <label class="flex items-center gap-2"><input type="checkbox" value="เช้า" class="shift-cb w-5 h-5 accent-pink-500"> เช้า</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" value="บ่าย" class="shift-cb w-5 h-5 accent-pink-500"> บ่าย</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" value="ดึก" class="shift-cb w-5 h-5 accent-pink-500"> ดึก</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="เช้า" class="shift-cb w-5 h-5 accent-pink-500"> เช้า</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="บ่าย" class="shift-cb w-5 h-5 accent-pink-500"> บ่าย</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="ดึก" class="shift-cb w-5 h-5 accent-pink-500"> ดึก</label>
                     </div>
                 </div>
                 <textarea id="txt-note" placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)..." class="form-input h-24 resize-none"></textarea>
                 <div id="image-area">
                     <input type="file" id="asset-image-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageChange(this)">
-                    <button id="btn-camera" onclick="document.getElementById('asset-image-input').click()" class="w-full py-4 bg-white border-2 border-dashed border-pink-200 rounded-2xl text-pink-400 text-sm font-bold">📸 ถ่ายรูปหรือเลือกภาพ</button>
+                    <button id="btn-camera" onclick="document.getElementById('asset-image-input').click()" class="w-full py-4 bg-white border-2 border-dashed border-pink-200 rounded-2xl text-pink-400 text-sm font-bold flex items-center justify-center gap-2 hover:bg-pink-50 transition-all">📸 ถ่ายรูปหรือเลือกภาพ</button>
                     <div id="image-preview-container" class="hidden relative mt-2">
                         <img id="image-preview-el" class="img-preview" src="">
                         <button onclick="removeImage()" class="absolute top-3 right-3 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center">×</button>
@@ -157,8 +197,8 @@
                 </div>
             </div>
             <div class="flex gap-4 mt-8">
-                <button onclick="closeDetailModal()" class="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl font-bold">ยกเลิก</button>
-                <button onclick="saveAssetToSelected()" class="flex-1 py-4 btn-pink rounded-2xl font-bold">บันทึกข้อมูล</button>
+                <button onclick="closeDetailModal()" class="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl font-bold hover:bg-gray-100 transition-all">ยกเลิก</button>
+                <button onclick="saveAssetToSelected()" class="flex-1 py-4 btn-pink rounded-2xl font-bold shadow-md">บันทึกข้อมูล</button>
             </div>
         </div>
     </div>
@@ -166,15 +206,15 @@
     <!-- Modal ลายเซ็น -->
     <div id="final-modal" class="modal-backdrop hidden">
         <div class="modal-content p-8">
-            <h3 class="font-bold text-xl text-center mb-6">ผู้ยืนยันการตรวจสอบ</h3>
+            <h3 class="font-bold text-xl text-center mb-6 text-gray-800">ผู้ยืนยันการตรวจสอบ</h3>
             <input type="text" id="inspector-name" placeholder="ชื่อ-นามสกุล ช่าง IT" class="form-input text-center font-bold mb-6">
             <div class="signature-wrapper">
                 <canvas id="sign-canvas" class="signature-pad"></canvas>
             </div>
             <button onclick="clearSignature()" class="text-xs text-pink-400 font-bold mt-3 block mx-auto underline">ล้างลายเซ็น</button>
             <div class="flex gap-4 mt-8">
-                <button onclick="closeFinalModal()" class="flex-1 py-4 text-gray-400 border rounded-2xl font-bold">ปิด</button>
-                <button onclick="processSubmit()" class="flex-1 py-4 btn-pink rounded-2xl font-bold">ส่งรายงาน</button>
+                <button onclick="closeFinalModal()" class="flex-1 py-4 text-gray-400 border border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all">ปิด</button>
+                <button onclick="processSubmit()" class="flex-1 py-4 btn-pink rounded-2xl font-bold shadow-md">ส่งรายงาน</button>
             </div>
         </div>
     </div>
@@ -200,7 +240,6 @@
         loadLocalDraft(); 
     };
 
-    // ปรับปรุงฟังก์ชันลายเซ็นให้เซ็นได้แน่นอน
     function initSignature() {
         const canvas = document.getElementById('sign-canvas');
         signaturePad = new SignaturePad(canvas, {
@@ -217,7 +256,6 @@
         }
 
         window.addEventListener("resize", resizeCanvas);
-        // เรียกครั้งแรกหลังจาก Modal เปิด หรือหลังจากโหลดหน้า
         setTimeout(resizeCanvas, 500);
     }
 
@@ -238,30 +276,37 @@
         buildings.forEach(b => { select.innerHTML += `<option value="${b}">${b}</option>`; });
     }
 
-    // แก้ไข: จัดกลุ่มหน่วยงานตามชั้น (Group by Floor)
     function filterDepartments() {
         const building = document.getElementById('building-select').value;
         const select = document.getElementById('dept-select');
         select.innerHTML = '<option value="">-- เลือกหน่วยงาน (แยกตามชั้น) --</option>';
         if(!building) return;
 
+        // กรองข้อมูลตามอาคารที่เลือก
         const filteredDepts = departments.filter(d => String(d.LOCATION_NAME) === building);
-        // หาชั้นทั้งหมดที่มีในอาคารนี้
-        const floors = [...new Set(filteredDepts.map(d => String(d.FLOOR_NAME || "ไม่ระบุชั้น")))].sort((a, b) => a.localeCompare(b));
+        
+        // ดึงรายการชั้นที่มีอยู่จริงในอาคารนั้น (ใช้ฟิลด์ FL ตามโครงสร้างข้อมูล)
+        const floors = [...new Set(filteredDepts.map(d => String(d.FL || "ไม่ระบุชั้น")))].sort((a, b) => {
+            return a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'});
+        });
 
         floors.forEach(floor => {
             const group = document.createElement('optgroup');
             group.label = `📍 ชั้น: ${floor}`;
             
+            // กรองหน่วยงานที่อยู่ในอาคารและชั้นนี้
             filteredDepts
-                .filter(d => String(d.FLOOR_NAME || "ไม่ระบุชั้น") === floor)
+                .filter(d => String(d.FL || "ไม่ระบุชั้น") === floor)
                 .forEach(d => {
                     const opt = document.createElement('option');
                     opt.value = d.DEP_ID;
                     opt.textContent = d.DEPNAME;
                     group.appendChild(opt);
                 });
-            select.appendChild(group);
+            
+            if (group.children.length > 0) {
+                select.appendChild(group);
+            }
         });
     }
 
@@ -282,8 +327,8 @@
         ).slice(0, 15);
         
         container.innerHTML = filtered.map(x => `
-            <div onclick='selectAsset(${JSON.stringify(x).replace(/'/g, "&apos;")})' class="p-4 bg-white border border-gray-100 rounded-2xl cursor-pointer hover:bg-pink-50 transition-all">
-                <span class="text-[11px] font-bold text-blue-500 uppercase">${highlightMatch(String(x.AssetID), q)}</span>
+            <div onclick='selectAsset(${JSON.stringify(x).replace(/'/g, "&apos;")})' class="p-4 bg-white border border-gray-100 rounded-2xl cursor-pointer hover:bg-pink-50 transition-all shadow-sm">
+                <span class="text-[11px] font-bold text-pink-500 uppercase tracking-wider">${highlightMatch(String(x.AssetID), q)}</span>
                 <p class="text-sm font-bold text-gray-700">${highlightMatch(String(x['ชื่อรายการครุภัณฑ์']), q)}</p>
             </div>
         `).join('');
@@ -298,7 +343,7 @@
         if(activeAsset.isNonumber) {
             container.innerHTML = `<div class="p-4 bg-pink-50 rounded-2xl border border-pink-100 mb-4"><p class="text-xs font-bold text-pink-500 mb-2 uppercase">ระบุข้อมูลครุภัณฑ์ใหม่</p><input type="text" id="manual-asset-id" placeholder="รหัสครุภัณฑ์..." class="form-input font-bold text-pink-600 mb-2"><input type="text" id="manual-asset-name" placeholder="ชื่อเรียกครุภัณฑ์..." class="form-input"></div>`;
         } else {
-            container.innerHTML = `<div class="asset-card-header"><div class="flex justify-between items-start mb-2"><h4 class="text-xl font-bold text-blue-600">${activeAsset.AssetID}</h4><span class="badge-orange">ในระบบ</span></div><p class="font-bold text-gray-700">${activeAsset['ชื่อรายการครุภัณฑ์']}</p></div>`;
+            container.innerHTML = `<div class="asset-card-header"><div class="flex justify-between items-start mb-2"><h4 class="text-xl font-bold text-pink-600">${activeAsset.AssetID}</h4><span class="badge-orange">ในระบบ</span></div><p class="font-bold text-gray-700">${activeAsset['ชื่อรายการครุภัณฑ์']}</p></div>`;
         }
         document.getElementById('detail-modal').classList.remove('hidden');
     }
@@ -340,17 +385,19 @@
 
     function renderSelectedList() {
         const container = document.getElementById('selected-list');
-        if(!selectedItems.length) { container.innerHTML = '<div class="py-16 text-center text-gray-300 italic text-sm">ยังไม่มีข้อมูลครุภัณฑ์ที่เลือก</div>'; return; }
+        if(!selectedItems.length) { container.innerHTML = '<div class="py-16 text-center text-gray-300 italic text-sm bg-white/50 rounded-2xl border-2 border-dashed border-pink-100">ยังไม่มีข้อมูลครุภัณฑ์ที่เลือก</div>'; return; }
         container.innerHTML = selectedItems.map((x, i) => `
-            <div class="p-4 bg-white border border-pink-50 rounded-2xl flex justify-between items-center shadow-sm">
+            <div class="p-4 bg-white border border-pink-50 rounded-2xl flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
                 <div class="flex items-center gap-4">
-                    <img src="${x.imageBase64 || 'https://via.placeholder.com/60'}" class="w-12 h-12 rounded-xl object-cover">
+                    <img src="${x.imageBase64 || 'https://via.placeholder.com/60?text=Asset'}" class="w-12 h-12 rounded-xl object-cover bg-pink-50">
                     <div class="text-xs">
-                        <b class="text-pink-500">${x.AssetID}</b>
+                        <b class="text-pink-500 font-bold tracking-wide">${x.AssetID}</b>
                         <p class="text-gray-600 line-clamp-1">${x['ชื่อรายการครุภัณฑ์']}</p>
                     </div>
                 </div>
-                <button onclick="removeSelected(${i})" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-400 rounded-full">🗑️</button>
+                <button onclick="removeSelected(${i})" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-400 hover:bg-red-100 rounded-full transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
             </div>
         `).join('');
     }
@@ -373,9 +420,9 @@
             selectedItems = []; 
             localStorage.removeItem('survey_v3_draft');
             renderSelectedList(); 
-            showAlert("ส่งรายงานการตรวจสอบเรียบร้อยแล้ว"); 
+            showAlert("✅ ส่งรายงานการตรวจสอบเรียบร้อยแล้ว"); 
             closeFinalModal();
-        } catch (e) { showAlert("เกิดข้อผิดพลาดในการส่งข้อมูล"); }
+        } catch (e) { showAlert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล"); }
         finally { toggleLoader(false); }
     }
 
@@ -405,7 +452,6 @@
     function openFinalModal() { 
         if(!selectedItems.length) return showAlert("กรุณาเพิ่มรายการครุภัณฑ์อย่างน้อย 1 รายการ");
         document.getElementById('final-modal').classList.remove('hidden');
-        // บังคับให้ Canvas คำนวณขนาดใหม่เมื่อ Modal เปิด
         setTimeout(() => {
             const canvas = document.getElementById('sign-canvas');
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
