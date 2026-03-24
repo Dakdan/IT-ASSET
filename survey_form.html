@@ -540,7 +540,23 @@
         const regex = new RegExp(`(${query})`, "gi");
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
+       async function startScanner(targetId) {
+        document.getElementById('scanner-modal').classList.remove('hidden');
+        html5QrCode = new Html5Qrcode("reader");
+        try { 
+            await html5QrCode.start({ facingMode: "environment" }, { fps: 12, qrbox: 240 }, (text) => { 
+                document.getElementById(targetId).value = text; 
+                if(targetId === 'search-input') doSearch(); 
+                stopScanner(); 
+            }); 
+        } catch (e) { showAlert("ไม่พบกล้องหรือขัดข้อง"); stopScanner(); }
+    }
 
+    async function stopScanner() { 
+        if (html5QrCode) { try { await html5QrCode.stop(); } catch(e) {} }
+        html5QrCode = null; 
+        document.getElementById('scanner-modal').classList.add('hidden'); 
+    }
     function doSearch() {
         const q = document.getElementById('search-input').value.trim();
         const container = document.getElementById('search-results');
@@ -714,23 +730,7 @@ function saveAssetToSelected() {
         finally { toggleLoader(false); }
     }
 
-    async function startScanner(targetId) {
-        document.getElementById('scanner-modal').classList.remove('hidden');
-        html5QrCode = new Html5Qrcode("reader");
-        try { 
-            await html5QrCode.start({ facingMode: "environment" }, { fps: 12, qrbox: 240 }, (text) => { 
-                document.getElementById(targetId).value = text; 
-                if(targetId === 'search-input') doSearch(); 
-                stopScanner(); 
-            }); 
-        } catch (e) { showAlert("ไม่พบกล้องหรือขัดข้อง"); stopScanner(); }
-    }
-
-    async function stopScanner() { 
-        if (html5QrCode) { try { await html5QrCode.stop(); } catch(e) {} }
-        html5QrCode = null; 
-        document.getElementById('scanner-modal').classList.add('hidden'); 
-    }
+ 
 
     function openFinalModal() { 
         if(!selectedItems.length) return showAlert("กรุณาเพิ่มครุภัณฑ์อย่างน้อย 1 รายการก่อนส่งรายงาน");
