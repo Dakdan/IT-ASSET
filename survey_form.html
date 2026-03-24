@@ -540,7 +540,7 @@
         const regex = new RegExp(`(${query})`, "gi");
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
-       async function startScanner(targetId) {
+    async function startScanner(targetId) {
         document.getElementById('scanner-modal').classList.remove('hidden');
         html5QrCode = new Html5Qrcode("reader");
         try { 
