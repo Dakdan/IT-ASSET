@@ -549,7 +549,7 @@
         container.innerHTML = filtered.map(x => `
             <div onclick='selectAsset(${JSON.stringify(x).replace(/'/g, "&apos;")})' class="p-4 bg-white border border-gray-100 rounded-2xl cursor-pointer hover:bg-pink-50 hover:border-pink-200 transition-all shadow-sm flex items-center justify-between group">
                 <div>
-                    <span class="text-[10px] font-bold text-pink-400 uppercase tracking-widest">${highlightMatch(String(x.AssetID), q)}</span>
+                    <span class="text-[20px] font-bold text-pink-400 uppercase tracking-widest">${highlightMatch(String(x.AssetID), q)}</span>
                     <p class="text-sm font-bold text-gray-700">${highlightMatch(String(x['ชื่อรายการครุภัณฑ์']), q)}</p>
                 </div>
                 <div class="opacity-0 group-hover:opacity-100 transition-opacity">
