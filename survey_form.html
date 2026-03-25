@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <script src="auth-check.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - IT Udon Hospital</title>
@@ -214,7 +215,10 @@
             <p class="text-pink-500 text-sm font-semibold tracking-widest uppercase mt-1">IT Udonthani Hospital</p>
         </div>    
         <!-- ขวา: โลโก้ -->
-        
+       <div class="p-3 text-end">
+        <span>เจ้าหน้าที่: <b id="userNameLabel"></b></span>
+        <button onclick="logout()" class="btn btn-sm btn-outline-danger">Logout</button>
+        </div> 
      </header>    
     <main class="max-w-4xl mx-auto space-y-8 p-4 md:p-8">
         <!-- Step 1: Location -->
@@ -771,6 +775,7 @@ function saveAssetToSelected() {
             renderSelectedList(); 
         }
     }
+    document.getElementById('userNameLabel').innerText = window.user.UserName;
 </script>
 </body>
 </html>
