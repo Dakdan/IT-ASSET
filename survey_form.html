@@ -487,12 +487,26 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbyo-lZoaJ4WMvAyt7dtQ5jgXjLgcLhIHTTKdtC_OVf6E9_efuhLnT1CaWD6GmsmVEjB/exec";
     let departments = [], allAssets = [], selectedItems = [], activeAsset = null, signaturePad, currentBase64 = null, html5QrCode = null;
 
-    window.onload = async () => { 
+   window.onload = async () => { 
+    // --- ส่วนดึงชื่อจาก auth-check.js ---
+        if (window.user && window.user.UserName) {
+            document.getElementById('uName').innerText = window.user.UserName;
+            // เติมชื่อในช่องผู้ตรวจสอบอัตโนมัติ (ถ้ามี)
+            const inspectorInput = document.getElementById('inspector-name');
+            if(inspectorInput) inspectorInput.value = window.user.UserName;
+        }
+    
         initSignature(); 
         await initializeData(); 
-        loadLocalDraft(); 
+        // loadLocalDraft(); // ถ้ายังไม่มีฟังก์ชันนี้ให้คอมเมนต์ไว้ก่อน
         setupCheckboxUI();
     };
+
+// เพิ่มฟังก์ชัน Logout ไว้ใต้ window.onload
+    function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = "index.html"; // ดีดกลับหน้า Login
+    }
 
     function setupCheckboxUI() {
         document.querySelectorAll('.shift-cb').forEach(cb => {
