@@ -200,7 +200,7 @@
     <header class="pink-gradient-header text-white shrink-0 relative z-10 no-print p-4 md:p-8">
     <!-- ซ้าย: ปุ่มกลับหน้าหลัก -->
         <div class="header-left">
-            <a href="https://dakdan.github.io/IT-ASSET/asset_survey_demo.html" 
+            <a href="https://dakdan.github.io/IT-ASSET/asset_survey.html" 
                class="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100 text-sm font-bold text-gray-500 hover:text-pink-500 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -561,7 +561,7 @@
         const q = document.getElementById('search-input').value.trim();
         const container = document.getElementById('search-results');
         if(q.length < 1) { container.innerHTML = ""; return; }
-        const filtered = allAssets.filter(x => String(x.AssetID).toLowerCase().includes(q.toLowerCase()) || String(x['ชื่อรายการครุภัณฑ์']).toLowerCase().includes(q.toLowerCase())).slice(0, 15);
+        const filtered = allAssets.filter(x => String(x.AssetID).toLowerCase().includes(q.toLowerCase()) || String(x['ชื่อรายการครุภัณฑ์']).toLowerCase().includes(q.toLowerCase())).slice(0, 30);
         container.innerHTML = filtered.map(x => `
             <div onclick='selectAsset(${JSON.stringify(x).replace(/'/g, "&apos;")})' class="p-4 bg-white border border-gray-100 rounded-2xl cursor-pointer hover:bg-pink-50 hover:border-pink-200 transition-all shadow-sm flex items-center justify-between group">
                 <div>
