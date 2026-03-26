@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - IT UDON HOSP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+        body::before {
+            content: "IT UDON HOSP";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 5rem;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: -1;
+            white-space: nowrap;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(255, 133, 161, 0.1);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+        }
+        .btn-pink {
+            background: #ff85a1;
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-pink:hover {
+            background: #ff6384;
+            transform: translateY(-2px);
+        }
+        .signature-pad {
+            border: 2px dashed #ffb3c1;
+            border-radius: 10px;
+            background: white;
+            cursor: crosshair;
+        }
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-bg {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        .highlight {
+            background-color: #ffdae0;
+            font-weight: bold;
+            color: #d63384;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="loading" class="loading-overlay">
+        <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent"></div>
+            <p class="mt-2 text-pink-600">กำลังดำเนินการ...</p>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="max-w-4xl mx-auto mb-8 text-center card p-6">
+        <div class="flex flex-col items-center">
+            <div class="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-3">
+                <span class="text-2xl">💻</span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+            <p class="text-pink-600 font-medium">โรงพยาบาลอุดรธานี</p>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- Step 1: Department Selection -->
+        <section id="step-dept" class="card p-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                <span class="mr-2">🏢</span> เลือกหน่วยงานที่สำรวจ
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">เลือกตึก/อาคาร</label>
+                    <select id="select-building" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300">
+                        <option value="">-- กรุณาเลือกตึก --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">เลือกชั้น</label>
+                    <select id="select-floor" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300" disabled>
+                        <option value="">-- กรุณาเลือกชั้น --</option>
+                    </select>
+                </div>
+            </div>
+            <div id="dept-list" class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </section>
+
+        <!-- Step 2: Survey Form -->
+        <section id="step-survey" class="hidden space-y-6">
+            <div class="card p-6 border-l-8 border-pink-400">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 id="display-dept-name" class="text-xl font-bold text-gray-800">ชื่อหน่วยงาน</h3>
+                        <p id="display-dept-info" class="text-gray-500 text-sm">ตึก: - | ชั้น: -</p>
+                    </div>
+                    <button onclick="resetApp()" class="text-sm text-pink-500 hover:underline">เปลี่ยนหน่วยงาน</button>
+                </div>
+            </div>
+
+            <!-- Asset List -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-gray-700">รายการครุภัณฑ์ที่พบ</h3>
+                    <div class="flex gap-2">
+                        <button onclick="openSearchModal()" class="btn-pink px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-md">
+                            <span>🔍</span> ค้นหาครุภัณฑ์
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="text-xs text-gray-400 uppercase border-b">
+                            <tr>
+                                <th class="pb-2 font-medium">รหัสครุภัณฑ์ / รายการ</th>
+                                <th class="pb-2 font-medium">ประเภท</th>
+                                <th class="pb-2 font-medium text-right">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="survey-list" class="divide-y">
+                            <!-- Items will appear here -->
+                        </tbody>
+                    </table>
+                    <div id="empty-list-msg" class="py-10 text-center text-gray-400 text-sm">
+                        ยังไม่มีรายการครุภัณฑ์ กด "ค้นหาครุภัณฑ์" เพื่อเริ่มเพิ่มข้อมูล
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <button onclick="openConfirmModal()" class="btn-pink py-4 rounded-2xl font-bold shadow-lg text-lg">
+                    บันทึกและลงชื่อตรวจสอบ
+                </button>
+            </div>
+        </section>
+
+        <!-- Final Step: Success -->
+        <section id="step-result" class="hidden card p-8 text-center">
+            <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">บันทึกข้อมูลสำเร็จ</h2>
+            <p class="text-gray-500 mb-6">รหัสอ้างอิง: <span id="res-act-no" class="font-mono font-bold text-pink-600"></span></p>
+            <div id="qrcode-result" class="flex justify-center mb-6"></div>
+            <button onclick="resetApp()" class="w-full p-4 bg-gray-100 rounded-xl font-medium">กลับหน้าหลัก</button>
+        </section>
+    </main>
+
+    <!-- Modal: Search Asset & QR Scanner -->
+    <div id="modal-search" class="fixed inset-0 modal-bg hidden z-50 flex items-start justify-center p-4 pt-6 md:pt-10">
+        <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+                <h3 class="font-bold text-lg">ค้นหาครุภัณฑ์</h3>
+                <button onclick="closeModal('modal-search')" class="text-gray-400 hover:text-gray-600 p-2 text-xl">✕</button>
+            </div>
+            
+            <div class="p-4 bg-gray-50 space-y-3">
+                <!-- Search Input with Scan Button inside -->
+                <div class="relative flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="asset-search-input" placeholder="พิมพ์รหัสครุภัณฑ์..." class="w-full p-4 pl-12 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-pink-300">
+                        <span class="absolute left-4 top-4 opacity-40 text-xl">🔍</span>
+                    </div>
+                    <button onclick="toggleScanner()" id="btn-toggle-scan" class="p-4 bg-pink-100 text-pink-600 rounded-2xl hover:bg-pink-200 transition shadow-sm" title="สแกน QR Code">
+                        <span id="scan-icon">📸</span>
+                    </button>
+                </div>
+
+                <!-- Scanner View Area -->
+                <div id="scanner-container" class="hidden overflow-hidden rounded-2xl border-2 border-pink-200 relative bg-black aspect-video">
+                    <div id="reader" class="w-full h-full"></div>
+                    <div class="absolute inset-0 border-2 border-pink-400 opacity-30 pointer-events-none m-8 rounded-lg"></div>
+                    <button onclick="toggleScanner()" class="absolute bottom-4 right-4 bg-red-500/80 text-white px-4 py-2 rounded-full text-xs backdrop-blur-sm">ปิดกล้อง</button>
+                </div>
+            </div>
+
+            <div id="search-results-container" class="flex-1 overflow-y-auto p-2 min-h-[200px]">
+                <div class="p-10 text-center text-gray-400">ระบุรหัสครุภัณฑ์หรือสแกน QR เพื่อค้นหา</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Asset Detail Form -->
+    <div id="modal-asset-detail" class="fixed inset-0 modal-bg hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div class="p-5 bg-pink-50 border-b flex justify-between items-center">
+                <h3 class="font-bold text-pink-700">รายละเอียดครุภัณฑ์</h3>
+                <button onclick="closeModal('modal-asset-detail')" class="text-gray-400">✕</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-gray-50 p-4 rounded-xl border border-dashed">
+                    <div class="text-xs text-gray-400 mb-1">รหัสครุภัณฑ์</div>
+                    <div id="detail-asset-id" class="font-mono font-bold text-gray-800">-</div>
+                    <div id="detail-asset-name" class="text-sm text-gray-500 mt-1">-</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทอุปกรณ์</label>
+                    <select id="field-asset-type" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300">
+                        <!-- Options from ASSET_TYPES -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ลำดับความสำคัญ (Priority)</label>
+                    <select id="field-priority" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300">
+                        <option value="ตรวจรักษา(แพทย์)">ตรวจรักษา(แพทย์)</option>
+                        <option value="ข้อมูลผู้ป่วย (พยาบาล)">ข้อมูลผู้ป่วย (พยาบาล)</option>
+                        <option value="บริการ การเงิน ห้องบัตร ห้องยา Lab สนับสนุนการรักษา">บริการ การเงิน ห้องบัตร ห้องยา...</option>
+                        <option value="งานเอกสาร งานธุรการ">งานเอกสาร งานธุรการ</option>
+                        <option value="บริการทั่วไป ซ่อมบำรุง ช่างต่างๆ โรงรถ">บริการทั่วไป ซ่อมบำรุง...</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
+                    <input type="checkbox" id="field-is-pace" class="w-5 h-5 accent-pink-500">
+                    <label for="field-is-pace" class="text-sm font-medium text-blue-800 cursor-pointer">เครื่องนี้ใช้ในระบบ PACE</label>
+                </div>
+
+                <button onclick="confirmAddAsset()" class="w-full btn-pink py-4 rounded-2xl font-bold shadow-md">เพิ่มลงในรายการสำรวจ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Sign & Confirm -->
+    <div id="modal-confirm" class="fixed inset-0 modal-bg hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">ยืนยันและลงชื่อ</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1">ชื่อผู้รับรองข้อมูล (หัวหน้าหน่วยงาน)</label>
+                    <input type="text" id="signer-name" placeholder="ระบุชื่อ-นามสกุล" class="w-full p-3 rounded-xl border border-gray-200">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1">ลายมือชื่อ</label>
+                    <canvas id="signature-pad" class="signature-pad w-full h-40"></canvas>
+                    <button onclick="clearSignature()" class="text-xs text-red-400 mt-1 underline">ล้างลายเซ็น</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-6">
+                <button onclick="closeModal('modal-confirm')" class="p-3 border rounded-xl">ยกเลิก</button>
+                <button onclick="submitFinalSurvey()" class="p-3 btn-pink rounded-xl font-bold">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwPlr01yTm5H18kf1iqAO1PjBbX4a45JAcf8jr0vA2wSl54_XihNaX9nXhlgFRgCof0/exec";
+        
+        let allDepts = [];
+        let assetTypes = [];
+        let selectedDept = null;
+        let surveyAssets = [];
+        let currentEditingAsset = null;
+        let userGps = "";
+        let html5QrCode = null;
+        let isScannerOpen = false;
+
+        // Initialization
+        window.onload = async () => {
+            showLoading(true);
+            try {
+                const respDept = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDepartments' }) });
+                allDepts = await respDept.json();
+                
+                const respType = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAssetTypes' }) });
+                assetTypes = await respType.json();
+                
+                populateBuildingSelect();
+                populateAssetTypeSelect();
+                initSignature();
+                getGeoLocation();
+            } catch (e) {
+                Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบได้: ' + e.message, 'error');
+            }
+            showLoading(false);
+        };
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        function getGeoLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    userGps = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+                }, err => console.warn("GPS Access Denied"));
+            }
+        }
+
+        function populateBuildingSelect() {
+            const selectB = document.getElementById('select-building');
+            const buildings = [...new Set(allDepts.map(d => d.LOCATION_NAME || d.LOCATION))].filter(Boolean).sort();
+            buildings.forEach(b => {
+                const opt = new Option(b, b);
+                selectB.add(opt);
+            });
+            selectB.onchange = (e) => updateFloors(e.target.value);
+        }
+
+        function populateAssetTypeSelect() {
+            const selectT = document.getElementById('field-asset-type');
+            assetTypes.forEach(t => {
+                const opt = new Option(t, t);
+                selectT.add(opt);
+            });
+        }
+
+        function updateFloors(building) {
+            const selectF = document.getElementById('select-floor');
+            selectF.innerHTML = '<option value="">-- กรุณาเลือกชั้น --</option>';
+            if (!building) { selectF.disabled = true; return; }
+            
+            const floors = [...new Set(allDepts.filter(d => (d.LOCATION_NAME || d.LOCATION) === building).map(d => d.FL || d.FLOOR))].filter(Boolean).sort((a,b)=>a-b);
+            floors.forEach(f => selectF.add(new Option(`ชั้น ${f}`, f)));
+            selectF.disabled = false;
+            selectF.onchange = (e) => renderDeptButtons(building, e.target.value);
+        }
+
+        function renderDeptButtons(building, floor) {
+            const container = document.getElementById('dept-list');
+            container.innerHTML = '';
+            const depts = allDepts.filter(d => (d.LOCATION_NAME || d.LOCATION) === building && String(d.FL || d.FLOOR) === String(floor));
+            depts.forEach(d => {
+                const btn = document.createElement('button');
+                btn.className = "p-4 text-left border border-pink-100 rounded-2xl hover:bg-pink-50 transition card flex items-center gap-3";
+                const imgHtml = d.photoUrl ? `<img src="${d.photoUrl}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 bg-pink-50 rounded-full flex items-center justify-center text-xl">🏢</div>`;
+                btn.innerHTML = `${imgHtml} <div><div class="font-bold text-gray-800">${d.DEPNAME || d.DEPT_NAME}</div><div class="text-xs text-gray-400">ID: ${d.DEP_ID || d.DEPT_ID}</div></div>`;
+                btn.onclick = () => { selectedDept = d; goToSurvey(); };
+                container.appendChild(btn);
+            });
+        }
+
+        function goToSurvey() {
+            document.getElementById('display-dept-name').textContent = selectedDept.DEPNAME || selectedDept.DEPT_NAME;
+            document.getElementById('display-dept-info').textContent = `ตึก: ${selectedDept.LOCATION_NAME || selectedDept.LOCATION} | ชั้น: ${selectedDept.FL || selectedDept.FLOOR} | ID: ${selectedDept.DEP_ID || selectedDept.DEPT_ID}`;
+            document.getElementById('step-dept').classList.add('hidden');
+            document.getElementById('step-survey').classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+
+        // Search Modal & QR Logic
+        function openSearchModal() {
+            document.getElementById('modal-search').classList.remove('hidden');
+            document.getElementById('asset-search-input').focus();
+        }
+
+        async function toggleScanner() {
+            const container = document.getElementById('scanner-container');
+            const icon = document.getElementById('scan-icon');
+            
+            if (isScannerOpen) {
+                await stopScanner();
+            } else {
+                container.classList.remove('hidden');
+                icon.textContent = "✕";
+                isScannerOpen = true;
+                html5QrCode = new Html5Qrcode("reader");
+                html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, 
+                    async (decodedText) => {
+                        document.getElementById('asset-search-input').value = decodedText;
+                        await stopScanner();
+                        // Trigger search manually
+                        const event = new Event('input', { bubbles: true });
+                        document.getElementById('asset-search-input').dispatchEvent(event);
+                    }
+                ).catch(err => {
+                    Swal.fire('กล้องผิดพลาด', 'ไม่สามารถเข้าถึงกล้องได้', 'error');
+                    stopScanner();
+                });
+            }
+        }
+
+        async function stopScanner() {
+            if (html5QrCode) {
+                await html5QrCode.stop().catch(() => {});
+                html5QrCode = null;
+            }
+            document.getElementById('scanner-container').classList.add('hidden');
+            document.getElementById('scan-icon').textContent = "📸";
+            isScannerOpen = false;
+        }
+
+        document.getElementById('asset-search-input').oninput = debounce(async (e) => {
+            const q = e.target.value.trim();
+            const container = document.getElementById('search-results-container');
+            if (q.length < 2) {
+                container.innerHTML = '<div class="p-10 text-center text-gray-400">ระบุอย่างน้อย 2 ตัวอักษร</div>';
+                return;
+            }
+            container.innerHTML = '<div class="p-10 text-center"><div class="animate-spin inline-block w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full"></div></div>';
+            
+            try {
+                const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'searchAssets', query: q }) });
+                const results = await resp.json();
+                renderSearchResults(results, q);
+            } catch (err) {
+                container.innerHTML = '<div class="p-10 text-center text-red-400">เกิดข้อผิดพลาด</div>';
+            }
+        }, 400);
+
+        // Highlight function
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.toString().replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        function renderSearchResults(results, query) {
+            const container = document.getElementById('search-results-container');
+            container.innerHTML = '';
+            if (!results || results.length === 0) {
+                container.innerHTML = '<div class="p-10 text-center text-gray-400">ไม่พบข้อมูล</div>';
+                return;
+            }
+            results.forEach(a => {
+                const div = document.createElement('div');
+                div.className = "p-4 border-b hover:bg-pink-50 cursor-pointer flex justify-between items-center transition animate-in fade-in slide-in-from-bottom-2 duration-300";
+                
+                const highlightedId = highlightText(a.AssetID, query);
+                const highlightedName = highlightText(a['ชื่อรายการครุภัณฑ์'] || '-', query);
+
+                div.innerHTML = `
+                    <div>
+                        <div class="font-mono font-bold text-gray-700">${highlightedId}</div>
+                        <div class="text-xs text-gray-500">${highlightedName}</div>
+                    </div>
+                    <div class="text-pink-400 text-xl">⊕</div>
+                `;
+                div.onclick = () => openAssetDetailForm(a);
+                container.appendChild(div);
+            });
+        }
+
+        // Asset Detail Form
+        function openAssetDetailForm(asset) {
+            currentEditingAsset = asset;
+            document.getElementById('detail-asset-id').textContent = asset.AssetID;
+            document.getElementById('detail-asset-name').textContent = asset['ชื่อรายการครุภัณฑ์'] || '-';
+            
+            const typeSelect = document.getElementById('field-asset-type');
+            if (asset['หมวดครุภัณฑ์'] && assetTypes.includes(asset['หมวดครุภัณฑ์'])) {
+                typeSelect.value = asset['หมวดครุภัณฑ์'];
+            }
+
+            document.getElementById('field-is-pace').checked = false;
+            document.getElementById('modal-asset-detail').classList.remove('hidden');
+        }
+
+        function confirmAddAsset() {
+            const type = document.getElementById('field-asset-type').value;
+            const priority = document.getElementById('field-priority').value;
+            const isPace = document.getElementById('field-is-pace').checked;
+
+            if (surveyAssets.some(a => a.AssetID === currentEditingAsset.AssetID)) {
+                Swal.fire('ซ้ำ', 'ครุภัณฑ์นี้อยู่ในรายการแล้ว', 'warning');
+            } else {
+                surveyAssets.push({
+                    ...currentEditingAsset,
+                    surveyType: type,
+                    surveyPriority: priority,
+                    isPace: isPace
+                });
+                renderSurveyList();
+                closeModal('modal-asset-detail');
+                closeModal('modal-search');
+                // Clean up search
+                document.getElementById('asset-search-input').value = '';
+                document.getElementById('search-results-container').innerHTML = '<div class="p-10 text-center text-gray-400">ระบุรหัสครุภัณฑ์หรือสแกน QR เพื่อค้นหา</div>';
+            }
+        }
+
+        function renderSurveyList() {
+            const tbody = document.getElementById('survey-list');
+            const emptyMsg = document.getElementById('empty-list-msg');
+            tbody.innerHTML = '';
+            
+            if (surveyAssets.length === 0) {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+                surveyAssets.forEach((a, i) => {
+                    const tr = document.createElement('tr');
+                    tr.className = "group hover:bg-gray-50 transition";
+                    tr.innerHTML = `
+                        <td class="py-4">
+                            <div class="font-mono font-bold text-gray-700">${a.AssetID}</div>
+                            <div class="text-xs text-gray-400 truncate max-w-[150px]">${a['ชื่อรายการครุภัณฑ์']}</div>
+                        </td>
+                        <td class="py-4">
+                            <span class="text-[10px] md:text-xs bg-pink-50 text-pink-600 px-2 py-1 rounded-full border border-pink-100 whitespace-nowrap">
+                                ${a.surveyType}${a.isPace ? '/Pace' : ''}
+                            </span>
+                        </td>
+                        <td class="py-4 text-right">
+                            <button onclick="removeAsset(${i})" class="text-red-300 hover:text-red-500 p-2 transition">✕</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function removeAsset(index) {
+            surveyAssets.splice(index, 1);
+            renderSurveyList();
+        }
+
+        // Signature & Submit
+        function initSignature() {
+            const canvas = document.getElementById('signature-pad');
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                return { x: (e.clientX || e.touches[0].clientX) - rect.left, y: (e.clientY || e.touches[0].clientY) - rect.top };
+            };
+            const draw = (e) => {
+                if (!drawing) return;
+                const { x, y } = getPos(e);
+                ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
+            };
+            canvas.addEventListener('mousedown', (e) => { drawing = true; ctx.lineWidth = 2; ctx.lineCap='round'; draw(e); });
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); });
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); drawing = true; draw(e.touches[0]); });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+        }
+
+        function clearSignature() {
+            const canvas = document.getElementById('signature-pad');
+            canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+        }
+
+        function openConfirmModal() {
+            if (surveyAssets.length === 0) return Swal.fire('เตือน', 'กรุณาเพิ่มครุภัณฑ์ก่อนบันทึก', 'info');
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        async function submitFinalSurvey() {
+            const name = document.getElementById('signer-name').value.trim();
+            if (!name) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อผู้รับรอง', 'warning');
+            
+            showLoading(true);
+            const signature = document.getElementById('signature-pad').toDataURL();
+            const payload = {
+                action: 'saveSurvey',
+                data: {
+                    deptId: selectedDept.DEP_ID || selectedDept.DEPT_ID,
+                    deptName: selectedDept.DEPNAME || selectedDept.DEPT_NAME,
+                    approverName: name,
+                    signature: signature,
+                    userEmail: 'it.survey@udonhosp.go.th',
+                    gps: userGps,
+                    assetsOnLog: surveyAssets.map(a => ({
+                        assetId: a.AssetID,
+                        noid: a.NOID || '',
+                        priority: a.surveyPriority,
+                        type: a.surveyType,
+                        isPace: a.isPace
+                    }))
+                }
+            };
+
+            try {
+                const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await resp.json();
+                if (result.success) {
+                    document.getElementById('modal-confirm').classList.add('hidden');
+                    document.getElementById('step-survey').classList.add('hidden');
+                    document.getElementById('step-result').classList.remove('hidden');
+                    document.getElementById('res-act-no').textContent = result.actNo;
+                    new QRCode(document.getElementById('qrcode-result'), { text: result.actNo, width: 120, height: 120 });
+                } else { throw new Error(result.error); }
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+            showLoading(false);
+        }
+
+        function closeModal(id) { 
+            if (id === 'modal-search') stopScanner();
+            document.getElementById(id).classList.add('hidden'); 
+        }
+        function resetApp() { location.reload(); }
+        function debounce(f, t) { let id; return (...a) => { clearTimeout(id); id = setTimeout(() => f(...a), t); }; }
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+</body>
+</html>
