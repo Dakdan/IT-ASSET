@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Maintenance And Service - รพ.อุดรธานี</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink-soft: #fff5f7;
+            --pink-primary: #ff85a2;
+            --pink-dark: #d63384;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, var(--white) 0%, var(--pink-soft) 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ลายน้ำ IT UDON HOSP */
+        body::before {
+            content: "IT UDON HOSP";
+            position: absolute;
+            font-size: 10vw;
+            color: rgba(214, 51, 132, 0.03);
+            font-weight: 800;
+            transform: rotate(-25deg);
+            white-space: nowrap;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(255, 133, 162, 0.12);
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        /* ส่วนหัวและโลโก้วงกลม */
+        .header-box {
+            margin-bottom: 2.5rem;
+        }
+
+        .logo-wrapper {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 1.5rem;
+            background: white;
+            border-radius: 50%;
+            padding: 5px;
+            box-shadow: 0 10px 25px rgba(214, 51, 132, 0.15);
+            border: 3px solid var(--pink-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* ป้องกันรูปบิดเบี้ยว */
+            border-radius: 50%;
+        }
+
+        .title-main {
+            color: var(--pink-dark);
+            font-weight: 600;
+            font-size: 1.4rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .title-sub {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        /* ฟอร์ม */
+        .form-label {
+            display: block;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 8px;
+            margin-left: 5px;
+        }
+
+        .form-control {
+            border-radius: 15px;
+            padding: 12px 20px;
+            border: 1.5px solid #ffeef2;
+            background: #fff;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--pink-primary);
+            box-shadow: 0 0 0 4px rgba(255, 133, 162, 0.15);
+        }
+
+        .btn-submit {
+            background: linear-gradient(45deg, #ff85a2, #d63384);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 14px;
+            width: 100%;
+            font-weight: 500;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            transition: 0.3s;
+            box-shadow: 0 8px 20px rgba(214, 51, 132, 0.25);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(214, 51, 132, 0.35);
+            color: white;
+        }
+
+        /* Loading */
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 2rem 1.5rem; margin: 15px; }
+            .logo-wrapper { width: 120px; height: 120px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+    <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;" role="status"></div>
+    <div class="mt-3 text-pink-dark">กำลังตรวจสอบข้อมูล...</div>
+</div>
+
+<div class="login-card">
+    <div class="header-box">
+        <div class="logo-wrapper">
+            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="UDH Logo" class="logo-img">
+        </div>
+        
+        <div class="title-main">IT Mainternance And Service</div>
+        <div class="title-sub">โรงพยาบาลอุดรธานี</div>
+        <div class="title-sub" style="font-size: 0.8rem; color: #888;">กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</div>
+    </div>
+
+    <form id="loginForm">
+        <div class="mb-3">
+            <label class="form-label">ชื่อผู้ใช้งาน (User Login)</label>
+            <input type="text" id="userpn" class="form-control" placeholder="กรอกชื่อผู้ใช้งาน" required>
+        </div>
+        <div class="mb-4">
+            <label class="form-label">รหัสผ่าน (Password)</label>
+            <input type="password" id="userpw" class="form-control" placeholder="กรอกรหัสผ่าน" required>
+        </div>
+        <button type="submit" class="btn btn-submit">ตกลง</button>
+    </form>
+</div>
+
+<div class="modal fade" id="alertModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-body text-center p-5">
+                <div id="alertIcon" style="font-size: 4rem;" class="mb-3"></div>
+                <h4 id="alertTitle" class="mb-2"></h4>
+                <p id="alertMsg" class="text-muted mb-4"></p>
+                <button type="button" class="btn btn-submit w-100" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwPk2LYTrUxUkEZmTuwrZ6vWtInLSbzTC7fscaKo7AENJ3cua0Nufl36OCFES3fqGw8hg/exec";
+
+    const loginForm = document.getElementById('loginForm');
+    const loading = document.getElementById('loadingOverlay');
+
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        loading.style.display = 'flex';
+
+        const payload = {
+            action: 'login',
+            username: document.getElementById('userpn').value,
+            password: document.getElementById('userpw').value
+        };
+
+        fetch(API_URL, {
+            method: 'POST',
+            mode: 'cors', // เพิ่มโหมด cors
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // ส่งเป็น Text เพื่อเลี่ยง Preflight
+        })
+        .then(res => res.json())
+        .then(res => {
+            loading.style.display = 'none';
+            if(res.success) {
+                localStorage.setItem('currentUser', JSON.stringify(res.data));
+                showAlert('สำเร็จ!', 'ยินดีต้อนรับคุณ ' + res.data.UserName, 'success');
+                // หากต้องการให้เด้งไปหน้าอื่นหลัง Login สำเร็จ ให้ใส่ URL ตรงนี้
+                // setTimeout(() => { window.location.href = 'https://system-a.github.io'; }, 2000);
+            } else {
+                showAlert('ขออภัย', res.message, 'error');
+            }
+        })
+        .catch(err => {
+            loading.style.display = 'none';
+            console.error("Error:", err);
+            showAlert('ผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ (โปรดตรวจสอบการ Deploy)', 'error');
+        });
+    });
+
+    function showAlert(title, msg, type) {
+        const modal = new bootstrap.Modal(document.getElementById('alertModal'));
+        document.getElementById('alertTitle').innerText = title;
+        document.getElementById('alertMsg').innerText = msg;
+        document.getElementById('alertIcon').innerHTML = (type === 'success') ? '🌸' : '❌';
+        modal.show();
+    }
+</script>
+</body>
+</html>
