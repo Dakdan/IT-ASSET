@@ -215,8 +215,13 @@
             <p class="text-pink-500 text-sm font-semibold tracking-widest uppercase mt-1">IT Udonthani Hospital</p>
         </div>    
         <!-- ขวา: โลโก้ -->
-       <div>เจ้าหน้าที่: <span id="uName"></span></div>
-    <button onclick="logout()">Logout</button>    
+       <div class="header-right flex flex-col items-end px-4 py-1 bg-white/30 rounded-xl border border-white/50">
+            <span class="text-[10px] uppercase font-bold text-pink-700 opacity-80">IT Staff</span>
+            <span id="uName" class="font-bold text-pink-600 text-sm">กำลังโหลด...</span>
+        </div>
+        <button onclick="logout()" class="ml-2 p-2 bg-white/20 hover:bg-red-500 hover:text-white rounded-lg transition-all text-xs font-bold">
+            Logout
+        </button> 
      </header>    
     <main class="max-w-4xl mx-auto space-y-8 p-4 md:p-8">
         <!-- Step 1: Location -->
@@ -460,17 +465,6 @@
             <button onclick="document.getElementById('alert-box').classList.add('hidden')" class="mt-8 w-full py-4 btn-primary rounded-2xl font-bold">ตกลง</button>
         </div>
     </div>
-    <nav class="navbar navbar-light bg-light">
-        <div class="container">
-            <span class="navbar-brand">IT Service</span>
-            <button onclick="logout()" class="btn btn-outline-danger">Logout</button>
-        </div>
-    </nav>
-
-    <div class="container mt-5">
-        <h1>ยินดีต้อนรับคุณ <span id="uName"></span></h1>
-        </div>
-
     <div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
