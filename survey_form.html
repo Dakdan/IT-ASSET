@@ -809,6 +809,23 @@ function saveAssetToSelected() {
             renderSelectedList(); 
         }
     }
+    function closeSearchModal() { 
+    document.getElementById('search-input').value = ""; // ล้างช่องค้นหา
+    document.getElementById('search-results').innerHTML = ""; // ล้างผลลัพธ์
+    document.getElementById('search-modal').classList.add('hidden'); 
+    }
+    function loadLocalDraft() { 
+    const d = localStorage.getItem('survey_v3_draft'); 
+    if(d) { 
+        try {
+            selectedItems = JSON.parse(d); 
+            renderSelectedList(); 
+        } catch(e) {
+            console.error("Draft error:", e);
+            localStorage.removeItem('survey_v3_draft');
+        }
+    } 
+    }
     document.getElementById('userNameLabel').innerText = window.user.UserName;
 </script>
 </body>
