@@ -2,7 +2,7 @@
 (function() {
     const userData = localStorage.getItem('currentUser');
     if (!userData) {
-        window.location.href = "login.html"; 
+        window.location.href = "survey_form.html"; 
     } else {
         window.user = JSON.parse(userData);
     }
