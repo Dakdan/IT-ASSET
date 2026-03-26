@@ -2,7 +2,7 @@
 (function() {
     const userData = localStorage.getItem('currentUser');
     if (!userData) {
-        window.location.href = "https://dakdan.github.io/it_login/"; 
+        window.location.href = "login.html"; 
     } else {
         window.user = JSON.parse(userData);
     }
