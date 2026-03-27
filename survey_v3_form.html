@@ -130,16 +130,15 @@
             <!-- Header Section -->
             <header class="max-w-4xl mx-auto mb-8 card p-6 relative">
         
-            <!-- ปุ่มกลับ -->
-            <a href="https://dakdan.github.io/IT-ASSET/asset_survey.html" 
-               class="back-btn absolute right-3 top-3 md:left-4 md:top-4 flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl text-gray-500">
-        
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-        
-                <span class="hidden md:inline">กลับหน้าหลัก</span>
-            </a>        
+                    <!-- ปุ่มกลับ -->
+                  <a href="https://dakdan.github.io/IT-ASSET/asset_survey.html" 
+                   class="back-btn absolute right-3 top-3 md:right-4 md:top-4 flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl text-gray-500">                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                
+                    <span class="hidden md:inline">กลับหน้าหลัก</span>
+                </a>  
            <div class="flex items-center gap-3 pl-10 md:pl-12">
                 
                 <!-- Logo -->
@@ -157,8 +156,7 @@
                 </div>            
             </div>        
         </header>
-    <main class="max-w-4xl mx-auto space-y-6">
-        
+    <main class="max-w-4xl mx-auto space-y-6">        
         <!-- Step 1: Department Selection -->
         <section id="step-dept" class="card p-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
@@ -291,7 +289,7 @@
                     <div id="non-number-fields" class="hidden space-y-3">
                         <div>
                             <label class="text-xs font-semibold text-pink-500">Asset ID (พิมพ์ได้)</label>
-                            <input type="text" id="field-asset-id-input" class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-300 outline-none" placeholder="ระบุรหัสทรัพย์สิน">
+                            <input type="text" id="field-asset-id-input" class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-300 outline-none" placeholder="ระบุรหัสครุภัณฑ์">
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-pink-500">Serial Number</label>
@@ -355,7 +353,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">การทำงาน (Shift Work)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ช่วงเวลาที่ใช้งาน (Shift Work)</label>
                     <div class="grid grid-cols-3 gap-2">
                         <label class="flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-pink-50 transition">
                             <input type="checkbox" name="shift-work" value="เช้า" class="w-4 h-4 accent-pink-500">
@@ -373,7 +371,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">ลำดับความสำคัญ (Priority)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เลือกลักษณะการใช้งาน (Priority)</label>
                     <select id="field-priority" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300">
                         <option value="">-- กรุณาเลือกลำดับความสำคัญ --</option>
                         <option value="ตรวจรักษา(แพทย์)">ตรวจรักษา(แพทย์)</option>
@@ -384,7 +382,7 @@
                     </select>
                 </div>
 
-                <button onclick="confirmAddAsset()" class="w-full btn-pink py-4 rounded-2xl font-bold shadow-md shrink-0">เพิ่มลงในรายการสำรวจ</button>
+                <button onclick="confirmAddAsset()" class="w-full btn-pink py-4 rounded-2xl font-bold shadow-md shrink-0">เพิ่มลงในรายการ</button>
             </div>
         </div>
     </div>
@@ -508,62 +506,79 @@
         }
 
        async function toggleScanner(target = 'search') {
-            currentScanTarget = target;
-            if (isScannerOpen) { await stopScanner(); return; }
-            document.getElementById('scanner-container').classList.remove('hidden');
-            document.getElementById('scan-icon').textContent = "✕";
-            isScannerOpen = true;
-            html5QrCode = new Html5Qrcode("reader");
-            
-            // ปรับแต่ง qrbox ให้เป็นจัตุรัส (Square) และนำเส้นไฮไลต์ (Highlight) กลับมา
-            const config = { 
-                fps: 30,
-                qrbox: { width: 250, height: 250 }, // กำหนดขนาดกล่องเล็งให้เป็นจัตุรัส
-                aspectRatio: 1.0,
-                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
-            };
-
-            html5QrCode.start({ facingMode: "environment" }, config, 
-                async (decodedText) => {
-                    if (currentScanTarget === 'search') {
-                        let cleanText = decodedText.trim();
-                    // ถ้าเป็น URL → ดึง id
-                    if (cleanText.includes('http')) {
-                        try {
-                            const url = new URL(cleanText);
-                            cleanText =
-                                url.searchParams.get('id') ||
-                                url.pathname.split('/').pop();
-                        } catch (e) {}
+                    currentScanTarget = target;
+                
+                    if (isScannerOpen) { 
+                        await stopScanner(); 
+                        return; 
                     }
-                    
-                    // ลบ space / \n
-                    cleanText = cleanText.replace(/\s/g, '');
-                    
-                    const input = document.getElementById('asset-search-input');
-                    input.value = cleanText;
-                    
-                    // trigger search
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                    
-                    setTimeout(async () => {
-                        await stopScanner();
-                    }, 300);;
-                    } else if (currentScanTarget === 'serial') {
-                        document.getElementById('field-serial-input').value = decodedText;
-                    }
-                    await stopScanner();
+                
+                    document.getElementById('scanner-container').classList.remove('hidden');
+                    document.getElementById('scan-icon').textContent = "✕";
+                
+                    isScannerOpen = true;
+                    isScanningLocked = false; // reset ตอนเปิด
+                
+                    html5QrCode = new Html5Qrcode("reader");
+                
+                    const config = { 
+                        fps: 30,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0,
+                        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+                    };
+                
+                    html5QrCode.start({ facingMode: "environment" }, config, 
+                        async (decodedText) => {
+                
+                            // ✅ กันยิงซ้ำ
+                            if (isScanningLocked) return;
+                            isScanningLocked = true;
+                
+                            // ✅ หยุดกล้องก่อนทำงาน (สำคัญ)
+                            await stopScanner();
+                
+                            if (currentScanTarget === 'search') {
+                
+                                let cleanText = decodedText.trim();
+                
+                                if (cleanText.includes('http')) {
+                                    try {
+                                        const url = new URL(cleanText);
+                                        cleanText =
+                                            url.searchParams.get('id') ||
+                                            url.pathname.split('/').pop();
+                                    } catch (e) {}
+                                }
+                
+                                cleanText = cleanText.replace(/\s/g, '');
+                
+                                const input = document.getElementById('asset-search-input');
+                                input.value = cleanText;
+                
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                            } else if (currentScanTarget === 'serial') {
+                
+                                document.getElementById('field-serial-input').value = decodedText;
+                
+                            }
+                        }
+                    ).catch(() => stopScanner());
+                }  
+            async function stopScanner() {
+                if (html5QrCode) { 
+                    await html5QrCode.stop().catch(() => {}); 
+                    html5QrCode = null; 
                 }
-            ).catch(() => stopScanner());
-        }
-
-        async function stopScanner() {
-            if (html5QrCode) { await html5QrCode.stop().catch(() => {}); html5QrCode = null; }
-            document.getElementById('scanner-container').classList.add('hidden');
-            document.getElementById('scan-icon').textContent = "📸";
-            isScannerOpen = false;
-        }
-
+            
+                document.getElementById('scanner-container').classList.add('hidden');
+                document.getElementById('scan-icon').textContent = "📸";
+                isScannerOpen = false;
+            
+                // ✅ สำคัญ
+                isScanningLocked = false;
+            }
         document.getElementById('asset-search-input').oninput = debounce(async (e) => {
             const q = e.target.value.trim();
             const container = document.getElementById('search-results-container');
