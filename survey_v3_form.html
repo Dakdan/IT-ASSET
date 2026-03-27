@@ -427,7 +427,7 @@
         let isScannerOpen = false;
         let currentScanTarget = 'search';
         let selectedAssetImageData = null;
-
+        
         window.onload = async () => {
             showLoading(true);
             try {
@@ -505,7 +505,7 @@
             document.getElementById('asset-search-input').focus();
         }
 
-       async function toggleScanner(target = 'search') {
+      async function toggleScanner(target = 'search') {
                     currentScanTarget = target;
                 
                     if (isScannerOpen) { 
@@ -517,15 +517,15 @@
                     document.getElementById('scan-icon').textContent = "✕";
                 
                     isScannerOpen = true;
-                    isScanningLocked = false; // reset ตอนเปิด
+                    isScanningLocked = false;
                 
                     html5QrCode = new Html5Qrcode("reader");
                 
                     const config = { 
                         fps: 30,
                         qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0,
-                        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+                        aspectRatio: 1.0
+                        // ❌ ลบ formatsToSupport ออก
                     };
                 
                     html5QrCode.start({ facingMode: "environment" }, config, 
@@ -535,7 +535,7 @@
                             if (isScanningLocked) return;
                             isScanningLocked = true;
                 
-                            // ✅ หยุดกล้องก่อนทำงาน (สำคัญ)
+                            // ✅ หยุดก่อน
                             await stopScanner();
                 
                             if (currentScanTarget === 'search') {
@@ -565,7 +565,7 @@
                             }
                         }
                     ).catch(() => stopScanner());
-                }  
+                }
             async function stopScanner() {
                 if (html5QrCode) { 
                     await html5QrCode.stop().catch(() => {}); 
@@ -576,7 +576,7 @@
                 document.getElementById('scan-icon').textContent = "📸";
                 isScannerOpen = false;
             
-                // ✅ สำคัญ
+                // ✅ reset lock
                 isScanningLocked = false;
             }
         document.getElementById('asset-search-input').oninput = debounce(async (e) => {
