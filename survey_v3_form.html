@@ -524,8 +524,29 @@
             html5QrCode.start({ facingMode: "environment" }, config, 
                 async (decodedText) => {
                     if (currentScanTarget === 'search') {
-                        document.getElementById('asset-search-input').value = decodedText;
-                        document.getElementById('asset-search-input').dispatchEvent(new Event('input'));
+                        let cleanText = decodedText.trim();
+                    // ถ้าเป็น URL → ดึง id
+                    if (cleanText.includes('http')) {
+                        try {
+                            const url = new URL(cleanText);
+                            cleanText =
+                                url.searchParams.get('id') ||
+                                url.pathname.split('/').pop();
+                        } catch (e) {}
+                    }
+                    
+                    // ลบ space / \n
+                    cleanText = cleanText.replace(/\s/g, '');
+                    
+                    const input = document.getElementById('asset-search-input');
+                    input.value = cleanText;
+                    
+                    // trigger search
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    
+                    setTimeout(async () => {
+                        await stopScanner();
+                    }, 300);;
                     } else if (currentScanTarget === 'serial') {
                         document.getElementById('field-serial-input').value = decodedText;
                     }
@@ -544,7 +565,7 @@
         document.getElementById('asset-search-input').oninput = debounce(async (e) => {
             const q = e.target.value.trim();
             const container = document.getElementById('search-results-container');
-            if (q.length < 2) { container.innerHTML = ''; return; }
+            if (q.length < 1) { container.innerHTML = ''; return; }
             container.innerHTML = '<div class="p-10 text-center"><div class="animate-spin inline-block w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full"></div></div>';
             try {
                 const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'searchAssets', query: q }) });
@@ -563,8 +584,19 @@
             const getHighlightedText = (text, q) => {
                 if (!text) return '-';
                 if (!q) return text;
-                const regex = new RegExp(`(${q})`, 'gi');
-                return text.replace(regex, '<span class="highlight">$1</span>');
+            
+                const lower = text.toLowerCase();
+                const query = q.toLowerCase();
+            
+                if (lower.endsWith(query)) {
+                    const start = text.length - q.length;
+                    return text.substring(0, start) +
+                           '<span class="highlight">' +
+                           text.substring(start) +
+                           '</span>';
+                }
+            
+                return text;
             };
 
             results.forEach(a => {
