@@ -458,9 +458,33 @@
 
         function getGeoLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    userGps = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-                }, err => console.warn("GPS Access Denied"));
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        userGps = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+                        console.log("GPS Locked: " + userGps);
+                    }, 
+                    err => {
+                        let msg = "";
+                        switch(err.code) {
+                            case err.PERMISSION_DENIED: msg = "กรุณาอนุญาตสิทธิ์เข้าถึง GPS เพื่อบันทึกพิกัดการตรวจสอบ"; break;
+                            case err.POSITION_UNAVAILABLE: msg = "ไม่สามารถระบุตำแหน่งพิกัดได้ในขณะนี้"; break;
+                            case err.TIMEOUT: msg = "การดึงพิกัดใช้เวลานานเกินไป"; break;
+                            default: msg = "เกิดข้อผิดพลาดในการดึงพิกัด GPS"; break;
+                        }
+                        Swal.fire({
+                            title: 'คำแนะนำเรื่อง GPS',
+                            text: msg,
+                            icon: 'info',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 4000
+                        });
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 } // เพิ่มความแม่นยำและกำหนดเวลา
+                );
+            } else {
+                Swal.fire('Error', 'เบราว์เซอร์ของคุณไม่รองรับการดึงพิกัด GPS', 'error');
             }
         }
 
