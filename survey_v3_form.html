@@ -672,6 +672,9 @@
         }
 
         function openAssetDetailForm(asset) {
+            if (asset.AssetID !== "นอกทะเบียน") {
+                isNonNumberMode = false;
+            }
             currentEditingAsset = asset;
             
             // 1. จัดการแสดงผลโหมด นอกทะเบียน/ในทะเบียน
@@ -856,9 +859,18 @@
                 } else { throw new Error(result.error); }
             } catch (e) { Swal.fire('Error', e.message, 'error'); }
             showLoading(false);
+        }       
+        function closeModal(id) { 
+            document.getElementById(id).classList.add('hidden'); 
+            
+            // --- เพิ่มส่วนนี้ ---
+            if (id === 'modal-asset-detail') {
+                isNonNumberMode = false; // รีเซ็ตโหมดทุกครั้งที่ปิดหน้ากรอกข้อมูล
+            }
+            // ------------------
+        
+            if (isScannerOpen) stopScanner(); 
         }
-
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); if(isScannerOpen) stopScanner(); }
         function resetApp() { location.reload(); }
         function debounce(f, t) { let id; return (...a) => { clearTimeout(id); id = setTimeout(() => f(...a), t); }; }
     </script>
