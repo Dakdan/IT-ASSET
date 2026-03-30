@@ -797,39 +797,37 @@
             const tbody = document.getElementById('survey-list');
             const emptyMsg = document.getElementById('empty-list-msg');
             
-            if (!tbody) return; // กัน Error ถ้าหาตารางไม่เจอ
-        
-            tbody.innerHTML = '';
+            if (!tbody) return;
             
-            // จัดการข้อความ "ยังไม่มีรายการ"
-            if (emptyMsg) {
-                emptyMsg.classList.toggle('hidden', surveyAssets.length > 0);
-            }
-        
-            surveyAssets.forEach((a, i) => {
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-pink-50 animate-fade-in"; // เพิ่มความสวยงามเล็กน้อย
+            tbody.innerHTML = ''; // ล้างตารางเดิมก่อนวาดใหม่
+            
+            if (surveyAssets.length === 0) {
+                if (emptyMsg) emptyMsg.classList.remove('hidden');
+            } else {
+                if (emptyMsg) emptyMsg.classList.add('hidden');
                 
-                // ใช้โครงสร้าง <tr> เดิมที่คุณวางไว้
-                tr.innerHTML = `
-                    <td class="py-4">
-                        <div class="font-mono font-bold text-gray-800">${a.AssetID}</div>
-                        <div class="text-[10px] text-gray-400 line-clamp-1">${a['ชื่อรายการครุภัณฑ์'] || '-'}</div>
-                    </td>
-                    <td class="text-center text-lg">${a.newImageData ? '📸' : '🖼️'}</td>
-                    <td class="py-4 text-center">
-                        <span class="text-[10px] bg-pink-50 text-pink-600 px-2 py-1 rounded-full font-medium">
-                            ${a.surveyType}
-                        </span>
-                    </td>
-                    <td class="text-right">
-                        <button onclick="removeAsset(${i})" class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center ml-auto hover:bg-red-100 transition">
-                            ✕
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                surveyAssets.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-pink-50"; // ตกแต่งตามธีมชมพู
+                    tr.innerHTML = `
+                        <td class="py-3 px-2">
+                            <div class="font-bold text-gray-800">${item.AssetID || '-'}</div>
+                            <div class="text-xs text-gray-400">${item['ชื่อรายการครุภัณฑ์'] || ''}</div>
+                        </td>
+                        <td class="text-center">
+                            ${item.newImageData ? '📸' : '🖼️'}
+                        </td>
+                        <td class="py-3 px-2 text-xs">
+                            <div class="text-pink-600 font-semibold">${item.surveyType}</div>
+                            <div class="text-gray-400">${item.surveyPriority}</div>
+                        </td>
+                        <td class="text-right">
+                            <button onclick="removeAsset(${index})" class="text-red-400 p-2">✕</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
         }
         function removeAsset(i) { surveyAssets.splice(i, 1); renderSurveyList(); }
 
