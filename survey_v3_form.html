@@ -731,52 +731,68 @@
         }
 
         function confirmAddAsset() {
-    // 1. ดึงค่าจากหน้าจอ (ใช้ ID เดิมที่คุณตั้งไว้)
-            const type = document.getElementById('field-asset-type').value;
-            const priority = document.getElementById('field-priority').value;
-            // ดึงค่ากะ (Checkboxes)
-            const shifts = Array.from(document.querySelectorAll('input[name="shift-work"]:checked')).map(cb => cb.value);
-        
-            // 2. เช็คเงื่อนไข (ถ้าค่าหลักไม่ครบ ให้หยุดทำงานและแจ้งเตือน)
-            if (!type || !priority || shifts.length === 0) {
-                return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกหมวดหมู่, ลำดับความสำคัญ และกะการทำงาน', 'warning');
-            }
-        
-            // 3. สร้าง Object รายการ (รักษาโครงสร้างเดิมของคุณไว้)
-            const item = { 
-                ...currentEditingAsset, 
-                surveyType: type, 
-                surveyPriority: priority, 
-                surveyShift: shifts.join(','), 
-                isPace: document.getElementById('field-is-pace').checked, 
-                newImageData: selectedAssetImageData, 
-                isNonNumber: isNonNumberMode 
-            };
-        
-            // 4. ถ้าเป็นโหมด "นอกทะเบียน" ให้ดึงค่าเพิ่ม (เฉพาะที่มีใน HTML ของคุณ)
-            if (isNonNumberMode) {
-                item.AssetID = document.getElementById('field-asset-id-input').value || "นอกทะเบียน";
-                item['ชื่อรายการครุภัณฑ์'] = type; // ใช้ประเภทที่เลือกเป็นชื่อชั่วคราว
-                item.serial = document.getElementById('field-serial-input').value;
-                
-                // ดึงค่าเพิ่มเติม (ถ้าใน HTML มี ID เหล่านี้)
-                const brandInp = document.getElementById('field-brand-input');
-                const detailInp = document.getElementById('field-detail-input');
-                const dateInp = document.getElementById('field-date-in');
-                
-                if(brandInp) item.brand = brandInp.value;
-                if(detailInp) item.detail = detailInp.value;
-                if(dateInp) item.dateIn = dateInp.value;
-            }
-        
-            // 5. สั่ง Push เข้า Array และ Update หน้าจอ (Logic เดิม)
-            surveyAssets.push(item);
-            renderSurveyList();
+                try {
+                    // 1. ดึงค่าส่วนกลางที่ต้องมี "ทุกโหมด"
+                    const typeEl = document.getElementById('field-asset-type');
+                    const priorityEl = document.getElementById('field-priority');
+                    const type = typeEl ? typeEl.value : "";
+                    const priority = priorityEl ? priorityEl.value : "";
+                    
+                    // ดึงค่ากะ (Checkboxes)
+                    const shiftElements = document.querySelectorAll('input[name="shift-work"]:checked');
+                    const shifts = Array.from(shiftElements).map(cb => cb.value);
             
-            // 6. ปิด Modal (Logic เดิม)
-            closeModal('modal-asset-detail');
-            closeModal('modal-search');
-        }
+                    // 2. ตรวจสอบค่าบังคับ (ถ้าไม่ครบให้หยุด)
+                    if (!type || !priority || shifts.length === 0) {
+                        return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกประเภท, ความสำคัญ และกะการทำงาน', 'warning');
+                    }
+            
+                    // 3. เตรียมโครงสร้าง Object (ใช้ข้อมูลเดิมที่มีอยู่)
+                    let item = { 
+                        ...currentEditingAsset, 
+                        surveyType: type, 
+                        surveyPriority: priority, 
+                        surveyShift: shifts.join(','), 
+                        isPace: document.getElementById('field-is-pace')?.checked || false, 
+                        newImageData: selectedAssetImageData || null, 
+                        isNonNumber: isNonNumberMode 
+                    };
+            
+                    // 4. แยก Logic ตามโหมด (จุดที่ทำให้ก็นิ่งจะอยู่ตรงนี้)
+                    if (isNonNumberMode === true) {
+                        // โหมดนอกทะเบียน: ดึงจาก Input fields
+                        item.AssetID = document.getElementById('field-asset-id-input')?.value || "นอกทะเบียน";
+                        item['ชื่อรายการครุภัณฑ์'] = type; 
+                        item.serial = document.getElementById('field-serial-input')?.value || "";
+                        item.brand = document.getElementById('field-brand-input')?.value || "";
+                        item.detail = document.getElementById('field-detail-input')?.value || "";
+                        item.dateIn = document.getElementById('field-date-in')?.value || "";
+                    } else {
+                        // โหมดปกติ (มีข้อมูลอยู่แล้ว): 
+                        // ไม่ต้องไปดึงค่าจาก field-asset-id-input เพราะมันไม่มีในหน้าจอโหมดนี้
+                        // ค่า AssetID และชื่อ จะถูกดึงมาจาก currentEditingAsset ตั้งแต่ตอนเปิด Modal แล้ว
+                        console.log("Adding existing asset:", item.AssetID);
+                    }
+            
+                    // 5. บันทึกลงรายการและอัปเดตหน้าจอ
+                    surveyAssets.push(item);
+                    renderSurveyList();
+                    
+                    // 6. ปิดหน้าต่าง (ลำดับสำคัญ)
+                    closeModal('modal-asset-detail');
+                    
+                    const searchModal = document.getElementById('modal-search');
+                    if (searchModal) searchModal.classList.add('hidden');
+            
+                    // แจ้งเตือนเล็กน้อย
+                    Swal.fire({ icon: 'success', title: 'เพิ่มรายการแล้ว', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            
+                } catch (err) {
+                    console.error("Critical Error in confirmAddAsset:", err);
+                    // ถ้า Error ให้แจ้งชื่อตัวแปรที่มีปัญหาออกมาเลย
+                    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเพิ่มได้: ' + err.message, 'error');
+                }
+            }
         function removeAsset(i) { surveyAssets.splice(i, 1); renderSurveyList(); }
 
         function initSignature() {
