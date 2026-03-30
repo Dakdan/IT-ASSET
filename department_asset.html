@@ -42,7 +42,7 @@
     <div id="loaderModal" class="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity duration-300">
         <div class="flex flex-col items-center">
             <div class="loader mb-3"></div>
-            <p id="loaderText" class="text-pink-800 font-medium animate-pulse">กำลังเรียกข้อมูลจากฐานข้อมูล...</p>
+            <p id="loaderText" class="text-pink-800 font-medium animate-pulse">กำลังเรียกข้อมูลจากฐานข้อมูลครุภัณฑ์...</p>
         </div>
     </div>
 
@@ -68,7 +68,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center font-bold mb-1">
                     <i class="fas fa-exclamation-triangle mr-3"></i>
-                    <span>เกิดข้อผิดพลาดในการเชื่อมต่อ</span>
+                    <span>เกิดข้อผิดพลาดในการดึงข้อมูล</span>
                 </div>
                 <span id="errorText" class="text-sm ml-8"></span>
                 <div class="mt-3 ml-8">
@@ -128,8 +128,8 @@
         <!-- Toolbar -->
         <div id="toolbar" class="hidden mb-4 flex flex-col md:flex-row gap-4 items-center justify-between no-print">
             <div class="inline-flex p-1 bg-gray-200 rounded-xl">
-                <button onclick="switchTab('on-log')" id="tab-on-log" class="px-6 py-2 rounded-lg text-sm font-medium transition-all">ในระบบ</button>
-                <button onclick="switchTab('non-log')" id="tab-non-log" class="px-6 py-2 rounded-lg text-sm font-medium transition-all">นอกระบบ</button>
+                <button onclick="switchTab('on-log')" id="tab-on-log" class="px-6 py-2 rounded-lg text-sm font-medium transition-all">ในระบบ (Asset_On)</button>
+                <button onclick="switchTab('non-log')" id="tab-non-log" class="px-6 py-2 rounded-lg text-sm font-medium transition-all">นอกระบบ (Non-Number)</button>
             </div>
             <div class="relative w-full md:w-72">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
@@ -144,12 +144,12 @@
         <!-- No Data State -->
         <div id="emptyState" class="hidden py-20 flex flex-col items-center justify-center text-gray-400">
             <i class="fas fa-box-open text-6xl mb-4 opacity-20"></i>
-            <p>ไม่พบรายการครุภัณฑ์ในหน่วยงานนี้</p>
+            <p>ไม่พบรายการครุภัณฑ์ที่เชื่อมโยงกับหน่วยงานนี้</p>
         </div>
     </main>
 
     <script>
-        // อัปเดต API_URL เป็น Web App URL ตัวใหม่ที่ถูกต้อง
+        // API URL จาก Web App ที่ใช้งาน
         const API_URL = 'https://script.google.com/macros/s/AKfycbxiOY15Idt7KJgQQn60_MAtVJmAICWT2wvNLS3C4h_SI7uaFD23Z6mzSp8nSrBd4TGVNA/exec';
         const DEFAULT_LOGO = 'https://img2.pic.in.th/-227e4f6f84f29f020.png';
         
@@ -173,6 +173,7 @@
 
         async function init() {
             try {
+                // เรียกข้อมูลโดยระบุ action เพื่อดึงข้อมูลทั้งหมดจาก Master_Asset Sheet
                 const response = await fetch(`${API_URL}?DEP_ID=${depId}&action=getFullData`);
                 const data = await response.json();
                 
@@ -187,7 +188,7 @@
                     switchTab('on-log');
                 }
             } catch (err) {
-                showError("ไม่สามารถเชื่อมต่อ API ได้: " + err.message);
+                showError("ไม่สามารถเชื่อมต่อฐานข้อมูลได้: " + err.message);
             } finally {
                 hideLoader();
             }
@@ -243,7 +244,7 @@
                 container.innerHTML = `
                     <div class="bg-white p-12 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400">
                         <i class="fas fa-search mb-2 text-2xl"></i>
-                        <p>ไม่พบรายการครุภัณฑ์</p>
+                        <p>ไม่พบรายการครุภัณฑ์ในหมวดนี้</p>
                     </div>
                 `;
                 return;
@@ -257,7 +258,7 @@
                                 <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                                     <th class="px-6 py-4 font-semibold whitespace-nowrap">รหัสครุภัณฑ์</th>
                                     <th class="px-6 py-4 font-semibold text-center">รูปภาพ</th>
-                                    <th class="px-6 py-4 font-semibold">รายละเอียด</th>
+                                    <th class="px-6 py-4 font-semibold">รายละเอียดครุภัณฑ์</th>
                                     <th class="px-6 py-4 font-semibold text-center">สถานะ</th>
                                 </tr>
                             </thead>
@@ -269,7 +270,7 @@
                 const type = item.Asset_Type || item.AssetType || 'ไม่ระบุประเภท';
                 const detail = item.Detail || '';
                 const status = item.CoStatus || 'ปกติ';
-                const imgUrl = item.Image || null;
+                const imgUrl = item.Image || item.Image_URL || null;
 
                 html += `
                     <tr class="hover:bg-pink-50/20 transition-colors">
