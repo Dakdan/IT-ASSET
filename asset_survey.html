@@ -439,6 +439,8 @@ async function showDeptDetail(id) {
         linkBtn.onclick = () => {
             const url = `https://dakdan.github.io/IT-ASSET/department_asset.html?DEP_ID=${depId}`;
             window.open(url, '_blank'); // เปิดแท็บใหม่ไปที่ GitHub Pages
+            // 2. ปิดหน้าต่าง Modal นี้ทันที
+            closeModal('modal-dept-detail');
         };
     }
     // --------------------------------------
