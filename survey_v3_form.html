@@ -794,50 +794,43 @@
                 }
             }
         function renderSurveyList() {
-                const container = document.getElementById('survey-list-container');
-                if (!container) return; // กันพังถ้าหาที่แสดงผลไม่เจอ
+            const tbody = document.getElementById('survey-list');
+            const emptyMsg = document.getElementById('empty-list-msg');
             
-                if (surveyAssets.length === 0) {
-                    container.innerHTML = `
-                        <div class="p-10 text-center border-2 border-dashed border-pink-100 rounded-3xl bg-pink-50/10">
-                            <div class="text-4xl mb-2 opacity-30">📋</div>
-                            <div class="text-gray-400 text-sm">ยังไม่มีรายการที่เลือกตรวจสอบ</div>
-                        </div>`;
-                    return;
-                }
+            if (!tbody) return; // กัน Error ถ้าหาตารางไม่เจอ
+        
+            tbody.innerHTML = '';
             
-                let html = '';
-                surveyAssets.forEach((item, index) => {
-                    // กำหนดป้ายสถานะ (Badge)
-                    const isNonNum = item.isNonNumber;
-                    const badgeClass = isNonNum ? 'bg-orange-100 text-orange-600' : 'bg-pink-100 text-pink-600';
-                    const badgeText = isNonNum ? 'นอกทะเบียน' : 'ในทะเบียน';
-            
-                    html += `
-                        <div class="bg-white p-4 rounded-2xl mb-3 shadow-sm border border-pink-50 flex justify-between items-center animate-fade-in">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${badgeClass}">${badgeText}</span>
-                                    <span class="font-mono font-bold text-gray-800">${item.AssetID || 'N/A'}</span>
-                                </div>
-                                <div class="text-sm text-gray-600 line-clamp-1">${item['ชื่อรายการครุภัณฑ์'] || item.surveyType || '-'}</div>
-                                <div class="flex gap-2 mt-2">
-                                    <span class="text-[10px] bg-gray-50 px-2 py-0.5 rounded text-gray-400">📍 ${item.surveyPriority || '-'}</span>
-                                    <span class="text-[10px] bg-gray-50 px-2 py-0.5 rounded text-gray-400">🕒 ${item.surveyShift || '-'}</span>
-                                </div>
-                            </div>
-                            <button onclick="removeAsset(${index})" class="ml-4 p-2 w-10 h-10 rounded-xl bg-red-50 text-red-400 hover:bg-red-100 transition flex items-center justify-center">
-                                🗑️
-                            </button>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-            
-                // ถ้ามี Badge ตัวเลขที่ปุ่มสรุป ให้ส่งค่าไปอัปเดตด้วย
-                const badgeCount = document.getElementById('survey-count-badge');
-                if (badgeCount) badgeCount.textContent = surveyAssets.length;
+            // จัดการข้อความ "ยังไม่มีรายการ"
+            if (emptyMsg) {
+                emptyMsg.classList.toggle('hidden', surveyAssets.length > 0);
             }
+        
+            surveyAssets.forEach((a, i) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-pink-50 animate-fade-in"; // เพิ่มความสวยงามเล็กน้อย
+                
+                // ใช้โครงสร้าง <tr> เดิมที่คุณวางไว้
+                tr.innerHTML = `
+                    <td class="py-4">
+                        <div class="font-mono font-bold text-gray-800">${a.AssetID}</div>
+                        <div class="text-[10px] text-gray-400 line-clamp-1">${a['ชื่อรายการครุภัณฑ์'] || '-'}</div>
+                    </td>
+                    <td class="text-center text-lg">${a.newImageData ? '📸' : '🖼️'}</td>
+                    <td class="py-4 text-center">
+                        <span class="text-[10px] bg-pink-50 text-pink-600 px-2 py-1 rounded-full font-medium">
+                            ${a.surveyType}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <button onclick="removeAsset(${i})" class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center ml-auto hover:bg-red-100 transition">
+                            ✕
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
         function removeAsset(i) { surveyAssets.splice(i, 1); renderSurveyList(); }
 
         function initSignature() {
