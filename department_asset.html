@@ -67,19 +67,19 @@
             border-bottom: 2px solid #fbcfe8;
         }
 
-        /* Print Settings */
+        /* Print Settings - Adjusted for A4 Portrait */
         @media print {
-            @page { size: landscape; margin: 1cm; }
+            @page { size: A4 portrait; margin: 1.5cm 1cm; }
             .no-print, #loaderModal { display: none !important; }
             body { background: white !important; padding: 0 !important; background-image: none !important; }
             .soft-card { box-shadow: none !important; border: 1px solid #eee !important; border-radius: 12px !important; }
             .print-only { display: block !important; }
-            table { font-size: 10pt; width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+            table { font-size: 9pt; width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; }
+            th, td { border: 1px solid #ddd; padding: 6px 4px; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
             th { background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; }
             .print-summary-box {
                 border: 1px solid #ddd;
-                padding: 10px;
+                padding: 8px;
                 text-align: center;
                 border-radius: 8px;
             }
@@ -173,13 +173,17 @@
                             <h2 id="deptName" class="text-2xl font-bold text-gray-800 mt-2">กำลังโหลดข้อมูล...</h2>
                             <p id="deptId" class="text-pink-500 font-mono text-sm mt-1"></p>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex flex-wrap gap-2">
+                            <!-- Home Button -->
+                            <button onclick="goHome()" class="bg-gray-800 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:bg-black transition-all">
+                                <i class="fas fa-home mr-2 text-lg"></i> กลับหน้าหลัก
+                            </button>
                             <!-- Export Button -->
-                            <button onclick="exportToCSV()" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:bg-emerald-700 hover:shadow-emerald-100 transition-all">
+                            <button onclick="exportToCSV()" class="bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:bg-emerald-700 hover:shadow-emerald-100 transition-all">
                                 <i class="fas fa-file-excel mr-2 text-lg"></i> Export Excel
                             </button>
                             <!-- Main Print Button -->
-                            <button id="mainPrintBtn" onclick="handlePrint()" class="btn-pink text-white px-8 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:scale-105 active:scale-95 transition-all">
+                            <button id="mainPrintBtn" onclick="handlePrint()" class="btn-pink text-white px-6 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:scale-105 active:scale-95 transition-all">
                                 <i class="fas fa-print mr-2 text-lg"></i> พิมพ์รายงานสรุป
                             </button>
                         </div>
@@ -246,54 +250,54 @@
             </div>
         </div>
 
-        <!-- Print View (Landscape) -->
+        <!-- Print View (Portrait) -->
         <div id="printArea" class="print-only">
             <!-- Header for Report -->
             <div class="flex justify-between items-end mb-6 pb-4 border-b-2 border-pink-700">
                 <div class="flex items-center gap-4">
-                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="h-16">
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="h-14">
                     <div>
-                        <h1 class="text-xl font-bold">รายงานสรุปข้อมูลครุภัณฑ์คอมพิวเตอร์</h1>
-                        <p class="text-sm">โรงพยาบาลอุดรธานี (กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์)</p>
+                        <h1 class="text-lg font-bold">รายงานสรุปข้อมูลครุภัณฑ์คอมพิวเตอร์</h1>
+                        <p class="text-[10px]">โรงพยาบาลอุดรธานี (กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์)</p>
                     </div>
                 </div>
-                <div class="text-right text-xs">
+                <div class="text-right text-[10px]">
                     <p>หน่วยงาน: <span id="printDeptName" class="font-bold"></span></p>
                     <p>วันที่พิมพ์: <span id="printDate"></span></p>
                 </div>
             </div>
 
             <!-- Print Summary -->
-            <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-3 gap-3 mb-6">
                 <div class="print-summary-box">
-                    <p class="text-[10px] uppercase text-gray-500">ในระบบ</p>
-                    <p class="text-xl font-bold" id="printOnCount">0</p>
+                    <p class="text-[8px] uppercase text-gray-500">ในระบบ</p>
+                    <p class="text-lg font-bold" id="printOnCount">0</p>
                 </div>
                 <div class="print-summary-box">
-                    <p class="text-[10px] uppercase text-gray-500">นอกระบบ</p>
-                    <p class="text-xl font-bold" id="printNonCount">0</p>
+                    <p class="text-[8px] uppercase text-gray-500">นอกระบบ</p>
+                    <p class="text-lg font-bold" id="printNonCount">0</p>
                 </div>
                 <div class="print-summary-box border-2 border-pink-700 bg-pink-50">
-                    <p class="text-[10px] uppercase text-pink-700 font-bold">รวมทั้งหมด</p>
-                    <p class="text-xl font-black text-pink-800" id="printTotalCount">0</p>
+                    <p class="text-[8px] uppercase text-pink-700 font-bold">รวมทั้งหมด</p>
+                    <p class="text-lg font-black text-pink-800" id="printTotalCount">0</p>
                 </div>
             </div>
 
-            <h2 class="text-sm font-bold mb-2 bg-gray-50 p-2 border-l-4 border-pink-700">1. รายการครุภัณฑ์ในระบบ (Asset_On)</h2>
+            <h2 class="text-xs font-bold mb-2 bg-gray-50 p-2 border-l-4 border-pink-700">1. รายการครุภัณฑ์ในระบบ (Asset_On)</h2>
             <div id="printOnTable"></div>
 
-            <h2 class="text-sm font-bold mb-2 mt-6 bg-gray-50 p-2 border-l-4 border-blue-700">2. รายการครุภัณฑ์นอกระบบ (Non-Number)</h2>
+            <h2 class="text-xs font-bold mb-2 mt-4 bg-gray-50 p-2 border-l-4 border-blue-700">2. รายการครุภัณฑ์นอกระบบ (Non-Number)</h2>
             <div id="printNonTable"></div>
 
             <!-- Footer Sign -->
-            <div class="mt-12 grid grid-cols-2 gap-20 text-center">
-                <div class="pt-8 border-t border-gray-300">
-                    <p class="text-sm">(ลงชื่อ)...........................................................</p>
-                    <p class="text-xs mt-2 font-bold text-gray-600">เจ้าหน้าที่ผู้รายงาน</p>
+            <div class="mt-8 grid grid-cols-2 gap-10 text-center">
+                <div class="pt-6 border-t border-gray-300">
+                    <p class="text-xs">(ลงชื่อ)...........................................................</p>
+                    <p class="text-[10px] mt-1 font-bold text-gray-600">เจ้าหน้าที่ผู้รายงาน</p>
                 </div>
-                <div class="pt-8 border-t border-gray-300">
-                    <p class="text-sm">(ลงชื่อ)...........................................................</p>
-                    <p class="text-xs mt-2 font-bold text-gray-600">หัวหน้าหน่วยงาน / ผู้รับรอง</p>
+                <div class="pt-6 border-t border-gray-300">
+                    <p class="text-xs">(ลงชื่อ)...........................................................</p>
+                    <p class="text-[10px] mt-1 font-bold text-gray-600">หัวหน้าหน่วยงาน / ผู้รับรอง</p>
                 </div>
             </div>
         </div>
@@ -423,6 +427,15 @@
             });
         }
 
+        function goHome() {
+            const homeUrl = 'https://dakdan.github.io/IT-ASSET/asset_survey.html';
+            window.location.href = homeUrl;
+            // Attempt to close window after redirect
+            setTimeout(() => {
+                window.close();
+            }, 500);
+        }
+
         function handlePrint() {
             if (!rawData.department.DEPNAME && !rawData.assetsOn.length && !rawData.assetsNon.length) {
                 alert("ไม่มีข้อมูลที่จะพิมพ์ หรือข้อมูลกำลังโหลด...");
@@ -487,11 +500,11 @@
             let html = `<table>
                 <thead>
                     <tr>
-                        <th style="width: 40px; text-align: center;">ลำดับ</th>
-                        <th style="width: 140px; text-align: left;">รหัสครุภัณฑ์</th>
-                        <th style="width: 140px; text-align: left;">ประเภท</th>
+                        <th style="width: 35px; text-align: center;">#</th>
+                        <th style="width: 110px; text-align: left;">รหัส</th>
+                        <th style="width: 100px; text-align: left;">ประเภท</th>
                         <th style="text-align: left;">รายละเอียด</th>
-                        <th style="width: 80px; text-align: center;">สถานะ</th>
+                        <th style="width: 60px; text-align: center;">สถานะ</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -501,8 +514,8 @@
                     <td style="text-align: center;">${index + 1}</td>
                     <td style="font-weight: bold;">${item.AssetID || item.NOID || '-'}</td>
                     <td>${item.Asset_Type || item.AssetType || '-'}</td>
-                    <td style="font-size: 9pt;">${item.Detail || '-'}</td>
-                    <td style="text-align: center;">${item.CoStatus || 'ปกติ'}</td>
+                    <td style="font-size: 8pt; line-height: 1.2;">${item.Detail || '-'}</td>
+                    <td style="text-align: center; font-size: 8pt;">${item.CoStatus || 'ปกติ'}</td>
                 </tr>`;
             });
             
