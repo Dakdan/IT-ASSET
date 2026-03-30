@@ -134,7 +134,7 @@
         </div>
 
         <!-- Department Detail Card -->
-        <div id="deptInfo" class="soft-card p-8 mb-8 no-print hidden">
+        <div id="deptInfo" class="soft-card p-8 mb-8 no-print">
             <div class="flex flex-col md:flex-row gap-8 items-start">
                 <div id="deptImg" class="w-full md:w-48 h-48 rounded-3xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
                     <img src="" class="w-full h-full object-cover hidden" id="deptAvatar">
@@ -146,11 +146,12 @@
                     <div class="flex justify-between items-start flex-wrap gap-4">
                         <div>
                             <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs font-bold rounded-full uppercase">ข้อมูลหน่วยงาน</span>
-                            <h2 id="deptName" class="text-2xl font-bold text-gray-800 mt-2"></h2>
+                            <h2 id="deptName" class="text-2xl font-bold text-gray-800 mt-2">กำลังโหลดข้อมูล...</h2>
                             <p id="deptId" class="text-pink-500 font-mono text-sm"></p>
                         </div>
+                        <!-- Main Print Button -->
                         <button onclick="handlePrint()" class="btn-pink text-white px-8 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:scale-105 active:scale-95 transition-all">
-                            <i class="fas fa-print mr-2"></i> พิมพ์รายงาน
+                            <i class="fas fa-print mr-2"></i> พิมพ์รายงานสรุป
                         </button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 border-t border-gray-50 pt-6">
@@ -178,10 +179,16 @@
                     <button onclick="switchTab('on')" id="btnTabOn" class="px-8 py-2.5 rounded-xl text-sm font-medium transition-all bg-white text-pink-700 shadow-sm">ในระบบ</button>
                     <button onclick="switchTab('non')" id="btnTabNon" class="px-8 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-500 hover:text-gray-700">นอกระบบ</button>
                 </div>
-                <div class="relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหารหัส หรือประเภทครุภัณฑ์..." 
-                        class="w-full md:w-80 pl-11 pr-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none text-sm transition-all shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหารหัส หรือประเภท..." 
+                            class="w-full md:w-64 pl-11 pr-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none text-sm transition-all shadow-sm">
+                    </div>
+                    <!-- Secondary Print Button for Mobile/Convenience -->
+                    <button onclick="handlePrint()" class="bg-gray-800 text-white p-3 rounded-2xl hover:bg-gray-700 transition-colors md:hidden">
+                        <i class="fas fa-print"></i>
+                    </button>
                 </div>
             </div>
 
@@ -209,7 +216,7 @@
             </div>
         </div>
 
-        <!-- Print View (Landscape) -->
+        <!-- Print View (Landscape) - This part is only visible during printing -->
         <div id="printArea" class="print-only">
             <!-- Header for Report -->
             <div class="flex justify-between items-end mb-6 pb-4 border-b-2 border-pink-700">
@@ -275,7 +282,7 @@
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
             });
             if (!depId) {
-                alert("กรุณาระบุรหัสหน่วยงานใน URL");
+                document.getElementById('deptName').innerText = "ไม่พบรหัสหน่วยงาน (DEP_ID)";
                 return;
             }
             fetchData();
@@ -292,7 +299,7 @@
                 renderUI();
             } catch (err) {
                 console.error(err);
-                alert("เกิดข้อผิดพลาด: " + err.message);
+                document.getElementById('deptName').innerText = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
             } finally {
                 hideModal();
             }
@@ -300,7 +307,6 @@
 
         function renderUI() {
             const d = rawData.department;
-            document.getElementById('deptInfo').classList.remove('hidden');
             document.getElementById('deptName').innerText = d.DEPNAME || 'ไม่พบชื่อหน่วยงาน';
             document.getElementById('deptId').innerText = `ID: ${d.DEP_ID}`;
             document.getElementById('locName').innerText = `สถานที่: ${d.LOCATION_NAME || '-'}`;
@@ -380,10 +386,15 @@
         }
 
         function handlePrint() {
+            if (!rawData.department.DEPNAME && !rawData.assetsOn.length && !rawData.assetsNon.length) {
+                alert("ไม่มีข้อมูลที่จะพิมพ์ หรือข้อมูลกำลังโหลด...");
+                return;
+            }
+
             showModal();
             setTimeout(() => {
                 const d = rawData.department;
-                document.getElementById('printDeptName').innerText = d.DEPNAME;
+                document.getElementById('printDeptName').innerText = d.DEPNAME || '-';
                 document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
                 
                 const onLen = rawData.assetsOn.length;
@@ -401,7 +412,7 @@
         }
 
         function buildPrintTable(data) {
-            if (data.length === 0) return '<p class="text-xs text-gray-400 italic mb-4">-- ไม่พบข้อมูล --</p>';
+            if (!data || data.length === 0) return '<p class="text-xs text-gray-400 italic mb-4">-- ไม่พบข้อมูล --</p>';
             let html = `<table>
                 <thead>
                     <tr>
