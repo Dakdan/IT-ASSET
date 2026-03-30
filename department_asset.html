@@ -3,336 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - IT UDON HOSP</title>
+    <title>ครุภัณฑ์คอมพิวเตอร์ - IT UDON HOSP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Kanit', sans-serif;
-            background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
+            background-color: #f8fafc;
             min-height: 100vh;
-            position: relative;
-        }
-        /* ลายน้ำ */
-        body::before {
-            content: "IT UDON HOSP";
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: 8rem;
-            color: rgba(255, 182, 193, 0.08);
-            pointer-events: none;
-            z-index: -1;
-            white-space: nowrap;
         }
         .pink-gradient {
-            background: linear-gradient(90deg, #ff7eb3 0%, #ff758c 100%);
+            background: linear-gradient(90deg, #be185d 0%, #db2777 100%);
         }
         .card-shadow {
-            box-shadow: 0 10px 25px -5px rgba(255, 116, 140, 0.1), 0 8px 10px -6px rgba(255, 116, 140, 0.1);
-        }
-        .status-badge {
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-        @media print {
-            body::before { display: none; }
-            .no-print { display: none; }
-            .print-area { width: 100%; }
-            @page { size: landscape; margin: 1cm; }
-        }
-        .modal-overlay {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
         }
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #ff758c;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #be185d;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Smooth transition for tabs */
-        .tab-btn { transition: all 0.3s ease; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white; }
+            .card-shadow { box-shadow: none; border: 1px solid #eee; }
+        }
     </style>
 </head>
 <body class="text-gray-800 pb-10">
 
-    <!-- Loading Modal -->
-    <div id="loaderModal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center">
-            <div class="loader mb-4"></div>
-            <p class="text-pink-600 font-medium">กำลังโหลดข้อมูลระบบ...</p>
+    <!-- Loading Overlay -->
+    <div id="loaderModal" class="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity duration-300">
+        <div class="flex flex-col items-center">
+            <div class="loader mb-3"></div>
+            <p class="text-pink-800 font-medium animate-pulse">กำลังเรียกข้อมูลจากฐานข้อมูล...</p>
         </div>
     </div>
 
-    <!-- Header Section -->
-    <header class="pink-gradient text-white p-6 shadow-lg rounded-b-[40px] mb-8">
+    <!-- Header -->
+    <header class="pink-gradient text-white p-6 shadow-md mb-8 no-print">
         <div class="container mx-auto flex flex-col md:flex-row items-center justify-between">
             <div class="flex items-center space-x-4">
-                <div class="bg-white p-2 rounded-full shadow-md">
-                    <img src="https://img5.pic.in.th/file/secure-sv1/logo-hosp.png" alt="Logo" class="w-12 h-12 object-contain" onerror="this.src='https://via.placeholder.com/50?text=IT'">
+                <div class="bg-white p-1 rounded-xl shadow-inner">
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Hospital Logo" class="h-12 w-auto object-contain">
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold leading-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-                    <p class="text-sm opacity-90">โรงพยาบาลอุดรธานี | กลุ่มงานเทคโนโลยีสารสนเทศ</p>
+                    <h1 class="text-xl md:text-2xl font-bold">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+                    <p class="text-xs opacity-80 uppercase tracking-widest">IT UDON HOSPITAL</p>
                 </div>
             </div>
-            <div class="mt-4 md:mt-0 bg-white/20 px-4 py-2 rounded-full text-sm">
-                <i class="fas fa-calendar-alt mr-2"></i> <span id="currentDate"></span>
-            </div>
+            <div id="currentDate" class="mt-4 md:mt-0 text-sm font-light"></div>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 print-area">
-        <!-- Section 1: Department Info -->
-        <div id="deptInfo" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div class="lg:col-span-3 text-center py-20 text-gray-400" id="initialLoading">
-                <i class="fas fa-search-location fa-3x mb-4 animate-pulse"></i>
-                <p id="statusText" class="text-lg">กรุณารอสักครู่ ระบบกำลังค้นหาข้อมูลหน่วยงาน...</p>
+    <main class="container mx-auto px-4">
+        <!-- Error Display -->
+        <div id="errorMessage" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle mr-3"></i>
+                <span id="errorText"></span>
             </div>
         </div>
 
-        <!-- Section 2: Main Navigation Tabs -->
-        <div id="mainTabs" class="mb-6 overflow-x-auto no-print hidden">
-            <div class="flex space-x-2 border-b border-pink-100 min-w-max pb-2">
-                <button onclick="switchTab('on-log')" class="tab-btn px-6 py-2 rounded-t-xl font-medium" id="tab-on-log">
-                    <i class="fas fa-desktop mr-2"></i>ครุภัณฑ์ในระบบ
-                </button>
-                <button onclick="switchTab('non-log')" class="tab-btn px-6 py-2 rounded-t-xl font-medium" id="tab-non-log">
-                    <i class="fas fa-laptop-medical mr-2"></i>ครุภัณฑ์นอกระบบ
-                </button>
-                <button onclick="switchTab('history')" class="tab-btn px-6 py-2 rounded-t-xl font-medium" id="tab-history">
-                    <i class="fas fa-history mr-2"></i>ประวัติรับบริการ
-                </button>
-                <button onclick="switchTab('download')" class="tab-btn px-6 py-2 rounded-t-xl font-medium" id="tab-download">
-                    <i class="fas fa-file-download mr-2"></i>เอกสาร/Download
-                </button>
+        <!-- Department Summary Section -->
+        <div id="deptSection" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl card-shadow border border-gray-100 flex flex-col items-center justify-center">
+                <div id="deptImageContainer" class="w-32 h-32 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 border border-pink-100 overflow-hidden shadow-inner">
+                    <!-- Default Image if none provided -->
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-20 opacity-30 grayscale">
+                </div>
+                <h2 id="displayDeptName" class="text-xl font-bold text-center text-gray-800 leading-tight"></h2>
+                <p id="displayDeptId" class="text-sm text-pink-600 font-mono mt-1"></p>
+            </div>
+            
+            <div class="lg:col-span-3 bg-white p-6 rounded-2xl card-shadow border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-map-marker-alt w-8 text-pink-500"></i>
+                            <div>
+                                <p class="text-xs text-gray-400 uppercase">สถานที่ตั้ง</p>
+                                <p id="displayLocation" class="font-medium">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-layer-group w-8 text-pink-500"></i>
+                            <div>
+                                <p class="text-xs text-gray-400 uppercase">ชั้น</p>
+                                <p id="displayFloor" class="font-medium">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-phone-alt w-8 text-pink-500"></i>
+                            <div>
+                                <p class="text-xs text-gray-400 uppercase">เบอร์โทรศัพท์</p>
+                                <p id="displayPhone" class="font-medium">-</p>
+                            </div>
+                        </div>
+                        <div class="pt-2 no-print">
+                            <button onclick="window.print()" class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition flex items-center shadow-md">
+                                <i class="fas fa-print mr-2"></i> พิมพ์รายงานสรุป
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Section 3: Dynamic Content Area -->
-        <div id="tabContent" class="space-y-6"></div>
+        <!-- Toolbar -->
+        <div id="toolbar" class="hidden mb-4 flex flex-col md:flex-row gap-4 items-center justify-between no-print">
+            <div class="inline-flex p-1 bg-gray-200 rounded-xl">
+                <button onclick="switchTab('on-log')" id="tab-on-log" class="px-6 py-2 rounded-lg text-sm font-medium transition-all">ในระบบ</button>
+                <button onclick="switchTab('non-log')" id="tab-non-log" class="px-6 py-2 rounded-lg text-sm font-medium transition-all">นอกระบบ</button>
+            </div>
+            <div class="relative w-full md:w-72">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหา รหัส/ประเภท/รายละเอียด..." 
+                    class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 focus:outline-none text-sm transition-all shadow-sm">
+            </div>
+        </div>
+
+        <!-- Assets List -->
+        <div id="assetContainer" class="hidden space-y-4"></div>
+
+        <!-- No Data State -->
+        <div id="emptyState" class="hidden py-20 flex flex-col items-center justify-center text-gray-400">
+            <i class="fas fa-box-open text-6xl mb-4 opacity-20"></i>
+            <p>ไม่พบรายการครุภัณฑ์ในหน่วยงานนี้</p>
+        </div>
     </main>
 
     <script>
-        // API URL จาก Google Apps Script
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwbwGmL5Y1SEb9kykCQ1bOPj_2RHvd_IPl5pHHe3MH3r0OQ5souilUz7b-zHUWKyNHcsA/exec';
-        let currentData = null;
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwml8efHi7YGiLFgBPFJcdVqOFxqEFYvGd6lz-neZIXevaemNaYwXwsPlF91VqfeUlm/exec';
+        const DEFAULT_LOGO = 'https://img2.pic.in.th/-227e4f6f84f29f020.png';
+        
+        let rawData = { department: null, assetsOn: [], assetsNon: [] };
+        let activeTab = 'on-log';
+        const params = new URLSearchParams(window.location.search);
+        const depId = params.get('DEP_ID');
 
-        // แสดงวันที่ปัจจุบัน
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('th-TH', { 
-            year: 'numeric', month: 'long', day: 'numeric' 
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' 
         });
 
-        // ดึง DEP_ID จาก URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const depId = urlParams.get('DEP_ID');
-
-        window.onload = async () => {
-            if (depId) {
-                await fetchData();
-            } else {
-                document.getElementById('statusText').innerHTML = `
-                    <div class="bg-red-50 p-6 rounded-2xl border border-red-100 text-red-600">
-                        <i class="fas fa-exclamation-triangle mb-2 text-2xl"></i><br>
-                        <b>ไม่พบรหัสหน่วยงาน (DEP_ID) ใน URL</b><br>
-                        <span class="text-sm">กรุณาตรวจสอบลิงก์ ตัวอย่างเช่น: ?DEP_ID=101</span>
-                    </div>`;
+        window.onload = () => {
+            if (!depId) {
+                showError("กรุณาระบุรหัสหน่วยงานใน URL เช่น ?DEP_ID=101");
+                hideLoader();
+                return;
             }
+            init();
         };
 
-        async function fetchData() {
-            showLoader(true);
+        async function init() {
             try {
                 const response = await fetch(`${API_URL}?DEP_ID=${depId}&action=getFullData`);
-                if (!response.ok) throw new Error('Network response was not ok');
+                if (!response.ok) throw new Error("Network response was not ok");
                 
                 const data = await response.json();
                 
                 if (data.error) {
-                    document.getElementById('statusText').innerHTML = `
-                        <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100 text-orange-600">
-                            <i class="fas fa-database mb-2 text-2xl"></i><br>
-                            <b>ไม่พบข้อมูล:</b> ${data.error}
-                        </div>`;
-                    showLoader(false);
-                    return;
+                    showError("ระบบฐานข้อมูลแจ้งว่า: " + data.error);
+                    document.getElementById('emptyState').classList.remove('hidden');
+                } else {
+                    rawData = data;
+                    renderDepartment();
+                    document.getElementById('deptSection').classList.remove('hidden');
+                    document.getElementById('toolbar').classList.remove('hidden');
+                    document.getElementById('assetContainer').classList.remove('hidden');
+                    switchTab('on-log');
                 }
-
-                renderUI(data);
-                showLoader(false);
-            } catch (error) {
-                console.error('Fetch error:', error);
-                document.getElementById('statusText').innerHTML = `
-                    <div class="bg-red-50 p-6 rounded-2xl border border-red-100 text-red-600">
-                        <i class="fas fa-wifi mb-2 text-2xl"></i><br>
-                        <b>เกิดข้อผิดพลาดในการเชื่อมต่อ</b><br>
-                        <small>กรุณาลองใหม่อีกครั้ง หรือตรวจสอบ API URL</small>
-                    </div>`;
-                showLoader(false);
+            } catch (err) {
+                showError("ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
+            } finally {
+                hideLoader();
             }
         }
 
-        function renderUI(data) {
-            currentData = data;
-            const dept = data.department;
+        function renderDepartment() {
+            const d = rawData.department;
+            document.getElementById('displayDeptName').innerText = d.DEPNAME || 'ไม่ระบุชื่อหน่วยงาน';
+            document.getElementById('displayDeptId').innerText = `ID: ${d.DEP_ID}`;
+            document.getElementById('displayLocation').innerText = d.LOCATION_NAME || '-';
+            document.getElementById('displayFloor').innerText = d.FL || '-';
+            document.getElementById('displayPhone').innerText = d.Tell || '-';
+
+            if (d.Image_URL) {
+                document.getElementById('deptImageContainer').innerHTML = `<img src="${d.Image_URL}" class="w-full h-full object-cover">`;
+            }
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            const btnOn = document.getElementById('tab-on-log');
+            const btnNon = document.getElementById('tab-non-log');
             
-            document.getElementById('mainTabs').classList.remove('hidden');
+            if (tab === 'on-log') {
+                btnOn.className = "px-6 py-2 rounded-lg text-sm font-medium transition-all bg-white text-pink-700 shadow-sm";
+                btnNon.className = "px-6 py-2 rounded-lg text-sm font-medium transition-all text-gray-500 hover:text-gray-700";
+            } else {
+                btnNon.className = "px-6 py-2 rounded-lg text-sm font-medium transition-all bg-white text-pink-700 shadow-sm";
+                btnOn.className = "px-6 py-2 rounded-lg text-sm font-medium transition-all text-gray-500 hover:text-gray-700";
+            }
+            filterAssets();
+        }
+
+        function filterAssets() {
+            const list = activeTab === 'on-log' ? (rawData.assetsOn || []) : (rawData.assetsNon || []);
+            const query = document.getElementById('searchInput').value.toLowerCase();
             
-            // แสดงข้อมูลหน่วยงาน
-            document.getElementById('deptInfo').innerHTML = `
-                <div class="lg:col-span-1 bg-white p-6 rounded-3xl card-shadow border border-pink-50">
-                    <div class="flex flex-col items-center text-center">
-                        <div class="w-32 h-32 rounded-2xl overflow-hidden mb-4 border-4 border-pink-100 bg-gray-50 flex items-center justify-center">
-                            <img src="${dept.DEPT_PHO || ''}" class="w-full h-full object-cover" 
-                                 onerror="this.src='https://via.placeholder.com/150/ff758c/ffffff?text=${encodeURIComponent(dept.DEPNAME || 'DEPT')}'">
-                        </div>
-                        <h2 class="text-xl font-bold text-pink-600 mb-1">${dept.DEPNAME || 'ไม่ทราบชื่อ'}</h2>
-                        <span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-xs font-medium">ID: ${dept.DEP_ID}</span>
+            const filtered = list.filter(item => {
+                const id = String(item.AssetID || item.NOID || '').toLowerCase();
+                const type = String(item.Asset_Type || item.AssetType || '').toLowerCase();
+                const detail = String(item.Detail || '').toLowerCase();
+                return id.includes(query) || type.includes(query) || detail.includes(query);
+            });
+
+            renderAssetTable(filtered);
+        }
+
+        function renderAssetTable(data) {
+            const container = document.getElementById('assetContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-12 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400">
+                        <i class="fas fa-search mb-2 text-2xl"></i>
+                        <p>ไม่พบรายการครุภัณฑ์</p>
                     </div>
-                </div>
-                <div class="lg:col-span-2 bg-white p-6 rounded-3xl card-shadow border border-pink-50 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-3">
-                        <div class="flex items-center"><i class="fas fa-building w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">อาคาร:</span> <b>${dept.LOCATION_NAME || '-'}</b></div>
-                        <div class="flex items-center"><i class="fas fa-layer-group w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">ชั้น:</span> <b>${dept.FL || '-'}</b></div>
-                        <div class="flex items-center"><i class="fas fa-phone-alt w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">เบอร์โทร:</span> <b>${dept.Tell || '-'}</b></div>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center"><i class="fas fa-map-marker-alt w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">พิกัด GPS:</span> 
-                            ${dept.GPS ? `<a href="https://maps.google.com/?q=${dept.GPS}" target="_blank" class="text-blue-500 hover:text-blue-700 underline text-sm font-medium">${dept.GPS}</a>` : '<b>-</b>'}
-                        </div>
-                        <div class="flex items-center"><i class="fas fa-info-circle w-8 text-pink-400"></i> <span class="text-gray-500 mr-2">รหัสอ้างอิง:</span> <b>${dept.DEP_NAME_LOC || '-'}</b></div>
-                        <button onclick="window.print()" class="no-print mt-2 w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-xl transition shadow-md font-medium">
-                            <i class="fas fa-print mr-2"></i> พิมพ์ข้อมูล
-                        </button>
-                    </div>
-                </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="bg-white rounded-2xl card-shadow overflow-hidden border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-4 font-semibold">รหัสครุภัณฑ์</th>
+                                    <th class="px-6 py-4 font-semibold text-center">รูปภาพ</th>
+                                    <th class="px-6 py-4 font-semibold">รายละเอียด</th>
+                                    <th class="px-6 py-4 font-semibold text-center">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-sm">
             `;
 
-            switchTab('on-log');
-            document.getElementById('initialLoading').style.display = 'none';
-        }
+            data.forEach(item => {
+                const id = item.AssetID || item.NOID || '-';
+                const type = item.Asset_Type || item.AssetType || 'ไม่ระบุประเภท';
+                const detail = item.Detail || '';
+                const status = item.CoStatus || 'ปกติ';
+                const imgUrl = item.Image || null;
 
-        function switchTab(tabId) {
-            const btns = document.querySelectorAll('.tab-btn');
-            btns.forEach(b => {
-                b.classList.remove('text-pink-600', 'border-b-2', 'border-pink-500', 'bg-pink-50');
-                b.classList.add('text-gray-500');
-            });
-            
-            const activeBtn = document.getElementById(`tab-${tabId}`);
-            activeBtn.classList.add('text-pink-600', 'border-b-2', 'border-pink-500', 'bg-pink-50');
-            activeBtn.classList.remove('text-gray-500');
-
-            renderTabContent(tabId);
-        }
-
-        function renderTabContent(tabId) {
-            let html = "";
-            if (tabId === 'on-log') {
-                const list = currentData.assetsOn || [];
-                html = `
-                    <div class="bg-white rounded-3xl card-shadow overflow-hidden">
-                        <div class="pink-gradient p-4 text-white font-medium flex justify-between items-center">
-                            <span>รายการครุภัณฑ์ในระบบ (${list.length})</span>
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-pink-50 text-pink-600 border-b border-pink-100">
-                                    <tr>
-                                        <th class="p-4 text-sm font-semibold">รหัสครุภัณฑ์</th>
-                                        <th class="p-4 text-sm font-semibold">ประเภทอุปกรณ์</th>
-                                        <th class="p-4 text-sm font-semibold">ลำดับความสำคัญ</th>
-                                        <th class="p-4 text-sm font-semibold">สถานะการใช้งาน</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-pink-50">
-                                    ${list.length > 0 ? list.map(item => `
-                                        <tr class="hover:bg-pink-50/50 transition">
-                                            <td class="p-4 font-mono text-sm font-medium text-gray-700">${item.AssetID || '-'}</td>
-                                            <td class="p-4 text-sm">${item.Asset_Type || '-'}</td>
-                                            <td class="p-4">
-                                                <span class="bg-blue-100 text-blue-600 status-badge font-medium">
-                                                    ${item.PiorytyJobe || 'ปกติ'}
-                                                </span>
-                                            </td>
-                                            <td class="p-4">
-                                                <span class="bg-green-100 text-green-600 status-badge font-medium">
-                                                    <i class="fas fa-check-circle mr-1 text-[10px]"></i> ${item.CoStatus || 'พร้อมใช้งาน'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    `).join('') : '<tr><td colspan="4" class="p-10 text-center text-gray-400">ไม่พบรายการครุภัณฑ์</td></tr>'}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            } else if (tabId === 'non-log') {
-                const list = currentData.assetsNon || [];
-                html = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${list.length > 0 ? list.map(item => `
-                            <div class="bg-white p-5 rounded-2xl card-shadow border-l-4 border-pink-400 flex justify-between items-start">
-                                <div class="space-y-1">
-                                    <div class="text-[10px] uppercase tracking-wider font-bold text-pink-400">${item.AssetType || 'อุปกรณ์อื่น'}</div>
-                                    <div class="font-bold text-gray-800">${item.AssetID || item.NOID || 'N/A'}</div>
-                                    <div class="text-sm text-gray-500">${item.Detail || '-'}</div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="bg-green-100 text-green-600 status-badge font-medium">${item.CoStatus || 'ปกติ'}</span>
-                                </div>
+                html += `
+                    <tr class="hover:bg-pink-50/20 transition-colors">
+                        <td class="px-6 py-4 font-mono font-bold text-gray-700 whitespace-nowrap">${id}</td>
+                        <td class="px-6 py-4">
+                            <div class="w-14 h-14 rounded-lg bg-gray-50 mx-auto flex items-center justify-center overflow-hidden border border-gray-100">
+                                ${imgUrl ? `<img src="${imgUrl}" class="w-full h-full object-cover">` : `<img src="${DEFAULT_LOGO}" class="w-8 opacity-20 grayscale">`}
                             </div>
-                        `).join('') : '<div class="md:col-span-2 text-center py-10 text-gray-400 bg-white rounded-3xl card-shadow">ไม่มีรายการอุปกรณ์นอกระบบ</div>'}
-                    </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="font-medium text-gray-900">${type}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">${detail}</p>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status === 'ปกติ' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                                <span class="w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'ปกติ' ? 'bg-green-500' : 'bg-amber-500'}"></span>
+                                ${status}
+                            </span>
+                        </td>
+                    </tr>
                 `;
-            } else if (tabId === 'history') {
-                html = `
-                    <div class="bg-white p-12 rounded-3xl card-shadow text-center text-gray-400">
-                        <div class="bg-pink-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-tools text-pink-300 text-3xl"></i>
-                        </div>
-                        <h3 class="text-gray-600 font-bold text-lg">ประวัติรับบริการ</h3>
-                        <p class="mt-2">กำลังเชื่อมต่อฐานข้อมูลประวัติซ่อมและบำรุงรักษา...</p>
-                    </div>
-                `;
-            } else {
-                html = `
-                    <div class="bg-white p-12 rounded-3xl card-shadow text-center">
-                        <i class="fas fa-folder-open fa-3x mb-4 text-pink-200"></i>
-                        <h3 class="text-gray-600 font-bold mb-4">คลังไฟล์และดาวน์โหลด</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
-                            <button class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-pink-50 transition text-left group">
-                                <i class="far fa-file-pdf text-red-400 text-2xl mr-3 group-hover:scale-110 transition"></i>
-                                <span>แบบฟอร์มขอติดตั้งครุภัณฑ์</span>
-                            </button>
-                            <button class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-pink-50 transition text-left group">
-                                <i class="far fa-file-excel text-green-500 text-2xl mr-3 group-hover:scale-110 transition"></i>
-                                <span>ทะเบียนรายการอุปกรณ์ (.xlsx)</span>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-            document.getElementById('tabContent').innerHTML = html;
+            });
+
+            html += `</tbody></table></div></div>`;
+            container.innerHTML = html;
         }
 
-        function showLoader(show) {
-            const modal = document.getElementById('loaderModal');
-            if (show) {
-                modal.classList.remove('hidden');
-            } else {
-                modal.classList.add('hidden');
-            }
+        function hideLoader() {
+            const loader = document.getElementById('loaderModal');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.classList.add('hidden'), 300);
+        }
+
+        function showError(msg) {
+            const errDiv = document.getElementById('errorMessage');
+            document.getElementById('errorText').innerText = msg;
+            errDiv.classList.remove('hidden');
         }
     </script>
 </body>
