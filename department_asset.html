@@ -120,7 +120,7 @@
                             </div>
                         </div>
                         <div class="pt-2 no-print">
-                            <button onclick="window.print()" class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition flex items-center shadow-md">
+                            <button onclick="window.print()" class="px-4 py-2 bg-pink-700 text-white rounded-lg text-sm hover:bg-pink-800 transition flex items-center shadow-md">
                                 <i class="fas fa-print mr-2"></i> พิมพ์รายงานสรุปทั้งหมด
                             </button>
                         </div>
@@ -129,23 +129,13 @@
             </div>
         </div>
 
-        <!-- สรุปสถิติ (Tabs Summary) -->
-        <div id="statSummary" class="hidden mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
-            <div class="bg-white p-4 rounded-xl border border-gray-100 card-shadow">
-                <p class="text-xs text-gray-400 uppercase">ในระบบ</p>
-                <p id="countOn" class="text-2xl font-bold text-pink-600">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-gray-100 card-shadow">
-                <p class="text-xs text-gray-400 uppercase">นอกระบบ</p>
-                <p id="countNon" class="text-2xl font-bold text-blue-600">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-gray-100 card-shadow">
-                <p class="text-xs text-gray-400 uppercase">ปกติ</p>
-                <p id="countNormal" class="text-2xl font-bold text-green-600">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-gray-100 card-shadow">
-                <p class="text-xs text-gray-400 uppercase">ชำรุด/รอจำหน่าย</p>
-                <p id="countBroken" class="text-2xl font-bold text-amber-600">0</p>
+        <!-- สรุปสถิติภาพรวม (Main Summary) -->
+        <div id="statSummary" class="hidden mb-8 no-print">
+            <h3 class="text-lg font-bold mb-4 text-gray-700 flex items-center">
+                <i class="fas fa-chart-pie mr-2 text-pink-600"></i> สรุปจำนวนครุภัณฑ์ทั้งหมด
+            </h3>
+            <div id="summaryCardsContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <!-- ข้อมูลสรุปรายประเภทจะถูกเติมที่นี่ -->
             </div>
         </div>
 
@@ -178,7 +168,6 @@
     </main>
 
     <script>
-        // API URL จาก Web App ที่ใช้งาน
         const API_URL = 'https://script.google.com/macros/s/AKfycbxiOY15Idt7KJgQQn60_MAtVJmAICWT2wvNLS3C4h_SI7uaFD23Z6mzSp8nSrBd4TGVNA/exec';
         const DEFAULT_LOGO = 'https://img2.pic.in.th/-227e4f6f84f29f020.png';
         
@@ -210,7 +199,7 @@
                 } else {
                     rawData = data;
                     renderDepartment();
-                    updateStats();
+                    renderSummary();
                     document.getElementById('deptSection').classList.remove('hidden');
                     document.getElementById('statSummary').classList.remove('hidden');
                     document.getElementById('toolbar').classList.remove('hidden');
@@ -239,18 +228,34 @@
             }
         }
 
-        function updateStats() {
-            const onLen = (rawData.assetsOn || []).length;
-            const nonLen = (rawData.assetsNon || []).length;
+        function renderSummary() {
             const allAssets = [...(rawData.assetsOn || []), ...(rawData.assetsNon || [])];
+            const summary = {};
             
-            const normalCount = allAssets.filter(a => (a.CoStatus || 'ปกติ') === 'ปกติ').length;
-            const brokenCount = allAssets.length - normalCount;
+            // นับจำนวนแยกตามประเภท
+            allAssets.forEach(item => {
+                const type = item.Asset_Type || item.AssetType || 'อื่นๆ';
+                summary[type] = (summary[type] || 0) + 1;
+            });
 
-            document.getElementById('countOn').innerText = onLen;
-            document.getElementById('countNon').innerText = nonLen;
-            document.getElementById('countNormal').innerText = normalCount;
-            document.getElementById('countBroken').innerText = brokenCount;
+            const container = document.getElementById('summaryCardsContainer');
+            let html = `
+                <div class="bg-pink-50 p-4 rounded-xl border border-pink-100 card-shadow flex flex-col justify-center items-center">
+                    <p class="text-[10px] text-pink-500 uppercase font-bold tracking-wider mb-1">รวมทั้งหมด</p>
+                    <p class="text-3xl font-black text-pink-700">${allAssets.length}</p>
+                </div>
+            `;
+
+            Object.entries(summary).sort((a,b) => b[1] - a[1]).forEach(([type, count]) => {
+                html += `
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 card-shadow text-center">
+                        <p class="text-[10px] text-gray-400 uppercase font-medium mb-1 truncate px-1" title="${type}">${type}</p>
+                        <p class="text-2xl font-bold text-gray-800">${count}</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
         function switchTab(tab) {
@@ -345,11 +350,18 @@
             container.innerHTML = html;
         }
 
-        // ฟังก์ชันเตรียมเนื้อหาสำหรับการพิมพ์รายงาน
         function preparePrintContent() {
             const printContainer = document.getElementById('printContainer');
             const d = rawData.department;
+            const allAssets = [...(rawData.assetsOn || []), ...(rawData.assetsNon || [])];
             
+            // คำนวณสรุปรายประเภท
+            const typeSummary = {};
+            allAssets.forEach(item => {
+                const type = item.Asset_Type || item.AssetType || 'อื่นๆ';
+                typeSummary[type] = (typeSummary[type] || 0) + 1;
+            });
+
             let html = `
                 <div class="text-center mb-8 border-b-2 border-pink-600 pb-4">
                     <h1 class="text-2xl font-bold">รายงานสรุปข้อมูลครุภัณฑ์คอมพิวเตอร์</h1>
@@ -357,32 +369,58 @@
                     <p class="text-sm text-gray-500">พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-8 mb-8">
-                    <div>
-                        <h4 class="font-bold border-b mb-2">ข้อมูลหน่วยงาน</h4>
-                        <p><b>สถานที่ตั้ง:</b> ${d.LOCATION_NAME || '-'}</p>
-                        <p><b>ชั้น:</b> ${d.FL || '-'}</p>
-                        <p><b>เบอร์โทรศัพท์:</b> ${d.Tell || '-'}</p>
+                <!-- สรุปสถิติด้านบนของหน้าพิมพ์ -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-bold mb-3 text-pink-700 border-b-2 border-pink-100 pb-1">สรุปข้อมูลภาพรวม (Executive Summary)</h3>
+                    <div class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="border p-3 text-center rounded-lg bg-gray-50">
+                            <p class="text-xs text-gray-500">ในระบบ (Asset_On)</p>
+                            <p class="text-xl font-bold">${rawData.assetsOn.length}</p>
+                        </div>
+                        <div class="border p-3 text-center rounded-lg bg-gray-50">
+                            <p class="text-xs text-gray-500">นอกระบบ (Non-Number)</p>
+                            <p class="text-xl font-bold">${rawData.assetsNon.length}</p>
+                        </div>
+                        <div class="border p-3 text-center rounded-lg bg-pink-50 border-pink-200">
+                            <p class="text-xs text-pink-600 font-bold">รวมทั้งหมด</p>
+                            <p class="text-xl font-black text-pink-700">${allAssets.length}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h4 class="font-bold border-b mb-2 text-pink-700">สรุปจำนวน (Summary)</h4>
-                        <table class="w-full text-sm">
-                            <tr><td>รายการในระบบ (Asset_On):</td><td class="text-right font-bold">${rawData.assetsOn.length}</td></tr>
-                            <tr><td>รายการนอกระบบ (Non-Number):</td><td class="text-right font-bold">${rawData.assetsNon.length}</td></tr>
-                            <tr class="border-t"><td><b>รวมทั้งหมด:</b></td><td class="text-right font-bold text-lg text-pink-600">${rawData.assetsOn.length + rawData.assetsNon.length}</td></tr>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <table class="w-full text-xs border border-gray-200">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="p-2 border text-left">ประเภทครุภัณฑ์</th>
+                                    <th class="p-2 border text-center w-20">จำนวน</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(typeSummary).sort((a,b) => b[1] - a[1]).map(([type, count]) => `
+                                    <tr>
+                                        <td class="p-2 border">${type}</td>
+                                        <td class="p-2 border text-center font-bold">${count}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
                         </table>
+                        <div class="p-4 border rounded-lg flex flex-col justify-center">
+                            <p class="text-sm"><b>ข้อมูลหน่วยงาน:</b></p>
+                            <p class="text-xs mt-1">ตั้งอยู่ที่: ${d.LOCATION_NAME || '-'}</p>
+                            <p class="text-xs">ชั้น: ${d.FL || '-'}</p>
+                            <p class="text-xs">เบอร์โทรศัพท์: ${d.Tell || '-'}</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Section: Asset_On -->
+                <!-- Section: รวมข้อมูลรายการครุภัณฑ์ทั้งหมด -->
                 <div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-3 bg-gray-100 p-2 rounded">1. รายการครุภัณฑ์ในระบบ (Asset_On_Log)</h3>
+                    <h3 class="text-lg font-bold text-gray-800 mb-3 bg-gray-100 p-2 rounded">รายละเอียดรายการครุภัณฑ์ทั้งหมด</h3>
+                    
+                    <h4 class="text-md font-bold text-pink-600 mb-2 mt-4">1. รายการในระบบ (Asset_On_Log)</h4>
                     ${renderPrintTable(rawData.assetsOn)}
-                </div>
 
-                <!-- Section: Asset_Non -->
-                <div class="page-break pt-8">
-                    <h3 class="text-xl font-bold text-gray-800 mb-3 bg-gray-100 p-2 rounded">2. รายการครุภัณฑ์นอกระบบ (Asset_On_Nonumber_Log)</h3>
+                    <h4 class="text-md font-bold text-blue-600 mb-2 mt-6">2. รายการนอกระบบ (Non-Number)</h4>
                     ${renderPrintTable(rawData.assetsNon)}
                 </div>
 
@@ -402,16 +440,16 @@
         }
 
         function renderPrintTable(data) {
-            if (!data || data.length === 0) return '<p class="text-gray-400 italic">--- ไม่พบข้อมูล ---</p>';
+            if (!data || data.length === 0) return '<p class="text-gray-400 italic text-xs mb-4">--- ไม่พบข้อมูลในหมวดนี้ ---</p>';
             
             let table = `
-                <table class="w-full text-xs border-collapse border border-gray-300">
+                <table class="w-full text-[10px] border-collapse border border-gray-300 mb-4">
                     <thead>
                         <tr class="bg-gray-50">
-                            <th class="border border-gray-300 p-2 text-left w-32">รหัส</th>
-                            <th class="border border-gray-300 p-2 text-left">ประเภท</th>
-                            <th class="border border-gray-300 p-2 text-left">รายละเอียด</th>
-                            <th class="border border-gray-300 p-2 text-center w-20">สถานะ</th>
+                            <th class="border border-gray-300 p-1.5 text-left w-32">รหัส</th>
+                            <th class="border border-gray-300 p-1.5 text-left">ประเภท</th>
+                            <th class="border border-gray-300 p-1.5 text-left">รายละเอียด</th>
+                            <th class="border border-gray-300 p-1.5 text-center w-16">สถานะ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -420,10 +458,10 @@
             data.forEach(item => {
                 table += `
                     <tr>
-                        <td class="border border-gray-300 p-2 font-mono">${item.AssetID || item.NOID || '-'}</td>
-                        <td class="border border-gray-300 p-2 font-bold">${item.Asset_Type || item.AssetType || '-'}</td>
-                        <td class="border border-gray-300 p-2">${item.Detail || '-'}</td>
-                        <td class="border border-gray-300 p-2 text-center">${item.CoStatus || 'ปกติ'}</td>
+                        <td class="border border-gray-300 p-1.5 font-mono">${item.AssetID || item.NOID || '-'}</td>
+                        <td class="border border-gray-300 p-1.5 font-bold">${item.Asset_Type || item.AssetType || '-'}</td>
+                        <td class="border border-gray-300 p-1.5">${item.Detail || '-'}</td>
+                        <td class="border border-gray-300 p-1.5 text-center">${item.CoStatus || 'ปกติ'}</td>
                     </tr>
                 `;
             });
