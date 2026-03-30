@@ -822,64 +822,82 @@
         }
 
       async function submitFinalSurvey(isDraft = false) {
-                const name = document.getElementById('signer-name').value.trim();
-                if (!isDraft && !name) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อผู้รับรอง', 'warning');
+            const name = document.getElementById('signer-name').value.trim();
+            if (!isDraft && !name) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อผู้รับรอง', 'warning');
+            
+            showLoading(true);
+            const signature = isDraft ? null : document.getElementById('signature-pad').toDataURL();
+        
+            // รวมข้อมูลทั้งหมดไว้ใน payload เดียว
+            const payload = {
+                action: 'saveSurvey',
+                data: {
+                    deptId: selectedDept.DEP_ID || selectedDept.DEPT_ID,
+                    deptName: selectedDept.DEPNAME || selectedDept.DEPT_NAME,
+                    jobeSystem: selectedDept.JOBE_SYSTEMP || "", // ส่งค่า Back Office / Medical Service
+                    userEmail: "khanitbonroum1@gmail.com",      // อีเมลผู้บันทึก
+                    approverName: name || "Draft",
+                    signature: signature,
+                    isDraft: isDraft,
+                    gps: userGps,
+                    
+                    // 1. รายการในทะเบียน (Existing Assets)
+                    assetsOnLog: surveyAssets.filter(a => !a.isNonNumber).map(a => ({ 
+                        noid: a.noid || a.NO_ID || "",
+                        assetId: a.AssetID, 
+                        priority: a.surveyPriority, 
+                        type: a.surveyType, 
+                        shiftWork: a.surveyShift, 
+                        isPace: a.isPace, 
+                        newPhoto: a.newImageData 
+                    })),
+        
+                    // 2. รายการนอกทะเบียน (Non-registry Assets)
+                    assetsNonLog: surveyAssets.filter(a => a.isNonNumber).map(a => ({
+                        assetId: a.AssetID,
+                        serial: a.serial || "",
+                        brand: a.brand || "",
+                        detail: a.detail || "",
+                        dateIn: a.dateIn || "",
+                        priority: a.surveyPriority,
+                        type: a.surveyType,
+                        shiftWork: a.surveyShift, // ส่งค่า "เช้า/บ่าย"
+                        isPace: a.isPace,
+                        newPhoto: a.newImageData
+                    }))
+                }
+            };
+        
+            try {
+                const resp = await fetch(API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload) 
+                });
+                const result = await resp.json();
                 
-                showLoading(true);
-                const signature = isDraft ? null : document.getElementById('signature-pad').toDataURL();
-            
-                const payload = {
-                    action: 'saveSurvey',
-                    data: {
-                        deptId: selectedDept.DEP_ID || selectedDept.DEPT_ID,
-                        deptName: selectedDept.DEPNAME || selectedDept.DEPT_NAME,
-                        approverName: name || "Draft",
-                        signature: signature,
-                        isDraft: isDraft,
-                        gps: userGps,
-                        
-                        // 1. แก้ไขส่วนรายการในทะเบียน (เพิ่ม noid)
-                        assetsOnLog: surveyAssets.filter(a => !a.isNonNumber).map(a => ({ 
-                            noid: a.noid || a.NO_ID || "", // ดึงค่าลำดับจากฐานข้อมูล
-                            assetId: a.AssetID, 
-                            name: a['ชื่อรายการครุภัณฑ์'], 
-                            priority: a.surveyPriority, 
-                            type: a.surveyType, 
-                            shiftWork: a.surveyShift, 
-                            isPace: a.isPace, 
-                            newPhoto: a.newImageData 
-                        })),
-            
-                        // 2. แก้ไขส่วนรายการนอกทะเบียน (เพิ่ม serial, brand, detail, dateIn)
-                        assetsNonLog: surveyAssets.filter(a => a.isNonNumber).map(a => ({ 
-                            assetId: a.AssetID, 
-                            name: a['ชื่อรายการครุภัณฑ์'], 
-                            serial: a.serial || "",    // เพิ่ม Serial
-                            brand: a.brand || "",      // เพิ่ม ยี่ห้อ
-                            detail: a.detail || "",    // เพิ่ม รายละเอียด
-                            dateIn: a.dateIn || "",    // เพิ่ม วันที่รับเข้า
-                            priority: a.surveyPriority, 
-                            type: a.surveyType, 
-                            shiftWork: a.surveyShift, 
-                            isPace: a.isPace, 
-                            newPhoto: a.newImageData 
-                        }))
-                    }
-                };
-            
-                try {
-                    const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                    const result = await resp.json();
-                    if (result.success) {
-                        document.getElementById('modal-confirm').classList.add('hidden');
-                        document.getElementById('step-survey').classList.add('hidden');
-                        document.getElementById('step-result').classList.remove('hidden');
-                        document.getElementById('res-act-no').textContent = result.actNo;
-                        new QRCode(document.getElementById('qrcode-result'), { text: result.actNo, width: 120, height: 120 });
-                    } else { throw new Error(result.error); }
-                } catch (e) { Swal.fire('Error', e.message, 'error'); }
+                if (result.success) {
+                    document.getElementById('modal-confirm').classList.add('hidden');
+                    document.getElementById('step-survey').classList.add('hidden');
+                    document.getElementById('step-result').classList.remove('hidden');
+                    document.getElementById('res-act-no').textContent = result.actNo;
+                    
+                    // สร้าง QR Code จากเลขที่ใบงาน
+                    const qrContainer = document.getElementById('qrcode-result');
+                    qrContainer.innerHTML = ""; // ล้างค่าเก่าก่อนสร้างใหม่
+                    new QRCode(qrContainer, { 
+                        text: result.actNo, 
+                        width: 120, 
+                        height: 120 
+                    });
+                } else { 
+                    throw new Error(result.error); 
+                }
+            } catch (e) { 
+                Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + e.message, 'error'); 
+            } finally {
                 showLoading(false);
-            }      
+            }
+        }
         function closeModal(id) { 
             document.getElementById(id).classList.add('hidden'); 
             
