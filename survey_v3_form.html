@@ -913,7 +913,7 @@
                     
                     // 1. รายการในทะเบียน (Existing Assets)
                     assetsOnLog: surveyAssets.filter(a => !a.isNonNumber).map(a => ({ 
-                        noid: a.noid || a.NO_ID || "",
+                        noid: a.noid || a.NOID || a.NO_ID || "",
                         assetId: a.AssetID, 
                         priority: a.surveyPriority, 
                         type: a.surveyType, 
