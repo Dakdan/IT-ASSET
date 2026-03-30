@@ -649,23 +649,39 @@
 
         function openAssetDetailForm(asset) {
             currentEditingAsset = asset;
+            
+            // 1. จัดการแสดงผลโหมด นอกทะเบียน/ในทะเบียน
             document.getElementById('non-number-fields').classList.toggle('hidden', !isNonNumberMode);
             document.getElementById('regular-asset-header').classList.toggle('hidden', isNonNumberMode);
             document.getElementById('detail-modal-title').textContent = isNonNumberMode ? "เพิ่มครุภัณฑ์นอกทะเบียน" : "รายละเอียดครุภัณฑ์";
             
+            // 2. เคลียร์ค่า Input ทุกครั้งที่เปิด (สำคัญมาก!)
+            document.getElementById('field-asset-id-input').value = ""; // ล้าง ID นอกทะเบียน
+            document.getElementById('field-serial-input').value = "";   // ล้าง Serial
+            document.getElementById('field-priority').value = "";       // ล้างลำดับความสำคัญ
+            document.getElementById('field-is-pace').checked = false;   // ล้างติ๊ก Pace
+            document.querySelectorAll('input[name="shift-work"]').forEach(cb => cb.checked = false); // ล้างกะ
+            
+            // 3. แสดงข้อมูลพื้นฐาน
             if (!isNonNumberMode) {
-                document.getElementById('detail-asset-id').textContent = asset.AssetID;
+                document.getElementById('detail-asset-id').textContent = asset.AssetID || '-';
                 document.getElementById('name-container-readonly').textContent = asset['ชื่อรายการครุภัณฑ์'] || '-';
+                
+                // ถ้าในฐานข้อมูลมีหมวดหมู่อยู่แล้ว ให้เลือกให้อัตโนมัติ
+                const typeSelect = document.getElementById('field-asset-type');
+                const existingType = asset['หมวดครุภัณฑ์'];
+                typeSelect.value = (existingType && assetTypes.includes(existingType)) ? existingType : "";
+            } else {
+                // ถ้าเป็นนอกทะเบียน ให้ล้างตัวเลือกหมวดหมู่เป็นค่าว่าง
+                document.getElementById('field-asset-type').value = "";
             }
-
-            document.getElementById('field-asset-type').value = (asset['หมวดครุภัณฑ์'] && assetTypes.includes(asset['หมวดครุภัณฑ์'])) ? asset['หมวดครุภัณฑ์'] : "";
-            document.querySelectorAll('input[name="shift-work"]').forEach(cb => cb.checked = false);
-            document.getElementById('field-priority').value = "";
-            document.getElementById('field-is-pace').checked = false;
+        
+            // 4. ล้างรูปภาพที่เคยเลือกค้างไว้
             removeSelectedImage();
+            
+            // 5. แสดง Modal
             document.getElementById('modal-asset-detail').classList.remove('hidden');
         }
-
         function handleImageSelect(event) {
             const file = event.target.files[0];
             if (file) {
