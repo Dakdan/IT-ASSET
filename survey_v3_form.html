@@ -684,12 +684,17 @@
             document.getElementById('field-serial-input').value = "";   // ล้าง Serial
             document.getElementById('field-priority').value = "";       // ล้างลำดับความสำคัญ
             document.getElementById('field-is-pace').checked = false;   // ล้างติ๊ก Pace
-            document.querySelectorAll('input[name="shift-work"]').forEach(cb => cb.checked = false); // ล้างกะ
+            document.querySelectorAll('input[name="shift-work"]').forEach(cb => cb.checked = false);
+            // เพิ่มบรรทัดเหล่านี้ในฟังก์ชัน openAssetDetailForm ที่เราคุยกันก่อนหน้า
+            document.getElementById('field-brand-input').value = "";
+            document.getElementById('field-detail-input').value = "";
+            document.getElementById('field-date-in').value = "";// ล้างกะ
             
             // 3. แสดงข้อมูลพื้นฐาน
             if (!isNonNumberMode) {
                 document.getElementById('detail-asset-id').textContent = asset.AssetID || '-';
                 document.getElementById('name-container-readonly').textContent = asset['ชื่อรายการครุภัณฑ์'] || '-';
+                
                 
                 // ถ้าในฐานข้อมูลมีหมวดหมู่อยู่แล้ว ให้เลือกให้อัตโนมัติ
                 const typeSelect = document.getElementById('field-asset-type');
