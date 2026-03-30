@@ -731,33 +731,40 @@
         }
 
         function confirmAddAsset() {
-            const type = document.getElementById('field-asset-type').value;
-            const priority = document.getElementById('field-priority').value;
-            const shifts = Array.from(document.querySelectorAll('input[name="shift-work"]:checked')).map(cb => cb.value);
-            if (!type || shifts.length === 0 || !priority) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
-
-            const item = { ...currentEditingAsset, surveyType: type, surveyPriority: priority, surveyShift: shifts.join(','), isPace: document.getElementById('field-is-pace').checked, newImageData: selectedAssetImageData, isNonNumber: isNonNumberMode };
-            if (isNonNumberMode) {
-                item.AssetID = document.getElementById('field-asset-id-input').value || "นอกทะเบียน";
-                item['ชื่อรายการครุภัณฑ์'] = type;
-                item.serial = document.getElementById('field-serial-input').value;
+                const type = document.getElementById('field-asset-type').value;
+                const priority = document.getElementById('field-priority').value;
+                const shifts = Array.from(document.querySelectorAll('input[name="shift-work"]:checked')).map(cb => cb.value);
+                
+                if (!type || shifts.length === 0 || !priority) {
+                    return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+                }
+            
+                // สร้าง Object พื้นฐาน
+                const item = { 
+                    ...currentEditingAsset, 
+                    surveyType: type, 
+                    surveyPriority: priority, 
+                    surveyShift: shifts.join(','), 
+                    isPace: document.getElementById('field-is-pace').checked, 
+                    newImageData: selectedAssetImageData, 
+                    isNonNumber: isNonNumberMode 
+                };
+            
+                // ถ้าเป็นนอกทะเบียน ให้ดึงค่าจากฟิลด์เพิ่มเติมด้วย
+                if (isNonNumberMode) {
+                    item.AssetID = document.getElementById('field-asset-id-input').value || "นอกทะเบียน";
+                    item['ชื่อรายการครุภัณฑ์'] = type; // ใช้หมวดหมู่เป็นชื่อรายการเบื้องต้น
+                    item.serial = document.getElementById('field-serial-input').value;
+                    item.brand = document.getElementById('field-brand-input').value;
+                    item.detail = document.getElementById('field-detail-input').value;
+                    item.dateIn = document.getElementById('field-date-in').value;
+                }
+            
+                surveyAssets.push(item);
+                renderSurveyList();
+                closeModal('modal-asset-detail');
+                closeModal('modal-search');
             }
-            surveyAssets.push(item);
-            renderSurveyList();
-            closeModal('modal-asset-detail');
-            closeModal('modal-search');
-        }
-
-        function renderSurveyList() {
-            const tbody = document.getElementById('survey-list');
-            tbody.innerHTML = '';
-            document.getElementById('empty-list-msg').classList.toggle('hidden', surveyAssets.length > 0);
-            surveyAssets.forEach((a, i) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="py-4"><div class="font-mono font-bold">${a.AssetID}</div><div class="text-[10px] text-gray-400">${a['ชื่อรายการครุภัณฑ์']}</div></td><td class="text-center">${a.newImageData ? '📷' : '🖼️'}</td><td class="py-4"><span class="text-[10px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full">${a.surveyType}</span></td><td class="text-right"><button onclick="removeAsset(${i})" class="text-red-300">✕</button></td>`;
-                tbody.appendChild(tr);
-            });
-        }
 
         function removeAsset(i) { surveyAssets.splice(i, 1); renderSurveyList(); }
 
