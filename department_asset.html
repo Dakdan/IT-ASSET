@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - โรงพยาบาลอุดรธานี</title>
+    <title>ครุภัณฑ์คอมพิวเตอร์ - โรงพยาบาลอุดรธานี</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -103,7 +103,7 @@
     <main class="container mx-auto px-4 mt-8">
         
         <!-- Stats Dashboard -->
-        <div id="statsDashboard" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 no-print">
+        <div id="statsDashboard" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 no-print">
             <div class="soft-card p-4 flex items-center gap-4">
                 <div class="w-12 h-12 bg-pink-50 rounded-xl flex items-center justify-center text-pink-600">
                     <i class="fas fa-laptop text-xl"></i>
@@ -122,22 +122,13 @@
                     <h3 id="statNonCount" class="text-2xl font-bold text-blue-700">0</h3>
                 </div>
             </div>
-            <div class="soft-card p-4 flex items-center gap-4">
-                <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
-                    <i class="fas fa-check-circle text-xl"></i>
+            <div class="soft-card p-4 flex items-center gap-4 bg-gradient-to-br from-pink-50 to-white border-pink-200">
+                <div class="w-12 h-12 bg-pink-600 rounded-xl flex items-center justify-center text-white">
+                    <i class="fas fa-list-check text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">ปกติ</p>
-                    <h3 id="statNormalCount" class="text-2xl font-bold text-green-700">0</h3>
-                </div>
-            </div>
-            <div class="soft-card p-4 flex items-center gap-4">
-                <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600">
-                    <i class="fas fa-tools text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs text-gray-500">ชำรุด/รอจำหน่าย</p>
-                    <h3 id="statBrokenCount" class="text-2xl font-bold text-orange-700">0</h3>
+                    <p class="text-xs text-pink-600 font-bold">รวมทั้งสิ้น</p>
+                    <h3 id="statTotalCount" class="text-2xl font-bold text-gray-800">0</h3>
                 </div>
             </div>
         </div>
@@ -158,10 +149,16 @@
                             <h2 id="deptName" class="text-2xl font-bold text-gray-800 mt-2">กำลังโหลดข้อมูล...</h2>
                             <p id="deptId" class="text-pink-500 font-mono text-sm"></p>
                         </div>
-                        <!-- Main Print Button -->
-                        <button id="mainPrintBtn" onclick="handlePrint()" class="btn-pink text-white px-8 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:scale-105 active:scale-95 transition-all">
-                            <i class="fas fa-print mr-2"></i> พิมพ์รายงานสรุป
-                        </button>
+                        <div class="flex gap-2">
+                            <!-- Export Button -->
+                            <button onclick="exportToCSV()" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:bg-emerald-700 transition-all">
+                                <i class="fas fa-file-excel mr-2"></i> Export Excel
+                            </button>
+                            <!-- Main Print Button -->
+                            <button id="mainPrintBtn" onclick="handlePrint()" class="btn-pink text-white px-8 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:scale-105 active:scale-95 transition-all">
+                                <i class="fas fa-print mr-2"></i> พิมพ์รายงานสรุป
+                            </button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 border-t border-gray-50 pt-6">
                         <div class="flex items-center gap-3 text-gray-600">
@@ -243,7 +240,7 @@
             </div>
 
             <!-- Print Summary -->
-            <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-3 gap-4 mb-6">
                 <div class="print-summary-box">
                     <p class="text-[10px] uppercase text-gray-500">ในระบบ</p>
                     <p class="text-xl font-bold" id="printOnCount">0</p>
@@ -252,13 +249,9 @@
                     <p class="text-[10px] uppercase text-gray-500">นอกระบบ</p>
                     <p class="text-xl font-bold" id="printNonCount">0</p>
                 </div>
-                <div class="print-summary-box">
-                    <p class="text-[10px] uppercase text-gray-500">ปกติ</p>
-                    <p class="text-xl font-bold text-green-700" id="printNormalCount">0</p>
-                </div>
-                <div class="print-summary-box">
-                    <p class="text-[10px] uppercase text-gray-500">ชำรุด/รอจำหน่าย</p>
-                    <p class="text-xl font-bold text-orange-700" id="printBrokenCount">0</p>
+                <div class="print-summary-box border-2 border-pink-700 bg-pink-50">
+                    <p class="text-[10px] uppercase text-pink-700 font-bold">รวมทั้งหมด</p>
+                    <p class="text-xl font-black text-pink-800" id="printTotalCount">0</p>
                 </div>
             </div>
 
@@ -335,14 +328,10 @@
             // คำนวณสถิติ
             const onLen = rawData.assetsOn.length;
             const nonLen = rawData.assetsNon.length;
-            const allAssets = [...rawData.assetsOn, ...rawData.assetsNon];
-            const normalCount = allAssets.filter(i => (i.CoStatus || '').includes('ปกติ')).length;
-            const brokenCount = allAssets.length - normalCount;
 
             document.getElementById('statOnCount').innerText = onLen;
             document.getElementById('statNonCount').innerText = nonLen;
-            document.getElementById('statNormalCount').innerText = normalCount;
-            document.getElementById('statBrokenCount').innerText = brokenCount;
+            document.getElementById('statTotalCount').innerText = onLen + nonLen;
 
             switchTab('on');
         }
@@ -416,10 +405,7 @@
                 return;
             }
 
-            // แสดงหน้าโหลดเพื่อเตรียมข้อมูล
             showModal();
-            
-            // ใช้ setTimeout เพื่อให้ UI ทันได้ Render ข้อมูลก่อนพิมพ์
             setTimeout(() => {
                 const d = rawData.department;
                 document.getElementById('printDeptName').innerText = d.DEPNAME || '-';
@@ -427,24 +413,49 @@
                 
                 const onLen = rawData.assetsOn.length;
                 const nonLen = rawData.assetsNon.length;
-                const allAssets = [...rawData.assetsOn, ...rawData.assetsNon];
-                const normalCount = allAssets.filter(i => (i.CoStatus || '').includes('ปกติ')).length;
-                const brokenCount = allAssets.length - normalCount;
 
                 document.getElementById('printOnCount').innerText = onLen;
                 document.getElementById('printNonCount').innerText = nonLen;
-                document.getElementById('printNormalCount').innerText = normalCount;
-                document.getElementById('printBrokenCount').innerText = brokenCount;
+                document.getElementById('printTotalCount').innerText = onLen + nonLen;
 
                 document.getElementById('printOnTable').innerHTML = buildPrintTable(rawData.assetsOn);
                 document.getElementById('printNonTable').innerHTML = buildPrintTable(rawData.assetsNon);
                 
-                // *** สำคัญ: ต้องซ่อน Loader ก่อนเรียกคำสั่งพิมพ์ มิเช่นนั้นหน้าพิมพ์จะค้างที่รูป Loader ***
                 hideModal();
-                
-                // เรียกพิมพ์
                 window.print();
             }, 800);
+        }
+
+        function exportToCSV() {
+            if (rawData.assetsOn.length === 0 && rawData.assetsNon.length === 0) {
+                alert("ไม่มีข้อมูลสำหรับส่งออก");
+                return;
+            }
+
+            const department = rawData.department.DEPNAME || "Unknown";
+            const date = new Date().toLocaleDateString('th-TH').replace(/\//g, '-');
+            let csvContent = "\uFEFF"; // Add BOM for Thai characters in Excel
+            csvContent += "ประเภทครุภัณฑ์,รหัสครุภัณฑ์,ประเภท,รายละเอียด,สถานะ\n";
+
+            // Add Assets On
+            rawData.assetsOn.forEach(item => {
+                csvContent += `ในระบบ,"${item.AssetID || ''}","${item.Asset_Type || ''}","${(item.Detail || '').replace(/"/g, '""')}","${item.CoStatus || 'ปกติ'}"\n`;
+            });
+
+            // Add Assets Non
+            rawData.assetsNon.forEach(item => {
+                csvContent += `นอกระบบ,"${item.NOID || ''}","${item.AssetType || ''}","${(item.Detail || '').replace(/"/g, '""')}","${item.CoStatus || 'ปกติ'}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `ครุภัณฑ์_${department}_${date}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function buildPrintTable(data) {
