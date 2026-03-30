@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ครุภัณฑ์คอมพิวเตอร์ - โรงพยาบาลอุดรธานี</title>
+    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - โรงพยาบาลอุดรธานี</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-pink: #be185d;
+            --medium-pink: #ec4899;
             --soft-pink: #fdf2f8;
-            --gradient-pink: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
+            --gradient-header: linear-gradient(135deg, #9d174d 0%, #be185d 50%, #f472b6 85%, #ffffff 100%);
         }
         body {
             font-family: 'Kanit', sans-serif;
@@ -31,13 +32,27 @@
             box-shadow: 0 15px 35px -5px rgba(190, 24, 93, 0.06);
         }
         .pink-header {
-            background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
+            background: var(--gradient-header);
+            position: relative;
+            overflow: hidden;
+        }
+        .pink-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.3);
         }
         .btn-pink {
             background: linear-gradient(90deg, #be185d 0%, #db2777 100%);
-            transition: opacity 0.2s;
+            transition: all 0.2s;
         }
-        .btn-pink:hover { opacity: 0.9; }
+        .btn-pink:hover { 
+            opacity: 0.9;
+            box-shadow: 0 4px 12px rgba(190, 24, 93, 0.3);
+        }
         
         .loader-overlay {
             background: rgba(255, 255, 255, 0.9);
@@ -49,6 +64,7 @@
             background-color: #fdf2f8;
             color: #be185d;
             font-weight: 500;
+            border-bottom: 2px solid #fbcfe8;
         }
 
         /* Print Settings */
@@ -82,48 +98,56 @@
     </div>
 
     <!-- Header Section -->
-    <header class="pink-header text-white px-6 py-8 shadow-lg no-print">
-        <div class="container mx-auto flex flex-col md:flex-row items-center gap-6">
-            <div class="bg-white p-2 rounded-2xl shadow-xl">
+    <header class="pink-header px-6 py-10 shadow-xl no-print">
+        <div class="container mx-auto flex flex-col md:flex-row items-center gap-6 relative z-10">
+            <div class="bg-white p-2.5 rounded-2xl shadow-2xl ring-4 ring-white/20">
                 <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-16 w-auto">
             </div>
             <div class="flex-grow text-center md:text-left">
-                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">ครุภัณฑ์คอมพิวเตอร์</h1>
-                <p class="text-pink-100 font-light text-lg">โรงพยาบาลอุดรธานี</p>
-                <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-2 text-sm text-pink-200">
-                    <span><i class="fas fa-microchip mr-1"></i> กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</span>
+                <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight text-white drop-shadow-md">ครุภัณฑ์คอมพิวเตอร์</h1>
+                <p class="text-white/90 font-medium text-lg mt-1">โรงพยาบาลอุดรธานี</p>
+                <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-3 text-sm">
+                    <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white border border-white/30">
+                        <i class="fas fa-microchip mr-1.5"></i> กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์
+                    </span>
                 </div>
             </div>
             <div id="headerDate" class="text-right hidden md:block">
-                <p class="text-pink-100 text-sm opacity-80" id="currentDateStr"></p>
+                <div class="bg-black/10 backdrop-blur-sm p-3 rounded-2xl border border-white/20">
+                    <p class="text-white text-xs font-medium uppercase tracking-widest opacity-80 mb-1">วันที่ปัจจุบัน</p>
+                    <p class="text-white font-bold text-sm" id="currentDateStr"></p>
+                </div>
             </div>
         </div>
+        <!-- Decorative abstract shape -->
+        <div class="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 -left-20 w-48 h-48 bg-pink-400/20 rounded-full blur-2xl"></div>
     </header>
 
     <main class="container mx-auto px-4 mt-8">
         
         <!-- Stats Dashboard -->
         <div id="statsDashboard" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 no-print">
-            <div class="soft-card p-4 flex items-center gap-4">
+            <div class="soft-card p-4 flex items-center gap-4 border-l-4 border-l-pink-500">
                 <div class="w-12 h-12 bg-pink-50 rounded-xl flex items-center justify-center text-pink-600">
                     <i class="fas fa-laptop text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">ในระบบ</p>
+                    <p class="text-xs text-gray-500 font-medium">ในระบบ</p>
                     <h3 id="statOnCount" class="text-2xl font-bold text-pink-700">0</h3>
                 </div>
             </div>
-            <div class="soft-card p-4 flex items-center gap-4">
+            <div class="soft-card p-4 flex items-center gap-4 border-l-4 border-l-blue-500">
                 <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
                     <i class="fas fa-boxes text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">นอกระบบ</p>
+                    <p class="text-xs text-gray-500 font-medium">นอกระบบ</p>
                     <h3 id="statNonCount" class="text-2xl font-bold text-blue-700">0</h3>
                 </div>
             </div>
-            <div class="soft-card p-4 flex items-center gap-4 bg-gradient-to-br from-pink-50 to-white border-pink-200">
-                <div class="w-12 h-12 bg-pink-600 rounded-xl flex items-center justify-center text-white">
+            <div class="soft-card p-4 flex items-center gap-4 bg-gradient-to-br from-pink-50 to-white border-pink-200 border-l-4 border-l-pink-700">
+                <div class="w-12 h-12 bg-pink-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-pink-200">
                     <i class="fas fa-list-check text-xl"></i>
                 </div>
                 <div>
@@ -136,7 +160,7 @@
         <!-- Department Detail Card -->
         <div id="deptInfo" class="soft-card p-8 mb-8 no-print">
             <div class="flex flex-col md:flex-row gap-8 items-start">
-                <div id="deptImg" class="w-full md:w-48 h-48 rounded-3xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
+                <div id="deptImg" class="w-full md:w-48 h-48 rounded-3xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0 shadow-inner">
                     <img src="" class="w-full h-full object-cover hidden" id="deptAvatar">
                     <div class="w-full h-full flex items-center justify-center text-gray-200" id="deptAvatarPlaceholder">
                         <i class="fas fa-hospital text-6xl"></i>
@@ -145,33 +169,33 @@
                 <div class="flex-grow">
                     <div class="flex justify-between items-start flex-wrap gap-4">
                         <div>
-                            <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs font-bold rounded-full uppercase">ข้อมูลหน่วยงาน</span>
+                            <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs font-bold rounded-full uppercase tracking-wider">ข้อมูลหน่วยงาน</span>
                             <h2 id="deptName" class="text-2xl font-bold text-gray-800 mt-2">กำลังโหลดข้อมูล...</h2>
-                            <p id="deptId" class="text-pink-500 font-mono text-sm"></p>
+                            <p id="deptId" class="text-pink-500 font-mono text-sm mt-1"></p>
                         </div>
                         <div class="flex gap-2">
                             <!-- Export Button -->
-                            <button onclick="exportToCSV()" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:bg-emerald-700 transition-all">
-                                <i class="fas fa-file-excel mr-2"></i> Export Excel
+                            <button onclick="exportToCSV()" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:bg-emerald-700 hover:shadow-emerald-100 transition-all">
+                                <i class="fas fa-file-excel mr-2 text-lg"></i> Export Excel
                             </button>
                             <!-- Main Print Button -->
                             <button id="mainPrintBtn" onclick="handlePrint()" class="btn-pink text-white px-8 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:scale-105 active:scale-95 transition-all">
-                                <i class="fas fa-print mr-2"></i> พิมพ์รายงานสรุป
+                                <i class="fas fa-print mr-2 text-lg"></i> พิมพ์รายงานสรุป
                             </button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 border-t border-gray-50 pt-6">
-                        <div class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-location-arrow text-pink-400"></i>
-                            <span id="locName">สถานที่: -</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 border-t border-gray-100 pt-6">
+                        <div class="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-xl border border-gray-50">
+                            <i class="fas fa-location-arrow text-pink-500"></i>
+                            <span id="locName" class="text-sm">สถานที่: -</span>
                         </div>
-                        <div class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-layer-group text-pink-400"></i>
-                            <span id="locFloor">ชั้น: -</span>
+                        <div class="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-xl border border-gray-50">
+                            <i class="fas fa-layer-group text-pink-500"></i>
+                            <span id="locFloor" class="text-sm">ชั้น: -</span>
                         </div>
-                        <div class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-phone text-pink-400"></i>
-                            <span id="locPhone">โทรศัพท์: -</span>
+                        <div class="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-xl border border-gray-50">
+                            <i class="fas fa-phone text-pink-500"></i>
+                            <span id="locPhone" class="text-sm">โทรศัพท์: -</span>
                         </div>
                     </div>
                 </div>
@@ -181,33 +205,33 @@
         <!-- UI List Section -->
         <div class="no-print">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div class="inline-flex bg-gray-100 p-1.5 rounded-2xl">
-                    <button onclick="switchTab('on')" id="btnTabOn" class="px-6 py-2.5 rounded-xl text-sm font-medium transition-all bg-white text-pink-700 shadow-sm">ในระบบ (Asset_On)</button>
-                    <button onclick="switchTab('non')" id="btnTabNon" class="px-6 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-500 hover:text-gray-700">นอกระบบ (Non-Number)</button>
+                <div class="inline-flex bg-pink-50 p-1.5 rounded-2xl border border-pink-100">
+                    <button onclick="switchTab('on')" id="btnTabOn" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-pink-700 shadow-sm border border-pink-100">ในระบบ (Asset_On)</button>
+                    <button onclick="switchTab('non')" id="btnTabNon" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all text-gray-500 hover:text-pink-600">นอกระบบ (Non-Number)</button>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <div class="relative group">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors"></i>
                         <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหารหัส หรือประเภท..." 
-                            class="w-full md:w-64 pl-11 pr-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none text-sm transition-all shadow-sm">
+                            class="w-full md:w-72 pl-11 pr-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none text-sm transition-all shadow-sm">
                     </div>
                 </div>
             </div>
 
-            <div id="tableContainer" class="soft-card overflow-hidden">
-                <div class="p-5 border-b border-gray-50 flex justify-between items-center">
-                    <h4 class="font-bold text-gray-700" id="tableTitle">รายการครุภัณฑ์</h4>
-                    <span id="rowCount" class="text-xs bg-gray-100 px-3 py-1 rounded-full text-gray-500">0 รายการ</span>
+            <div id="tableContainer" class="soft-card overflow-hidden border-t-4 border-t-pink-600">
+                <div class="p-5 border-b border-gray-50 flex justify-between items-center bg-pink-50/30">
+                    <h4 class="font-bold text-pink-900" id="tableTitle">รายการครุภัณฑ์</h4>
+                    <span id="rowCount" class="text-xs bg-pink-600 px-3 py-1 rounded-full text-white font-bold">0 รายการ</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left asset-table">
                         <thead>
                             <tr class="text-xs uppercase tracking-wider">
-                                <th class="px-6 py-4 font-semibold text-center w-16">ลำดับ</th>
-                                <th class="px-6 py-4 font-semibold">รหัสครุภัณฑ์</th>
-                                <th class="px-6 py-4 font-semibold">ประเภท</th>
-                                <th class="px-6 py-4 font-semibold">รายละเอียด</th>
-                                <th class="px-6 py-4 font-semibold text-center">สถานะ</th>
+                                <th class="px-6 py-4 font-bold text-center w-16">ลำดับ</th>
+                                <th class="px-6 py-4 font-bold">รหัสครุภัณฑ์</th>
+                                <th class="px-6 py-4 font-bold">ประเภท</th>
+                                <th class="px-6 py-4 font-bold">รายละเอียด</th>
+                                <th class="px-6 py-4 font-bold text-center">สถานะ</th>
                             </tr>
                         </thead>
                         <tbody id="assetTbody" class="divide-y divide-gray-50 text-sm">
@@ -215,9 +239,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div id="emptyState" class="py-20 text-center text-gray-400 hidden">
-                    <i class="fas fa-search text-5xl mb-4 opacity-10"></i>
-                    <p>ไม่พบข้อมูลครุภัณฑ์ที่ค้นหา</p>
+                <div id="emptyState" class="py-24 text-center text-gray-400 hidden">
+                    <i class="fas fa-search-minus text-6xl mb-4 opacity-20"></i>
+                    <p class="text-lg font-medium">ไม่พบข้อมูลครุภัณฑ์ที่ค้นหา</p>
                 </div>
             </div>
         </div>
@@ -343,12 +367,12 @@
             const title = document.getElementById('tableTitle');
             
             if (type === 'on') {
-                btnOn.className = "px-6 py-2.5 rounded-xl text-sm font-medium transition-all bg-white text-pink-700 shadow-sm";
-                btnNon.className = "px-6 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-500 hover:text-gray-700";
+                btnOn.className = "px-6 py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-pink-700 shadow-sm border border-pink-100";
+                btnNon.className = "px-6 py-2.5 rounded-xl text-sm font-bold transition-all text-gray-500 hover:text-pink-600";
                 title.innerText = `รายการในระบบ (${rawData.assetsOn.length} รายการ)`;
             } else {
-                btnNon.className = "px-6 py-2.5 rounded-xl text-sm font-medium transition-all bg-white text-pink-700 shadow-sm";
-                btnOn.className = "px-6 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-500 hover:text-gray-700";
+                btnNon.className = "px-6 py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-pink-700 shadow-sm border border-pink-100";
+                btnOn.className = "px-6 py-2.5 rounded-xl text-sm font-bold transition-all text-gray-500 hover:text-pink-600";
                 title.innerText = `รายการนอกระบบ (${rawData.assetsNon.length} รายการ)`;
             }
             filterAssets();
@@ -383,13 +407,13 @@
                 const statusColor = status.includes('ปกติ') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
                 
                 const row = `
-                    <tr class="hover:bg-pink-50/30 transition-colors">
+                    <tr class="hover:bg-pink-50 transition-colors">
                         <td class="px-6 py-4 text-center font-mono text-gray-400 text-xs">${index + 1}</td>
                         <td class="px-6 py-4 font-bold text-gray-700">${item.AssetID || item.NOID || '-'}</td>
-                        <td class="px-6 py-4 text-pink-700 font-medium">${item.Asset_Type || item.AssetType || '-'}</td>
+                        <td class="px-6 py-4 text-pink-700 font-semibold">${item.Asset_Type || item.AssetType || '-'}</td>
                         <td class="px-6 py-4"><p class="line-clamp-1 text-gray-500 text-xs">${item.Detail || '-'}</p></td>
                         <td class="px-6 py-4 text-center">
-                            <span class="inline-block px-2 py-1 rounded-lg text-[10px] font-bold ${statusColor}">
+                            <span class="inline-block px-3 py-1 rounded-full text-[10px] font-bold ${statusColor} shadow-sm">
                                 ${status}
                             </span>
                         </td>
