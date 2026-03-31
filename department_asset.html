@@ -243,10 +243,12 @@
 
             const avatar = document.getElementById('deptAvatar');
             const placeholder = document.getElementById('deptAvatarPlaceholder');
-            const fileId = d.N_ || d.N_ID; 
+            
+            // ใช้ photoUrl ที่ code.gs เตรียมไว้ให้แล้ว
+            const photoUrl = d.photoUrl; 
 
-            if (fileId && String(fileId).trim().length > 10) {
-                avatar.src = `https://drive.google.com/thumbnail?id=${fileId.trim()}&sz=w400`;
+            if (photoUrl) {
+                avatar.src = photoUrl;
                 avatar.onload = () => { avatar.classList.remove('hidden'); placeholder.classList.add('hidden'); };
                 avatar.onerror = () => { avatar.classList.add('hidden'); placeholder.classList.remove('hidden'); };
             } else {
@@ -294,7 +296,6 @@
             renderTable(filtered);
         }
 
-        // ปรับปรุงฟังก์ชัน Render ให้ Mapping ข้อมูลได้แม่นยำขึ้น
         function renderTable(data) {
             const tbody = document.getElementById('assetTbody');
             const empty = document.getElementById('emptyState');
@@ -303,14 +304,12 @@
             empty.classList.add('hidden');
 
             data.forEach((item, index) => {
-                const status = item.CoStatus || 'ปกติ';
-                const statusColor = status.includes('ปกติ') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
+                const status = item.ConfirmStatus || 'รอยืนยัน';
+                const statusColor = status.includes('ยืนยันแล้ว') || status.includes('ปกติ') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
                 
-                // Mapping: รายละเอียด (รองรับชื่อตัวแปร Detail หรือ Asset_Detail)
-                const detail = item.Detail || item.Asset_Detail || item.AssetDetail || '-';
-                
-                // Mapping: อายุ (รองรับชื่อตัวแปร Age หรือ Asset_Age หรือ Year_Count)
-                const age = item.Age || item.Asset_Age || item.Year_Count || '-';
+                // แก้ไข Mapping ให้ตรงกับ Code.gs (DetailFromDB และ AgeFromDB)
+                const detail = item.DetailFromDB || item.Detail || item.Asset_Detail || '-';
+                const age = item.AgeFromDB || item.Age || item.Asset_Age || '-';
 
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-pink-50 transition-colors">
