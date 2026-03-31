@@ -254,8 +254,8 @@
             let count = 0;
 
             list.forEach(item => {
-                // ใช้ค่าเดิม (ASSET_ID / ID) และเพิ่มรายละเอียด/อายุเข้าไปตามสั่ง
-                const assetId = item.ASSET_ID || item.ID || item.NOID || '-';
+                // ตัด NOID ออก และใช้ตัวแปรเดิม (ASSET_ID หรือ ID) เท่านั้น
+                const assetId = item.ASSET_ID || item.ID || '-';
                 const detail = item.DETAIL || item.DetailFromDB || '-';
                 const age = item.Age_Year || item.AgeFromDB || '0';
                 const status = item.Status || item.ConfirmStatus || 'ปกติ';
@@ -289,7 +289,8 @@
                 const target = document.getElementById(targetId);
                 target.innerHTML = '<tr><th>ที่</th><th>รหัส</th><th>รายการ</th><th>รายละเอียด</th><th>อายุ</th><th>สถานะ</th></tr>';
                 list.forEach((item, i) => {
-                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.ASSET_ID || item.ID || item.NOID}</td><td>${item.TYPE_NAME}</td><td>${item.DETAIL || item.DetailFromDB}</td><td>${item.Age_Year || item.AgeFromDB}</td><td>${item.Status || item.ConfirmStatus}</td></tr>`;
+                    // ปรับในส่วนพิมพ์ด้วย
+                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.ASSET_ID || item.ID}</td><td>${item.TYPE_NAME}</td><td>${item.DETAIL || item.DetailFromDB}</td><td>${item.Age_Year || item.AgeFromDB}</td><td>${item.Status || item.ConfirmStatus}</td></tr>`;
                 });
             };
             fillPrintTable('printOnTbody', fullData.assetsOn || []);
