@@ -90,6 +90,7 @@
     </header>
 
     <main class="max-w-6xl mx-auto px-4 -mt-10">
+        <!-- แผงข้อมูลหน่วยงาน -->
         <div class="soft-card p-6 md:p-8 mb-8 relative z-10 no-print">
             <div class="flex flex-col md:flex-row gap-8 items-start">
                 <div class="w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-pink-50 border-4 border-white shadow-md overflow-hidden flex-shrink-0">
@@ -130,9 +131,6 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-2 w-full md:w-auto relative">
-                    <a href="survey_asset.html" class="bg-white border border-pink-200 text-pink-600 px-6 py-2 rounded-xl font-bold text-sm hover:bg-pink-50 transition-all flex items-center justify-center gap-2 shadow-sm">
-                        <i class="fas fa-home"></i> กลับหน้าแรก
-                    </a>
                     <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg">
                         <i class="fas fa-print"></i> พิมพ์รายงานสรุป
                     </button>
@@ -143,6 +141,7 @@
             </div>
         </div>
 
+        <!-- ส่วนตารางแสดงผล -->
         <div id="mainContent" class="no-print">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
                 <div class="bg-white p-1 rounded-2xl border border-gray-200 flex w-full md:w-auto shadow-sm">
@@ -161,11 +160,11 @@
                         <thead>
                             <tr>
                                 <th class="px-6 py-4 text-center w-16">ลำดับ</th>
-                                <th class="px-6 py-4">หมายเลขครุภัณฑ์ / รหัส</th>
+                                <th class="px-6 py-4">หมายเลขครุภัณฑ์</th>
                                 <th class="px-6 py-4">ประเภท/รายการ</th>
                                 <th class="px-6 py-4">รายละเอียด</th>
-                                <th class="px-6 py-4 text-center">อายุ(ปี)</th>
-                                <th class="px-6 py-4 text-center">สถานะปัจจุบัน</th>
+                                <th class="px-6 py-4 text-center">อายุ (ปี)</th>
+                                <th class="px-6 py-4 text-center">สถานะ</th>
                             </tr>
                         </thead>
                         <tbody id="assetTbody" class="divide-y divide-gray-100 bg-white"></tbody>
@@ -178,6 +177,7 @@
             </div>
         </div>
 
+        <!-- ส่วนสำหรับการพิมพ์ (Print View) -->
         <div id="printContainer" class="print-only">
              <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="font-size: 18pt; font-weight: bold;">รายงานการตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
@@ -254,23 +254,29 @@
             let count = 0;
 
             list.forEach(item => {
-                // ตัด NOID ออก และใช้ตัวแปรเดิม (ASSET_ID หรือ ID) เท่านั้น
-                const assetId = item.ASSET_ID || item.ID || '-';
-                const detail = item.DETAIL || item.DetailFromDB || '-';
-                const age = item.Age_Year || item.AgeFromDB || '0';
-                const status = item.Status || item.ConfirmStatus || 'ปกติ';
+                // เก็บค่า NOID ไว้ในตัวแปรแต่ไม่แสดงผล (ใช้เป็น Key ภายในได้ถ้าต้องการ)
+                const nid = item.NOID; 
+                const assetId = item.ASSET_ID || '-';
+                const typeName = item.TYPE_NAME || '-';
+                const detail = item.DetailFromDB || item.DETAIL || '-';
+                const age = item.AgeFromDB || item.Age_Year || '0';
+                const status = item.ConfirmStatus || "รอยืนยัน";
 
-                if (String(assetId).toLowerCase().includes(search) || String(detail).toLowerCase().includes(search)) {
+                if (String(assetId).toLowerCase().includes(search) || 
+                    String(detail).toLowerCase().includes(search) || 
+                    String(typeName).toLowerCase().includes(search)) {
+                    
                     count++;
                     let statusClass = "status-active";
                     if (status.includes("เสีย") || status.includes("ชำรุด") || status === "รอยืนยัน") statusClass = "status-inactive";
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50/50 transition-colors";
+                    // แสดงเฉพาะข้อมูลที่จำเป็น ไม่แสดง NOID
                     tr.innerHTML = `
                         <td class="px-6 py-4 text-center text-gray-400 font-medium">${count}</td>
                         <td class="px-6 py-4 font-bold text-gray-800">${assetId}</td>
-                        <td class="px-6 py-4 text-gray-600">${item.TYPE_NAME || '-'}</td>
+                        <td class="px-6 py-4 text-gray-600">${typeName}</td>
                         <td class="px-6 py-4 text-xs text-gray-500 max-w-sm leading-relaxed">${detail}</td>
                         <td class="px-6 py-4 text-center font-semibold text-gray-700">${age}</td>
                         <td class="px-6 py-4 text-center"><span class="status-badge ${statusClass}">${status}</span></td>
@@ -283,14 +289,28 @@
 
         function preparePrintData() {
             const d = fullData.department || {};
-            document.getElementById('printDeptHeader').innerText = `หน่วยงาน: ${d.DEPNAME || '-'}`;
-            document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
+            const deptHeader = document.getElementById('printDeptHeader');
+            if(deptHeader) deptHeader.innerText = `หน่วยงาน: ${d.DEPNAME || '-'}`;
+            
+            const printDate = document.getElementById('printDate');
+            if(printDate) printDate.innerText = new Date().toLocaleString('th-TH');
+            
             const fillPrintTable = (targetId, list) => {
                 const target = document.getElementById(targetId);
-                target.innerHTML = '<tr><th>ที่</th><th>รหัส</th><th>รายการ</th><th>รายละเอียด</th><th>อายุ</th><th>สถานะ</th></tr>';
+                if (!target) return;
+                
+                target.innerHTML = '<tr><th>ที่</th><th>รหัสครุภัณฑ์</th><th>รายการ</th><th>รายละเอียด</th><th>อายุ</th><th>สถานะ</th></tr>';
+                if (!list || list.length === 0) {
+                    target.innerHTML += '<tr><td colspan="6" style="text-align:center;">ไม่มีข้อมูล</td></tr>';
+                    return;
+                }
                 list.forEach((item, i) => {
-                    // ปรับในส่วนพิมพ์ด้วย
-                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.ASSET_ID || item.ID}</td><td>${item.TYPE_NAME}</td><td>${item.DETAIL || item.DetailFromDB}</td><td>${item.Age_Year || item.AgeFromDB}</td><td>${item.Status || item.ConfirmStatus}</td></tr>`;
+                    const id = item.ASSET_ID || '-';
+                    const name = item.TYPE_NAME || '-';
+                    const det = item.DetailFromDB || item.DETAIL || '-';
+                    const ag = item.AgeFromDB || item.Age_Year || '0';
+                    const st = item.ConfirmStatus || "รอยืนยัน";
+                    target.innerHTML += `<tr><td>${i+1}</td><td>${id}</td><td>${name}</td><td>${det}</td><td>${ag}</td><td>${st}</td></tr>`;
                 });
             };
             fillPrintTable('printOnTbody', fullData.assetsOn || []);
