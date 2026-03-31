@@ -108,8 +108,9 @@
                     <button onclick="goHome()" class="bg-white/15 backdrop-blur-md text-white border border-white/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-[11px] active:scale-95 transition-all">
                         <i class="fas fa-home"></i> <span>หน้าหลัก</span>
                     </button>
-                    <button onclick="handlePrint()" class="bg-white text-pink-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-[11px] font-bold active:scale-95 transition-all shadow-md">
-                        <i class="fas fa-print"></i> <span>พิมพ์รายงาน</span>
+                    <!-- ปุ่ม Export/พิมพ์รายงาน -->
+                    <button onclick="handlePrint()" class="bg-white text-pink-700 px-4 py-1.5 rounded-lg flex items-center gap-1.5 text-[11px] font-bold active:scale-95 transition-all shadow-md hover:bg-pink-50">
+                        <i class="fas fa-print"></i> <span>พิมพ์รายงาน/Export</span>
                     </button>
                 </div>
             </div>
@@ -171,7 +172,7 @@
                             <tr class="text-[10px] uppercase bg-pink-50/30 text-pink-900/60">
                                 <th class="px-4 py-2.5 text-center">#</th>
                                 <th class="px-4 py-2.5">รหัส/รายละเอียด</th>
-                                <th class="px-4 py-2.5">ผู้ตรวจสอบ</th>
+                                <th class="px-4 py-2.5 text-center">อายุ (ปี)</th>
                                 <th class="px-4 py-2.5 text-center">สถานะ</th>
                             </tr>
                         </thead>
@@ -210,12 +211,9 @@
                 <div id="printNonTable"></div>
             </div>
             
-            <!-- ส่วนลายเซ็นท้ายรายงาน -->
             <div class="mt-10 sig-box">
                 <h3 class="text-[10px] font-bold mb-4 border-b pb-1">ลงชื่อยืนยันการตรวจสอบข้อมูล</h3>
-                <div id="printSignatureContainer" class="flex flex-wrap gap-12 justify-start mt-4">
-                    <!-- ลายเซ็นจะถูกสร้างที่นี่โดย JavaScript -->
-                </div>
+                <div id="printSignatureContainer" class="flex flex-wrap gap-12 justify-start mt-4"></div>
             </div>
         </div>
     </main>
@@ -232,7 +230,6 @@
         async function fetchData() {
             showModal();
             try {
-                // เรียก API ด้วย parameter getFullData เพื่อรับข้อมูล Mapping Confirmations มาด้วย
                 const res = await fetch(`${API_URL}?DEP_ID=${depId}&action=getFullData`);
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
@@ -250,15 +247,20 @@
             document.getElementById('deptName').innerText = d.DEPNAME || '-';
             document.getElementById('deptId').innerText = `ID: ${d.DEP_ID}`;
             
-            // อัปเดตข้อมูลสถานที่
-            document.getElementById('locName').innerText = `สถานที่: ${d.Location || '-'}`;
-            document.getElementById('locFloor').innerText = `ชั้น: ${d.Floor || '-'}`;
-            document.getElementById('locPhone').innerText = `โทรศัพท์: ${d.Tel || '-'}`;
+            document.getElementById('locName').innerText = `สถานที่: ${d.Location || d.LOCNAME || '-'}`;
+            document.getElementById('locFloor').innerText = `ชั้น: ${d.Floor || d.FLOOR || '-'}`;
+            document.getElementById('locPhone').innerText = `โทรศัพท์: ${d.Tel || d.TEL || '-'}`;
 
-            // อัปเดตสถิติ
-            document.getElementById('statOnCount').innerText = rawData.assetsOn.length;
-            document.getElementById('statNonCount').innerText = rawData.assetsNon.length;
-            document.getElementById('statTotalCount').innerText = rawData.assetsOn.length + rawData.assetsNon.length;
+            if (d.photoUrl) {
+                const img = document.getElementById('deptAvatar');
+                img.src = d.photoUrl;
+                img.classList.remove('hidden');
+                document.getElementById('deptAvatarPlaceholder').classList.add('hidden');
+            }
+
+            document.getElementById('statOnCount').innerText = (rawData.assetsOn || []).length;
+            document.getElementById('statNonCount').innerText = (rawData.assetsNon || []).length;
+            document.getElementById('statTotalCount').innerText = ((rawData.assetsOn || []).length + (rawData.assetsNon || []).length);
             
             switchTab('on');
         }
@@ -282,7 +284,7 @@
 
         function filterAssets() {
             const search = document.getElementById('searchInput').value.toLowerCase();
-            const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
+            const data = activeTab === 'on' ? (rawData.assetsOn || []) : (rawData.assetsNon || []);
             const filtered = data.filter(item => 
                 `${item.AssetID} ${item.Detail} ${item.Asset_Type} ${item.NOID}`.toLowerCase().includes(search)
             );
@@ -302,12 +304,9 @@
             document.getElementById('emptyState').classList.add('hidden');
             
             data.forEach((item, index) => {
-                // ดึงข้อมูลการยืนยันจาก Mapping โดยใช้ Note8 (Action_ID)
-                const actionId = item.Note8;
-                const conf = rawData.confirmations[actionId] || {};
-                
                 const status = item.CoStatus || 'ปกติ';
                 const statusColor = status.includes('ปกติ') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
+                const age = item.Age || item.Age_Year || '-';
                 
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-pink-50/20 transition-colors">
@@ -316,9 +315,8 @@
                             <div class="font-bold text-pink-700">${item.AssetID || item.NOID || '-'}</div>
                             <div class="text-[10px] text-gray-500 leading-tight">${item.Asset_Type || ''} ${item.Detail || ''}</div>
                         </td>
-                        <td class="px-4 py-3" data-label="ผู้ตรวจสอบ">
-                            <div class="text-[11px] font-medium text-gray-700">${conf.Act_Name || '<span class="text-gray-300 italic">ไม่ได้ระบุ</span>'}</div>
-                            <div class="text-[9px] text-gray-400">${conf.Activity_ID || ''}</div>
+                        <td class="px-4 py-3 text-center" data-label="อายุ (ปี)">
+                            <div class="text-[11px] font-medium text-gray-700">${age}</div>
                         </td>
                         <td class="px-4 py-3 text-center" data-label="สถานะ">
                             <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColor}">${status}</span>
@@ -333,22 +331,19 @@
             document.getElementById('printDeptName').innerText = d.DEPNAME;
             document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
             
-            // สร้างตารางในส่วนของ Print
-            document.getElementById('printOnTable').innerHTML = buildPrintTable(rawData.assetsOn);
-            document.getElementById('printNonTable').innerHTML = buildPrintTable(rawData.assetsNon);
+            document.getElementById('printOnTable').innerHTML = buildPrintTable(rawData.assetsOn || []);
+            document.getElementById('printNonTable').innerHTML = buildPrintTable(rawData.assetsNon || []);
             
-            // สร้างส่วนลายเซ็น
             const sigContainer = document.getElementById('printSignatureContainer');
             sigContainer.innerHTML = '';
             
-            // คัดกรองรายชื่อผู้ยืนยันที่ไม่ซ้ำกันจากทั้งสองรายการ
             const uniqueConfs = [];
             const seenIds = new Set();
+            const allAssets = [...(rawData.assetsOn || []), ...(rawData.assetsNon || [])];
             
-            const allAssets = [...rawData.assetsOn, ...rawData.assetsNon];
             allAssets.forEach(asset => {
                 const aid = asset.Note8;
-                if (aid && rawData.confirmations[aid]) {
+                if (aid && rawData.confirmations && rawData.confirmations[aid]) {
                     const person = rawData.confirmations[aid];
                     if (!seenIds.has(person.Activity_ID)) {
                         uniqueConfs.push(person);
@@ -361,59 +356,27 @@
                 sigContainer.innerHTML = '<p class="text-[9px] italic text-gray-400">ยังไม่มีข้อมูลการยืนยันในระบบ</p>';
             } else {
                 uniqueConfs.forEach(c => {
-                    // การดึงลายเซ็นจาก Google Drive ผ่าน Direct Link
-                    const sigImg = c.Con_Signature ? 
-                        `<img src="https://lh3.googleusercontent.com/d/${c.Con_Signature}" class="h-10 mx-auto object-contain mb-1" onerror="this.style.display='none'">` : 
-                        '<div class="h-10"></div>';
-                        
+                    const sigImg = c.Con_Signature ? `<img src="https://lh3.googleusercontent.com/d/${c.Con_Signature}" class="h-10 mx-auto object-contain mb-1">` : '<div class="h-10"></div>';
                     sigContainer.innerHTML += `
                         <div class="text-center w-56 border border-gray-100 p-2 rounded">
-                            <div class="min-h-[40px] flex items-end justify-center">
-                                ${sigImg}
-                            </div>
+                            <div class="min-h-[40px] flex items-end justify-center">${sigImg}</div>
                             <div class="border-t border-dotted border-black mt-1"></div>
                             <p class="text-[9px] mt-1 font-bold">( ${c.Act_Name} )</p>
                             <p class="text-[8px] text-gray-500">ตำแหน่ง: ${c.Activity_ID || 'เจ้าหน้าที่ประจำหน่วยงาน'}</p>
-                            <p class="text-[7px] text-gray-400 mt-0.5 italic">ยืนยันข้อมูลผ่านระบบดิจิทัล</p>
                         </div>
                     `;
                 });
             }
             
-            // สั่งพิมพ์
             setTimeout(() => { window.print(); }, 500);
         }
 
         function buildPrintTable(data) {
             if (!data || data.length === 0) return '<p class="text-[8px] italic text-gray-400 p-2">ไม่พบรายการข้อมูล</p>';
-            
-            let html = `
-                <table class="w-full">
-                    <thead>
-                        <tr>
-                            <th style="width: 5%">#</th>
-                            <th style="width: 20%">รหัสครุภัณฑ์</th>
-                            <th style="width: 15%">ประเภท</th>
-                            <th style="width: 35%">รายละเอียด/ยี่ห้อ/รุ่น</th>
-                            <th style="width: 10%">สถานะ</th>
-                            <th style="width: 15%">ผู้ตรวจสอบ</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-                    
+            let html = `<table class="w-full"><thead><tr><th style="width: 5%">#</th><th style="width: 25%">รหัสครุภัณฑ์</th><th style="width: 15%">ประเภท</th><th style="width: 35%">รายละเอียด</th><th style="width: 10%">อายุ (ปี)</th><th style="width: 10%">สถานะ</th></tr></thead><tbody>`;
             data.forEach((item, index) => {
-                const conf = rawData.confirmations[item.Note8] || {};
-                html += `
-                    <tr>
-                        <td class="text-center">${index + 1}</td>
-                        <td class="font-bold">${item.AssetID || item.NOID || '-'}</td>
-                        <td>${item.Asset_Type || '-'}</td>
-                        <td>${item.Detail || '-'}</td>
-                        <td class="text-center">${item.CoStatus || 'ปกติ'}</td>
-                        <td class="text-center">${conf.Act_Name || '-'}</td>
-                    </tr>`;
+                html += `<tr><td class="text-center">${index + 1}</td><td class="font-bold">${item.AssetID || item.NOID || '-'}</td><td>${item.Asset_Type || '-'}</td><td>${item.Detail || '-'}</td><td class="text-center">${item.Age || item.Age_Year || '-'}</td><td class="text-center">${item.CoStatus || 'ปกติ'}</td></tr>`;
             });
-            
             return html + `</tbody></table>`;
         }
 
