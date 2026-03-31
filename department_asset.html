@@ -36,6 +36,45 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
+        /* --- Overlay & Modal Styles (กู้คืน) --- */
+        #loadingOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+            transition: all 0.5s ease;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.9);
+            transition: all 0.3s ease;
+        }
+        .modal-active {
+            display: flex;
+        }
+        .modal-active .modal-content {
+            transform: scale(1);
+        }
+
         /* สำหรับการพิมพ์รายงาน */
         @media print {
             @page { size: A4 landscape; margin: 1cm; }
@@ -44,23 +83,29 @@
             body { background: white; color: black; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
             th, td { border: 1px solid #000 !important; padding: 8px; text-align: left; font-size: 10pt; }
-            
-            .signature-section {
-                margin-top: 40px;
-                display: flex;
-                justify-content: space-around;
-                text-align: center;
-            }
-            .sig-line {
-                width: 250px;
-                border-top: 1px solid black;
-                margin: 40px auto 5px auto;
-            }
+            .signature-section { margin-top: 40px; display: flex; justify-content: space-around; text-align: center; }
+            .sig-line { width: 250px; border-top: 1px solid black; margin: 40px auto 5px auto; }
         }
         .print-only { display: none; }
     </style>
 </head>
 <body class="text-slate-800">
+
+    <!-- Loading Overlay (กู้คืน) -->
+    <div id="loadingOverlay">
+        <div class="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin"></div>
+        <p class="mt-4 text-pink-700 font-bold animate-pulse">กำลังโหลดข้อมูลระบบ...</p>
+    </div>
+
+    <!-- Modal แจ้งเตือน (กู้คืน) -->
+    <div id="statusModal" class="modal-overlay no-print" onclick="closeModal()">
+        <div class="modal-content shadow-2xl" onclick="event.stopPropagation()">
+            <div id="modalIcon" class="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-3xl mb-4"></div>
+            <h3 id="modalTitle" class="text-2xl font-bold text-center text-slate-800 mb-2"></h3>
+            <p id="modalMessage" class="text-center text-slate-500 mb-6"></p>
+            <button onclick="closeModal()" class="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl transition-all">รับทราบ</button>
+        </div>
+    </div>
 
     <!-- Header -->
     <header class="pink-header px-4 py-8 shadow-xl no-print">
@@ -76,7 +121,6 @@
             </div>
             <div class="flex items-center gap-2 flex-wrap justify-center">
                 <button onclick="location.href='index.html'" class="bg-white/10 text-white px-4 py-2.5 rounded-2xl text-sm font-medium border border-white/20 hover:bg-white/20 transition-all"><i class="fas fa-home mr-2"></i>หน้าหลัก</button>
-                <!-- ปุ่ม Export (ต้องคงไว้เสมอ) -->
                 <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-2xl text-sm font-bold shadow-lg hover:bg-emerald-700 transition-all"><i class="fas fa-file-excel mr-2"></i>Export</button>
                 <button onclick="window.print()" class="bg-white text-pink-700 px-4 py-2.5 rounded-2xl text-sm font-bold shadow-lg hover:bg-pink-50 transition-all"><i class="fas fa-print mr-2"></i>พิมพ์รายงาน</button>
             </div>
@@ -120,7 +164,6 @@
                 <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหารหัสครุภัณฑ์, รายละเอียด..." 
                     class="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-200 outline-none text-base focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 shadow-sm transition-all">
             </div>
-
             <div class="lg:col-span-5 flex bg-slate-200/50 p-1.5 rounded-2xl">
                 <button onclick="switchTab('on')" id="btnTabOn" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all tab-active">ในทะเบียน (Log On)</button>
                 <button onclick="switchTab('non')" id="btnTabNon" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all text-slate-500 hover:text-slate-700">นอกทะเบียน (Log Non)</button>
@@ -128,7 +171,7 @@
         </div>
 
         <!-- ตารางข้อมูล -->
-        <div id="tableContainer" class="soft-card overflow-hidden no-print">
+        <div id="tableContainer" class="soft-card overflow-hidden no-print min-h-[300px]">
             <div class="px-6 py-5 bg-slate-50/80 border-b border-slate-100 flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-6 bg-pink-600 rounded-full"></div>
@@ -150,6 +193,10 @@
                         <!-- ข้อมูลจะโหลดที่นี่ -->
                     </tbody>
                 </table>
+                <div id="noDataMsg" class="hidden py-20 text-center text-slate-400">
+                    <i class="fas fa-folder-open text-4xl mb-3"></i>
+                    <p>ไม่พบข้อมูลรายการครุภัณฑ์ในหมวดนี้</p>
+                </div>
             </div>
         </div>
 
@@ -162,10 +209,7 @@
                     <p style="margin: 0;"><strong>วันที่พิมพ์:</strong> <span id="printDate"></span></p>
                 </div>
             </div>
-            
             <div id="printTableContainer"></div>
-
-            <!-- ส่วนลายเซ็น -->
             <div class="signature-section">
                 <div>
                     <div class="sig-line"></div>
@@ -188,13 +232,53 @@
         let fullData = null;
         let currentTab = 'on';
 
+        // --- ฟังก์ชัน Modal (กู้คืน) ---
+        function showModal(title, message, type = 'success') {
+            const modal = document.getElementById('statusModal');
+            const icon = document.getElementById('modalIcon');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            
+            if (type === 'success') {
+                icon.className = "w-20 h-20 rounded-full mx-auto flex items-center justify-center text-3xl mb-4 bg-emerald-100 text-emerald-600";
+                icon.innerHTML = '<i class="fas fa-check"></i>';
+            } else {
+                icon.className = "w-20 h-20 rounded-full mx-auto flex items-center justify-center text-3xl mb-4 bg-red-100 text-red-600";
+                icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            }
+            modal.classList.add('modal-active');
+        }
+
+        function closeModal() {
+            document.getElementById('statusModal').classList.remove('modal-active');
+        }
+
+        // --- การโหลดข้อมูล (กู้คืน) ---
         async function init() {
-            if (!depId) return;
+            if (!depId) {
+                showModal('ข้อผิดพลาด', 'ไม่พบรหัสหน่วยงานในระบบ (Missing DEP_ID)', 'error');
+                document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-500 font-bold">ไม่พบ DEP_ID</p>`;
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_URL}?DEP_ID=${depId}`);
                 fullData = await res.json();
+                
+                if(fullData.error) throw new Error(fullData.error);
+                
                 render();
-            } catch (e) { console.error(e); }
+                // ซ่อน Overlay เมื่อโหลดเสร็จ
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 500);
+                }, 800);
+
+            } catch (e) { 
+                console.error(e);
+                showModal('โหลดข้อมูลไม่สำเร็จ', e.message, 'error');
+                document.getElementById('loadingOverlay').innerHTML = `<div class="text-center p-8"><p class="text-red-500 font-bold mb-4">${e.message}</p><button onclick="location.reload()" class="bg-pink-600 text-white px-6 py-2 rounded-xl">ลองใหม่อีกครั้ง</button></div>`;
+            }
         }
 
         function render() {
@@ -202,41 +286,54 @@
             const d = fullData.department || {};
             const assets = (currentTab === 'on' ? fullData.assetsOn : fullData.assetsNon) || [];
 
-            document.getElementById('deptName').innerText = d.DEPNAME || 'ไม่พบชื่อ';
+            // ข้อมูลหน่วยงาน
+            document.getElementById('deptName').innerText = d.DEPNAME || 'ไม่พบชื่อหน่วยงาน';
             document.getElementById('deptIdDisplay').innerText = `ID: ${d.DEP_ID || depId}`;
             document.getElementById('locDisplay').innerText = `ที่ตั้ง: ${d.Building || d.Location || '-'}`;
             document.getElementById('totalAssetsCount').innerText = (fullData.assetsOn?.length || 0) + (fullData.assetsNon?.length || 0);
             document.getElementById('lastUpdateText').innerText = new Date().toLocaleDateString('th-TH');
-            
-            // แสดงรูปหน่วยงาน
             if(d.photoUrl) document.getElementById('deptPhoto').src = d.photoUrl;
 
             // ข้อมูลหน้าพิมพ์
             document.getElementById('printDeptName').innerText = d.DEPNAME || '-';
             document.getElementById('printDate').innerText = new Date().toLocaleDateString('th-TH');
 
+            // ตารางในหน้าเว็บ
             const tbody = document.getElementById('assetTbody');
+            const noData = document.getElementById('noDataMsg');
             document.getElementById('recordCount').innerText = `${assets.length} รายการ`;
-            tbody.innerHTML = assets.map((item, index) => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-8 py-5 text-center text-slate-400 font-medium">${index + 1}</td>
-                    <td class="px-6 py-5 font-bold text-slate-700">${item.NOID || item.AssetID || '-'}</td>
-                    <td class="px-6 py-5">
-                        <div class="font-medium text-slate-800">${item.Asset_Type || '-'}</div>
-                        <div class="text-xs text-slate-500 mt-0.5">${item.DetailFromDB || item.Detail || '-'}</div>
-                    </td>
-                    <td class="px-6 py-5 text-center">
-                        <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider border border-emerald-100">${item.CoStatus || 'ปกติ'}</span>
-                    </td>
-                </tr>
-            `).join('');
 
+            if (assets.length === 0) {
+                tbody.innerHTML = '';
+                noData.classList.remove('hidden');
+            } else {
+                noData.classList.add('hidden');
+                tbody.innerHTML = assets.map((item, index) => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-8 py-5 text-center text-slate-400 font-medium">${index + 1}</td>
+                        <td class="px-6 py-5 font-bold text-slate-700">${item.NOID || item.AssetID || '-'}</td>
+                        <td class="px-6 py-5">
+                            <div class="font-medium text-slate-800">${item.Asset_Type || '-'}</div>
+                            <div class="text-xs text-slate-500 mt-0.5">${item.DetailFromDB || item.Detail || '-'}</div>
+                        </td>
+                        <td class="px-6 py-5 text-center">
+                            <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider border border-emerald-100">${item.CoStatus || 'ปกติ'}</span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // ตารางสำหรับ Print
             const pContainer = document.getElementById('printTableContainer');
-            let pTable = '<table style="width:100%; border: 1px solid black;">';
-            pTable += '<thead style="background:#f2f2f2"><tr><th>ลำดับ</th><th>รหัสครุภัณฑ์</th><th>รายการ</th><th>สถานะ</th></tr></thead><tbody>';
-            assets.forEach((item, idx) => {
-                pTable += `<tr><td style="text-align:center">${idx+1}</td><td>${item.NOID || item.AssetID}</td><td>${item.Asset_Type} - ${item.DetailFromDB || item.Detail}</td><td style="text-align:center">${item.CoStatus || 'ปกติ'}</td></tr>`;
-            });
+            let pTable = '<table style="width:100%; border-collapse: collapse;">';
+            pTable += '<thead style="background:#f2f2f2"><tr><th style="border:1px solid black; padding:5px;">ลำดับ</th><th style="border:1px solid black; padding:5px;">รหัสครุภัณฑ์</th><th style="border:1px solid black; padding:5px;">รายการ</th><th style="border:1px solid black; padding:5px;">สถานะ</th></tr></thead><tbody>';
+            if(assets.length === 0) {
+                pTable += '<tr><td colspan="4" style="text-align:center; border:1px solid black; padding:20px;">ไม่มีข้อมูล</td></tr>';
+            } else {
+                assets.forEach((item, idx) => {
+                    pTable += `<tr><td style="text-align:center; border:1px solid black;">${idx+1}</td><td style="border:1px solid black; padding:5px;">${item.NOID || item.AssetID}</td><td style="border:1px solid black; padding:5px;">${item.Asset_Type} - ${item.DetailFromDB || item.Detail}</td><td style="text-align:center; border:1px solid black;">${item.CoStatus || 'ปกติ'}</td></tr>`;
+                });
+            }
             pTable += '</tbody></table>';
             pContainer.innerHTML = pTable;
         }
@@ -251,47 +348,33 @@
         function filterAssets() {
             const val = document.getElementById('searchInput').value.toLowerCase();
             const rows = document.querySelectorAll('#assetTbody tr');
+            let count = 0;
             rows.forEach(row => {
                 const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(val) ? '' : 'none';
+                const match = text.includes(val);
+                row.style.display = match ? '' : 'none';
+                if(match) count++;
             });
+            document.getElementById('recordCount').innerText = `${count} รายการ`;
         }
 
-        // ฟังก์ชัน Export ข้อมูลเป็น Excel (.csv)
         function exportToExcel() {
             if (!fullData) return;
             const assets = (currentTab === 'on' ? fullData.assetsOn : fullData.assetsNon) || [];
-            if (assets.length === 0) {
-                alert("ไม่มีข้อมูลที่จะส่งออก");
-                return;
-            }
+            if (assets.length === 0) return;
 
-            let csvContent = "\uFEFF"; // BOM สำหรับภาษาไทยให้เปิดใน Excel ได้ถูกต้อง
+            let csvContent = "\uFEFF"; 
             csvContent += "ลำดับ,รหัสครุภัณฑ์,ประเภท,รายละเอียด,สถานะ\n";
-
             assets.forEach((item, index) => {
-                const row = [
-                    index + 1,
-                    `"${item.NOID || item.AssetID || '-'}"`, // ใส่ฟันหนูป้องกันรหัสครุภัณฑ์เพี้ยน
-                    `"${item.Asset_Type || '-'}"`,
-                    `"${(item.DetailFromDB || item.Detail || '-').replace(/"/g, '""')}"`, // จัดการฟันหนูในข้อความ
-                    `"${item.CoStatus || 'ปกติ'}"`
-                ];
+                const row = [index + 1, `"${item.NOID || item.AssetID || '-'}"`, `"${item.Asset_Type || '-'}"`, `"${(item.DetailFromDB || item.Detail || '-').replace(/"/g, '""')}"`, `"${item.CoStatus || 'ปกติ'}"` ];
                 csvContent += row.join(",") + "\n";
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            const deptName = document.getElementById('deptName').innerText;
-            const fileName = `Assets_${deptName}_${currentTab === 'on' ? 'In_Registry' : 'Outside_Registry'}.csv`;
-            
-            link.setAttribute("href", url);
-            link.setAttribute("download", fileName);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
+            link.href = URL.createObjectURL(blob);
+            link.download = `Assets_${document.getElementById('deptName').innerText}.csv`;
             link.click();
-            document.body.removeChild(link);
         }
 
         window.onload = init;
