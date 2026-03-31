@@ -29,8 +29,8 @@
         }
         .pink-header {
             background: var(--gradient-header);
-            border-bottom-left-radius: 40px; /* เพิ่มความโค้งมนส่วนล่างซ้าย */
-            border-bottom-right-radius: 40px; /* เพิ่มความโค้งมนส่วนล่างขวา */
+            border-bottom-left-radius: 30px; /* ลดความโค้งลงเล็กน้อยเพื่อให้ดูทันสมัย */
+            border-bottom-right-radius: 30px;
             border-bottom: 4px solid rgba(255, 255, 255, 0.3);
         }
         .loader-overlay {
@@ -95,39 +95,38 @@
         </div>
     </div>
 
-    <!-- Header Section -->
-    <header class="pink-header px-4 pt-8 pb-12 shadow-lg no-print relative overflow-hidden">
+    <!-- Header Section - ปรับปรุงให้ Compact สำหรับ Mobile -->
+    <header class="pink-header px-4 py-6 md:pt-8 md:pb-12 shadow-lg no-print relative overflow-hidden">
         <div class="container mx-auto relative z-10">
-            <!-- ปรับแก้: Logo และ Text เรียงเป็นแถวเดียวกัน -->
-            <div class="flex flex-row items-center justify-center gap-4 text-left">
-                <div class="bg-white p-1.5 rounded-xl shadow-lg flex-shrink-0">
-                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-10 w-auto">
+            <div class="flex flex-row items-center justify-center gap-3 text-left">
+                <div class="bg-white p-1 rounded-xl shadow-md flex-shrink-0">
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-8 md:h-10 w-auto">
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-3xl font-bold text-white tracking-tight leading-tight">ครุภัณฑ์คอมพิวเตอร์</h1>
-                    <p class="text-white/80 text-[10px] md:text-sm font-light">โรงพยาบาลอุดรธานี</p>
+                    <h1 class="text-lg md:text-2xl font-bold text-white tracking-tight leading-tight">ครุภัณฑ์คอมพิวเตอร์</h1>
+                    <p class="text-white/80 text-[9px] md:text-sm font-light">โรงพยาบาลอุดรธานี</p>
                 </div>
             </div>
             
-            <!-- ปุ่มควบคุม -->
-            <div class="grid grid-cols-3 gap-2 mt-8 max-w-lg mx-auto">
-                <button onclick="goHome()" class="bg-white/15 backdrop-blur-md text-white border border-white/20 p-2 rounded-xl flex flex-col items-center justify-center text-[10px] active:scale-95 transition-all">
-                    <i class="fas fa-home mb-1 text-base"></i> หน้าหลัก
+            <!-- ปุ่มควบคุม - ปรับขนาดให้กระชับขึ้นสำหรับ Mobile -->
+            <div class="grid grid-cols-3 gap-2 mt-5 max-w-sm mx-auto">
+                <button onclick="goHome()" class="bg-white/15 backdrop-blur-md text-white border border-white/20 py-1.5 rounded-lg flex flex-col items-center justify-center text-[10px] active:scale-95 transition-all">
+                    <i class="fas fa-home mb-0.5 text-sm"></i> หน้าหลัก
                 </button>
-                <button onclick="exportToCSV()" class="bg-emerald-500 text-white p-2 rounded-xl flex flex-col items-center justify-center text-[10px] active:scale-95 transition-all shadow-lg shadow-emerald-900/20">
-                    <i class="fas fa-file-excel mb-1 text-base"></i> Export
+                <button onclick="exportToCSV()" class="bg-emerald-500 text-white py-1.5 rounded-lg flex flex-col items-center justify-center text-[10px] active:scale-95 transition-all shadow-md">
+                    <i class="fas fa-file-excel mb-0.5 text-sm"></i> Export
                 </button>
-                <button onclick="handlePrint()" class="bg-white text-pink-700 p-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold active:scale-95 transition-all shadow-lg">
-                    <i class="fas fa-print mb-1 text-base"></i> พิมพ์
+                <button onclick="handlePrint()" class="bg-white text-pink-700 py-1.5 rounded-lg flex flex-col items-center justify-center text-[10px] font-bold active:scale-95 transition-all shadow-md">
+                    <i class="fas fa-print mb-0.5 text-sm"></i> พิมพ์
                 </button>
             </div>
         </div>
         <!-- Decorative elements -->
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-pink-400/20 rounded-full blur-2xl"></div>
+        <div class="absolute -top-10 -right-10 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-24 h-24 bg-pink-400/20 rounded-full blur-2xl"></div>
     </header>
 
-    <main class="container mx-auto px-4 -mt-6 pb-20 relative z-20">
+    <main class="container mx-auto px-4 -mt-4 pb-20 relative z-20">
         
         <!-- Department Detail Card -->
         <div id="deptInfo" class="soft-card p-5 mb-4 no-print shadow-md">
