@@ -438,8 +438,12 @@ async function showDeptDetail(id) {
     if (linkBtn) {
         linkBtn.onclick = () => {
             const url = `department_asset.html?DEP_ID=${depId}`;
-            window.open(url, '_blank'); // เปิดแท็บใหม่ไปที่ GitHub Pages
-            // 2. ปิดหน้าต่าง Modal นี้ทันที
+            
+            // เปลี่ยนจาก window.open เป็นการกำหนด href เพื่อเปิดในหน้าเดิม
+            window.location.href = url; 
+    
+            // หมายเหตุ: เมื่อเปลี่ยนหน้า (Redirect) หน้าต่าง Modal จะหายไปพร้อมกับการโหลดหน้าใหม่ 
+            // แต่ถ้าต้องการสั่งปิดเผื่อไว้ก่อน transition สามารถคงบรรทัดนี้ไว้ได้ครับ
             closeModal('modal-dept-detail');
         };
     }
