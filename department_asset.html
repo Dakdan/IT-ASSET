@@ -112,10 +112,23 @@
                     </span>
                 </div>
             </div>
-            <div id="headerDate" class="text-right hidden md:block">
-                <div class="bg-black/10 backdrop-blur-sm p-3 rounded-2xl border border-white/20">
-                    <p class="text-white text-xs font-medium uppercase tracking-widest opacity-80 mb-1">วันที่ปัจจุบัน</p>
-                    <p class="text-white font-bold text-sm" id="currentDateStr"></p>
+            
+            <!-- ปุ่มควบคุม ย้ายมาไว้ที่ Header -->
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 mt-4 md:mt-0">
+                <button onclick="goHome()" class="bg-white/20 backdrop-blur-md text-white border border-white/40 px-4 py-2.5 rounded-xl flex items-center text-xs font-semibold hover:bg-white/30 transition-all">
+                    <i class="fas fa-home mr-2"></i> หน้าหลัก
+                </button>
+                <button onclick="exportToCSV()" class="bg-emerald-500/90 backdrop-blur-md text-white px-4 py-2.5 rounded-xl flex items-center text-xs font-semibold hover:bg-emerald-600 transition-all border border-emerald-400/50">
+                    <i class="fas fa-file-excel mr-2"></i> Export
+                </button>
+                <button id="mainPrintBtn" onclick="handlePrint()" class="bg-white text-pink-700 px-4 py-2.5 rounded-xl shadow-lg flex items-center text-xs font-bold hover:scale-105 active:scale-95 transition-all">
+                    <i class="fas fa-print mr-2"></i> พิมพ์รายงาน
+                </button>
+            </div>
+
+            <div id="headerDate" class="text-right hidden xl:block ml-4">
+                <div class="bg-black/10 backdrop-blur-sm p-2 px-4 rounded-xl border border-white/20">
+                    <p class="text-white font-bold text-xs" id="currentDateStr"></p>
                 </div>
             </div>
         </div>
@@ -171,17 +184,6 @@
                             <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs font-bold rounded-full uppercase tracking-wider">ข้อมูลหน่วยงาน</span>
                             <h2 id="deptName" class="text-2xl font-bold text-gray-800 mt-2">กำลังโหลดข้อมูล...</h2>
                             <p id="deptId" class="text-pink-500 font-mono text-sm mt-1"></p>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <button onclick="goHome()" class="bg-gray-800 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:bg-black transition-all">
-                                <i class="fas fa-home mr-2 text-lg"></i> กลับหน้าหลัก
-                            </button>
-                            <button onclick="exportToCSV()" class="bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:bg-emerald-700 hover:shadow-emerald-100 transition-all">
-                                <i class="fas fa-file-excel mr-2 text-lg"></i> Export Excel
-                            </button>
-                            <button id="mainPrintBtn" onclick="handlePrint()" class="btn-pink text-white px-6 py-3 rounded-2xl shadow-lg flex items-center text-sm font-semibold hover:scale-105 active:scale-95 transition-all">
-                                <i class="fas fa-print mr-2 text-lg"></i> พิมพ์รายงานสรุป
-                            </button>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 border-t border-gray-100 pt-6">
@@ -488,3 +490,4 @@
     </script>
 </body>
 </html>
+
