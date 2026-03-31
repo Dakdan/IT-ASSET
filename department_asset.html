@@ -72,14 +72,14 @@
 </head>
 <body class="text-gray-700 pb-10">
 
-    <!-- Loading Overlay -->
+    <!-- Loading Overlay (รักษาไว้ตามความต้องการ) -->
     <div id="loadingOverlay">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-600 mb-4"></div>
         <p class="text-pink-600 font-bold animate-pulse text-xl">กำลังดึงข้อมูลระบบ...</p>
         <p id="loadingStatus" class="text-gray-400 text-sm mt-2 font-light italic">โปรดรอสักครู่</p>
     </div>
 
-    <!-- Header Section -->
+    <!-- Header Section (โครงสร้างเดิม) -->
     <header class="pink-gradient-bg px-6 py-12 no-print relative">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6 mt-4">
             <div class="bg-white p-2 rounded-2xl shadow-xl">
@@ -93,7 +93,7 @@
     </header>
 
     <main class="max-w-6xl mx-auto px-4 -mt-10">
-        <!-- Profile Card -->
+        <!-- Profile Card (โครงสร้างเดิม) -->
         <div class="soft-card p-6 md:p-8 mb-8 relative z-10 no-print">
             <div class="flex flex-col md:flex-row gap-8 items-start">
                 <div class="w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-pink-50 border-4 border-white shadow-md overflow-hidden flex-shrink-0">
@@ -147,7 +147,7 @@
             </div>
         </div>
 
-        <!-- Dashboard Content -->
+        <!-- Dashboard Content (โครงสร้างเดิม) -->
         <div id="mainContent" class="no-print">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
                 <div class="bg-white p-1 rounded-2xl border border-gray-200 flex w-full md:w-auto shadow-sm">
@@ -183,7 +183,7 @@
             </div>
         </div>
 
-        <!-- Print Area -->
+        <!-- Print Area (โครงสร้างเดิม) -->
         <div id="printContainer" class="print-only">
              <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="font-size: 18pt; font-weight: bold;">รายงานการตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
@@ -219,12 +219,14 @@
                 renderUI();
                 preparePrintData();
                 
+                // ค่อยๆ จางหน้าจอโหลดหายไป
                 overlay.style.opacity = '0';
                 setTimeout(() => { overlay.style.display = 'none'; }, 500);
 
             } catch (err) {
                 console.error("Fetch Error:", err);
                 document.getElementById('loadingStatus').innerText = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+                document.getElementById('loadingStatus').classList.add('text-red-500');
             }
         }
 
@@ -270,28 +272,23 @@
             let count = 0;
 
             list.forEach(item => {
-                // ใช้ชื่อ Property ตรงตามที่ code.gs ส่งมา: NOID, TYPE_NAME, DetailFromDB, AgeFromDB, ConfirmStatus
-                const id = String(item.NOID || item.ID || '').toLowerCase();
-                const type = String(item.TYPE_NAME || '').toLowerCase();
-                const detail = String(item.DetailFromDB || item.DETAIL || '').toLowerCase();
-                
-                if (id.includes(search) || type.includes(search) || detail.includes(search)) {
+                const id = String(item.ASSET_ID || item.ID || '').toLowerCase();
+                const detail = String(item.DETAIL || item.DetailFromDB || '').toLowerCase();
+                if (id.includes(search) || detail.includes(search)) {
                     count++;
-                    const statusText = String(item.ConfirmStatus || item.Status || 'รอยืนยัน').trim();
+                    const status = String(item.Status || item.ConfirmStatus || 'ปกติ').trim();
                     let statusClass = "status-active";
-                    if (statusText.includes("เสีย") || statusText.includes("ชำรุด") || statusText.includes("รอยืนยัน")) {
-                        statusClass = "status-inactive";
-                    }
+                    if (status.includes("เสีย") || status.includes("ชำรุด")) statusClass = "status-inactive";
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50/50 transition-colors";
                     tr.innerHTML = `
                         <td class="px-6 py-4 text-center text-gray-400 font-medium">${count}</td>
-                        <td class="px-6 py-4 font-bold text-gray-800">${item.NOID || item.ID || '-'}</td>
+                        <td class="px-6 py-4 font-bold text-gray-800">${item.ASSET_ID || item.ID || '-'}</td>
                         <td class="px-6 py-4 text-gray-600">${item.TYPE_NAME || '-'}</td>
-                        <td class="px-6 py-4 text-xs text-gray-500 max-w-sm leading-relaxed">${item.DetailFromDB || item.DETAIL || '-'}</td>
-                        <td class="px-6 py-4 text-center font-semibold text-gray-700">${item.AgeFromDB || item.Age_Year || '0'}</td>
-                        <td class="px-6 py-4 text-center"><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td class="px-6 py-4 text-xs text-gray-500 max-w-sm leading-relaxed">${item.DETAIL || item.DetailFromDB || '-'}</td>
+                        <td class="px-6 py-4 text-center font-semibold text-gray-700">${item.Age_Year || item.AgeFromDB || '0'}</td>
+                        <td class="px-6 py-4 text-center"><span class="status-badge ${statusClass}">${status}</span></td>
                     `;
                     tbody.appendChild(tr);
                 }
@@ -303,12 +300,12 @@
             const d = fullData.department || {};
             document.getElementById('printDeptHeader').innerText = `หน่วยงาน: ${d.DEPNAME || '-'}`;
             document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
-            
+            // ทำการ Render ตารางสำหรับการพิมพ์ไว้ล่วงหน้า (ใช้โครงสร้างเดิมของคุณ)
             const fillPrintTable = (targetId, list) => {
                 const target = document.getElementById(targetId);
                 target.innerHTML = '<tr><th>ที่</th><th>รหัส</th><th>รายการ</th><th>รายละเอียด</th><th>อายุ</th><th>สถานะ</th></tr>';
                 list.forEach((item, i) => {
-                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.NOID || item.ID}</td><td>${item.TYPE_NAME}</td><td>${item.DetailFromDB || item.DETAIL}</td><td>${item.AgeFromDB || item.Age_Year}</td><td>${item.ConfirmStatus || item.Status}</td></tr>`;
+                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.ASSET_ID || item.ID}</td><td>${item.TYPE_NAME}</td><td>${item.DETAIL || item.DetailFromDB}</td><td>${item.Age_Year || item.AgeFromDB}</td><td>${item.Status || item.ConfirmStatus}</td></tr>`;
                 });
             };
             fillPrintTable('printOnTbody', fullData.assetsOn || []);
