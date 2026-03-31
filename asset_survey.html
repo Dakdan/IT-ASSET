@@ -362,32 +362,40 @@ function updateDashboard(data, filteredDetails) {
 
     let html = "";
     let currentBldg = "";
-    const sorted = [...filteredDetails].sort((a, b) => (a.building || "").localeCompare(b.building || ""));
+    
+    // เรียงลำดับตามชื่ออาคารเพื่อให้แถบหัวข้อแสดงผลถูกต้อง
+    const sorted = [...filteredDetails].sort((a, b) => (a.building || "").localeCompare(b.building || "", 'th'));
 
     sorted.forEach(item => {
         const id = item.deptId || item.DEPID;
         const name = item.deptName || item.DEP_NAME_LOC;
 
+        // ส่วนที่เพิ่ม: ตรวจสอบและสร้างแถบหัวข้อชื่ออาคาร (สีเทาอ่อน)
         if (item.building !== currentBldg) {
             currentBldg = item.building;
-            html += `<div class="bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-b sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
+            // ใช้ col-span-full เพื่อให้แถบหัวข้อกางเต็มหน้าจอทั้งบน PC และ Mobile
+            html += `
+                <div class="col-span-full bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] uppercase border-y border-gray-200 mt-2 first:mt-0 sticky top-0 z-10 shadow-sm">
+                    อาคาร: ${currentBldg || '-'}
+                </div>`;
         }
 
         let imgTag = (item.deptPhoto && item.deptPhoto !== "") 
             ? `<img src="${item.deptPhoto}" class="w-full h-full object-cover">`
             : `<div class="w-full h-full bg-gray-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-gray-200"></i></div>`;
 
+        // ส่วนรายการหน่วยงาน
         html += `
-        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer" 
+        <div class="flex justify-between items-center p-4 border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer transition-colors bg-white" 
              onclick="showDeptDetail('${id}')">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-2xl bg-white overflow-hidden shrink-0 border border-gray-100 shadow-sm flex items-center justify-center">
                     ${imgTag}
                 </div>
-                <div>
-                    <p class="font-semibold text-gray-800 text-sm leading-tight">${name}</p>
-                    <p class="text-[10px] text-pink-500 font-bold uppercase">
-                        ☎️ ${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.gps || item.GPS || 0}
+                <div class="overflow-hidden">
+                    <p class="font-semibold text-gray-800 text-sm leading-tight truncate">${name}</p>
+                    <p class="text-[10px] text-pink-500 font-bold uppercase mt-1">
+                        <i data-lucide="phone" class="w-2.5 h-2.5 inline mr-1"></i>${item.tel || '-'} | ชั้น ${item.floor || '-'} | GPS: ${item.gps || item.GPS || 0}
                     </p>                     
                 </div>
             </div>
