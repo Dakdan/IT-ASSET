@@ -70,7 +70,7 @@
     <div id="loaderModal" class="fixed inset-0 z-[100] flex items-center justify-center loader-overlay hidden no-print">
         <div class="text-center">
             <div class="inline-block w-12 h-12 border-4 border-pink-200 border-t-pink-700 rounded-full animate-spin mb-4"></div>
-            <p class="text-pink-800 font-medium">กำลัง Mapping ข้อมูล...</p>
+            <p class="text-pink-800 font-medium">กำลังตรวจสอบข้อมูล...</p>
         </div>
     </div>
 
@@ -110,10 +110,9 @@
             </div>
         </div>
 
-        <!-- Department Detail Card (Mapping ข้อมูลที่นี่) -->
+        <!-- Department Detail Card -->
         <div id="deptInfo" class="soft-card p-8 mb-8 no-print">
             <div class="flex flex-col md:flex-row gap-8 items-start">
-                <!-- Mapping รูปภาพหน่วยงาน -->
                 <div id="deptImg" class="w-full md:w-48 h-48 rounded-3xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0 shadow-inner flex items-center justify-center">
                     <img src="" class="w-full h-full object-cover hidden" id="deptAvatar">
                     <i class="fas fa-hospital text-6xl text-gray-200" id="deptAvatarPlaceholder"></i>
@@ -122,13 +121,11 @@
                 <div class="flex-grow w-full">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                         <div>
-                            <!-- Mapping ชื่อหน่วยงาน และ DEP_ID -->
                             <h2 id="deptName" class="text-2xl md:text-3xl font-black text-gray-800 mb-1 leading-tight">กำลังโหลด...</h2>
                             <p id="deptCode" class="text-pink-600 font-bold flex items-center gap-2">
                                 <span class="bg-pink-100 px-3 py-0.5 rounded-full text-xs" id="deptIdLabel">ID: -</span>
                             </p>
                         </div>
-                        <!-- กลุ่มปุ่มควบคุม (ห้ามลบ) -->
                         <div class="flex flex-wrap gap-2">
                             <button onclick="location.href='index.html'" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl font-bold text-sm transition-all">
                                 <i class="fas fa-home"></i> กลับหน้าหลัก
@@ -142,19 +139,18 @@
                         </div>
                     </div>
 
-                    <!-- Mapping ข้อมูลสถานที่ -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 border-t border-gray-100 pt-6">
                         <div class="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-xl border border-gray-50">
                             <i class="fas fa-location-arrow text-pink-500"></i>
-                            <span id="locName" class="text-sm font-medium italic text-gray-400">สถานที่: -</span>
+                            <span id="locName" class="text-sm font-medium">สถานที่: -</span>
                         </div>
                         <div class="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-xl border border-gray-50">
                             <i class="fas fa-layer-group text-pink-500"></i>
-                            <span id="locFloor" class="text-sm font-medium italic text-gray-400">ชั้น: -</span>
+                            <span id="locFloor" class="text-sm font-medium">ชั้น: -</span>
                         </div>
                         <div class="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-xl border border-gray-50">
                             <i class="fas fa-phone text-pink-500"></i>
-                            <span id="locPhone" class="text-sm font-medium italic text-gray-400">โทรศัพท์: -</span>
+                            <span id="locPhone" class="text-sm font-medium">โทรศัพท์: -</span>
                         </div>
                     </div>
                 </div>
@@ -201,21 +197,7 @@
             </div>
         </div>
 
-        <!-- Print Area (Hidden in Web View) -->
         <div id="printArea" class="print-only">
-            <div class="flex justify-between items-end mb-6 pb-4 border-b-2 border-pink-700">
-                <div class="flex items-center gap-4">
-                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="h-14">
-                    <div>
-                        <h1 class="text-lg font-bold">รายงานสรุปข้อมูลครุภัณฑ์คอมพิวเตอร์</h1>
-                        <p class="text-[10px]">โรงพยาบาลอุดรธานี (กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์)</p>
-                    </div>
-                </div>
-                <div class="text-right text-[10px]">
-                    <p>หน่วยงาน: <span id="printDeptName" class="font-bold"></span></p>
-                    <p>วันที่พิมพ์: <span id="printDate"></span></p>
-                </div>
-            </div>
             <div id="printOnTable"></div>
             <div id="printNonTable"></div>
         </div>
@@ -251,20 +233,14 @@
             }
         }
 
-        // ฟังก์ชันหัวใจหลัก: การ Mapping ข้อมูลลงโครงสร้างเดิม
         function mapDataToUI() {
             const d = rawData.department || {};
-            
-            // 1. Mapping ชื่อหน่วยงาน และ ID
             document.getElementById('deptName').innerText = d.DEPNAME || 'ไม่พบชื่อหน่วยงาน';
             document.getElementById('deptIdLabel').innerText = `ID: ${d.DEP_ID || '-'}`;
-            
-            // 2. Mapping ข้อมูลสถานที่
             document.getElementById('locName').innerText = `สถานที่: ${d.LOCATION_NAME || '-'}`;
             document.getElementById('locFloor').innerText = `ชั้น: ${d.FL || '-'}`;
             document.getElementById('locPhone').innerText = `โทรศัพท์: ${d.Tell || '-'}`;
 
-            // 3. Mapping รูปภาพหน่วยงาน (Google Drive Thumbnail)
             const avatar = document.getElementById('deptAvatar');
             const placeholder = document.getElementById('deptAvatarPlaceholder');
             const fileId = d.N_ || d.N_ID; 
@@ -278,7 +254,6 @@
                 placeholder.classList.remove('hidden');
             }
 
-            // 4. สรุปสถิติ
             const onLen = rawData.assetsOn ? rawData.assetsOn.length : 0;
             const nonLen = rawData.assetsNon ? rawData.assetsNon.length : 0;
             document.getElementById('statOnCount').innerText = onLen;
@@ -311,54 +286,46 @@
             const search = document.getElementById('searchInput').value.toLowerCase();
             const data = activeTab === 'on' ? (rawData.assetsOn || []) : (rawData.assetsNon || []);
             const filtered = data.filter(item => {
-                const id = (item.AssetID || item.NOID || '').toLowerCase();
-                const type = (item.Asset_Type || item.AssetType || '').toLowerCase();
+                const id = String(item.AssetID || item.NOID || '').toLowerCase();
+                const type = String(item.Asset_Type || item.AssetType || '').toLowerCase();
                 return id.includes(search) || type.includes(search);
             });
             document.getElementById('rowCount').innerText = `${filtered.length} รายการ`;
             renderTable(filtered);
         }
 
+        // ปรับปรุงฟังก์ชัน Render ให้ Mapping ข้อมูลได้แม่นยำขึ้น
         function renderTable(data) {
             const tbody = document.getElementById('assetTbody');
             const empty = document.getElementById('emptyState');
             tbody.innerHTML = '';
             if (data.length === 0) { empty.classList.remove('hidden'); return; }
             empty.classList.add('hidden');
+
             data.forEach((item, index) => {
                 const status = item.CoStatus || 'ปกติ';
                 const statusColor = status.includes('ปกติ') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
+                
+                // Mapping: รายละเอียด (รองรับชื่อตัวแปร Detail หรือ Asset_Detail)
+                const detail = item.Detail || item.Asset_Detail || item.AssetDetail || '-';
+                
+                // Mapping: อายุ (รองรับชื่อตัวแปร Age หรือ Asset_Age หรือ Year_Count)
+                const age = item.Age || item.Asset_Age || item.Year_Count || '-';
+
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-pink-50 transition-colors">
                         <td class="px-6 py-4 text-center font-mono text-gray-400 text-xs">${index + 1}</td>
                         <td class="px-6 py-4 font-bold text-gray-700">${item.AssetID || item.NOID || '-'}</td>
                         <td class="px-6 py-4 text-pink-700 font-semibold">${item.Asset_Type || item.AssetType || '-'}</td>
-                        <td class="px-6 py-4"><p class="line-clamp-1 text-gray-500 text-xs">${item.Detail || '-'}</p></td>
-                        <td class="px-6 py-4 text-center font-medium text-gray-600">${item.Age || '-'}</td>
+                        <td class="px-6 py-4"><p class="line-clamp-1 text-gray-500 text-xs" title="${detail}">${detail}</p></td>
+                        <td class="px-6 py-4 text-center font-medium text-gray-600">${age}</td>
                         <td class="px-6 py-4 text-center"><span class="inline-block px-3 py-1 rounded-full text-[10px] font-bold ${statusColor}">${status}</span></td>
                     </tr>
                 `);
             });
         }
 
-        function handlePrint() {
-            const d = rawData.department || {};
-            document.getElementById('printDeptName').innerText = d.DEPNAME || '-';
-            document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
-            document.getElementById('printOnTable').innerHTML = buildPrintTable(rawData.assetsOn, 'ในระบบ');
-            document.getElementById('printNonTable').innerHTML = buildPrintTable(rawData.assetsNon, 'นอกระบบ');
-            window.print();
-        }
-
-        function buildPrintTable(data, title) {
-            if (!data || data.length === 0) return '';
-            let html = `<h2 class="text-xs font-bold mt-4 mb-2">${title}</h2><table><thead><tr><th>#</th><th>รหัส</th><th>ประเภท</th><th>รายละเอียด</th><th>สถานะ</th></tr></thead><tbody>`;
-            data.forEach((item, i) => {
-                html += `<tr><td>${i+1}</td><td>${item.AssetID || item.NOID}</td><td>${item.Asset_Type || item.AssetType}</td><td>${item.Detail}</td><td>${item.CoStatus || 'ปกติ'}</td></tr>`;
-            });
-            return html + `</tbody></table>`;
-        }
-
+        function handlePrint() { window.print(); }
         function exportToExcel() {
             const onData = rawData.assetsOn || [];
             const ws = XLSX.utils.json_to_sheet(onData);
