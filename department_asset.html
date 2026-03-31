@@ -74,8 +74,9 @@
             .no-print { display: none !important; }
             body { background: white !important; padding: 0 !important; background-image: none !important; }
             .print-only { display: block !important; }
-            table { font-size: 8pt; width: 100%; border-collapse: collapse; }
+            table { font-size: 8pt; width: 100%; border-collapse: collapse; margin-bottom: 15px; }
             th, td { border: 1px solid #ddd; padding: 4px; }
+            th { background-color: #f9fafb !important; color: black !important; }
             .pink-header { border-radius: 0; }
             .sig-box { break-inside: avoid; }
         }
@@ -107,11 +108,8 @@
                     <button onclick="goHome()" class="bg-white/15 backdrop-blur-md text-white border border-white/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-[11px] active:scale-95 transition-all">
                         <i class="fas fa-home"></i> <span>หน้าหลัก</span>
                     </button>
-                    <button onclick="exportToCSV()" class="bg-emerald-500 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-[11px] font-medium active:scale-95 transition-all shadow-md">
-                        <i class="fas fa-file-excel"></i> <span>Export</span>
-                    </button>
                     <button onclick="handlePrint()" class="bg-white text-pink-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-[11px] font-bold active:scale-95 transition-all shadow-md">
-                        <i class="fas fa-print"></i> <span>พิมพ์</span>
+                        <i class="fas fa-print"></i> <span>พิมพ์รายงาน</span>
                     </button>
                 </div>
             </div>
@@ -119,7 +117,7 @@
     </header>
 
     <main class="container mx-auto px-4 mt-6 pb-20 relative z-20">
-        <!-- Dept Card & Stats remain same -->
+        <!-- ข้อมูลหน่วยงาน -->
         <div id="deptInfo" class="soft-card p-5 mb-4 no-print shadow-sm">
             <div class="flex flex-row gap-4 items-center mb-4">
                 <div id="deptImg" class="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
@@ -141,17 +139,19 @@
             </div>
         </div>
 
+        <!-- แผงสถิติ -->
         <div id="statsDashboard" class="grid grid-cols-3 gap-2 mb-4 no-print">
             <div class="soft-card p-3 text-center border-b-4 border-b-pink-500"><p class="text-[9px] text-gray-400 font-medium mb-1">รายการในทะเบียน</p><h3 id="statOnCount" class="text-lg font-bold text-pink-700">0</h3></div>
             <div class="soft-card p-3 text-center border-b-4 border-b-blue-400"><p class="text-[9px] text-gray-400 font-medium mb-1">ยังไม่ขึ้นทะเบียน</p><h3 id="statNonCount" class="text-lg font-bold text-blue-600">0</h3></div>
             <div class="soft-card p-3 text-center bg-pink-50 border-b-4 border-b-pink-700"><p class="text-[9px] text-pink-600 font-bold mb-1">รวมทั้งสิ้น</p><h3 id="statTotalCount" class="text-lg font-bold text-gray-800">0</h3></div>
         </div>
 
+        <!-- ค้นหาและตาราง -->
         <div class="no-print">
             <div class="mb-3">
                 <div class="relative">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                    <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหา..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 outline-none text-xs transition-all shadow-sm">
+                    <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหารหัสครุภัณฑ์ หรือรายละเอียด..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 outline-none text-xs transition-all shadow-sm">
                 </div>
             </div>
 
@@ -184,25 +184,37 @@
             </div>
         </div>
 
-        <!-- Print View -->
+        <!-- หน้าสำหรับพิมพ์ (Print View) -->
         <div id="printArea" class="print-only">
             <div class="flex justify-between items-center mb-6 border-b-2 border-black pb-2">
                 <div class="flex items-center gap-3">
                     <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="h-10">
-                    <div><h1 class="text-sm font-bold">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์ ประจำปี 2569</h1><p class="text-[8px]">โรงพยาบาลอุดรธานี</p></div>
+                    <div>
+                        <h1 class="text-sm font-bold">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์ ประจำปี 2569</h1>
+                        <p class="text-[8px]">โรงพยาบาลอุดรธานี</p>
+                    </div>
                 </div>
-                <div class="text-right text-[8px]"><p>หน่วยงาน: <span id="printDeptName"></span></p><p>พิมพ์เมื่อ: <span id="printDate"></span></p></div>
+                <div class="text-right text-[8px]">
+                    <p>หน่วยงาน: <span id="printDeptName" class="font-bold"></span></p>
+                    <p>พิมพ์เมื่อ: <span id="printDate"></span></p>
+                </div>
             </div>
-            <h2 class="text-[10px] font-bold mb-1">รายการในระบบ (Asset_On)</h2>
-            <div id="printOnTable"></div>
-            <h2 class="text-[10px] font-bold mb-1 mt-4">รายการนอกระบบ (Non-Number)</h2>
-            <div id="printNonTable"></div>
+
+            <div class="mb-4">
+                <h2 class="text-[10px] font-bold mb-1 bg-gray-100 p-1">1. รายการในระบบ (Asset_On)</h2>
+                <div id="printOnTable"></div>
+            </div>
+
+            <div class="mb-4">
+                <h2 class="text-[10px] font-bold mb-1 bg-gray-100 p-1">2. รายการนอกระบบ (Non-Number)</h2>
+                <div id="printNonTable"></div>
+            </div>
             
             <!-- ส่วนลายเซ็นท้ายรายงาน -->
-            <div class="mt-8 sig-box border-t pt-4">
-                <h3 class="text-[10px] font-bold mb-4">ลงชื่อยืนยันการตรวจสอบข้อมูล</h3>
-                <div id="printSignatureContainer" class="flex flex-wrap gap-8">
-                    <!-- ลายเซ็นจะถูกสร้างที่นี่ -->
+            <div class="mt-10 sig-box">
+                <h3 class="text-[10px] font-bold mb-4 border-b pb-1">ลงชื่อยืนยันการตรวจสอบข้อมูล</h3>
+                <div id="printSignatureContainer" class="flex flex-wrap gap-12 justify-start mt-4">
+                    <!-- ลายเซ็นจะถูกสร้างที่นี่โดย JavaScript -->
                 </div>
             </div>
         </div>
@@ -220,12 +232,16 @@
         async function fetchData() {
             showModal();
             try {
+                // เรียก API ด้วย parameter getFullData เพื่อรับข้อมูล Mapping Confirmations มาด้วย
                 const res = await fetch(`${API_URL}?DEP_ID=${depId}&action=getFullData`);
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
                 rawData = data;
                 renderUI();
-            } catch (err) { console.error(err); } 
+            } catch (err) { 
+                console.error(err); 
+                document.getElementById('deptName').innerText = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+            } 
             finally { hideModal(); }
         }
 
@@ -233,9 +249,17 @@
             const d = rawData.department;
             document.getElementById('deptName').innerText = d.DEPNAME || '-';
             document.getElementById('deptId').innerText = `ID: ${d.DEP_ID}`;
+            
+            // อัปเดตข้อมูลสถานที่
+            document.getElementById('locName').innerText = `สถานที่: ${d.Location || '-'}`;
+            document.getElementById('locFloor').innerText = `ชั้น: ${d.Floor || '-'}`;
+            document.getElementById('locPhone').innerText = `โทรศัพท์: ${d.Tel || '-'}`;
+
+            // อัปเดตสถิติ
             document.getElementById('statOnCount').innerText = rawData.assetsOn.length;
             document.getElementById('statNonCount').innerText = rawData.assetsNon.length;
             document.getElementById('statTotalCount').innerText = rawData.assetsOn.length + rawData.assetsNon.length;
+            
             switchTab('on');
         }
 
@@ -243,15 +267,25 @@
             activeTab = type;
             const btnOn = document.getElementById('btnTabOn');
             const btnNon = document.getElementById('btnTabNon');
-            btnOn.className = type === 'on' ? "flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-white text-pink-700 shadow-sm" : "flex-1 py-2 rounded-lg text-xs font-bold transition-all text-gray-500";
-            btnNon.className = type === 'non' ? "flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-white text-pink-700 shadow-sm" : "flex-1 py-2 rounded-lg text-xs font-bold transition-all text-gray-500";
+            
+            if (type === 'on') {
+                btnOn.className = "flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-white text-pink-700 shadow-sm";
+                btnNon.className = "flex-1 py-2 rounded-lg text-xs font-bold transition-all text-gray-500";
+                document.getElementById('tableTitle').innerText = "รายการในทะเบียน (Asset_On)";
+            } else {
+                btnOn.className = "flex-1 py-2 rounded-lg text-xs font-bold transition-all text-gray-500";
+                btnNon.className = "flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-white text-pink-700 shadow-sm";
+                document.getElementById('tableTitle').innerText = "รายการยังไม่ขึ้นทะเบียน (Non-Number)";
+            }
             filterAssets();
         }
 
         function filterAssets() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
-            const filtered = data.filter(item => `${item.AssetID} ${item.Detail} ${item.Asset_Type}`.toLowerCase().includes(search));
+            const filtered = data.filter(item => 
+                `${item.AssetID} ${item.Detail} ${item.Asset_Type} ${item.NOID}`.toLowerCase().includes(search)
+            );
             document.getElementById('rowCount').innerText = `${filtered.length} รายการ`;
             renderTable(filtered);
         }
@@ -259,24 +293,31 @@
         function renderTable(data) {
             const tbody = document.getElementById('assetTbody');
             tbody.innerHTML = '';
-            if (data.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); return; }
+            
+            if (data.length === 0) { 
+                document.getElementById('emptyState').classList.remove('hidden'); 
+                return; 
+            }
+            
             document.getElementById('emptyState').classList.add('hidden');
             
             data.forEach((item, index) => {
+                // ดึงข้อมูลการยืนยันจาก Mapping โดยใช้ Note8 (Action_ID)
                 const actionId = item.Note8;
                 const conf = rawData.confirmations[actionId] || {};
+                
                 const status = item.CoStatus || 'ปกติ';
                 const statusColor = status.includes('ปกติ') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
                 
                 tbody.insertAdjacentHTML('beforeend', `
-                    <tr>
-                        <td class="px-4 py-3 text-center" data-label="ลำดับ">${index + 1}</td>
+                    <tr class="hover:bg-pink-50/20 transition-colors">
+                        <td class="px-4 py-3 text-center text-gray-400 font-mono" data-label="ลำดับ">${index + 1}</td>
                         <td class="px-4 py-3" data-label="รหัส/รายละเอียด">
                             <div class="font-bold text-pink-700">${item.AssetID || item.NOID || '-'}</div>
-                            <div class="text-[10px] text-gray-500">${item.Asset_Type || ''} ${item.Detail || ''}</div>
+                            <div class="text-[10px] text-gray-500 leading-tight">${item.Asset_Type || ''} ${item.Detail || ''}</div>
                         </td>
                         <td class="px-4 py-3" data-label="ผู้ตรวจสอบ">
-                            <div class="text-[11px] font-medium">${conf.Act_Name || '-'}</div>
+                            <div class="text-[11px] font-medium text-gray-700">${conf.Act_Name || '<span class="text-gray-300 italic">ไม่ได้ระบุ</span>'}</div>
                             <div class="text-[9px] text-gray-400">${conf.Activity_ID || ''}</div>
                         </td>
                         <td class="px-4 py-3 text-center" data-label="สถานะ">
@@ -291,6 +332,8 @@
             const d = rawData.department;
             document.getElementById('printDeptName').innerText = d.DEPNAME;
             document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
+            
+            // สร้างตารางในส่วนของ Print
             document.getElementById('printOnTable').innerHTML = buildPrintTable(rawData.assetsOn);
             document.getElementById('printNonTable').innerHTML = buildPrintTable(rawData.assetsNon);
             
@@ -298,46 +341,85 @@
             const sigContainer = document.getElementById('printSignatureContainer');
             sigContainer.innerHTML = '';
             
-            // กรองเอาเฉพาะรายชื่อที่ไม่ซ้ำกัน
+            // คัดกรองรายชื่อผู้ยืนยันที่ไม่ซ้ำกันจากทั้งสองรายการ
             const uniqueConfs = [];
             const seenIds = new Set();
             
-            [...rawData.assetsOn, ...rawData.assetsNon].forEach(asset => {
+            const allAssets = [...rawData.assetsOn, ...rawData.assetsNon];
+            allAssets.forEach(asset => {
                 const aid = asset.Note8;
-                if (aid && rawData.confirmations[aid] && !seenIds.has(rawData.confirmations[aid].Activity_ID)) {
-                    uniqueConfs.push(rawData.confirmations[aid]);
-                    seenIds.add(rawData.confirmations[aid].Activity_ID);
+                if (aid && rawData.confirmations[aid]) {
+                    const person = rawData.confirmations[aid];
+                    if (!seenIds.has(person.Activity_ID)) {
+                        uniqueConfs.push(person);
+                        seenIds.add(person.Activity_ID);
+                    }
                 }
             });
 
-            uniqueConfs.forEach(c => {
-                const sigImg = c.Con_Signature ? `<img src="https://lh3.googleusercontent.com/d/${c.Con_Signature}" class="h-12 mx-auto">` : '<div class="h-12"></div>';
-                sigContainer.innerHTML += `
-                    <div class="text-center w-48">
-                        ${sigImg}
-                        <p class="border-t border-black text-[9px] mt-1 pt-1">( ${c.Act_Name} )</p>
-                        <p class="text-[8px] text-gray-500">ผู้ตรวจสอบข้อมูล</p>
-                    </div>
-                `;
-            });
+            if (uniqueConfs.length === 0) {
+                sigContainer.innerHTML = '<p class="text-[9px] italic text-gray-400">ยังไม่มีข้อมูลการยืนยันในระบบ</p>';
+            } else {
+                uniqueConfs.forEach(c => {
+                    // การดึงลายเซ็นจาก Google Drive ผ่าน Direct Link
+                    const sigImg = c.Con_Signature ? 
+                        `<img src="https://lh3.googleusercontent.com/d/${c.Con_Signature}" class="h-10 mx-auto object-contain mb-1" onerror="this.style.display='none'">` : 
+                        '<div class="h-10"></div>';
+                        
+                    sigContainer.innerHTML += `
+                        <div class="text-center w-56 border border-gray-100 p-2 rounded">
+                            <div class="min-h-[40px] flex items-end justify-center">
+                                ${sigImg}
+                            </div>
+                            <div class="border-t border-dotted border-black mt-1"></div>
+                            <p class="text-[9px] mt-1 font-bold">( ${c.Act_Name} )</p>
+                            <p class="text-[8px] text-gray-500">ตำแหน่ง: ${c.Activity_ID || 'เจ้าหน้าที่ประจำหน่วยงาน'}</p>
+                            <p class="text-[7px] text-gray-400 mt-0.5 italic">ยืนยันข้อมูลผ่านระบบดิจิทัล</p>
+                        </div>
+                    `;
+                });
+            }
             
-            window.print();
+            // สั่งพิมพ์
+            setTimeout(() => { window.print(); }, 500);
         }
 
         function buildPrintTable(data) {
-            if (!data || data.length === 0) return '<p class="text-[8px] italic">ไม่มีข้อมูล</p>';
-            let html = `<table><thead><tr><th>#</th><th>รหัส</th><th>ประเภท</th><th>รายละเอียด</th><th>สถานะ</th><th>ผู้ตรวจสอบ</th></tr></thead><tbody>`;
+            if (!data || data.length === 0) return '<p class="text-[8px] italic text-gray-400 p-2">ไม่พบรายการข้อมูล</p>';
+            
+            let html = `
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 20%">รหัสครุภัณฑ์</th>
+                            <th style="width: 15%">ประเภท</th>
+                            <th style="width: 35%">รายละเอียด/ยี่ห้อ/รุ่น</th>
+                            <th style="width: 10%">สถานะ</th>
+                            <th style="width: 15%">ผู้ตรวจสอบ</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                    
             data.forEach((item, index) => {
                 const conf = rawData.confirmations[item.Note8] || {};
-                html += `<tr><td>${index + 1}</td><td>${item.AssetID || item.NOID || '-'}</td><td>${item.Asset_Type || '-'}</td><td>${item.Detail || '-'}</td><td>${item.CoStatus || 'ปกติ'}</td><td>${conf.Act_Name || '-'}</td></tr>`;
+                html += `
+                    <tr>
+                        <td class="text-center">${index + 1}</td>
+                        <td class="font-bold">${item.AssetID || item.NOID || '-'}</td>
+                        <td>${item.Asset_Type || '-'}</td>
+                        <td>${item.Detail || '-'}</td>
+                        <td class="text-center">${item.CoStatus || 'ปกติ'}</td>
+                        <td class="text-center">${conf.Act_Name || '-'}</td>
+                    </tr>`;
             });
+            
             return html + `</tbody></table>`;
         }
 
         function goHome() { window.location.href = 'https://dakdan.github.io/IT-ASSET/asset_survey.html'; }
         function showModal() { document.getElementById('loaderModal').classList.remove('hidden'); }
         function hideModal() { document.getElementById('loaderModal').classList.add('hidden'); }
-        function exportToCSV() { /* same as original */ }
     </script>
 </body>
 </html>
