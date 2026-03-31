@@ -2,208 +2,213 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - โรงพยาบาลอุดรธานี</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary-pink: #be185d; --medium-pink: #ec4899; }
         body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
-        .soft-card { background: white; border-radius: 24px; border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 25px -5px rgba(0, 0, 0, 0.03); }
-        .pink-header { background: linear-gradient(135deg, #9d174d 0%, #be185d 50%, #f472b6 85%); border-bottom-left-radius: 32px; border-bottom-right-radius: 32px; }
-        .tab-active { background-color: white; color: var(--primary-pink); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+        .pink-gradient { background: linear-gradient(135deg, #9d174d 0%, #be185d 100%); }
+        .soft-card { background: white; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .tab-active { background: white; color: #be185d; box-shadow: 0 4px 12px rgba(0,0,0,0.08); font-weight: 600; }
         
+        /* สไตล์สำหรับตารางบนมือถือ */
         @media (max-width: 768px) {
             .asset-table thead { display: none; }
-            .asset-table tr { display: block; margin-bottom: 1rem; padding: 1rem; background: white; border-radius: 16px; border: 1px solid #f1f5f9; }
-            .asset-table td { display: flex; justify-content: space-between; padding: 0.5rem 0; border: none !important; text-align: right; }
-            .asset-table td::before { content: attr(data-label); font-weight: 600; color: #64748b; font-size: 0.75rem; text-align: left; }
+            .asset-table tr { display: block; margin-bottom: 1rem; padding: 1.25rem; background: white; border-radius: 20px; border: 1px solid #edf2f7; }
+            .asset-table td { display: flex; justify-content: space-between; padding: 0.6rem 0; border: none !important; text-align: right; font-size: 0.875rem; }
+            .asset-table td::before { content: attr(data-label); font-weight: 600; color: #718096; text-align: left; }
         }
-        
-        @media print {
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #000 !important; padding: 5px; font-size: 10pt; }
-        }
-        .print-only { display: none; }
     </style>
 </head>
-<body class="text-slate-800">
+<body class="text-slate-800 pb-10">
 
-    <!-- Loading State -->
-    <div id="loaderModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-sm hidden no-print">
-        <div class="text-center">
-            <div class="inline-block w-12 h-12 border-4 border-pink-100 border-t-pink-600 rounded-full animate-spin mb-3"></div>
-            <p class="text-pink-800 text-sm font-medium">กำลังโหลดข้อมูล...</p>
-        </div>
+    <!-- Loading Screen -->
+    <div id="loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md">
+        <div class="w-12 h-12 border-4 border-pink-100 border-t-pink-600 rounded-full animate-spin"></div>
+        <p class="mt-4 text-pink-700 font-medium animate-pulse">กำลังเรียกข้อมูลจากระบบ...</p>
     </div>
 
-    <!-- Header Section -->
-    <header class="pink-header px-4 py-8 shadow-xl no-print">
-        <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-4 text-white">
-                <div class="bg-white p-2 rounded-2xl shadow-inner">
-                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-10">
+    <!-- Header -->
+    <header class="pink-gradient text-white pt-8 pb-20 px-6 rounded-b-[45px] shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 opacity-10 transform translate-x-10 -translate-y-10">
+            <i class="fas fa-laptop-medical text-[200px]"></i>
+        </div>
+        <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+            <div class="flex items-center gap-4">
+                <div class="bg-white p-3 rounded-2xl shadow-xl">
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Hospital Logo" class="h-10">
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-                    <p class="text-white/80 text-xs font-light">ฝ่ายสารสนเทศทางการแพทย์ โรงพยาบาลอุดรธานี</p>
+                    <h1 class="text-2xl font-bold tracking-wide">ระบบตรวจสอบครุภัณฑ์</h1>
+                    <p class="text-pink-100 text-xs font-light opacity-90">ศูนย์เทคโนโลยีสารสนเทศ โรงพยาบาลอุดรธานี</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg hover:bg-emerald-700 transition-all">
-                    <i class="fas fa-file-excel mr-2"></i>Export
+            <div class="flex gap-3">
+                <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all flex items-center gap-2">
+                    <i class="fas fa-file-excel"></i> Export
                 </button>
-                <button onclick="handlePrint()" class="bg-white text-pink-700 px-4 py-2 rounded-xl text-sm font-bold shadow-lg hover:bg-pink-50 transition-all">
-                    <i class="fas fa-print mr-2"></i>พิมพ์
+                <button onclick="window.print()" class="bg-white/20 hover:bg-white/30 px-5 py-2.5 rounded-xl text-sm font-bold backdrop-blur-sm transition-all flex items-center gap-2">
+                    <i class="fas fa-print"></i> พิมพ์
                 </button>
             </div>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 mt-8 pb-24 no-print">
+    <main class="container mx-auto px-4 -mt-12 relative z-20">
         <!-- Dashboard Card -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="lg:col-span-2 soft-card p-6 flex items-center gap-6">
-                <div class="w-24 h-24 bg-slate-100 rounded-3xl overflow-hidden border-4 border-white shadow-md">
-                    <img id="deptPhoto" src="https://via.placeholder.com/150?text=Department" class="w-full h-full object-cover">
+                <div class="w-24 h-24 bg-slate-50 rounded-3xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
+                    <img id="deptPhoto" src="https://via.placeholder.com/200?text=Department" class="w-full h-full object-cover">
                 </div>
-                <div>
-                    <h2 id="deptTitle" class="text-2xl font-bold text-slate-800 tracking-tight">-- กำลังโหลด --</h2>
-                    <p id="deptSubtitle" class="text-slate-500 text-sm">หน่วยงานรับบริการ | <span id="deptIdLabel">ID: -</span></p>
+                <div class="overflow-hidden">
+                    <h2 id="deptTitle" class="text-2xl font-bold text-slate-800 truncate">รอดำเนินการ...</h2>
+                    <p id="deptId" class="text-slate-400 text-sm font-medium mt-1">DEPARTMENT ID: -</p>
                 </div>
             </div>
             <div class="soft-card p-6 bg-slate-900 text-white flex flex-col justify-center">
-                <p class="text-white/60 text-xs uppercase font-bold tracking-widest">รวมครุภัณฑ์ในระบบ</p>
-                <h3 id="totalAssets" class="text-5xl font-bold mt-1">0 <small class="text-lg opacity-50">เครื่อง</small></h3>
+                <p class="text-slate-400 text-[10px] uppercase font-black tracking-[0.2em]">ครุภัณฑ์ทั้งหมด</p>
+                <h3 id="totalAssets" class="text-5xl font-bold mt-1 tracking-tight">0 <span class="text-lg font-normal text-slate-500 italic">เครื่อง</span></h3>
             </div>
         </div>
 
-        <!-- Search and Tabs -->
+        <!-- Controls -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
             <div class="lg:col-span-7 relative">
                 <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหารหัสครุภัณฑ์ หรือรายละเอียด..." 
-                    class="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-pink-500/10 transition-all shadow-sm">
+                <input type="text" id="search" onkeyup="filterData()" placeholder="ค้นหารหัสครุภัณฑ์ หรือรายละเอียด..." 
+                       class="w-full pl-14 pr-6 py-4 rounded-3xl border-none shadow-sm focus:ring-4 focus:ring-pink-500/20 outline-none transition-all text-sm">
             </div>
-            <div class="lg:col-span-5 flex bg-slate-200/50 p-1.5 rounded-2xl">
-                <button onclick="switchTab('on')" id="btnTabOn" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all tab-active">ในทะเบียน (On Log)</button>
-                <button onclick="switchTab('non')" id="btnTabNon" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all text-slate-500">นอกระบบ (Non Log)</button>
+            <div class="lg:col-span-5 flex bg-slate-200/60 p-1.5 rounded-3xl backdrop-blur-sm border border-white/50">
+                <button onclick="switchTab('on')" id="btnOn" class="flex-1 py-3 rounded-2xl text-xs font-bold transition-all tab-active uppercase tracking-wider">ในทะเบียน (On Log)</button>
+                <button onclick="switchTab('non')" id="btnNon" class="flex-1 py-3 rounded-2xl text-xs font-bold transition-all text-slate-500 uppercase tracking-wider">นอกระบบ (Non Log)</button>
             </div>
         </div>
 
-        <!-- Table Display -->
-        <div class="soft-card overflow-hidden">
-            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+        <!-- Data Table -->
+        <div class="soft-card overflow-hidden border-none shadow-xl">
+            <div class="bg-white px-8 py-5 border-b border-slate-50 flex justify-between items-center">
                 <div class="flex items-center gap-2">
-                    <div class="w-2 h-5 bg-pink-600 rounded-full"></div>
-                    <h3 class="font-bold text-slate-700">รายการครุภัณฑ์คอมพิวเตอร์</h3>
+                    <div class="w-1.5 h-6 bg-pink-600 rounded-full"></div>
+                    <h3 class="font-bold text-slate-700 text-sm tracking-wide">รายการครุภัณฑ์คอมพิวเตอร์</h3>
                 </div>
-                <span id="recordCount" class="text-xs bg-pink-600 text-white px-3 py-1 rounded-lg font-bold">0 รายการ</span>
+                <span id="count" class="bg-pink-50 text-pink-700 px-4 py-1 rounded-full text-xs font-black shadow-sm">0 รายการ</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left asset-table">
                     <thead>
-                        <tr class="text-[12px] text-slate-400 border-b uppercase font-bold bg-white">
-                            <th class="px-6 py-4 text-center">ลำดับ</th>
-                            <th class="px-6 py-4">รหัสครุภัณฑ์</th>
-                            <th class="px-6 py-4">ประเภท</th>
-                            <th class="px-6 py-4">รายละเอียด</th>
-                            <th class="px-6 py-4 text-center">ค่า/อายุ</th>
-                            <th class="px-6 py-4 text-center">สถานะ</th>
+                        <tr class="bg-slate-50/50 text-[11px] text-slate-400 uppercase font-black border-b tracking-widest">
+                            <th class="px-8 py-5 text-center w-20">ลำดับ</th>
+                            <th class="px-8 py-5">รหัสครุภัณฑ์</th>
+                            <th class="px-8 py-5">ประเภท</th>
+                            <th class="px-8 py-5">รายละเอียด</th>
+                            <th class="px-8 py-5 text-center">อายุ (ปี)</th>
+                            <th class="px-8 py-5 text-center">สถานะ</th>
                         </tr>
                     </thead>
-                    <tbody id="assetTbody" class="divide-y divide-slate-100">
-                        <tr><td colspan="6" class="py-20 text-center text-slate-300 italic">กำลังรอการโหลดข้อมูล...</td></tr>
+                    <tbody id="tbody" class="divide-y divide-slate-50">
+                        <tr><td colspan="6" class="py-32 text-center text-slate-300 italic font-light tracking-widest">กำลังดึงข้อมูลจากระบบสารสนเทศ...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Print Area -->
-    <div id="printArea" class="print-only p-8">
-        <div class="flex justify-between items-center border-b-2 border-black pb-4 mb-6">
-            <h2 class="text-xl font-bold">รายงานตรวจสอบครุภัณฑ์: <span id="printDeptName"></span></h2>
-            <p class="text-sm">วันที่พิมพ์: <span id="printDate"></span></p>
-        </div>
-        <div id="printContent"></div>
-    </div>
-
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxiOY15Idt7KJgQQn60_MAtVJmAICWT2wvNLS3C4h_SI7uaFD23Z6mzSp8nSrBd4TGVNA/exec';
-        let rawData = { assetsOn: [], assetsNon: [], department: {} };
+        let fullData = { assetsOn: [], assetsNon: [], department: {} };
         let activeTab = 'on';
 
         window.onload = () => {
-            const depId = new URLSearchParams(window.location.search).get('DEP_ID');
-            if(!depId) return alert('ไม่พบรหัสหน่วยงานในระบบ');
+            const urlParams = new URLSearchParams(window.location.search);
+            const depId = urlParams.get('DEP_ID');
+            if(!depId) {
+                document.getElementById('loader').innerHTML = '<p class="text-red-500 font-bold px-10 text-center">กรุณาเข้าใช้งานผ่านระบบ Link ที่มี DEP_ID</p>';
+                return;
+            }
             fetchData(depId);
         };
 
         async function fetchData(depId) {
-            document.getElementById('loaderModal').classList.remove('hidden');
             try {
-                const res = await fetch(`${API_URL}?DEP_ID=${depId}&action=getFullData`);
-                const data = await res.json();
-                rawData = data;
+                // ส่ง DEP_ID ไปที่ doGet ของ Code.gs
+                const response = await fetch(`${API_URL}?DEP_ID=${depId}`);
+                if (!response.ok) throw new Error('Network error');
+                const data = await response.json();
+                
+                if(data.error) throw new Error(data.error);
+                
+                fullData = data;
                 renderUI(depId);
             } catch (err) {
-                console.error("Fetch error:", err);
-                alert('การเชื่อมต่อล้มเหลว กรุณาลองใหม่อีกครั้ง');
+                console.error(err);
+                document.getElementById('loader').innerHTML = `
+                    <div class="text-center p-6 bg-white rounded-3xl shadow-2xl max-w-sm mx-4">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                        <p class="text-slate-800 font-bold mb-2">การเชื่อมต่อล้มเหลว</p>
+                        <p class="text-slate-500 text-xs mb-6">${err.message}</p>
+                        <button onclick="location.reload()" class="bg-pink-600 text-white px-6 py-2 rounded-xl text-sm font-bold">ลองอีกครั้ง</button>
+                    </div>
+                `;
             } finally {
-                document.getElementById('loaderModal').classList.add('hidden');
+                const loader = document.getElementById('loader');
+                if(!loader.querySelector('.text-red-500')) {
+                    loader.classList.add('hidden');
+                }
             }
         }
 
         function renderUI(depId) {
-            const dept = rawData.department || {};
-            document.getElementById('deptTitle').innerText = dept.DEPNAME || 'ไม่พบข้อมูลหน่วยงาน';
-            document.getElementById('deptIdLabel').innerText = `ID: ${depId}`;
-            if(dept.photoUrl) document.getElementById('deptPhoto').src = dept.photoUrl;
-            document.getElementById('totalAssets').innerText = (rawData.assetsOn.length + rawData.assetsNon.length);
-            filterAssets();
-        }
-
-        function switchTab(t) {
-            activeTab = t;
-            document.getElementById('btnTabOn').className = t === 'on' ? 'flex-1 py-3 rounded-xl text-sm font-bold transition-all tab-active' : 'flex-1 py-3 rounded-xl text-sm font-bold transition-all text-slate-500';
-            document.getElementById('btnTabNon').className = t === 'non' ? 'flex-1 py-3 rounded-xl text-sm font-bold transition-all tab-active' : 'flex-1 py-3 rounded-xl text-sm font-bold transition-all text-slate-500';
-            filterAssets();
-        }
-
-        function filterAssets() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
-            const filtered = data.filter(i => 
-                String(i.ASSET_ID).toLowerCase().includes(search) || 
-                String(i.DETAIL_I).toLowerCase().includes(search) ||
-                String(i.TYPE_NAME).toLowerCase().includes(search)
-            );
-            renderTable(filtered);
-        }
-
-        function renderTable(data) {
-            const tbody = document.getElementById('assetTbody');
-            document.getElementById('recordCount').innerText = `${data.length} รายการ`;
+            const dept = fullData.department || {};
+            document.getElementById('deptTitle').innerText = dept.DEPNAME || 'ไม่พบข้อมูล';
+            document.getElementById('deptId').innerText = `DEPARTMENT ID: ${depId}`;
+            if(dept.photoUrl) {
+                document.getElementById('deptPhoto').src = dept.photoUrl;
+            }
             
-            if(data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="py-20 text-center text-slate-400">ไม่พบรายการครุภัณฑ์ในหมวดนี้</td></tr>';
+            const total = (fullData.assetsOn?.length || 0) + (fullData.assetsNon?.length || 0);
+            document.getElementById('totalAssets').innerText = total.toLocaleString();
+            filterData();
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('btnOn').className = tab === 'on' ? 'flex-1 py-3 rounded-2xl text-xs font-bold transition-all tab-active uppercase tracking-wider' : 'flex-1 py-3 rounded-2xl text-xs font-bold transition-all text-slate-500 uppercase tracking-wider';
+            document.getElementById('btnNon').className = tab === 'non' ? 'flex-1 py-3 rounded-2xl text-xs font-bold transition-all tab-active uppercase tracking-wider' : 'flex-1 py-3 rounded-2xl text-xs font-bold transition-all text-slate-500 uppercase tracking-wider';
+            filterData();
+        }
+
+        function filterData() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const pool = activeTab === 'on' ? fullData.assetsOn : fullData.assetsNon;
+            
+            const filtered = pool.filter(i => 
+                String(i.ASSET_ID).toLowerCase().includes(search) || 
+                String(i.TYPE_NAME).toLowerCase().includes(search) ||
+                String(i.DETAIL_I).toLowerCase().includes(search)
+            );
+            
+            const tbody = document.getElementById('tbody');
+            document.getElementById('count').innerText = `${filtered.length} รายการ`;
+            
+            if(filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-32 text-center text-slate-400 font-light">ไม่พบรายการครุภัณฑ์ในหมวดหมู่นี้</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = data.map((item, idx) => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-5 text-center text-slate-400 font-mono text-xs" data-label="ลำดับ">${idx + 1}</td>
-                    <td class="px-6 py-5 font-bold text-slate-800" data-label="รหัสครุภัณฑ์">${item.ASSET_ID}</td>
-                    <td class="px-6 py-5" data-label="ประเภท"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase">${item.TYPE_NAME}</span></td>
-                    <td class="px-6 py-5 text-slate-500 text-xs" data-label="รายละเอียด">${item.DETAIL_I}</td>
-                    <td class="px-6 py-5 text-center font-bold text-pink-600" data-label="อายุ">${item.AGE_V}</td>
-                    <td class="px-6 py-5 text-center" data-label="สถานะ">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-bold ${item.STATUS.includes('แล้ว') || item.STATUS === 'ปกติ' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+            tbody.innerHTML = filtered.map((item, idx) => `
+                <tr class="hover:bg-slate-50/80 transition-all group">
+                    <td class="px-8 py-5 text-center text-slate-300 font-mono text-xs group-hover:text-pink-600 transition-colors" data-label="ลำดับ">${idx + 1}</td>
+                    <td class="px-8 py-5 font-bold text-slate-700 text-sm" data-label="รหัส">${item.ASSET_ID}</td>
+                    <td class="px-8 py-5" data-label="ประเภท">
+                        <span class="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter">${item.TYPE_NAME}</span>
+                    </td>
+                    <td class="px-8 py-5 text-slate-500 text-xs leading-relaxed" data-label="รายละเอียด">${item.DETAIL_I}</td>
+                    <td class="px-8 py-5 text-center font-bold text-slate-700 text-sm" data-label="อายุ">${item.AGE_V}</td>
+                    <td class="px-8 py-5 text-center" data-label="สถานะ">
+                        <span class="px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm ${getStatusClass(item.STATUS)}">
                             ${item.STATUS}
                         </span>
                     </td>
@@ -211,31 +216,26 @@
             `).join('');
         }
 
-        function handlePrint() {
-            document.getElementById('printDeptName').innerText = rawData.department.DEPNAME || '';
-            document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
-            
-            const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
-            let html = `<table><thead><tr><th>ลำดับ</th><th>รหัส</th><th>ประเภท</th><th>รายละเอียด</th><th>สถานะ</th></tr></thead><tbody>`;
-            data.forEach((i, idx) => {
-                html += `<tr><td>${idx+1}</td><td>${i.ASSET_ID}</td><td>${i.TYPE_NAME}</td><td>${i.DETAIL_I}</td><td>${i.STATUS}</td></tr>`;
-            });
-            html += `</tbody></table>`;
-            
-            document.getElementById('printContent').innerHTML = html;
-            window.print();
+        function getStatusClass(status) {
+            const s = String(status);
+            if (s.includes('แล้ว') || s === 'ปกติ') return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+            if (s.includes('รอ') || s === 'ซ่อม') return 'bg-amber-50 text-amber-600 border border-amber-100';
+            return 'bg-slate-100 text-slate-500 border border-slate-200';
         }
 
         function exportToExcel() {
-            const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
-            let csv = "\uFEFFลำดับ,รหัสครุภัณฑ์,ประเภท,รายละเอียด,อายุ,สถานะ\n";
+            const data = activeTab === 'on' ? fullData.assetsOn : fullData.assetsNon;
+            if(!data.length) return alert('ไม่มีข้อมูลสำหรับ Export');
+            
+            let csv = "\uFEFFลำดับ,รหัสครุภัณฑ์,ประเภท,รายละเอียด,อายุ(ปี),สถานะ\n";
             data.forEach((i, idx) => {
                 csv += `${idx+1},"${i.ASSET_ID}","${i.TYPE_NAME}","${i.DETAIL_I}","${i.AGE_V}","${i.STATUS}"\n`;
             });
+            
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `Asset_Report_${activeTab}.csv`;
+            link.download = `Asset_Report_${fullData.department.DEPNAME}_${activeTab}.csv`;
             link.click();
         }
     </script>
