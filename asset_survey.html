@@ -435,19 +435,25 @@ async function showDeptDetail(id) {
     const depId = dept.deptId || dept.DEPID; // เก็บค่า ID ไว้ใช้
     const linkBtn = document.getElementById('btn-view-dept-link');
     
-    if (linkBtn) {
+   if (linkBtn) {
         linkBtn.onclick = () => {
-            const url = `department_asset.html?DEP_ID=${depId}`;
+            // 1. ตรวจสอบเงื่อนไขขนาดหน้าจอ (เช็คที่ความกว้าง 768px ตามมาตรฐาน Mobile/Tablet)
+            const isMobile = window.innerWidth <= 768;
             
-            // เปลี่ยนจาก window.open เป็นการกำหนด href เพื่อเปิดในหน้าเดิม
-            window.location.href = url; 
-    
-            // หมายเหตุ: เมื่อเปลี่ยนหน้า (Redirect) หน้าต่าง Modal จะหายไปพร้อมกับการโหลดหน้าใหม่ 
-            // แต่ถ้าต้องการสั่งปิดเผื่อไว้ก่อน transition สามารถคงบรรทัดนี้ไว้ได้ครับ
+            // 2. เลือกชื่อไฟล์ตามเงื่อนไข
+            const fileName = isMobile ? 'department_asset_vmobile.html' : 'department_asset.html';
+            
+            // 3. ประกอบ URL
+            const url = `${fileName}?DEP_ID=${depId}`;
+            
+            // 4. เปิดในหน้าต่างเดิม
+            window.location.href = url;
+            
+            // ปิด Modal
             closeModal('modal-dept-detail');
         };
     }
-    // --------------------------------------
+        // --------------------------------------
 
     // แสดงข้อมูลพื้นฐานใน Modal (Logic เดิมของคุณ)
     document.getElementById('md-name').innerText = dept.building || "-"; 
