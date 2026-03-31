@@ -128,7 +128,7 @@
         <!-- พื้นที่สำหรับ Print -->
         <div id="printArea" class="print-only">
             <h1 class="text-center font-bold text-xl mb-4">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-            <div id="printDeptDetail" class="mb-6 text-sm"></div>
+            <div id="printDeptDetail" class="mb-6 text-sm text-center"></div>
             <div id="printTableContainer"></div>
         </div>
     </main>
@@ -154,6 +154,7 @@
 
         function renderUI() {
             const d = rawData.department;
+            // ดึงข้อมูลตามชื่อ Header ใน Google Sheets: DEPNAME, DEP_ID, LOCNAME, FLOOR, TEL
             document.getElementById('deptName').innerText = d.DEPNAME || '-';
             document.getElementById('deptId').innerText = `หน่วยงานรหัส: ${d.DEP_ID}`;
             document.getElementById('locName').innerText = `สถานที่: ${d.LOCNAME || '-'}`;
@@ -187,6 +188,7 @@
             const tbody = document.getElementById('assetTbody');
             tbody.innerHTML = '';
             data.forEach((item, index) => {
+                // ดึงข้อมูลอายุครุภัณฑ์จากคอลัมน์ชื่อ Age
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr>
                         <td class="px-4 py-3 text-gray-400">${index + 1}</td>
@@ -208,12 +210,22 @@
         function handlePrint() {
             const d = rawData.department;
             document.getElementById('printDeptDetail').innerHTML = `
-                <p>หน่วยงาน: ${d.DEPNAME} | สถานที่: ${d.LOCNAME} | ชั้น: ${d.FLOOR} | โทร: ${d.TEL}</p>
-                <p>วันที่พิมพ์: ${new Date().toLocaleString('th-TH')}</p>
+                <p class="font-bold text-lg">${d.DEPNAME}</p>
+                <p>สถานที่: ${d.LOCNAME} | ชั้น: ${d.FLOOR} | โทร: ${d.TEL}</p>
+                <p class="text-[10px] text-gray-400">วันที่พิมพ์: ${new Date().toLocaleString('th-TH')}</p>
             `;
             let tableHtml = '<table><thead><tr><th>#</th><th>รหัส</th><th>ประเภท</th><th>รายละเอียด</th><th>อายุครุภัณฑ์</th><th>สถานะ</th></tr></thead><tbody>';
-            [...rawData.assetsOn, ...rawData.assetsNon].forEach((item, index) => {
-                tableHtml += `<tr><td align="center">${index+1}</td><td>${item.AssetID || item.NOID || '-'}</td><td>${item.Asset_Type || '-'}</td><td>${item.Detail || '-'}</td><td>${item.Age || '-'}</td><td align="center">${item.CoStatus || 'ปกติ'}</td></tr>`;
+            // รวมทั้ง On และ Non ในการพิมพ์
+            const allAssets = [...rawData.assetsOn, ...rawData.assetsNon];
+            allAssets.forEach((item, index) => {
+                tableHtml += `<tr>
+                    <td align="center">${index+1}</td>
+                    <td>${item.AssetID || item.NOID || '-'}</td>
+                    <td>${item.Asset_Type || '-'}</td>
+                    <td>${item.Detail || '-'}</td>
+                    <td>${item.Age || '-'}</td>
+                    <td align="center">${item.CoStatus || 'ปกติ'}</td>
+                </tr>`;
             });
             tableHtml += '</tbody></table>';
             document.getElementById('printTableContainer').innerHTML = tableHtml;
