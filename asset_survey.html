@@ -136,9 +136,15 @@
                             <div id="md-list-nonum" class="grid grid-cols-1 gap-2"></div>
                         </div>
                     </div>
-                     <button id="btn-view-dept-link" class="w-full bg-pink-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-pink-200 mb-8 active:scale-95 transition-all flex items-center justify-center gap-2">
-                        <i data-lucide="external-link" class="w-5 h-5"></i> ดูรายการครุภัณฑ์ทั้งหมด
-                    </button>
+                    <div class="p-6 bg-white border-t-2 border-slate-100 flex gap-4 shrink-0">
+                        <button onclick="closeModal('modal-dept-detail')" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-sm active:scale-95 transition-all">
+                            ปิดหน้าต่าง
+                        </button>
+                        <button id="btn-view-dept-link" class="flex-[2] py-4 bg-pink-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-pink-200 flex items-center justify-center gap-2 active:scale-95 transition-all">
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                            ดูรายละเอียดหน่วยงาน
+                        </button>                
+                    </div>
                 </div>
             </div>
         </div>
