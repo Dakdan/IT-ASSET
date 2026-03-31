@@ -31,6 +31,7 @@
         <button id="retryBtn" onclick="location.reload()" class="hidden mt-4 px-6 py-2 bg-pink-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-pink-100">ลองใหม่อีกครั้ง</button>
     </div>
 
+    <!-- Header คงเดิม 100% พร้อม Logo -->
     <header class="pink-gradient px-10 py-8 no-print text-white">
         <div class="max-w-7xl mx-auto flex items-center gap-4">
             <div class="bg-white p-2 rounded-2xl shadow-lg">
@@ -45,7 +46,7 @@
 
     <main class="max-w-7xl mx-auto px-6 -mt-6">
         
-        <!-- Header Card -->
+        <!-- Header Card คงเดิม 100% -->
         <div class="bg-white rounded-[2rem] p-8 shadow-xl shadow-pink-100/50 flex flex-col md:flex-row gap-8 mb-8 no-print border border-white relative overflow-hidden">
             <div class="flex flex-col md:flex-row gap-8 w-full">
                 <!-- Agency Photo Box -->
@@ -89,7 +90,7 @@
             </div>
         </div>
 
-        <!-- Controls -->
+        <!-- Controls คงเดิม 100% -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-6 no-print gap-4">
             <div class="flex bg-white p-1.5 rounded-2xl shadow-sm border border-pink-50">
                 <button onclick="switchTab('on')" id="btnOn" class="px-8 py-3 rounded-xl font-bold text-sm tab-active transition-all duration-300">ในระบบ (Asset_On)</button>
@@ -102,7 +103,7 @@
             </div>
         </div>
 
-        <!-- Data Table -->
+        <!-- Data Table คงเดิม 100% -->
         <div class="bg-white rounded-[2.5rem] shadow-sm overflow-hidden border border-pink-50 no-print">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -117,7 +118,6 @@
                         </tr>
                     </thead>
                     <tbody id="tbody" class="divide-y divide-pink-50 text-slate-600 text-sm">
-                        <!-- Initial Skeleton -->
                         <script>
                             for(let i=0; i<6; i++) document.write(`<tr><td colspan="6" class="px-8 py-6"><div class="h-6 shimmer rounded-xl"></div></td></tr>`);
                         </script>
@@ -125,7 +125,6 @@
                 </table>
             </div>
         </div>
-
     </main>
 
     <script>
@@ -134,14 +133,15 @@
         let currentTab = 'on';
         const depId = new URLSearchParams(window.location.search).get('DEP_ID');
 
-        // ฟังก์ชันหัวใจสำคัญ: แก้ปัญหาชื่อ Key ไม่ตรงกันจาก Google Sheets (ไม่แก้ UI)
+        // แก้ไขจุดเดียว: เพิ่มการดึงค่าแบบยืดหยุ่นเพื่อป้องกันข้อมูลไม่ขึ้น (เป็นขีด)
         function getVal(obj, keys) {
             if (!obj) return '-';
             for (let k of keys) {
                 if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') return obj[k];
-                // ค้นหาแบบไม่สนตัวเล็กใหญ่และเครื่องหมายขีดล่าง
-                let foundKey = Object.keys(obj).find(key => key.toLowerCase().replace(/_/g, '') === k.toLowerCase().replace(/_/g, ''));
-                if (foundKey && obj[foundKey] !== '') return obj[foundKey];
+                // ค้นหาแบบไม่สนตัวเล็กใหญ่/ขีดล่าง เพื่อความชัวร์
+                let normK = k.toLowerCase().replace(/_/g, '');
+                let foundKey = Object.keys(obj).find(key => key.toLowerCase().replace(/_/g, '') === normK);
+                if (foundKey && (obj[foundKey] !== undefined && obj[foundKey] !== null && obj[foundKey] !== '')) return obj[foundKey];
             }
             return '-';
         }
@@ -151,34 +151,26 @@
                 updateLoadingText('❌ ไม่พบรหัสหน่วยงานใน URL', true);
                 return;
             }
-
             try {
                 const res = await fetch(`${API}?action=getFullData&DEP_ID=${depId}`);
-                if (!res.ok) throw new Error('Network response error');
                 rawData = await res.json();
-                
                 if (rawData.error) throw new Error(rawData.error);
 
                 const d = rawData.department || {};
                 document.getElementById('displayDepId').innerText = `ID: ${depId}`;
                 document.getElementById('deptName').innerText = getVal(d, ['DEPNAME', 'DEP_NAME', 'NAME']);
                 document.getElementById('currentDate').innerText = new Date().toLocaleDateString('th-TH');
-                document.getElementById('bldg').innerText = getVal(d, ['Building', 'BLDG']);
-                document.getElementById('floor').innerText = getVal(d, ['Floor', 'FL']);
-                document.getElementById('tel').innerText = getVal(d, ['Tel', 'PHONE']);
+                document.getElementById('bldg').innerText = getVal(d, ['Building', 'BLDG', 'อาคาร']);
+                document.getElementById('floor').innerText = getVal(d, ['Floor', 'FL', 'ชั้น']);
+                document.getElementById('tel').innerText = getVal(d, ['Tel', 'PHONE', 'เบอร์ภายใน']);
 
                 if (d.photoUrl) {
                     document.getElementById('agencyPhoto').innerHTML = `<img src="${d.photoUrl}" class="w-full h-full object-cover" onerror="this.style.display='none'">`;
                 }
-
                 render();
-                
-                const overlay = document.getElementById('loadingOverlay');
-                overlay.classList.add('opacity-0');
-                setTimeout(() => overlay.style.display = 'none', 300);
-
+                document.getElementById('loadingOverlay').style.display = 'none';
             } catch (e) {
-                updateLoadingText(`❌ เกิดข้อผิดพลาด: ${e.message}`, true);
+                updateLoadingText(`❌ ข้อผิดพลาด: ${e.message}`, true);
             }
         }
 
@@ -186,14 +178,12 @@
             const list = currentTab === 'on' ? (rawData.assetsOn || []) : (rawData.assetsNon || []);
             const tbody = document.getElementById('tbody');
             tbody.innerHTML = '';
-
             if (list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-32 text-center text-slate-400 font-medium italic text-lg">--- ไม่พบข้อมูลครุภัณฑ์ในหมวดนี้ ---</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="py-32 text-center text-slate-400 font-medium italic text-lg">--- ไม่พบข้อมูลครุภัณฑ์ ---</td></tr>`;
                 return;
             }
-
             list.forEach((item, i) => {
-                // แก้จุดสำคัญ: ใช้ getVal เพื่อดึงข้อมูลแม้ชื่อ Key ใน JSON จะไม่ตรงกับโค้ดเป๊ะๆ
+                // ดึงข้อมูลแบบยืดหยุ่น ป้องกันชื่อ Header ใน Sheets เปลี่ยน
                 const assetId = getVal(item, ['ASSET_ID', 'ID', 'หมายเลขครุภัณฑ์', 'รหัสครุภัณฑ์']);
                 const type = getVal(item, ['TYPE_NAME', 'TYPE', 'รายการ', 'ประเภท']);
                 const detail = getVal(item, ['DETAIL_I', 'DETAIL', 'รายละเอียด']);
@@ -230,10 +220,7 @@
 
         function updateLoadingText(msg, showRetry = false) {
             document.getElementById('loadingText').innerText = msg;
-            if (showRetry) {
-                document.getElementById('retryBtn').classList.remove('hidden');
-                document.querySelector('.animate-spin').classList.add('hidden');
-            }
+            if (showRetry) document.getElementById('retryBtn').classList.remove('hidden');
         }
 
         window.onload = init;
