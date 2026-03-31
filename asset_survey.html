@@ -156,48 +156,59 @@ let selectedAssets=[];
 let sigPad=null;
 let currentActivityId=null;
 
-window.onload=()=>{
-    lucide.createIcons();
-    const canvas=document.getElementById('sig-pad');
-    sigPad=new SignaturePad(canvas);
+// แก้ไขลำดับการโหลด: ให้เริ่มทำงานทันทีที่โครงสร้างหน้าเว็บพร้อม
+document.addEventListener('DOMContentLoaded', () => {
+    if(window.lucide) lucide.createIcons();
+    
+    const canvas = document.getElementById('sig-pad');
+    if (canvas) {
+        sigPad = new SignaturePad(canvas);
+    }
+    
+    // เรียกโหลดข้อมูลทันที
     initApp();
-};
+});
 
-function setLoading(s){ document.getElementById('loading').classList.toggle('hidden',!s); }
-function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
-function showModal(id){ document.getElementById(id).classList.remove('hidden'); }
-function showNewAssetModal(){ showModal('modal-new-asset'); }
-function showSignModal(){ showModal('modal-sign'); }
-
-function navigateTo(pageId){
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    window.scrollTo(0,0);
+// ฟังก์ชันเดิมของคุณ
+function setLoading(s){ 
+    const el = document.getElementById('loading');
+    if(el) el.classList.toggle('hidden',!s); 
+}
+function closeModal(id){ 
+    const el = document.getElementById(id);
+    if(el) el.classList.add('hidden'); 
+}
+function showModal(id){ 
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('hidden'); 
 }
 
 async function initApp(){
     setLoading(true);
     try {
+        // เพิ่ม t=${Date.now()} เพื่อป้องกัน Browser จำ Cache ข้อมูลเก่า
         const [dashRes, deptRes, filteredRes] = await Promise.all([
             fetch(`${API}?action=getDashboard&t=${Date.now()}`),
-            fetch(`${API}?action=getDepartments`),
-            fetch(`${API}?action=getFilteredDepartments`)
+            fetch(`${API}?action=getDepartments&t=${Date.now()}`),
+            fetch(`${API}?action=getFilteredDepartments&t=${Date.now()}`)
         ]);
 
         const dash = await dashRes.json();
         masterDepts = await deptRes.json();
         globalFilteredDepts = await filteredRes.json();
         
+        // อัปเดตหน้าจอหลัก
         updateDashboard(dash, globalFilteredDepts); 
         initFormSelects();
     } catch(e) {
         console.error(e);
-        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดข้อมูลได้', confirmButtonColor: '#e91e63' });
+        if(window.Swal) {
+            Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดข้อมูลได้', confirmButtonColor: '#e91e63' });
+        }
     }
     setLoading(false);
 }
 
-// ฟังก์ชันแสดงรายละเอียดเมื่อคลิก (แก้ไขเพื่อป้องกัน Error บรรทัด 224)
 async function showDeptDetail(id) {
     if(!id || id === 'undefined') return;
 
@@ -207,7 +218,6 @@ async function showDeptDetail(id) {
     const depId = dept.deptId || dept.DEPID;
     const linkBtn = document.getElementById('btn-view-dept-link');
     
-    // ตั้งค่าปุ่ม Link ไปหน้าแสดงรายการ
     if (linkBtn) {
         linkBtn.onclick = () => {
             const isMobile = window.innerWidth <= 768;
@@ -216,63 +226,65 @@ async function showDeptDetail(id) {
         };
     }
 
-    // เขียนข้อมูลลง Modal (เรียกเฉพาะ ID ที่มีอยู่จริง)
-    document.getElementById('md-name').innerText = dept.building || "-"; 
-    document.getElementById('md-floor').innerText = dept.floor || '-';
-    document.getElementById('md-tel').innerText = dept.tel || '-';
-    document.getElementById('md-active').innerText = dept.note1 || 'ACTIVE';
-    document.getElementById('md-note').innerText = dept.deptName || dept.DEP_NAME_LOC || "-";
+    // เขียนข้อมูลลง Modal (เช็ค Element ก่อนทุกครั้งเพื่อป้องกัน Error)
+    const setTxt = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+    
+    setTxt('md-name', dept.building || "-");
+    setTxt('md-floor', dept.floor || '-');
+    setTxt('md-tel', dept.tel || '-');
+    setTxt('md-active', dept.note1 || 'ACTIVE');
+    setTxt('md-note', dept.deptName || dept.DEP_NAME_LOC || "-");
 
-    // จัดการรูปภาพ
     const imgEl = document.getElementById('md-dept-photo');
     const placeholderEl = document.getElementById('md-dept-photo-placeholder');
     const photoUrl = dept.deptPhoto || dept.DEPT_PHO || "";
 
-    if (photoUrl) {
-        imgEl.src = photoUrl;
-        imgEl.classList.remove('hidden');
-        placeholderEl.classList.add('hidden');
-    } else {
-        imgEl.classList.add('hidden');
-        placeholderEl.classList.remove('hidden');
+    if (imgEl && placeholderEl) {
+        if (photoUrl) {
+            imgEl.src = photoUrl;
+            imgEl.classList.remove('hidden');
+            placeholderEl.classList.add('hidden');
+        } else {
+            imgEl.classList.add('hidden');
+            placeholderEl.classList.remove('hidden');
+        }
     }
 
-    // ล้างรายการเก่า
-    document.getElementById('md-list-log').innerHTML = '<p class="text-[10px] text-slate-400">กำลังโหลด...</p>';
-    document.getElementById('md-list-nonum').innerHTML = '<p class="text-[10px] text-slate-400">กำลังโหลด...</p>';
+    setTxt('md-list-log', 'กำลังโหลด...');
+    setTxt('md-list-nonum', 'กำลังโหลด...');
 
     showModal('modal-dept-detail');
     if(window.lucide) lucide.createIcons();
 
-    // ดึงข้อมูลประวัติการสำรวจ
     try {
         const res = await fetch(`${API}?action=getSurveyDetailByDept&deptId=${id}`);
         const data = await res.json();
         
         if(!data.error) {
-            document.getElementById('md-list-log').innerHTML = (data.assets && data.assets.length) 
+            const logBox = document.getElementById('md-list-log');
+            const nonumBox = document.getElementById('md-list-nonum');
+
+            if(logBox) logBox.innerHTML = (data.assets && data.assets.length) 
                 ? data.assets.map(a => `<div class="p-3 bg-white border-2 border-emerald-100 text-slate-950 text-[11px] rounded-xl font-black shadow-sm">📌 ${a.AssetID}</div>`).join('')
                 : '<p class="text-[10px] text-slate-400 italic py-2">ไม่มีข้อมูลในระบบ</p>';
             
-            document.getElementById('md-list-nonum').innerHTML = (data.newAssets && data.newAssets.length)
+            if(nonumBox) nonumBox.innerHTML = (data.newAssets && data.newAssets.length)
                 ? data.newAssets.map(a => `<div class="p-3 bg-white border-2 border-amber-100 text-slate-950 text-[11px] rounded-xl font-black shadow-sm">📦 ${a.itemName} (SN: ${a.serial})</div>`).join('')
                 : '<p class="text-[10px] text-slate-400 italic py-2">ไม่มีข้อมูลนอกทะเบียน</p>';
 
-            document.getElementById('md-count-log').innerText = data.assets ? data.assets.length : 0;
-            document.getElementById('md-count-nonum').innerText = data.newAssets ? data.newAssets.length : 0;
+            setTxt('md-count-log', data.assets ? data.assets.length : 0);
+            setTxt('md-count-nonum', data.newAssets ? data.newAssets.length : 0);
         }
-    } catch(e) {
-        console.error("Error loading survey details:", e);
-    }
+    } catch(e) { console.error(e); }
 }
 
-// ฟังก์ชันสร้างรายการแสดงผลบน Dashboard (รองรับ 2 คอลัมน์บน PC)
 function updateDashboard(data, filteredDetails) {
-    document.getElementById('dash-goal').innerText = data.goal || 0;
-    document.getElementById('dash-in').innerText = data.totalIn || 0;
-    document.getElementById('dash-out').innerText = data.totalOut || 0;
-    document.getElementById('dash-sum').innerText = data.totalSum || 0;
-    document.getElementById('dash-percent').innerText = (data.percent || 0) + "%";
+    const setTxt = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+    setTxt('dash-goal', data.goal || 0);
+    setTxt('dash-in', data.totalIn || 0);
+    setTxt('dash-out', data.totalOut || 0);
+    setTxt('dash-sum', data.totalSum || 0);
+    setTxt('dash-percent', (data.percent || 0) + "%");
 
     const container = document.getElementById('dept-list-container');
     if (!container) return;
@@ -285,7 +297,7 @@ function updateDashboard(data, filteredDetails) {
         const id = item.deptId || item.DEPID;
         const name = item.deptName || item.DEP_NAME_LOC;
 
-        // แทรกแถบอาคาร (ใช้ col-span-full เพื่อให้แสดงเต็มความกว้างในระบบ Grid)
+        // ส่วนสำคัญ: col-span-full เพื่อให้แถบชื่ออาคารกางเต็มหน้าจอ PC
         if (item.building !== currentBldg) {
             currentBldg = item.building;
             html += `<div class="col-span-full bg-gray-100 text-gray-500 px-4 py-2 font-bold text-[10px] md:text-xs uppercase border-y border-gray-200 sticky top-0 z-10">อาคาร: ${currentBldg || '-'}</div>`;
