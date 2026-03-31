@@ -36,6 +36,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
+        /* สำหรับการแสดงผลบนมือถือ */
         @media (max-width: 768px) {
             .asset-table thead { display: none; }
             .asset-table tr { 
@@ -64,6 +65,7 @@
             }
         }
 
+        /* ############### CSS สำหรับการพิมพ์รายงาน (Print Mode) ############### */
         @media print {
             @page { 
                 size: A4 landscape; 
@@ -72,23 +74,48 @@
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white; color: black; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
-            th, td { border: 1px solid #000 !important; padding: 8px 4px; text-align: left; word-wrap: break-word; font-size: 10pt; }
-            th { background-color: #f2f2f2 !important; text-align: center; -webkit-print-color-adjust: exact; }
-            .page-break { page-break-before: always; margin-top: 20px; }
+            
+            .report-container { width: 100%; }
+            
+            table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-bottom: 20px;
+                table-layout: fixed;
+            }
+            th, td { 
+                border: 1px solid #000 !important; 
+                padding: 8px 4px; 
+                text-align: left; 
+                word-wrap: break-word;
+                font-size: 10pt;
+            }
+            th { 
+                background-color: #f2f2f2 !important; 
+                text-align: center;
+                -webkit-print-color-adjust: exact; 
+            }
+            .page-break { 
+                page-break-before: always; 
+                margin-top: 20px;
+            }
+            .text-center { text-align: center; }
+            .font-bold { font-weight: bold; }
         }
         .print-only { display: none; }
     </style>
 </head>
 <body class="text-slate-800">
 
+    <!-- Loading Overlay -->
     <div id="loaderModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-sm hidden no-print">
         <div class="text-center">
             <div class="inline-block w-12 h-12 border-4 border-pink-100 border-t-pink-600 rounded-full animate-spin mb-3"></div>
-            <p class="text-pink-800 text-sm font-medium">กำลังโหลดข้อมูล...</p>
+            <p class="text-pink-800 text-sm font-medium">กำลังเตรียมข้อมูลรายการ...</p>
         </div>
     </div>
 
+    <!-- Header UI -->
     <header class="pink-header px-4 py-8 shadow-xl no-print">
         <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
             <div class="flex items-center gap-4">
@@ -110,14 +137,15 @@
 
     <main class="container mx-auto px-4 mt-8 pb-24">
         
+        <!-- ข้อมูลหน่วยงานบนหน้าจอ (UI) -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 no-print">
             <div class="lg:col-span-2 soft-card p-6 flex flex-col md:flex-row gap-6 items-center md:items-start">
                 <div class="w-32 h-32 bg-slate-100 rounded-3xl overflow-hidden flex-shrink-0 border-4 border-white shadow-md">
                     <img id="deptPhoto" src="https://via.placeholder.com/150?text=Department" class="w-full h-full object-cover">
                 </div>
                 <div class="text-center md:text-left space-y-2">
-                    <div class="inline-block px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-bold uppercase tracking-wider mb-1">หน่วยงานรับบริการ</div>
-                    <h2 id="deptName" class="text-3xl font-bold text-slate-800 tracking-tight">-- กำลังโหลด --</h2>
+                    <div class="inline-block px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-bold uppercase tracking-wider mb-1">Information Center</div>
+                    <h2 id="deptName" class="text-3xl font-bold text-slate-800 tracking-tight">-- ชื่อหน่วยงาน --</h2>
                     <div class="flex flex-wrap justify-center md:justify-start gap-4 text-slate-500 text-sm">
                         <span class="flex items-center gap-2"><i class="fas fa-id-card text-pink-400"></i> <span id="deptIdDisplay">ID: -</span></span>
                         <span class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-pink-400"></i> <span id="locDisplay">ที่ตั้ง: -</span></span>
@@ -132,11 +160,12 @@
                     <h3 id="totalAssetsCount" class="text-5xl font-bold mt-2 tracking-tighter">0 <small class="text-lg font-light text-white/40">เครื่อง</small></h3>
                 </div>
                 <div class="relative z-10 mt-6 flex items-center gap-2 text-xs font-bold text-emerald-400">
-                    <i class="fas fa-clock"></i> ข้อมูล ณ วันที่: <span id="lastUpdateText">-</span>
+                    <i class="fas fa-check-circle"></i> ข้อมูลอัปเดตล่าสุดปี 2568
                 </div>
             </div>
         </div>
 
+        <!-- Search & Tab Switcher (no-print) -->
         <div class="no-print grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
             <div class="lg:col-span-7 relative">
                 <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -150,6 +179,7 @@
             </div>
         </div>
 
+        <!-- UI Table -->
         <div id="tableContainer" class="soft-card overflow-hidden no-print">
             <div class="px-6 py-5 bg-slate-50/80 border-b border-slate-100 flex justify-between items-center">
                 <div class="flex items-center gap-2">
@@ -177,7 +207,9 @@
             </div>
         </div>
 
-        <div id="printArea" class="print-only">
+        <!-- ############### หน้ารายงาน (แสดงเฉพาะตอน Print เท่านั้น) ############### -->
+        <div id="printArea" class="print-only report-container">
+            <!-- ส่วนหัวรายงานทางการ -->
             <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" style="height: 70px;">
@@ -192,17 +224,21 @@
                     <p style="margin: 0;">วันที่พิมพ์: <span id="printDate"></span></p>
                 </div>
             </div>
+
+            <!-- เนื้อหาตารางรายงานจะถูกฉีดเข้าที่นี่ -->
             <div id="printContent"></div>
-            <div style="margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center;">
-                <div>
-                    <div style="border-bottom: 1px solid #000; width: 250px; height: 40px; margin: 0 auto 10px auto;"></div>
-                    <p style="font-size: 10pt;">( ลงชื่อ ............................................................ )</p>
-                    <p style="font-size: 10pt; font-weight: bold;">หัวหน้าหน่วยงาน / ผู้รับผิดชอบ</p>
+
+            <!-- ส่วนลงชื่อท้ายรายงาน -->
+            <div style="margin-top: 50px; display: grid; grid-template-cols: 1fr 1fr; gap: 40px; text-align: center;">
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <div style="border-bottom: 1px solid #000; width: 250px; height: 40px; margin-bottom: 10px;"></div>
+                    <p style="font-size: 10pt; margin: 0;">( ลงชื่อ ............................................................ )</p>
+                    <p style="font-size: 10pt; font-weight: bold; margin-top: 5px;">หัวหน้าหน่วยงาน / ผู้รับผิดชอบ</p>
                 </div>
-                <div>
-                    <div style="border-bottom: 1px solid #000; width: 250px; height: 40px; margin: 0 auto 10px auto;"></div>
-                    <p style="font-size: 10pt;">( ลงชื่อ ............................................................ )</p>
-                    <p style="font-size: 10pt; font-weight: bold;">เจ้าหน้าที่ตรวจสอบ (ฝ่ายสารสนเทศ)</p>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <div style="border-bottom: 1px solid #000; width: 250px; height: 40px; margin-bottom: 10px;"></div>
+                    <p style="font-size: 10pt; margin: 0;">( ลงชื่อ ............................................................ )</p>
+                    <p style="font-size: 10pt; font-weight: bold; margin-top: 5px;">เจ้าหน้าที่ตรวจสอบ (ฝ่ายสารสนเทศ)</p>
                 </div>
             </div>
         </div>
@@ -238,13 +274,11 @@
             document.getElementById('locDisplay').innerText = `ที่ตั้ง: ${d.LOCATION_NAME || '-'} ชั้น ${d.FL || '-'}`;
             document.getElementById('totalAssetsCount').innerText = (rawData.assetsOn.length + rawData.assetsNon.length);
             
-            // แสดงวันที่ดึงข้อมูลจริง
-            const now = new Date();
-            document.getElementById('lastUpdateText').innerText = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-
+            // รูปหน่วยงาน
             if (d.photoUrl) {
                 document.getElementById('deptPhoto').src = d.photoUrl;
             }
+            
             filterAssets();
         }
 
@@ -285,6 +319,7 @@
             });
         }
 
+        // ฟังก์ชันจัดการการพิมพ์
         function handlePrint() {
             const d = rawData.department;
             document.getElementById('printDeptName').innerText = d.DEPNAME || '-';
@@ -293,9 +328,11 @@
                 year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
             });
             
+            // สร้างเนื้อหารายงานแบบแยกส่วน
             let html = '<h3 style="font-weight: bold; margin-bottom: 10px; border-left: 5px solid #000; padding-left: 10px;">ตอนที่ 1: ครุภัณฑ์ในทะเบียน (Log On)</h3>';
             html += buildPrintTable(rawData.assetsOn);
             
+            // ตรวจสอบว่ามีข้อมูลนอกทะเบียนไหม ถ้ามีให้ขึ้นหน้าใหม่
             if (rawData.assetsNon && rawData.assetsNon.length > 0) {
                 html += '<div class="page-break"></div>';
                 html += '<h3 style="font-weight: bold; margin-bottom: 10px; border-left: 5px solid #000; padding-left: 10px;">ตอนที่ 2: ครุภัณฑ์นอกทะเบียน (Log Non)</h3>';
@@ -303,15 +340,34 @@
             }
             
             document.getElementById('printContent').innerHTML = html;
+            
+            // สั่งพิมพ์
             setTimeout(() => { window.print(); }, 500);
         }
 
         function buildPrintTable(data) {
             if(!data || !data.length) return '<p style="color: #666; font-style: italic; margin-bottom: 30px;">-- ไม่พบข้อมูลรายการในส่วนนี้ --</p>';
-            let table = '<table><thead><tr><th style="width: 40px;">ลำดับ</th><th style="width: 150px;">รหัสครุภัณฑ์</th><th style="width: 100px;">ประเภท</th><th>รายละเอียด</th><th style="width: 50px;">อายุ</th><th style="width: 80px;">สถานะ</th></tr></thead><tbody>';
+            
+            let table = '<table><thead><tr>';
+            table += '<th style="width: 40px;">ลำดับ</th>';
+            table += '<th style="width: 150px;">รหัสครุภัณฑ์</th>';
+            table += '<th style="width: 100px;">ประเภท</th>';
+            table += '<th>รายละเอียด</th>';
+            table += '<th style="width: 50px;">อายุ</th>';
+            table += '<th style="width: 80px;">สถานะ</th>';
+            table += '</tr></thead><tbody>';
+            
             data.forEach((i, idx) => {
-                table += `<tr><td class="text-center">${idx + 1}</td><td class="font-bold">${i.NOID || i.AssetID || '-'}</td><td>${i.Asset_Type || i.AssetType || '-'}</td><td style="font-size: 9pt;">${i.DetailFromDB || i.Detail || '-'}</td><td class="text-center">${i.AgeFromDB || i.Age || '-'}</td><td class="text-center">${i.CoStatus || 'ปกติ'}</td></tr>`;
+                table += `<tr>
+                    <td class="text-center">${idx + 1}</td>
+                    <td class="font-bold">${i.NOID || i.AssetID || '-'}</td>
+                    <td>${i.Asset_Type || i.AssetType || '-'}</td>
+                    <td style="font-size: 9pt;">${i.DetailFromDB || i.Detail || '-'}</td>
+                    <td class="text-center">${i.AgeFromDB || i.Age || '-'}</td>
+                    <td class="text-center">${i.CoStatus || 'ปกติ'}</td>
+                </tr>`;
             });
+            
             table += '</tbody></table>';
             return table;
         }
@@ -319,7 +375,9 @@
         function exportToExcel() {
             const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
             let csv = "\uFEFFลำดับ,รหัสครุภัณฑ์,ประเภท,รายละเอียด,อายุ,สถานะ\n";
-            data.forEach((i, idx) => { csv += `${idx+1},"${i.NOID || i.AssetID}","${i.Asset_Type || i.AssetType}","${(i.DetailFromDB || i.Detail || '').replace(/"/g, '""')}","${i.AgeFromDB || i.Age}","${i.CoStatus || 'ปกติ'}"\n`; });
+            data.forEach((i, idx) => { 
+                csv += `${idx+1},"${i.NOID || i.AssetID}","${i.Asset_Type || i.AssetType}","${(i.DetailFromDB || i.Detail || '').replace(/"/g, '""')}","${i.AgeFromDB || i.Age}","${i.CoStatus || 'ปกติ'}"\n`; 
+            });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
             link.download = `Report_${rawData.department.DEPNAME || 'Asset'}_${activeTab}.csv`;
