@@ -44,7 +44,6 @@
         .status-active { background: #ecfdf5; color: #059669; border: 1px solid #10b98133; }
         .status-inactive { background: #fef2f2; color: #dc2626; border: 1px solid #ef444433; }
         
-        /* Loading Overlay Style */
         #loadingOverlay {
             position: fixed;
             inset: 0;
@@ -72,14 +71,12 @@
 </head>
 <body class="text-gray-700 pb-10">
 
-    <!-- Loading Overlay (รักษาไว้ตามความต้องการ) -->
     <div id="loadingOverlay">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-600 mb-4"></div>
         <p class="text-pink-600 font-bold animate-pulse text-xl">กำลังดึงข้อมูลระบบ...</p>
         <p id="loadingStatus" class="text-gray-400 text-sm mt-2 font-light italic">โปรดรอสักครู่</p>
     </div>
 
-    <!-- Header Section (โครงสร้างเดิม) -->
     <header class="pink-gradient-bg px-6 py-12 no-print relative">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6 mt-4">
             <div class="bg-white p-2 rounded-2xl shadow-xl">
@@ -93,7 +90,6 @@
     </header>
 
     <main class="max-w-6xl mx-auto px-4 -mt-10">
-        <!-- Profile Card (โครงสร้างเดิม) -->
         <div class="soft-card p-6 md:p-8 mb-8 relative z-10 no-print">
             <div class="flex flex-col md:flex-row gap-8 items-start">
                 <div class="w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-pink-50 border-4 border-white shadow-md overflow-hidden flex-shrink-0">
@@ -147,7 +143,6 @@
             </div>
         </div>
 
-        <!-- Dashboard Content (โครงสร้างเดิม) -->
         <div id="mainContent" class="no-print">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
                 <div class="bg-white p-1 rounded-2xl border border-gray-200 flex w-full md:w-auto shadow-sm">
@@ -183,7 +178,6 @@
             </div>
         </div>
 
-        <!-- Print Area (โครงสร้างเดิม) -->
         <div id="printContainer" class="print-only">
              <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="font-size: 18pt; font-weight: bold;">รายงานการตรวจสอบครุภัณฑ์คอมพิวเตอร์</h2>
@@ -215,18 +209,13 @@
             try {
                 const res = await fetch(`${API_URL}?DEP_ID=${depId}&action=getFullData`);
                 fullData = await res.json();
-                
                 renderUI();
                 preparePrintData();
-                
-                // ค่อยๆ จางหน้าจอโหลดหายไป
                 overlay.style.opacity = '0';
                 setTimeout(() => { overlay.style.display = 'none'; }, 500);
-
             } catch (err) {
                 console.error("Fetch Error:", err);
                 document.getElementById('loadingStatus').innerText = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
-                document.getElementById('loadingStatus').classList.add('text-red-500');
             }
         }
 
@@ -252,14 +241,8 @@
             activeTab = tab;
             const btnOn = document.getElementById('tabBtnOn');
             const btnNon = document.getElementById('tabBtnNon');
-            
-            if (tab === 'on') {
-                btnOn.className = "flex-1 md:flex-none px-8 py-2.5 rounded-xl font-bold text-sm transition-all bg-pink-600 text-white shadow-md";
-                btnNon.className = "flex-1 md:flex-none px-8 py-2.5 rounded-xl font-bold text-sm transition-all text-gray-500 hover:text-pink-600";
-            } else {
-                btnNon.className = "flex-1 md:flex-none px-8 py-2.5 rounded-xl font-bold text-sm transition-all bg-pink-600 text-white shadow-md";
-                btnOn.className = "flex-1 md:flex-none px-8 py-2.5 rounded-xl font-bold text-sm transition-all text-gray-500 hover:text-pink-600";
-            }
+            btnOn.className = tab === 'on' ? "flex-1 md:flex-none px-8 py-2.5 rounded-xl font-bold text-sm transition-all bg-pink-600 text-white shadow-md" : "flex-1 md:flex-none px-8 py-2.5 rounded-xl font-bold text-sm transition-all text-gray-500 hover:text-pink-600";
+            btnNon.className = tab === 'non' ? "flex-1 md:flex-none px-8 py-2.5 rounded-xl font-bold text-sm transition-all bg-pink-600 text-white shadow-md" : "flex-1 md:flex-none px-8 py-2.5 rounded-xl font-bold text-sm transition-all text-gray-500 hover:text-pink-600";
             renderTable();
         }
 
@@ -267,27 +250,29 @@
             const tbody = document.getElementById('assetTbody');
             const list = activeTab === 'on' ? (fullData.assetsOn || []) : (fullData.assetsNon || []);
             const search = document.getElementById('searchInput').value.toLowerCase();
-            
             tbody.innerHTML = '';
             let count = 0;
 
             list.forEach(item => {
-                const id = String(item.ASSET_ID || item.ID || '').toLowerCase();
-                const detail = String(item.DETAIL || item.DetailFromDB || '').toLowerCase();
-                if (id.includes(search) || detail.includes(search)) {
+                // ใช้ค่าเดิม (ASSET_ID / ID) และเพิ่มรายละเอียด/อายุเข้าไปตามสั่ง
+                const assetId = item.ASSET_ID || item.ID || item.NOID || '-';
+                const detail = item.DETAIL || item.DetailFromDB || '-';
+                const age = item.Age_Year || item.AgeFromDB || '0';
+                const status = item.Status || item.ConfirmStatus || 'ปกติ';
+
+                if (String(assetId).toLowerCase().includes(search) || String(detail).toLowerCase().includes(search)) {
                     count++;
-                    const status = String(item.Status || item.ConfirmStatus || 'ปกติ').trim();
                     let statusClass = "status-active";
-                    if (status.includes("เสีย") || status.includes("ชำรุด")) statusClass = "status-inactive";
+                    if (status.includes("เสีย") || status.includes("ชำรุด") || status === "รอยืนยัน") statusClass = "status-inactive";
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50/50 transition-colors";
                     tr.innerHTML = `
                         <td class="px-6 py-4 text-center text-gray-400 font-medium">${count}</td>
-                        <td class="px-6 py-4 font-bold text-gray-800">${item.ASSET_ID || item.ID || '-'}</td>
+                        <td class="px-6 py-4 font-bold text-gray-800">${assetId}</td>
                         <td class="px-6 py-4 text-gray-600">${item.TYPE_NAME || '-'}</td>
-                        <td class="px-6 py-4 text-xs text-gray-500 max-w-sm leading-relaxed">${item.DETAIL || item.DetailFromDB || '-'}</td>
-                        <td class="px-6 py-4 text-center font-semibold text-gray-700">${item.Age_Year || item.AgeFromDB || '0'}</td>
+                        <td class="px-6 py-4 text-xs text-gray-500 max-w-sm leading-relaxed">${detail}</td>
+                        <td class="px-6 py-4 text-center font-semibold text-gray-700">${age}</td>
                         <td class="px-6 py-4 text-center"><span class="status-badge ${statusClass}">${status}</span></td>
                     `;
                     tbody.appendChild(tr);
@@ -300,12 +285,11 @@
             const d = fullData.department || {};
             document.getElementById('printDeptHeader').innerText = `หน่วยงาน: ${d.DEPNAME || '-'}`;
             document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
-            // ทำการ Render ตารางสำหรับการพิมพ์ไว้ล่วงหน้า (ใช้โครงสร้างเดิมของคุณ)
             const fillPrintTable = (targetId, list) => {
                 const target = document.getElementById(targetId);
                 target.innerHTML = '<tr><th>ที่</th><th>รหัส</th><th>รายการ</th><th>รายละเอียด</th><th>อายุ</th><th>สถานะ</th></tr>';
                 list.forEach((item, i) => {
-                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.ASSET_ID || item.ID}</td><td>${item.TYPE_NAME}</td><td>${item.DETAIL || item.DetailFromDB}</td><td>${item.Age_Year || item.AgeFromDB}</td><td>${item.Status || item.ConfirmStatus}</td></tr>`;
+                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.ASSET_ID || item.ID || item.NOID}</td><td>${item.TYPE_NAME}</td><td>${item.DETAIL || item.DetailFromDB}</td><td>${item.Age_Year || item.AgeFromDB}</td><td>${item.Status || item.ConfirmStatus}</td></tr>`;
                 });
             };
             fillPrintTable('printOnTbody', fullData.assetsOn || []);
