@@ -37,10 +37,6 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
-        /* Modal Overlay Animation */
-        .modal-enter { opacity: 0; transform: scale(0.95); }
-        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.3s ease-out; }
-
         @media (max-width: 768px) {
             .asset-table thead { display: none; }
             .asset-table tr { 
@@ -75,9 +71,10 @@
             .print-only { display: block !important; }
             body { background: white; color: black; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
-            th, td { border: 1px solid #000 !important; padding: 8px 4px; text-align: left; word-wrap: break-word; font-size: 10pt; }
+            th, td { border: 1px solid #000 !important; padding: 8px 4px; text-align: left; word-wrap: break-word; font-size: 8pt; }
             th { background-color: #f2f2f2 !important; text-align: center; -webkit-print-color-adjust: exact; }
             .page-break { page-break-before: always; margin-top: 20px; }
+            .signature-img { height: 35px; }
         }
         .print-only { display: none; }
     </style>
@@ -92,7 +89,7 @@
         </div>
     </div>
 
-    <!-- Custom Alert Modal -->
+    <!-- Alert Modal -->
     <div id="alertModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden no-print p-4">
         <div class="bg-white rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl transform transition-all duration-300 scale-95 opacity-0" id="alertBox">
             <div class="p-8 text-center">
@@ -125,6 +122,7 @@
 
     <main class="container mx-auto px-4 mt-8 pb-24">
         
+        <!-- Dept Card -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 no-print">
             <div class="lg:col-span-2 soft-card p-6 flex flex-col md:flex-row gap-6 items-center md:items-start">
                 <div class="w-32 h-32 bg-slate-100 rounded-3xl overflow-hidden flex-shrink-0 border-4 border-white shadow-md">
@@ -135,7 +133,6 @@
                     <h2 id="deptName" class="text-3xl font-bold text-slate-800 tracking-tight">-- กำลังโหลด --</h2>
                     <div class="flex flex-wrap justify-center md:justify-start gap-4 text-slate-500 text-sm">
                         <span class="flex items-center gap-2"><i class="fas fa-id-card text-pink-400"></i> <span id="deptIdDisplay">ID: -</span></span>
-                        <span class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-pink-400"></i> <span id="locDisplay">ที่ตั้ง: -</span></span>
                     </div>
                 </div>
             </div>
@@ -147,33 +144,32 @@
                     <h3 id="totalAssetsCount" class="text-5xl font-bold mt-2 tracking-tighter">0 <small class="text-lg font-light text-white/40">เครื่อง</small></h3>
                 </div>
                 <div class="relative z-10 mt-6 flex items-center gap-2 text-xs font-bold text-emerald-400">
-                    <i class="fas fa-clock"></i> ข้อมูล ณ วันที่: <span id="lastUpdateText">-</span>
+                    <i class="fas fa-calendar-alt"></i> วันที่ตรวจสอบล่าสุด: <span id="lastUpdateText">-</span>
                 </div>
             </div>
         </div>
 
+        <!-- Search & Tab -->
         <div class="no-print grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
             <div class="lg:col-span-7 relative">
                 <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="ค้นหารหัสครุภัณฑ์, รายละเอียด..." 
                     class="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-200 outline-none text-base focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 shadow-sm transition-all">
             </div>
-
             <div class="lg:col-span-5 flex bg-slate-200/50 p-1.5 rounded-2xl">
-                <button onclick="switchTab('on')" id="btnTabOn" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all tab-active">ในทะเบียน (Log On)</button>
-                <button onclick="switchTab('non')" id="btnTabNon" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all text-slate-500 hover:text-slate-700">นอกทะเบียน (Log Non)</button>
+                <button onclick="switchTab('on')" id="btnTabOn" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all tab-active">ในทะเบียน (On Log)</button>
+                <button onclick="switchTab('non')" id="btnTabNon" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all text-slate-500 hover:text-slate-700">นอกทะเบียน (Non Log)</button>
             </div>
         </div>
 
+        <!-- Table Content -->
         <div id="tableContainer" class="soft-card overflow-hidden no-print">
             <div class="px-6 py-5 bg-slate-50/80 border-b border-slate-100 flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-6 bg-pink-600 rounded-full"></div>
                     <h3 class="font-bold text-slate-700">รายการครุภัณฑ์</h3>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span id="recordCount" class="text-xs bg-pink-600 text-white px-3 py-1 rounded-lg font-bold shadow-sm">0 รายการ</span>
-                </div>
+                <span id="recordCount" class="text-xs bg-pink-600 text-white px-3 py-1 rounded-lg font-bold">0 รายการ</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left asset-table">
@@ -183,8 +179,8 @@
                             <th class="px-6 py-5">รหัสครุภัณฑ์</th>
                             <th class="px-6 py-5">ประเภท</th>
                             <th class="px-6 py-5">รายละเอียด</th>
-                            <th class="px-6 py-5 text-center">อายุ (ปี)</th>
-                            <th class="px-8 py-5 text-center">สถานะ</th>
+                            <th class="px-6 py-5 text-center">อายุ (V)</th>
+                            <th class="px-6 py-5">สถานะ</th>
                         </tr>
                     </thead>
                     <tbody id="assetTbody" class="divide-y divide-slate-100 text-[14px]"></tbody>
@@ -192,7 +188,7 @@
             </div>
         </div>
 
-        <!-- Print View -->
+        <!-- Print View Section -->
         <div id="printArea" class="print-only">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
                 <div style="display: flex; gap: 15px; align-items: center;">
@@ -209,14 +205,14 @@
                 </div>
             </div>
             <div id="printContent"></div>
-            <div style="margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center;">
+            <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center;">
                 <div>
-                    <div style="border-bottom: 1px solid #000; width: 250px; height: 40px; margin: 0 auto 10px auto;"></div>
+                    <div style="border-bottom: 1px solid #000; width: 220px; height: 35px; margin: 0 auto 10px auto;"></div>
                     <p style="font-size: 10pt;">( ลงชื่อ ............................................................ )</p>
                     <p style="font-size: 10pt; font-weight: bold;">หัวหน้าหน่วยงาน / ผู้รับผิดชอบ</p>
                 </div>
                 <div>
-                    <div style="border-bottom: 1px solid #000; width: 250px; height: 40px; margin: 0 auto 10px auto;"></div>
+                    <div style="border-bottom: 1px solid #000; width: 220px; height: 35px; margin: 0 auto 10px auto;"></div>
                     <p style="font-size: 10pt;">( ลงชื่อ ............................................................ )</p>
                     <p style="font-size: 10pt; font-weight: bold;">เจ้าหน้าที่ตรวจสอบ (ฝ่ายสารสนเทศ)</p>
                 </div>
@@ -225,84 +221,46 @@
     </main>
 
     <script>
-        // --- Configuration ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbxiOY15Idt7KJgQQn60_MAtVJmAICWT2wvNLS3C4h_SI7uaFD23Z6mzSp8nSrBd4TGVNA/exec';
         let rawData = { department: {}, assetsOn: [], assetsNon: [] };
         let activeTab = 'on';
-        let userLocation = { lat: null, lng: null };
 
         const params = new URLSearchParams(window.location.search);
         const depId = params.get('DEP_ID');
 
-        // --- Lifecycle ---
         window.onload = async () => {
             if(!depId) {
-                showAlert('warning', 'ไม่พบรหัสหน่วยงาน', 'กรุณาเข้าสู่ระบบผ่านลิงก์ที่ได้รับจากฝ่ายสารสนเทศ');
+                showAlert('warning', 'ไม่พบรหัสหน่วยงาน', 'กรุณาเข้าสู่ระบบผ่านลิงก์ที่ถูกต้อง');
                 return;
             }
-            await getGPSLocation();
             fetchData();
         };
 
-        // --- Functions ---
-        async function getGPSLocation() {
-            return new Promise((resolve) => {
-                if ("geolocation" in navigator) {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                            resolve(true);
-                        },
-                        (err) => {
-                            resolve(false);
-                        },
-                        { timeout: 5000 }
-                    );
-                } else {
-                    resolve(false);
-                }
-            });
-        }
-
         async function fetchData() {
-            showLoader('กำลังดึงข้อมูลครุภัณฑ์...');
+            showLoader('กำลังรวบรวมข้อมูล...');
             try {
-                const fetchUrl = `${API_URL}?DEP_ID=${depId}&lat=${userLocation.lat || ''}&lng=${userLocation.lng || ''}&v=${Date.now()}`;
+                const fetchUrl = `${API_URL}?DEP_ID=${depId}&v=${Date.now()}`;
                 const res = await fetch(fetchUrl);
                 const data = await res.json();
-                
                 if (data.error) throw new Error(data.error);
 
                 rawData = {
                     department: data.department || {},
-                    assetsOn: Array.isArray(data.assetsOn) ? data.assetsOn : (data.logOn || []),
-                    assetsNon: Array.isArray(data.assetsNon) ? data.assetsNon : (data.logNon || [])
+                    assetsOn: data.assetsOn || [],
+                    assetsNon: data.assetsNon || []
                 };
-                
                 renderUI();
             } catch (err) { 
-                showAlert('error', 'เกิดข้อผิดพลาด', `ไม่สามารถโหลดข้อมูลได้: ${err.message}`);
-                document.getElementById('deptName').innerText = "ข้อมูลไม่ถูกต้อง";
+                showAlert('error', 'เกิดข้อผิดพลาด', err.message);
             } finally { hideLoader(); }
         }
 
         function renderUI() {
             const d = rawData.department;
-            document.getElementById('deptName').innerText = d.DEPNAME || d.DEP_NAME || 'ไม่พบข้อมูลหน่วยงาน';
-            document.getElementById('deptIdDisplay').innerText = `ID: ${d.DEP_ID || depId}`;
-            document.getElementById('locDisplay').innerText = `ที่ตั้ง: ${d.LOCATION_NAME || '-'} ชั้น ${d.FL || d.FLOOR || '-'}`;
+            document.getElementById('deptName').innerText = d.DEPNAME || depId;
+            document.getElementById('deptIdDisplay').innerText = `ID: ${depId}`;
             document.getElementById('totalAssetsCount').innerText = (rawData.assetsOn.length + rawData.assetsNon.length);
-            
-            const now = new Date();
-            document.getElementById('lastUpdateText').innerText = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-
-            const photoEl = document.getElementById('deptPhoto');
-            if (d.photoUrl) {
-                photoEl.src = d.photoUrl;
-            } else if (d.FileID || d.FILE_ID) {
-                photoEl.src = `https://drive.google.com/thumbnail?id=${d.FileID || d.FILE_ID}&sz=w400`;
-            }
-            
+            document.getElementById('lastUpdateText').innerText = new Date().toLocaleDateString('th-TH');
             filterAssets();
         }
 
@@ -310,15 +268,10 @@
             activeTab = type;
             const btnOn = document.getElementById('btnTabOn');
             const btnNon = document.getElementById('btnTabNon');
-            
             if (type === 'on') {
-                btnOn.classList.add('tab-active');
-                btnNon.classList.remove('tab-active');
-                btnNon.classList.add('text-slate-500');
+                btnOn.classList.add('tab-active'); btnNon.classList.remove('tab-active');
             } else {
-                btnNon.classList.add('tab-active');
-                btnOn.classList.remove('tab-active');
-                btnOn.classList.add('text-slate-500');
+                btnNon.classList.add('tab-active'); btnOn.classList.remove('tab-active');
             }
             filterAssets();
         }
@@ -326,65 +279,53 @@
         function filterAssets() {
             const s = document.getElementById('searchInput').value.toLowerCase();
             const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
-            
-            const filtered = data.filter(i => {
-                const id = String(i.NOID || i.Asset_ID || i.ASSET_ID || '').toLowerCase();
-                const detail = String(i.DetailFromDB || i.DETAIL || i.detail || '').toLowerCase();
-                const type = String(i.Asset_Type || i.TYPE_NAME || '').toLowerCase();
-                return id.includes(s) || detail.includes(s) || type.includes(s);
-            });
+            const filtered = data.filter(i => 
+                String(i.ASSET_ID).toLowerCase().includes(s) || 
+                String(i.DETAIL_I).toLowerCase().includes(s) ||
+                String(i.TYPE_NAME).toLowerCase().includes(s)
+            );
             renderTable(filtered);
         }
 
         function renderTable(data) {
             const tbody = document.getElementById('assetTbody');
             document.getElementById('recordCount').innerText = `${data.length} รายการ`;
-            
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="py-20 text-center text-slate-400">ไม่พบรายการในหมวดนี้</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="py-20 text-center text-slate-400">ไม่พบรายการ</td></tr>';
                 return;
             }
-
             tbody.innerHTML = '';
             data.forEach((item, idx) => {
-                const assetId = item.NOID || item.Asset_ID || item.ASSET_ID || '-';
-                const assetType = item.Asset_Type || item.TYPE_NAME || item.TYPE || '-';
-                const detail = item.DetailFromDB || item.DETAIL || '-';
-                const age = item.AgeFromDB || item.Age_Year || item.AGE || '0';
-                
-                // แก้ไข Logic สถานะ: ถ้าว่างให้แสดง — แทนคำว่า ปกติ
-                const status = item.CoStatus || item.STATUS || '—';
-                const statusClass = status === 'ปกติ' ? 'text-emerald-600' : (status === '—' ? 'text-slate-300' : 'text-amber-600');
-
+                // ใช้ STATUS จากข้อมูลครุภัณฑ์โดยตรง
+                const status = item.STATUS || '-';
                 tbody.insertAdjacentHTML('beforeend', `
-                    <tr class="hover:bg-slate-50/50 transition-colors">
+                    <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-8 py-5 text-center text-slate-400 font-mono text-xs" data-label="ลำดับ">${idx + 1}</td>
-                        <td class="px-6 py-5 font-bold text-slate-800" data-label="รหัสครุภัณฑ์">${assetId}</td>
-                        <td class="px-6 py-5" data-label="ประเภท"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">${assetType}</span></td>
-                        <td class="px-6 py-5 text-slate-500 text-xs leading-relaxed" data-label="รายละเอียด">${detail}</td>
-                        <td class="px-6 py-5 text-center font-bold text-pink-600" data-label="อายุ">${age}</td>
-                        <td class="px-8 py-5 text-center" data-label="สถานะ"><span class="text-[11px] font-bold ${statusClass}">${status}</span></td>
+                        <td class="px-6 py-5 font-bold text-slate-800" data-label="รหัสครุภัณฑ์">${item.ASSET_ID}</td>
+                        <td class="px-6 py-5" data-label="ประเภท"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase">${item.TYPE_NAME}</span></td>
+                        <td class="px-6 py-5 text-slate-500 text-xs" data-label="รายละเอียด">${item.DETAIL_I}</td>
+                        <td class="px-6 py-5 text-center font-bold text-pink-600" data-label="อายุ">${item.AGE_V}</td>
+                        <td class="px-6 py-5" data-label="สถานะ">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${status.includes('ปกติ') ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+                                ${status}
+                            </span>
+                        </td>
                     </tr>
                 `);
             });
         }
 
         function handlePrint() {
-            if(!rawData.department.DEP_ID && !rawData.department.DEP_NAME) {
-                showAlert('warning', 'ไม่สามารถพิมพ์ได้', 'ข้อมูลยังไม่พร้อมใช้งาน');
-                return;
-            }
             const d = rawData.department;
-            document.getElementById('printDeptName').innerText = d.DEPNAME || d.DEP_NAME || '-';
-            document.getElementById('printDeptId').innerText = d.DEP_ID || depId || '-';
-            document.getElementById('printDate').innerText = new Date().toLocaleDateString('th-TH', { 
-                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-            });
-            let html = '<h3 style="font-weight: bold; margin-bottom: 10px; border-left: 5px solid #be185d; padding-left: 10px;">ตอนที่ 1: ครุภัณฑ์ในทะเบียน (Log On)</h3>';
+            document.getElementById('printDeptName').innerText = d.DEPNAME || '-';
+            document.getElementById('printDeptId').innerText = depId || '-';
+            document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
+
+            let html = '<h3 style="font-weight: bold; margin: 15px 0 10px 0;">1. ครุภัณฑ์ในทะเบียน (Log On)</h3>';
             html += buildPrintTable(rawData.assetsOn);
-            if (rawData.assetsNon && rawData.assetsNon.length > 0) {
+            if (rawData.assetsNon.length > 0) {
                 html += '<div class="page-break"></div>';
-                html += '<h3 style="font-weight: bold; margin-bottom: 10px; border-left: 5px solid #be185d; padding-left: 10px;">ตอนที่ 2: ครุภัณฑ์นอกทะเบียน (Log Non)</h3>';
+                html += '<h3 style="font-weight: bold; margin: 15px 0 10px 0;">2. ครุภัณฑ์นอกทะเบียน (Log Non)</h3>';
                 html += buildPrintTable(rawData.assetsNon);
             }
             document.getElementById('printContent').innerHTML = html;
@@ -392,23 +333,27 @@
         }
 
         function buildPrintTable(data) {
-            if(!data || !data.length) return '<p style="color: #666; font-style: italic; margin-bottom: 30px;">-- ไม่พบข้อมูลรายการในส่วนนี้ --</p>';
-            let table = '<table style="width:100%; border-collapse: collapse; margin-bottom: 20px;"><thead><tr style="background:#f8fafc;">' +
-                        '<th style="width: 40px; border:1px solid #000; padding:8px;">ลำดับ</th>' +
-                        '<th style="width: 150px; border:1px solid #000; padding:8px;">รหัสครุภัณฑ์</th>' +
-                        '<th style="width: 100px; border:1px solid #000; padding:8px;">ประเภท</th>' +
-                        '<th style="border:1px solid #000; padding:8px;">รายละเอียด</th>' +
-                        '<th style="width: 50px; border:1px solid #000; padding:8px;">อายุ</th>' +
-                        '<th style="width: 80px; border:1px solid #000; padding:8px;">สถานะ</th>' +
+            if(!data || !data.length) return '<p style="color: #666; font-style: italic;">-- ไม่พบข้อมูล --</p>';
+            let table = '<table style="width:100%; border-collapse: collapse; margin-bottom: 20px;"><thead><tr>' +
+                        '<th style="width: 30px;">ลำดับ</th>' +
+                        '<th style="width: 120px;">รหัสครุภัณฑ์</th>' +
+                        '<th style="width: 90px;">ประเภท</th>' +
+                        '<th>รายละเอียด</th>' +
+                        '<th style="width: 35px;">อายุ</th>' +
+                        '<th style="width: 80px;">สถานะ</th>' +
+                        '<th style="width: 100px;">ผู้ยืนยัน</th>' +
+                        '<th style="width: 100px;">ลายเซ็น</th>' +
                         '</tr></thead><tbody>';
             data.forEach((i, idx) => {
                 table += `<tr>
-                    <td style="border:1px solid #000; padding:8px; text-align:center;">${idx + 1}</td>
-                    <td style="border:1px solid #000; padding:8px; font-weight:bold;">${i.NOID || i.Asset_ID || '-'}</td>
-                    <td style="border:1px solid #000; padding:8px;">${i.Asset_Type || i.TYPE_NAME || '-'}</td>
-                    <td style="border:1px solid #000; padding:8px; font-size: 9pt;">${i.DetailFromDB || i.DETAIL || '-'}</td>
-                    <td style="border:1px solid #000; padding:8px; text-align:center;">${i.AgeFromDB || i.Age_Year || '0'}</td>
-                    <td style="border:1px solid #000; padding:8px; text-align:center;">${i.CoStatus || i.STATUS || '—'}</td>
+                    <td style="text-align:center;">${idx + 1}</td>
+                    <td style="font-weight:bold;">${i.ASSET_ID}</td>
+                    <td>${i.TYPE_NAME}</td>
+                    <td style="font-size: 7.5pt;">${i.DETAIL_I}</td>
+                    <td style="text-align:center; font-weight:bold;">${i.AGE_V}</td>
+                    <td style="text-align:center;">${i.STATUS || '-'}</td>
+                    <td style="text-align:center; font-size: 8pt;">${i.CONFIRM_NAME || ''}</td>
+                    <td style="text-align:center;">${i.SIGNATURE ? `<img src="${i.SIGNATURE}" class="signature-img">` : ''}</td>
                 </tr>`;
             });
             table += '</tbody></table>';
@@ -417,64 +362,25 @@
 
         function exportToExcel() {
             const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
-            if(data.length === 0) {
-                showAlert('warning', 'ไม่สามารถ Export ได้', 'ไม่มีรายการข้อมูลในแท็บนี้');
-                return;
-            }
             let csv = "\uFEFFลำดับ,รหัสครุภัณฑ์,ประเภท,รายละเอียด,อายุ,สถานะ\n";
-            data.forEach((i, idx) => { 
-                const id = i.NOID || i.Asset_ID || '';
-                const type = i.Asset_Type || i.TYPE_NAME || '';
-                const detail = (i.DetailFromDB || i.DETAIL || '').replace(/"/g, '""');
-                const age = i.AgeFromDB || i.Age_Year || '';
-                const status = i.CoStatus || i.STATUS || '—';
-                csv += `${idx+1},"${id}","${type}","${detail}","${age}","${status}"\n`; 
-            });
+            data.forEach((i, idx) => { csv += `${idx+1},"${i.ASSET_ID}","${i.TYPE_NAME}","${(i.DETAIL_I||'').replace(/"/g,'""')}","${i.AGE_V}","${i.STATUS}"\n`; });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `Report_${rawData.department.DEPNAME || 'Asset'}_${activeTab}_${Date.now()}.csv`;
+            link.download = `Report_${depId}_${activeTab}.csv`;
             link.click();
         }
 
         function showAlert(type, title, message) {
             const modal = document.getElementById('alertModal');
-            const box = document.getElementById('alertBox');
-            const icon = document.getElementById('alertIcon');
-            const titleEl = document.getElementById('alertTitle');
-            const msgEl = document.getElementById('alertMessage');
-            if (type === 'error') {
-                icon.innerHTML = '<i class="fas fa-times text-4xl text-red-600"></i>';
-                icon.className = 'w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-red-100';
-            } else if (type === 'warning') {
-                icon.innerHTML = '<i class="fas fa-exclamation text-4xl text-amber-600"></i>';
-                icon.className = 'w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-amber-100';
-            } else {
-                icon.innerHTML = '<i class="fas fa-check text-4xl text-emerald-600"></i>';
-                icon.className = 'w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-emerald-100';
-            }
-            titleEl.innerText = title;
-            msgEl.innerText = message;
+            document.getElementById('alertTitle').innerText = title;
+            document.getElementById('alertMessage').innerText = message;
             modal.classList.remove('hidden');
-            setTimeout(() => {
-                box.classList.remove('scale-95', 'opacity-0');
-                box.classList.add('scale-100', 'opacity-100');
-            }, 10);
+            setTimeout(() => document.getElementById('alertBox').classList.remove('scale-95', 'opacity-0'), 10);
         }
-
-        function closeAlert() {
-            const box = document.getElementById('alertBox');
-            box.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                document.getElementById('alertModal').classList.add('hidden');
-            }, 300);
-        }
-
+        function closeAlert() { document.getElementById('alertModal').classList.add('hidden'); }
         function goHome() { window.location.href = 'https://dakdan.github.io/IT-ASSET/asset_survey.html'; }
-        function showLoader(text) { 
-            document.getElementById('loaderText').innerText = text || 'กำลังโหลด...';
-            document.getElementById('loaderModal').classList.remove('hidden'); 
-        }
+        function showLoader(text) { document.getElementById('loaderText').innerText = text; document.getElementById('loaderModal').classList.remove('hidden'); }
         function hideLoader() { document.getElementById('loaderModal').classList.add('hidden'); }
     </script>
 </body>
