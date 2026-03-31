@@ -549,30 +549,41 @@
                         isScanningLocked = true;
                         await stopScanner();
             
+                       // --- ⚡️ ส่วนที่ต้องแก้ไขใน toggleScanner ⚡️ ---
+
                         let raw = decodedText.trim();
                         let finalId = raw;
-            
-                        // --- ⚡️ แก้ไขจุดนี้: Logic การดึง ID แบบชาญฉลาด ⚡️ ---
+                        
                         if (raw.toLowerCase().includes('http')) {
                             try {
-                                // สร้างเงื่อนไขการค้นหารหัส (Regex) 
-                                // [A-Z0-9-]{5,} หมายถึง หาชุดตัวอักษร/เลข/ขีด ที่ยาว 5 ตัวขึ้นไป
-                                const idPattern = /([A-Z0-9-]{7,})/gi; 
-                                const matches = raw.match(idPattern);
-            
-                                if (matches && matches.length > 0) {
-                                    // กรองคำที่ไม่ใช่ ID ออก (เช่นชื่อโดเมน หรือคำว่า 'view', 'assets')
-                                    const ignoreList = ['http', 'https', 'it-asset', 'github', 'io', 'html', 'view', 'edit'];
-                                    const filtered = matches.filter(m => !ignoreList.some(word => m.toLowerCase().includes(word)));
-                                    
-                                    finalId = filtered.length > 0 ? filtered[0] : raw;
+                                // 1. แยกส่วนประกอบของ URL ออกมาเป็นคำๆ โดยใช้ / และ ? เป็นตัวตัด
+                                // เช่น https://dakdan.github.io/IT-ASSET/ABC-123/view -> ["https:", "", "dakdan.github.io", "IT-ASSET", "ABC-123", "view"]
+                                const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
+                                
+                                // 2. รายชื่อคำที่ "ไม่ใช่" รหัสครุภัณฑ์ (คำต้องห้าม)
+                                const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
+                        
+                                // 3. กรองเอาเฉพาะคำที่ไม่อยู่ใน ignoreList และมีความยาวเหมาะสม
+                                // ส่วนใหญ่รหัสครุภัณฑ์มักจะมี "ตัวเลข" ผสมอยู่ด้วย เราจะเช็คตรงนี้
+                                const candidates = parts.filter(p => {
+                                    const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
+                                    const hasNumber = /\d/.test(p); // ต้องมีตัวเลขอย่างน้อย 1 ตัว
+                                    return isNotIgnore && hasNumber && p.length >= 4; 
+                                });
+                        
+                                if (candidates.length > 0) {
+                                    // เลือกตัวที่ดูเหมือน ID ที่สุด (ปกติจะเป็นตัวสุดท้ายที่เหลืออยู่)
+                                    finalId = candidates[candidates.length - 1]; 
                                 }
-                            } catch (e) { console.error(e); }
+                            } catch (e) {
+                                console.error("Parsing error:", e);
+                                finalId = raw;
+                            }
                         }
-            
-                        // ทำความสะอาดค่า: ลบช่องว่าง และทำให้เป็นตัวพิมพ์ใหญ่ตามใน Sheets
+                        
+                        // ล้างช่องว่างและทำเป็นตัวพิมพ์ใหญ่
                         finalId = finalId.replace(/\s/g, '').toUpperCase();
-            
+                        // ------------------------------------------
                         if (currentScanTarget === 'search') {
                             const input = document.getElementById('asset-search-input');
                             input.value = finalId;
