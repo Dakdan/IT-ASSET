@@ -38,7 +38,6 @@
             backdrop-filter: blur(4px);
         }
         
-        /* Table Styles for Mobile */
         @media (max-width: 640px) {
             .asset-table thead { display: none; }
             .asset-table tr { 
@@ -77,17 +76,15 @@
             .no-print { display: none !important; }
             body { background: white !important; padding: 0 !important; background-image: none !important; }
             .print-only { display: block !important; }
-            table { font-size: 9pt; width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+            table { font-size: 10pt; width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
             th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
-            .pink-header { border-radius: 0; }
         }
         .print-only { display: none; }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <!-- Modal Loader -->
     <div id="loaderModal" class="fixed inset-0 z-[100] flex items-center justify-center loader-overlay hidden no-print">
         <div class="text-center p-6 bg-white rounded-3xl shadow-2xl">
             <div class="inline-block w-10 h-10 border-4 border-pink-100 border-t-pink-600 rounded-full animate-spin mb-4"></div>
@@ -95,7 +92,6 @@
         </div>
     </div>
 
-    <!-- Header Section -->
     <header class="pink-header px-4 py-6 md:pt-8 md:pb-12 shadow-lg no-print relative overflow-hidden">
         <div class="container mx-auto relative z-10">
             <div class="flex flex-row items-center justify-center gap-3 text-left">
@@ -209,44 +205,27 @@
             </div>
         </div>
 
-        <!-- Print View Section (Hidden in Web, Visible in Print) -->
+        <!-- หน้าแสดงผลสำหรับพิมพ์ (ซ่อนไว้หน้าปกติ) -->
         <div id="printArea" class="print-only">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" style="height: 50px;">
-                    <div>
-                        <h1 style="font-size: 16pt; margin: 0;">สรุปครุภัณฑ์คอมพิวเตอร์</h1>
-                        <p style="font-size: 10pt; margin: 0;">โรงพยาบาลอุดรธานี</p>
-                    </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="font-size: 18pt; margin: 0;">สรุปครุภัณฑ์คอมพิวเตอร์</h1>
+                <p id="printDeptHeader" style="font-size: 12pt; margin: 5px 0;"></p>
+                <p id="printTime" style="font-size: 9pt; color: #666;"></p>
+            </div>
+            
+            <div id="printStats" style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div style="border: 1px solid #000; padding: 10px; text-align: center;">
+                    <small>ในระบบ</small><br><strong><span id="pOn">0</span></strong>
                 </div>
-                <div style="text-align: right; font-size: 9pt;">
-                    <p style="margin: 2px 0;"><strong>หน่วยงาน:</strong> <span id="printDeptName"></span></p>
-                    <p style="margin: 2px 0;"><strong>พิมพ์เมื่อ:</strong> <span id="printDate"></span></p>
+                <div style="border: 1px solid #000; padding: 10px; text-align: center;">
+                    <small>นอกระบบ</small><br><strong><span id="pNon">0</span></strong>
+                </div>
+                <div style="border: 1px solid #000; padding: 10px; text-align: center; background: #eee;">
+                    <small>รวม</small><br><strong><span id="pTotal">0</span></strong>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-                <div style="border: 1px solid #000; padding: 10px; text-align: center;">
-                    <p style="font-size: 9pt; margin: 0;">ในระบบ (Asset_On)</p>
-                    <p id="printOnCount" style="font-size: 14pt; font-weight: bold; margin: 0;">0</p>
-                </div>
-                <div style="border: 1px solid #000; padding: 10px; text-align: center;">
-                    <p style="font-size: 9pt; margin: 0;">นอกระบบ (Non-Number)</p>
-                    <p id="printNonCount" style="font-size: 14pt; font-weight: bold; margin: 0;">0</p>
-                </div>
-                <div style="border: 1px solid #000; padding: 10px; text-align: center; background-color: #f0f0f0;">
-                    <p style="font-size: 9pt; margin: 0;">รวมทั้งสิ้น</p>
-                    <p id="printTotalCount" style="font-size: 14pt; font-weight: bold; margin: 0;">0</p>
-                </div>
-            </div>
-
-            <h2 style="font-size: 11pt; font-weight: bold; margin-bottom: 5px;">1. รายการในระบบ (Asset_On)</h2>
-            <div id="printOnTable"></div>
-
-            <div style="page-break-before: always;"></div>
-
-            <h2 style="font-size: 11pt; font-weight: bold; margin-bottom: 5px; margin-top: 20px;">2. รายการนอกระบบ (Non-Number)</h2>
-            <div id="printNonTable"></div>
+            <div id="printTables"></div>
         </div>
     </main>
 
@@ -366,46 +345,40 @@
             });
         }
 
-        function buildPrintTable(data) {
-            if (!data || data.length === 0) return '<p style="font-size: 9pt; font-style: italic;">ไม่มีข้อมูล</p>';
-            let html = `<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-                <thead>
-                    <tr style="background-color: #f3f4f6;">
-                        <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 40px;">#</th>
-                        <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 140px;">รหัส</th>
-                        <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 100px;">ประเภท</th>
-                        <th style="border: 1px solid #000; padding: 5px; text-align: left;">รายละเอียด</th>
-                        <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 80px;">สถานะ</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-            data.forEach((item, index) => {
-                html += `<tr>
-                    <td style="border: 1px solid #000; padding: 5px; text-align: center;">${index + 1}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${item.AssetID || item.NOID || '-'}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${item.Asset_Type || item.AssetType || '-'}</td>
-                    <td style="border: 1px solid #000; padding: 5px;">${item.Detail || '-'}</td>
-                    <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.CoStatus || 'ปกติ'}</td>
-                </tr>`;
-            });
-            html += `</tbody></table>`;
-            return html;
-        }
-
         function handlePrint() {
             const d = rawData.department;
-            document.getElementById('printDeptName').innerText = d.DEPNAME || '-';
-            document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
-            document.getElementById('printOnCount').innerText = rawData.assetsOn.length;
-            document.getElementById('printNonCount').innerText = rawData.assetsNon.length;
-            document.getElementById('printTotalCount').innerText = rawData.assetsOn.length + rawData.assetsNon.length;
+            document.getElementById('printDeptHeader').innerText = `หน่วยงาน: ${d.DEPNAME || '-'}`;
+            document.getElementById('printTime').innerText = `พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}`;
             
-            document.getElementById('printOnTable').innerHTML = buildPrintTable(rawData.assetsOn);
-            document.getElementById('printNonTable').innerHTML = buildPrintTable(rawData.assetsNon);
+            document.getElementById('pOn').innerText = rawData.assetsOn.length;
+            document.getElementById('pNon').innerText = rawData.assetsNon.length;
+            document.getElementById('pTotal').innerText = rawData.assetsOn.length + rawData.assetsNon.length;
+
+            let html = '<h3 style="font-size: 12pt; margin-top: 20px;">1. รายการในระบบ (Asset_On)</h3>' + buildTableHtml(rawData.assetsOn);
+            html += '<div style="page-break-before: always;"></div>';
+            html += '<h3 style="font-size: 12pt; margin-top: 20px;">2. รายการนอกระบบ (Non-Number)</h3>' + buildTableHtml(rawData.assetsNon);
+            
+            document.getElementById('printTables').innerHTML = html;
             
             setTimeout(() => {
                 window.print();
             }, 500);
+        }
+
+        function buildTableHtml(data) {
+            if (!data || data.length === 0) return '<p>ไม่มีข้อมูล</p>';
+            let table = '<table><thead><tr><th>#</th><th>รหัส</th><th>ประเภท</th><th>รายละเอียด</th><th>สถานะ</th></tr></thead><tbody>';
+            data.forEach((item, i) => {
+                table += `<tr>
+                    <td style="text-align:center">${i+1}</td>
+                    <td>${item.AssetID || item.NOID || '-'}</td>
+                    <td>${item.Asset_Type || item.AssetType || '-'}</td>
+                    <td>${item.Detail || '-'}</td>
+                    <td>${item.CoStatus || 'ปกติ'}</td>
+                </tr>`;
+            });
+            table += '</tbody></table>';
+            return table;
         }
 
         function goHome() {
