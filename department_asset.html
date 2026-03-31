@@ -12,7 +12,7 @@
             --primary-pink: #be185d;
             --medium-pink: #ec4899;
             --soft-pink: #fdf2f8;
-            --gradient-header: linear-gradient(135deg, #9d174d 0%, #be185d 50%, #f472b6 85%, #ffffff 100%);
+            --gradient-header: linear-gradient(135deg, #9d174d 0%, #be185d 50%, #f472b6 100%);
         }
         body {
             font-family: 'Kanit', sans-serif;
@@ -31,20 +31,18 @@
             transform: translateY(-2px);
             box-shadow: 0 15px 35px -5px rgba(190, 24, 93, 0.06);
         }
+        
+        /* ปรับปรุงส่วน Header: โค้งมนและมีเส้นขอบ */
         .pink-header {
             background: var(--gradient-header);
             position: relative;
             overflow: hidden;
+            border-bottom-left-radius: 50px;
+            border-bottom-right-radius: 50px;
+            border-bottom: 6px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(157, 23, 77, 0.3);
         }
-        .pink-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.3);
-        }
+        
         .btn-pink {
             background: linear-gradient(90deg, #be185d 0%, #db2777 100%);
             transition: all 0.2s;
@@ -59,7 +57,6 @@
             backdrop-filter: blur(8px);
         }
         
-        /* Table Styles */
         .asset-table thead th {
             background-color: #fdf2f8;
             color: #be185d;
@@ -67,22 +64,16 @@
             border-bottom: 2px solid #fbcfe8;
         }
 
-        /* Print Settings - Adjusted for A4 Portrait */
         @media print {
             @page { size: A4 portrait; margin: 1.5cm 1cm; }
             .no-print, #loaderModal { display: none !important; }
             body { background: white !important; padding: 0 !important; background-image: none !important; }
+            .pink-header { border-radius: 0; border-bottom: 2px solid #be185d; }
             .soft-card { box-shadow: none !important; border: 1px solid #eee !important; border-radius: 12px !important; }
             .print-only { display: block !important; }
             table { font-size: 9pt; width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; }
             th, td { border: 1px solid #ddd; padding: 6px 4px; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
             th { background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; }
-            .print-summary-box {
-                border: 1px solid #ddd;
-                padding: 8px;
-                text-align: center;
-                border-radius: 8px;
-            }
         }
         .print-only { display: none; }
     </style>
@@ -97,40 +88,51 @@
         </div>
     </div>
 
-    <!-- Header Section -->
-    <header class="pink-header px-6 py-10 shadow-xl no-print">
-        <div class="container mx-auto flex flex-col md:flex-row items-center gap-6 relative z-10">
-            <div class="bg-white p-2.5 rounded-2xl shadow-2xl ring-4 ring-white/20">
-                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-16 w-auto">
+    <!-- Header Section: ปรับปรุงการจัดเรียง Row และความโค้งมน -->
+    <header class="pink-header px-6 py-12 shadow-xl no-print">
+        <div class="container mx-auto relative z-10">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                
+                <!-- ส่วน Logo และ ชื่อ (เรียงเป็น Row) -->
+                <div class="flex items-center gap-5">
+                    <div class="bg-white p-2.5 rounded-2xl shadow-2xl ring-4 ring-white/20 flex-shrink-0">
+                        <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-14 md:h-20 w-auto">
+                    </div>
+                    <div class="text-left">
+                        <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight text-white drop-shadow-lg leading-tight">ครุภัณฑ์คอมพิวเตอร์</h1>
+                        <p class="text-white/90 font-medium text-base md:text-xl">โรงพยาบาลอุดรธานี</p>
+                        <div class="mt-2 hidden md:block">
+                            <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white border border-white/30 text-xs">
+                                <i class="fas fa-microchip mr-1.5"></i> กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ปุ่มควบคุม -->
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="goHome()" class="bg-white/15 backdrop-blur-md text-white border border-white/30 px-5 py-2.5 rounded-2xl flex items-center text-xs font-semibold hover:bg-white/25 transition-all">
+                        <i class="fas fa-home mr-2 text-sm"></i> หน้าหลัก
+                    </button>
+                    <button onclick="exportToCSV()" class="bg-emerald-500/90 text-white px-5 py-2.5 rounded-2xl flex items-center text-xs font-semibold hover:bg-emerald-600 transition-all border border-emerald-400/30 shadow-lg">
+                        <i class="fas fa-file-excel mr-2 text-sm"></i> Export
+                    </button>
+                    <button id="mainPrintBtn" onclick="handlePrint()" class="bg-white text-pink-700 px-6 py-2.5 rounded-2xl shadow-xl flex items-center text-xs font-bold hover:scale-105 active:scale-95 transition-all">
+                        <i class="fas fa-print mr-2 text-sm"></i> พิมพ์รายงาน
+                    </button>
+                </div>
             </div>
-            <div class="flex-grow text-center md:text-left">
-                <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight text-white drop-shadow-md">ครุภัณฑ์คอมพิวเตอร์</h1>
-                <p class="text-white/90 font-medium text-lg mt-1">โรงพยาบาลอุดรธานี</p>
-                <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-3 text-sm">
-                    <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white border border-white/30">
-                        <i class="fas fa-microchip mr-1.5"></i> กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์
-                    </span>
-                </div>
-                    <!-- ปุ่มควบคุม ย้ายมาไว้ที่ Header -->
-                <div class="flex flex-wrap justify-center md:justify-end gap-2 mt-4 md:mt-0">
-                    <button onclick="goHome()" class="bg-white/20 backdrop-blur-md text-white border border-white/40 px-4 py-2.5 rounded-xl flex items-center text-xs font-semibold hover:bg-white/30 transition-all">
-                        <i class="fas fa-home mr-2"></i> หน้าหลัก
-                    </button>
-                    <button onclick="exportToCSV()" class="bg-emerald-500/90 backdrop-blur-md text-white px-4 py-2.5 rounded-xl flex items-center text-xs font-semibold hover:bg-emerald-600 transition-all border border-emerald-400/50">
-                        <i class="fas fa-file-excel mr-2"></i> Export
-                    </button>
-                    <button id="mainPrintBtn" onclick="handlePrint()" class="bg-white text-pink-700 px-4 py-2.5 rounded-xl shadow-lg flex items-center text-xs font-bold hover:scale-105 active:scale-95 transition-all">
-                        <i class="fas fa-print mr-2"></i> พิมพ์รายงาน
-                    </button>
+
+            <!-- วันที่ปัจจุบัน -->
+            <div id="headerDate" class="mt-8 flex justify-center md:justify-start">
+                <div class="bg-black/10 backdrop-blur-sm p-2 px-5 rounded-full border border-white/10">
+                    <p class="text-white font-medium text-xs" id="currentDateStr"></p>
                 </div>
             </div>
-            <div id="headerDate" class="text-right hidden xl:block ml-4">
-                <div class="bg-black/10 backdrop-blur-sm p-2 px-4 rounded-xl border border-white/20">
-                    <p class="text-white font-bold text-xs" id="currentDateStr"></p>
-                </div>
-            </div>              
         </div>
-        <div class="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        
+        <!-- แสงตกแต่ง -->
+        <div class="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
         <div class="absolute top-1/2 -left-20 w-48 h-48 bg-pink-400/20 rounded-full blur-2xl"></div>
     </header>
 
@@ -169,6 +171,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Stats Dashboard -->
         <div id="statsDashboard" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 no-print">
             <div class="soft-card p-4 flex items-center gap-4 border-l-4 border-l-pink-500">
@@ -199,8 +202,6 @@
                 </div>
             </div>
         </div>
-
-        
 
         <!-- UI List Section -->
         <div class="no-print">
@@ -261,15 +262,15 @@
             </div>
 
             <div class="grid grid-cols-3 gap-3 mb-6">
-                <div class="print-summary-box">
+                <div class="border p-2 text-center rounded-lg">
                     <p class="text-[8px] uppercase text-gray-500">ในระบบ</p>
                     <p class="text-lg font-bold" id="printOnCount">0</p>
                 </div>
-                <div class="print-summary-box">
+                <div class="border p-2 text-center rounded-lg">
                     <p class="text-[8px] uppercase text-gray-500">นอกระบบ</p>
                     <p class="text-lg font-bold" id="printNonCount">0</p>
                 </div>
-                <div class="print-summary-box border-2 border-pink-700 bg-pink-50">
+                <div class="border-2 border-pink-700 p-2 text-center bg-pink-50 rounded-lg">
                     <p class="text-[8px] uppercase text-pink-700 font-bold">รวมทั้งหมด</p>
                     <p class="text-lg font-black text-pink-800" id="printTotalCount">0</p>
                 </div>
@@ -281,7 +282,7 @@
             <h2 class="text-xs font-bold mb-2 mt-4 bg-gray-50 p-2 border-l-4 border-blue-700">2. รายการครุภัณฑ์นอกระบบ (Non-Number)</h2>
             <div id="printNonTable"></div>
 
-            <div class="mt-8 grid grid-cols-2 gap-10 text-center">
+            <div class="mt-12 grid grid-cols-2 gap-10 text-center">
                 <div class="pt-6 border-t border-gray-300">
                     <p class="text-xs">(ลงชื่อ)...........................................................</p>
                     <p class="text-[10px] mt-1 font-bold text-gray-600">เจ้าหน้าที่ผู้รายงาน</p>
@@ -337,24 +338,18 @@
             document.getElementById('locFloor').innerText = `ชั้น: ${d.FL || '-'}`;
             document.getElementById('locPhone').innerText = `โทรศัพท์: ${d.Tell || '-'}`;
 
-            // --- ส่วนจัดการรูปภาพโปรไฟล์จาก Google Drive (คอลัมน์ N_) ---
             const avatar = document.getElementById('deptAvatar');
             const placeholder = document.getElementById('deptAvatarPlaceholder');
-            
-            // ตรวจสอบค่าจากคอลัมน์ N_ (หรือฟิลด์ N_ ใน JSON)
             const driveFileId = d.N_ || d.N_ID; 
 
             if (driveFileId && String(driveFileId).trim() !== "") {
-                // สร้าง URL สำหรับดึงรูปภาพโดยใช้ File ID จาก Google Drive
                 const driveImageUrl = `https://lh3.googleusercontent.com/d/${driveFileId.trim()}`;
-                
                 avatar.src = driveImageUrl;
                 avatar.onload = () => {
                     avatar.classList.remove('hidden');
                     placeholder.classList.add('hidden');
                 };
                 avatar.onerror = () => {
-                    // หากโหลดรูปจาก ID ไม่สำเร็จ ให้ลองดึงจาก Image_URL เดิม
                     if (d.Image_URL) {
                         avatar.src = d.Image_URL;
                         avatar.classList.remove('hidden');
@@ -365,7 +360,6 @@
                     }
                 };
             } else if (d.Image_URL) {
-                // กรณีไม่มี ID ใน N_ ให้ใช้ Image_URL ปกติ
                 avatar.src = d.Image_URL;
                 avatar.classList.remove('hidden');
                 placeholder.classList.add('hidden');
@@ -438,12 +432,10 @@
 
         function goHome() {
             window.location.href = 'https://dakdan.github.io/IT-ASSET/asset_survey.html';
-            setTimeout(() => { window.close(); }, 500);
         }
 
         function handlePrint() {
             if (!rawData.department.DEPNAME && !rawData.assetsOn.length && !rawData.assetsNon.length) {
-                alert("ไม่มีข้อมูลที่จะพิมพ์ หรือข้อมูลกำลังโหลด...");
                 return;
             }
             showModal();
