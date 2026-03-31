@@ -429,7 +429,7 @@
         let isScannerOpen = false;
         let currentScanTarget = 'search';
         let selectedAssetImageData = null;
-        
+        let isScanningLocked = false;
         window.onload = async () => {
             showLoading(true);
             try {
@@ -531,67 +531,59 @@
             document.getElementById('asset-search-input').focus();
         }
 
-      async function toggleScanner(target = 'search') {
-                    currentScanTarget = target;
-                
-                    if (isScannerOpen) { 
-                        await stopScanner(); 
-                        return; 
-                    }
-                
-                    document.getElementById('scanner-container').classList.remove('hidden');
-                    document.getElementById('scan-icon').textContent = "✕";
-                
-                    isScannerOpen = true;
-                    isScanningLocked = false;
-                
-                    html5QrCode = new Html5Qrcode("reader");
-                
-                    const config = { 
-                        fps: 30,
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0
-                        // ❌ ลบ formatsToSupport ออก
-                    };
-                
-                    html5QrCode.start({ facingMode: "environment" }, config, 
-                        async (decodedText) => {
-                
-                            // ✅ กันยิงซ้ำ
-                            if (isScanningLocked) return;
-                            isScanningLocked = true;
-                
-                            // ✅ หยุดก่อน
-                            await stopScanner();
-                
-                            if (currentScanTarget === 'search') {
-                
-                                let cleanText = decodedText.trim();
-                
-                                if (cleanText.includes('http')) {
-                                    try {
-                                        const url = new URL(cleanText);
-                                        cleanText =
-                                            url.searchParams.get('id') ||
-                                            url.pathname.split('/').pop();
-                                    } catch (e) {}
+     async function toggleScanner(target = 'search') {
+                currentScanTarget = target;
+                if (isScannerOpen) { await stopScanner(); return; }
+            
+                document.getElementById('scanner-container').classList.remove('hidden');
+                document.getElementById('scan-icon').textContent = "✕";
+                isScannerOpen = true;
+                isScanningLocked = false; 
+            
+                html5QrCode = new Html5Qrcode("reader");
+                const config = { fps: 25, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+            
+                html5QrCode.start({ facingMode: "environment" }, config, 
+                    async (decodedText) => {
+                        if (isScanningLocked) return;
+                        isScanningLocked = true;
+                        await stopScanner();
+            
+                        let raw = decodedText.trim();
+                        let finalId = raw;
+            
+                        // --- ⚡️ แก้ไขจุดนี้: Logic การดึง ID แบบชาญฉลาด ⚡️ ---
+                        if (raw.toLowerCase().includes('http')) {
+                            try {
+                                // สร้างเงื่อนไขการค้นหารหัส (Regex) 
+                                // [A-Z0-9-]{5,} หมายถึง หาชุดตัวอักษร/เลข/ขีด ที่ยาว 5 ตัวขึ้นไป
+                                const idPattern = /([A-Z0-9-]{7,})/gi; 
+                                const matches = raw.match(idPattern);
+            
+                                if (matches && matches.length > 0) {
+                                    // กรองคำที่ไม่ใช่ ID ออก (เช่นชื่อโดเมน หรือคำว่า 'view', 'assets')
+                                    const ignoreList = ['http', 'https', 'it-asset', 'github', 'io', 'html', 'view', 'edit'];
+                                    const filtered = matches.filter(m => !ignoreList.some(word => m.toLowerCase().includes(word)));
+                                    
+                                    finalId = filtered.length > 0 ? filtered[0] : raw;
                                 }
-                
-                                cleanText = cleanText.replace(/\s/g, '');
-                
-                                const input = document.getElementById('asset-search-input');
-                                input.value = cleanText;
-                
-                                input.dispatchEvent(new Event('input', { bubbles: true }));
-                
-                            } else if (currentScanTarget === 'serial') {
-                
-                                document.getElementById('field-serial-input').value = decodedText;
-                
-                            }
+                            } catch (e) { console.error(e); }
                         }
-                    ).catch(() => stopScanner());
-                }
+            
+                        // ทำความสะอาดค่า: ลบช่องว่าง และทำให้เป็นตัวพิมพ์ใหญ่ตามใน Sheets
+                        finalId = finalId.replace(/\s/g, '').toUpperCase();
+            
+                        if (currentScanTarget === 'search') {
+                            const input = document.getElementById('asset-search-input');
+                            input.value = finalId;
+                            // สั่งให้ระบบเริ่มค้นหาอัตโนมัติ
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                        } else {
+                            document.getElementById('field-serial-input').value = finalId;
+                        }
+                    }
+                ).catch(() => stopScanner());
+            }
             async function stopScanner() {
                 if (html5QrCode) { 
                     await html5QrCode.stop().catch(() => {}); 
