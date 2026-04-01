@@ -261,13 +261,23 @@
             }
             filterAssets();
         }
+         function filterAssets() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
+            const filtered = data.filter(item => {
+                const text = `${item.AssetID || ''} ${item.NOID || ''} ${item.Asset_Type || ''} ${item.AssetType || ''} ${item.Detail || ''}`.toLowerCase();
+                return text.includes(search);
+            });
+            document.getElementById('rowCount').innerText = `${filtered.length} รายการ`;
+            renderTable(filtered);
+        
 
         function filterAssets() {
             const s = document.getElementById('searchInput').value.toLowerCase();
             const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
             
             const filtered = data.filter(i => {
-                const id = String(i.NOID || i.AssetID || '').toLowerCase();
+                const id = String(i.AssetID || i.NOID || '').toLowerCase();
                 const detail = String(i.DetailFromDB || i.Detail || '').toLowerCase();
                 const type = String(i.Asset_Type || i.AssetType || '').toLowerCase();
                 return id.includes(s) || detail.includes(s) || type.includes(s);
@@ -287,7 +297,7 @@
 
             tbody.innerHTML = '';
             data.forEach((item, idx) => {
-                const id = item.NOID || item.AssetID || '-';
+                const id = item.AssetID || item.NOID || '-';
                 const type = item.Asset_Type || item.AssetType || '-';
                 const detail = item.DetailFromDB || item.Detail || '-';
                 const age = item.AgeFromDB || item.Age || '-';
