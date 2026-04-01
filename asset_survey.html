@@ -272,7 +272,7 @@
             let count = 0;
 
             list.forEach(item => {
-                const id = String(item.ASSET_ID || item.ID || '').toLowerCase();
+                const id = String(item.AssetID || item.ID || '').toLowerCase();
                 const detail = String(item.DETAIL || item.DetailFromDB || '').toLowerCase();
                 if (id.includes(search) || detail.includes(search)) {
                     count++;
@@ -284,7 +284,7 @@
                     tr.className = "hover:bg-gray-50/50 transition-colors";
                     tr.innerHTML = `
                         <td class="px-6 py-4 text-center text-gray-400 font-medium">${count}</td>
-                        <td class="px-6 py-4 font-bold text-gray-800">${item.ASSETID || item.ID || '-'}</td>
+                        <td class="px-6 py-4 font-bold text-gray-800">${item.AssetID || item.ID || '-'}</td>
                         <td class="px-6 py-4 text-gray-600">${item.TYPE_NAME || '-'}</td>
                         <td class="px-6 py-4 text-xs text-gray-500 max-w-sm leading-relaxed">${item.DETAIL || item.DetailFromDB || '-'}</td>
                         <td class="px-6 py-4 text-center font-semibold text-gray-700">${item.Age_Year || item.AgeFromDB || '0'}</td>
@@ -305,7 +305,7 @@
                 const target = document.getElementById(targetId);
                 target.innerHTML = '<tr><th>ที่</th><th>รหัส</th><th>รายการ</th><th>รายละเอียด</th><th>อายุ</th><th>สถานะ</th></tr>';
                 list.forEach((item, i) => {
-                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.ASSETID || item.ID}</td><td>${item.TYPE_NAME}</td><td>${item.DETAIL || item.DetailFromDB}</td><td>${item.Age_Year || item.AgeFromDB}</td><td>${item.Status || item.ConfirmStatus}</td></tr>`;
+                    target.innerHTML += `<tr><td>${i+1}</td><td>${item.AssetID || item.ID}</td><td>${item.TYPE_NAME}</td><td>${item.DETAIL || item.DetailFromDB}</td><td>${item.Age_Year || item.AgeFromDB}</td><td>${item.Status || item.ConfirmStatus}</td></tr>`;
                 });
             };
             fillPrintTable('printOnTbody', fullData.assetsOn || []);
