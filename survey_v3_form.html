@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         body {
             font-family: 'Kanit', sans-serif;
@@ -122,6 +122,25 @@
             background: rgba(255,255,255,0.85);
             box-shadow: 0 8px 20px rgba(255, 133, 161, 0.08);
             backdrop-filter: blur(4px);
+        }
+        #reader {
+            width: 500px; /* ความกว้างสูงสุดของพื้นที่กล้อง */
+            max-width: 90%; /* ยืดหยุ่นบนมือถือ */
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden; /* ป้องกันเนื้อหาล้น */
+            background-color: white;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 8px;
+            max-width: 90%;
+            word-wrap: break-word; /* ให้ข้อความยาวขึ้นบรรทัดใหม่ */
+            display: none; /* ซ่อนไว้ก่อนจนกว่าจะสแกนเจอ */
         }
     </style>
 </head>
