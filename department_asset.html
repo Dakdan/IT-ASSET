@@ -261,15 +261,7 @@
             }
             filterAssets();
         }
-         function filterAssets() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const data = activeTab === 'on' ? rawData.assetsOn : rawData.assetsNon;
-            const filtered = data.filter(item => {
-                const text = `${item.AssetID || ''} ${item.NOID || ''} ${item.Asset_Type || ''} ${item.AssetType || ''} ${item.Detail || ''}`.toLowerCase();
-                return text.includes(search);
-            });
-            document.getElementById('rowCount').innerText = `${filtered.length} รายการ`;
-            renderTable(filtered);
+  
         
 
         function filterAssets() {
@@ -331,7 +323,7 @@
             let csv = "\uFEFFลำดับ,รหัสครุภัณฑ์,ประเภท,รายละเอียด,อายุ,สถานะ\n";
             data.forEach((i, idx) => {
                 const detail = (i.DetailFromDB || i.Detail || '').replace(/"/g, '""');
-                csv += `${idx+1},"${i.NOID || i.AssetID}","${i.Asset_Type || i.AssetType}","${detail}","${i.AgeFromDB || i.Age}","${i.CoStatus || 'ปกติ'}"\n`;
+                csv += `${idx+1},"${ i.AssetID ||i.NOID}","${i.Asset_Type || i.AssetType}","${detail}","${i.AgeFromDB || i.Age}","${i.CoStatus || 'ปกติ'}"\n`;
             });
             
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -362,7 +354,7 @@
             data.forEach((i, idx) => {
                 t += `<tr>
                     <td class="border border-slate-300 p-2 text-center">${idx+1}</td>
-                    <td class="border border-slate-300 p-2 font-bold">${i.NOID || i.AssetID}</td>
+                    <td class="border border-slate-300 p-2 font-bold">${ i.AssetID ||i.NOID}</td>
                     <td class="border border-slate-300 p-2 text-center">${i.Asset_Type || i.AssetType}</td>
                     <td class="border border-slate-300 p-2">${i.DetailFromDB || i.Detail}</td>
                     <td class="border border-slate-300 p-2 text-center">${i.AgeFromDB || i.Age}</td>
