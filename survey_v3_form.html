@@ -414,7 +414,7 @@
             </div>
         </div>
     </div>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwPlr01yTm5H18kf1iqAO1PjBbX4a45JAcf8jr0vA2wSl54_XihNaX9nXhlgFRgCof0/exec";
         
@@ -996,6 +996,7 @@
         function resetApp() { location.reload(); }
         function debounce(f, t) { let id; return (...a) => { clearTimeout(id); id = setTimeout(() => f(...a), t); }; }
     </script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
 </body>
 </html>
