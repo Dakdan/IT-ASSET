@@ -495,7 +495,7 @@
                             timer: 4000
                         });
                     },
-                    { enableHighAccuracy: true, timeout: 10000 } // เพิ่มความแม่นยำและกำหนดเวลา
+                    { enableHighAccuracy: true, timeout: 5000 } // เพิ่มความแม่นยำและกำหนดเวลา
                 );
             } else {
                 Swal.fire('Error', 'เบราว์เซอร์ของคุณไม่รองรับการดึงพิกัด GPS', 'error');
@@ -927,7 +927,7 @@
                     deptId: selectedDept.DEP_ID || selectedDept.DEPT_ID,
                     deptName: selectedDept.DEPNAME || selectedDept.DEPT_NAME,
                     jobeSystem: selectedDept.JOBE_SYSTEMP || "", 
-                    userEmail: "khanitbonroum1@gmail.com",      
+                    userEmail: "@gmail.com",      
                     approverName: name || "Draft",
                     signature: signature,
                     isDraft: isDraft,
