@@ -580,8 +580,8 @@
                                 const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
                                 
                                 // 2. รายชื่อคำที่ "ไม่ใช่" รหัสครุภัณฑ์ (คำต้องห้าม)
-                                const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
-                        
+                                const ignoreList = ['http', 'https', 'nextgov-th.com', 'UDH', 'NEXTGOV', 'IcmAssetDetail', 'assets', 'false', 'https:', 'html', 'www'];
+                                                    
                                 // 3. กรองเอาเฉพาะคำที่ไม่อยู่ใน ignoreList และมีความยาวเหมาะสม
                                 // ส่วนใหญ่รหัสครุภัณฑ์มักจะมี "ตัวเลข" ผสมอยู่ด้วย เราจะเช็คตรงนี้
                                 const candidates = parts.filter(p => {
