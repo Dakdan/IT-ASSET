@@ -551,77 +551,106 @@
         }
 
     async function toggleScanner(target = 'search') {
-            currentScanTarget = target; // เก็บไว้ว่าสแกนมาจากช่องไหน ('search' หรือ 'serial')
-            
-            // เลือก ID ให้ตรงกับ HTML ของคุณ (scanner-overlay คือตัวสีดำๆ ที่บังหน้าจอ)
-            const scannerElem = document.getElementById('scanner-overlay');
-            
-            if (isScannerOpen) { await stopScanner(); return; }
-        
-            if (scannerElem) scannerElem.classList.remove('hidden');
-            isScannerOpen = true;
-            isScanningLocked = false; 
-        
-            html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 25, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
-        
-            html5QrCode.start({ facingMode: "environment" }, config, 
-                async (decodedText) => {
-                    if (isScanningLocked) return;
-                    isScanningLocked = true;
-                    
-                    let raw = decodedText.trim();
-                    let finalId = raw;
-                    
-                    // --- Logic ตัด URL (คงเดิมไว้ทั้งหมด) ---
-                    if (raw.toLowerCase().includes('http')) {
-                        try {
-                            const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
-                            const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
-                            const candidates = parts.filter(p => {
-                                const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
-                                const hasNumber = /\d/.test(p);
-                                return isNotIgnore && hasNumber && p.length >= 4; 
-                            });
-                            if (candidates.length > 0) {
-                                finalId = candidates[candidates.length - 1]; 
-                            }
-                        } catch (e) { console.error(e); finalId = raw; }
-                    }
-                    
-                    finalId = finalId.replace(/\s/g, '').toUpperCase();
-                    // ------------------------------------
-        
-                    // ✨ จุดสำคัญ: แยกการส่งค่ากลับตาม target ที่กดมา
-                    if (currentScanTarget === 'serial') {
-                        // ถ้ากดมาจากปุ่มข้างช่อง Serial Number
-                        document.getElementById('field-serial-input').value = finalId;
-                    } else {
-                        // ถ้ากดมาจากปุ่มค้นหาหน้าหลัก (search)
-                        const searchInput = document.getElementById('asset-search-input');
-                        if (searchInput) {
-                            searchInput.value = finalId;
-                            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    }
-        
-                    await stopScanner(); // สแกนติดแล้วปิดกล้องทันที
+    // 1. กำหนดเป้าหมายว่าสแกนไปลงที่ไหน
+    currentScanTarget = target; 
+
+    // 2. ตรวจสอบ ID ของตัวครอบสแกนเนอร์ (ต้องตรงกับใน HTML ของคุณ)
+    // ถ้าใน HTML คุณใช้ id="scanner-overlay" ให้ใช้ชื่อนั้น
+    const scannerElem = document.getElementById('scanner-overlay') || document.getElementById('scanner-container');
+    
+    if (isScannerOpen) { 
+        await stopScanner(); 
+        return; 
+    }
+
+    // 3. เปิดหน้าต่างสแกน
+    if (scannerElem) {
+        scannerElem.classList.remove('hidden');
+        // บังคับให้มันลอยอยู่บนสุด (ป้องกันโดน Modal อื่นทับ)
+        scannerElem.style.display = 'flex'; 
+        scannerElem.style.zIndex = '9999';
+    }
+    
+    isScannerOpen = true;
+    isScanningLocked = false; 
+
+    // 4. เริ่มทำงานกล้อง
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { 
+        fps: 25, 
+        qrbox: { width: 250, height: 250 }, 
+        aspectRatio: 1.0 
+    };
+
+    try {
+        await html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            async (decodedText) => {
+                if (isScanningLocked) return;
+                isScanningLocked = true;
+
+                let raw = decodedText.trim();
+                let finalId = raw;
+
+                // --- ส่วน Logic ตัด URL (คงเดิมของคุณไว้ 100%) ---
+                if (raw.toLowerCase().includes('http')) {
+                    try {
+                        const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
+                        const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
+                        const candidates = parts.filter(p => {
+                            const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
+                            const hasNumber = /\d/.test(p);
+                            return isNotIgnore && hasNumber && p.length >= 4; 
+                        });
+                        if (candidates.length > 0) finalId = candidates[candidates.length - 1]; 
+                    } catch (e) { console.error(e); }
                 }
-            ).catch(() => stopScanner());
-        }
+                finalId = finalId.replace(/\s/g, '').toUpperCase();
+                // ------------------------------------------
+
+                // ✨ 5. ส่งค่ากลับให้ถูกช่อง (แก้ไขให้ตรงกับ ID ที่คุณส่งมา)
+                if (currentScanTarget === 'serial') {
+                    // ส่งไปที่ช่อง Serial Number ใน Form
+                    const serialInput = document.getElementById('field-serial-input');
+                    if (serialInput) serialInput.value = finalId;
+                } else {
+                    // ส่งไปที่ช่อง Search หลัก
+                    const searchInput = document.getElementById('asset-search-input');
+                    if (searchInput) {
+                        searchInput.value = finalId;
+                        // สั่งให้ระบบค้นหาอัตโนมัติ
+                        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+
+                await stopScanner(); // สแกนติดแล้วปิดกล้อง
+            }
+        );
+    } catch (err) {
+        console.error("Camera Error:", err);
+        Swal.fire('Error', 'ไม่สามารถเปิดกล้องได้ หรือกล้องถูกใช้งานอยู่', 'error');
+        stopScanner();
+    }
+}
+
+// แก้ฟังก์ชันปิดให้สอดคล้องกัน
             async function stopScanner() {
                 if (html5QrCode) { 
-                    await html5QrCode.stop().catch(() => {}); 
+                    try { await html5QrCode.stop(); } catch(e) {}
                     html5QrCode = null; 
                 }
             
-                document.getElementById('scanner-container').classList.add('hidden');
-                document.getElementById('scan-icon').textContent = "📸";
+                const scannerElem = document.getElementById('scanner-overlay') || document.getElementById('scanner-container');
+                if (scannerElem) {
+                    scannerElem.classList.add('hidden');
+                    scannerElem.style.display = 'none';
+                }
+                
                 isScannerOpen = false;
-            
-                // ✅ reset lock
                 isScanningLocked = false;
             }
+                   
         document.getElementById('asset-search-input').oninput = debounce(async (e) => {
             const q = e.target.value.trim();
             const container = document.getElementById('search-results-container');
