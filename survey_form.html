@@ -206,7 +206,7 @@
         let currentScanTarget = 'search';
         let selectedAssetImageData = null;
         let isScanningLocked = false;
-        window.onload = async () => {
+       window.onload = async () => {
             showLoading(true);
             try {
                 const respDept = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDepartments' }) });
@@ -215,7 +215,7 @@
                 assetTypes = await respType.json();
                 populateBuildingSelect();
                 populateAssetTypeSelect();
-                initSignature();
+                // initSignature(); // ❌ เอาออกจากการโหลดครั้งแรก เพื่อป้องกัน Error getContext of null
                 getGeoLocation();
             } catch (e) {
                 Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบได้: ' + e.message, 'error');
@@ -643,7 +643,15 @@
 
         function openConfirmModal() {
             if (surveyAssets.length === 0) return Swal.fire('เตือน', 'กรุณาเพิ่มครุภัณฑ์ก่อน', 'info');
-            document.getElementById('modal-confirm').classList.remove('hidden');
+            
+            // แสดง Modal ยืนยัน
+            const modal = document.getElementById('modal-confirm');
+            modal.classList.remove('hidden');
+            
+            // ✅ เรียกใช้การตั้งค่าลายเซ็นตอนเปิดหน้าต่างนี้ และใช้ setTimeout เพื่อให้ DOM พร้อม 100%
+            setTimeout(() => {
+                initSignature();
+            }, 100);
         }
 
       async function submitFinalSurvey(isDraft = false) {
