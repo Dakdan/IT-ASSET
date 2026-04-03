@@ -52,3 +52,49 @@ async function handleLogin() {
         msg.innerText = "❌ " + result.message;
     }
 }
+function showDetail(asset) {
+    const content = document.getElementById('detailContent');
+    content.innerHTML = `
+        <div class="mb-4">
+            <img src="${asset.imageUrl}" class="w-full h-48 object-cover rounded-lg shadow" 
+                 onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
+        </div>
+        <p><b>รหัสครุภัณฑ์:</b> ${asset.AssetID}</p>
+        ...
+    `;
+}
+async function getLocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject("Browser ของคุณไม่รองรับ GPS");
+        } else {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    resolve(`${lat},${lng}`);
+                },
+                (err) => reject("กรุณาเปิดตำแหน่ง GPS บนมือถือ")
+            );
+        }
+    });
+}
+
+// ปรับปรุงฟังก์ชันบันทึก
+async function submitSurvey() {
+    try {
+        const gpsCoords = await getLocation(); // ดึง GPS ก่อนบันทึก
+        
+        const payload = {
+            action: 'saveSurvey',
+            data: {
+                Asset_ID: document.getElementById('currentAssetID').value,
+                Asset_Gps: gpsCoords, // ส่งพิกัดไปเก็บใน ASSET_LOGS
+                // ... ข้อมูลอื่นๆ ...
+            }
+        };
+        // ... ส่ง fetch ไป Transaction API ...
+    } catch (error) {
+        alert(error);
+    }
+}
