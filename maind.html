@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Asset Survey - Udon Thani Hospital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        .bg-pink-gradient {
+            background: linear-gradient(180deg, #ff69b4 0%, #ffffff 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <div class="bg-pink-600 text-white p-4 shadow-lg text-center">
+        <h1 class="text-xl font-bold">ระบบสำรวจครุภัณฑ์ IT</h1>
+        <p class="text-sm">โรงพยาบาลอุดรธานี (รพ.อุดรธานี)</p>
+    </div>
+
+    <div class="max-w-md mx-auto p-4">
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-pink-600 font-bold mb-4">🔍 ค้นหาหรือสแกน QR Code</h2>
+            <div id="reader" class="mb-4"></div> <div class="flex gap-2">
+                <input type="text" id="searchInput" placeholder="ใส่เลขท้ายครุภัณฑ์..." 
+                       class="flex-1 border-2 border-pink-200 rounded-lg px-3 py-2 focus:outline-none focus:border-pink-500">
+                <button onclick="handleManualSearch()" class="bg-pink-500 text-white px-4 py-2 rounded-lg">ค้นหา</button>
+            </div>
+        </div>
+
+        <div id="assetDetail" class="hidden bg-white rounded-lg shadow-md p-6 mb-6 border-t-4 border-pink-500">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">รายละเอียดครุภัณฑ์</h3>
+            <div id="detailContent" class="text-sm space-y-2 text-gray-600">
+                </div>
+            
+            <hr class="my-4">
+            
+            <form id="surveyForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">ระดับความสำคัญ (Priority)</label>
+                    <select id="priority" class="w-full border rounded-lg p-2 mt-1">
+                        <option value="PIO-001">ตรวจรักษา(แพทย์)</option>
+                        <option value="PIO-002">ข้อมูลผู้ป่วย (พยาบาล)</option>
+                        <option value="PIO-003">การเงิน/ห้องยา/Lab</option>
+                        <option value="PIO-004">งานเอกสาร/ธุรการ</option>
+                        <option value="PIO-005">บริการทั่วไป/ช่าง</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">สถานะการใช้งาน</label>
+                    <select id="coStatus" class="w-full border rounded-lg p-2 mt-1">
+                        <option value="COS-001">ใช้งานปกติ</option>
+                        <option value="COS-002">ชำรุด/รอซ่อม</option>
+                    </select>
+                </div>
+                <button type="button" onclick="submitSurvey()" 
+                        class="w-full bg-pink-600 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-pink-700 transition">
+                    บันทึกข้อมูลการสำรวจ
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        // 🚩 สำคัญ: เปลี่ยน URL เป็นของ Web App ที่คุณ Deploy
+        const DISCOVERY_API = "URL_APPSCRIPT_DISCOVERY_API";
+        const TRANSACTION_API = "URL_APPSCRIPT_TRANSACTION_API";
+
+        // --- 1. ระบบสแกน QR Code ---
+        const html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+            document.getElementById('searchInput').value = decodedText;
+            handleSearch(decodedText);
+        });
+
+        // --- 2. ฟังก์ชันค้นหา (Discovery API) ---
+        async function handleSearch(query) {
+            try {
+                // เรียก API ฝั่งค้นหา
+                const response = await fetch(`${DISCOVERY_API}?action=search&query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    const asset = data[0]; // ดึงตัวแรกที่เจอ
+                    showDetail(asset);
+                } else {
+                    alert("ไม่พบข้อมูลครุภัณฑ์นี้");
+                }
+            } catch (err) {
+                console.error("Search Error:", err);
+            }
+        }
+
+        function showDetail(asset) {
+            const detailDiv = document.getElementById('assetDetail');
+            const content = document.getElementById('detailContent');
+            
+            detailDiv.classList.remove('hidden');
+            content.innerHTML = `
+                <p><b>รหัสครุภัณฑ์:</b> ${asset.AssetID}</p>
+                <p><b>ชื่อรายการ:</b> ${asset['ชื่อรายการครุภัณฑ์']}</p>
+                <p><b>สเปค:</b> ${asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']}</p>
+                <p><b>หน่วยงาน:</b> ${asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']}</p>
+                <input type="hidden" id="currentAssetID" value="${asset.AssetID}">
+                <input type="hidden" id="currentNOID" value="${asset.NOID}">
+            `;
+        }
+
+        // --- 3. ฟังก์ชันบันทึกข้อมูล (Transaction API) ---
+        async function submitSurvey() {
+            const payload = {
+                action: 'saveSurvey',
+                data: {
+                    Asset_ID: document.getElementById('currentAssetID').value,
+                    NOID: document.getElementById('currentNOID').value,
+                    PIORITY_ID: document.getElementById('priority').value,
+                    CoStatus: document.getElementById('coStatus').value,
+                    IT_User_Mail: "it_staff@udh.go.th", // ตัวอย่าง
+                    Action_ID: "ACT-" + Date.now()
+                }
+            };
+
+            try {
+                const response = await fetch(TRANSACTION_API, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert("✅ บันทึกข้อมูลลง Google Sheets เรียบร้อย!");
+                    location.reload(); // รีโหลดหน้าเพื่อเริ่มใหม่
+                }
+            } catch (err) {
+                alert("❌ เกิดข้อผิดพลาดในการบันทึก");
+            }
+        }
+
+        function handleManualSearch() {
+            const val = document.getElementById('searchInput').value;
+            handleSearch(val);
+        }
+    </script>
+</body>
+</html>
