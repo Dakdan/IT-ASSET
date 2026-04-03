@@ -556,7 +556,7 @@
 
     // 2. ตรวจสอบ ID ของตัวครอบสแกนเนอร์ (ต้องตรงกับใน HTML ของคุณ)
     // ถ้าใน HTML คุณใช้ id="scanner-overlay" ให้ใช้ชื่อนั้น
-    const scannerElem = document.getElementById('scanner-overlay') || document.getElementById('scanner-container');
+    const scannerElem = document.getElementById('scanner-container') || document.getElementById('scanner-container');
     
     if (isScannerOpen) { 
         await stopScanner(); 
@@ -597,7 +597,7 @@
                 if (raw.toLowerCase().includes('http')) {
                     try {
                         const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
-                        const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
+                        const ignoreList = ['http', 'https', 'NEXGOV', 'UDH', 'view', 'edit', 'https://nextgov-th.com/UDH/NEXTGOV/IcmAssetDetail/', 'IcmAssetDetail', 'false', 'html', 'www'];
                         const candidates = parts.filter(p => {
                             const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
                             const hasNumber = /\d/.test(p);
