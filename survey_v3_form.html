@@ -550,70 +550,65 @@
             document.getElementById('asset-search-input').focus();
         }
 
-     async function toggleScanner(target = 'search') {
-                currentScanTarget = target;
-                if (isScannerOpen) { await stopScanner(); return; }
+    async function toggleScanner(target = 'search') {
+            currentScanTarget = target; // เก็บไว้ว่าสแกนมาจากช่องไหน ('search' หรือ 'serial')
             
-                document.getElementById('scanner-container').classList.remove('hidden');
-                document.getElementById('scan-icon').textContent = "✕";
-                isScannerOpen = true;
-                isScanningLocked = false; 
+            // เลือก ID ให้ตรงกับ HTML ของคุณ (scanner-overlay คือตัวสีดำๆ ที่บังหน้าจอ)
+            const scannerElem = document.getElementById('scanner-overlay');
             
-                html5QrCode = new Html5Qrcode("reader");
-                const config = { fps: 25, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
-            
-                html5QrCode.start({ facingMode: "environment" }, config, 
-                    async (decodedText) => {
-                        if (isScanningLocked) return;
-                        isScanningLocked = true;
-                        await stopScanner();
-            
-                       // --- ⚡️ ส่วนที่ต้องแก้ไขใน toggleScanner ⚡️ ---
-
-                        let raw = decodedText.trim();
-                        let finalId = raw;
-                        
-                        if (raw.toLowerCase().includes('http')) {
-                            try {
-                                // 1. แยกส่วนประกอบของ URL ออกมาเป็นคำๆ โดยใช้ / และ ? เป็นตัวตัด
-                                // เช่น https://dakdan.github.io/IT-ASSET/ABC-123/view -> ["https:", "", "dakdan.github.io", "IT-ASSET", "ABC-123", "view"]
-                                const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
-                                
-                                // 2. รายชื่อคำที่ "ไม่ใช่" รหัสครุภัณฑ์ (คำต้องห้าม)
-                                const ignoreList = ['http', 'https', 'nextgov-th.com', 'UDH', 'NEXTGOV', 'IcmAssetDetail', 'assets', 'false', 'https:', 'html', 'www'];
-                                                    
-                                // 3. กรองเอาเฉพาะคำที่ไม่อยู่ใน ignoreList และมีความยาวเหมาะสม
-                                // ส่วนใหญ่รหัสครุภัณฑ์มักจะมี "ตัวเลข" ผสมอยู่ด้วย เราจะเช็คตรงนี้
-                                const candidates = parts.filter(p => {
-                                    const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
-                                    const hasNumber = /\d/.test(p); // ต้องมีตัวเลขอย่างน้อย 1 ตัว
-                                    return isNotIgnore && hasNumber && p.length >= 4; 
-                                });
-                        
-                                if (candidates.length > 0) {
-                                    // เลือกตัวที่ดูเหมือน ID ที่สุด (ปกติจะเป็นตัวสุดท้ายที่เหลืออยู่)
-                                    finalId = candidates[candidates.length - 1]; 
-                                }
-                            } catch (e) {
-                                console.error("Parsing error:", e);
-                                finalId = raw;
+            if (isScannerOpen) { await stopScanner(); return; }
+        
+            if (scannerElem) scannerElem.classList.remove('hidden');
+            isScannerOpen = true;
+            isScanningLocked = false; 
+        
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 25, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+        
+            html5QrCode.start({ facingMode: "environment" }, config, 
+                async (decodedText) => {
+                    if (isScanningLocked) return;
+                    isScanningLocked = true;
+                    
+                    let raw = decodedText.trim();
+                    let finalId = raw;
+                    
+                    // --- Logic ตัด URL (คงเดิมไว้ทั้งหมด) ---
+                    if (raw.toLowerCase().includes('http')) {
+                        try {
+                            const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
+                            const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
+                            const candidates = parts.filter(p => {
+                                const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
+                                const hasNumber = /\d/.test(p);
+                                return isNotIgnore && hasNumber && p.length >= 4; 
+                            });
+                            if (candidates.length > 0) {
+                                finalId = candidates[candidates.length - 1]; 
                             }
-                        }
-                        
-                        // ล้างช่องว่างและทำเป็นตัวพิมพ์ใหญ่
-                        finalId = finalId.replace(/\s/g, '').toUpperCase();
-                        // ------------------------------------------
-                        if (currentScanTarget === 'search') {
-                            const input = document.getElementById('asset-search-input');
-                            input.value = finalId;
-                            // สั่งให้ระบบเริ่มค้นหาอัตโนมัติ
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                        } else {
-                            document.getElementById('field-serial-input').value = finalId;
+                        } catch (e) { console.error(e); finalId = raw; }
+                    }
+                    
+                    finalId = finalId.replace(/\s/g, '').toUpperCase();
+                    // ------------------------------------
+        
+                    // ✨ จุดสำคัญ: แยกการส่งค่ากลับตาม target ที่กดมา
+                    if (currentScanTarget === 'serial') {
+                        // ถ้ากดมาจากปุ่มข้างช่อง Serial Number
+                        document.getElementById('field-serial-input').value = finalId;
+                    } else {
+                        // ถ้ากดมาจากปุ่มค้นหาหน้าหลัก (search)
+                        const searchInput = document.getElementById('asset-search-input');
+                        if (searchInput) {
+                            searchInput.value = finalId;
+                            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
                         }
                     }
-                ).catch(() => stopScanner());
-            }
+        
+                    await stopScanner(); // สแกนติดแล้วปิดกล้องทันที
+                }
+            ).catch(() => stopScanner());
+        }
             async function stopScanner() {
                 if (html5QrCode) { 
                     await html5QrCode.stop().catch(() => {}); 
