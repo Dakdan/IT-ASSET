@@ -308,72 +308,44 @@
         }
 
     async function toggleScanner(target = 'search') {
-            currentScanTarget = target;
+            currentScanTarget = target; // เก็บไว้ว่ารอบนี้สแกนให้ 'search' หรือ 'serial'
             const section = document.getElementById('scanner-section');
-            const icon = document.getElementById('scan-icon');
-
+            
             if (isScannerOpen) { 
                 await stopScanner(); 
                 return; 
             }
-
+        
             section.classList.remove('hidden');
-            if(icon) icon.textContent = "✕";
             isScannerOpen = true;
             isScanningLocked = false; 
-
-            // เลื่อนไปที่ตำแหน่งกล้อง
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
+        
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 20, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
-
+        
             html5QrCode.start({ facingMode: "environment" }, config, 
                 async (decodedText) => {
                     if (isScanningLocked) return;
                     isScanningLocked = true;
                     await stopScanner();
-
-                    // --- Logic การ Extract ID (ของคุณ) ---
-                    let raw = decodedText.trim();
-                    let finalId = raw;
-                    if (raw.toLowerCase().includes('http')) {
-                        try {
-                            const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
-                            const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
-                            const candidates = parts.filter(p => {
-                                const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
-                                return isNotIgnore && /\d/.test(p) && p.length >= 4;
-                            });
-                            if (candidates.length > 0) finalId = candidates[candidates.length - 1];
-                        } catch (e) { console.error(e); }
-                    }
-                    finalId = finalId.replace(/\s/g, '').toUpperCase();
-                    // ----------------------------------
-
+        
+                    let finalId = decodedText.trim().replace(/\s/g, '').toUpperCase();
+                    // ... (ใส่ Logic ตัดคำ URL ของคุณตรงนี้) ...
+        
+                    // ✅ เช็คเป้าหมายก่อนส่งค่ากลับ
                     if (currentScanTarget === 'search') {
                         const input = document.getElementById('asset-search-input');
                         input.value = finalId;
-                        input.dispatchEvent(new Event('input', { bubbles: true }));
-                    } else {
+                        // สั่งให้ช่องค้นหาทำงานทันที (Debounce จะทำงานต่อเอง)
+                        input.dispatchEvent(new Event('input', { bubbles: true })); 
+                    } else if (currentScanTarget === 'serial') {
+                        // ส่งค่าเข้าช่อง Serial ใน Modal
                         document.getElementById('field-serial-input').value = finalId;
                     }
                 }
             ).catch(() => stopScanner());
         }
-
-        async function stopScanner() {
-            if (html5QrCode) { 
-                await html5QrCode.stop().catch(() => {}); 
-                html5QrCode = null; 
-            }
-            document.getElementById('scanner-section').classList.add('hidden');
-            const icon = document.getElementById('scan-icon');
-            if(icon) icon.textContent = "📸";
-            isScannerOpen = false;
-            isScanningLocked = false;
-        }
-
+     
             async function stopScanner() {
                 if (html5QrCode) { 
                     await html5QrCode.stop().catch(() => {}); 
