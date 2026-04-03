@@ -3,148 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Asset Survey - Udon Thani Hospital</title>
+    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - รพ.อุดรธานี</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        .bg-pink-gradient {
-            background: linear-gradient(180deg, #ff69b4 0%, #ffffff 100%);
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: "IT UDON HOSP";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 8rem;
+            color: rgba(219, 39, 119, 0.03);
+            pointer-events: none;
+            z-index: -1;
+            white-space: nowrap;
+        }
+
+        .pink-gradient {
+            background: linear-gradient(90deg, #db2777 0%, #f472b6 100%);
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(219, 39, 119, 0.08);
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        #reader {
+            width: 100% !important;
+            border: none !important;
+        }
+
+        #reader video {
+            border-radius: 20px;
+            object-fit: cover;
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="text-gray-700">
 
-    <div class="bg-pink-600 text-white p-4 shadow-lg text-center">
-        <h1 class="text-xl font-bold">ระบบสำรวจครุภัณฑ์ IT</h1>
-        <p class="text-sm">โรงพยาบาลอุดรธานี (รพ.อุดรธานี)</p>
-    </div>
-
-    <div class="max-w-md mx-auto p-4">
-        
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-pink-600 font-bold mb-4">🔍 ค้นหาหรือสแกน QR Code</h2>
-            <div id="reader" class="mb-4"></div> <div class="flex gap-2">
-                <input type="text" id="searchInput" placeholder="ใส่เลขท้ายครุภัณฑ์..." 
-                       class="flex-1 border-2 border-pink-200 rounded-lg px-3 py-2 focus:outline-none focus:border-pink-500">
-                <button onclick="handleManualSearch()" class="bg-pink-500 text-white px-4 py-2 rounded-lg">ค้นหา</button>
+    <!-- Login Section -->
+    <div id="loginPage" class="fixed inset-0 z-[100] bg-white flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white p-8 rounded-[40px] shadow-2xl text-center border border-pink-50">
+            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-24 w-24 mx-auto mb-6 bg-pink-50 p-2 rounded-full">
+            <h2 class="text-2xl font-bold text-pink-600 mb-2">เข้าสู่ระบบ</h2>
+            <p class="text-gray-400 text-sm mb-8">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ (IT Audit)</p>
+            
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-4">Email Address</label>
+                    <input type="email" id="email" class="w-full bg-gray-50 border-none rounded-full px-6 py-3 mt-1 focus:ring-2 focus:ring-pink-500 outline-none" placeholder="example@mail.com">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-4">Password</label>
+                    <input type="password" id="password" class="w-full bg-gray-50 border-none rounded-full px-6 py-3 mt-1 focus:ring-2 focus:ring-pink-500 outline-none" placeholder="••••••••">
+                </div>
+                <p id="loginMsg" class="text-red-500 text-xs text-center min-h-[1.5rem] px-4 font-medium"></p>
+                <button onclick="handleLogin()" id="loginBtn" class="w-full pink-gradient text-white font-bold py-4 rounded-full shadow-lg hover:shadow-pink-200 transition active:scale-95 disabled:opacity-50">เข้าสู่ระบบ</button>
             </div>
         </div>
+    </div>
 
-        <div id="assetDetail" class="hidden bg-white rounded-lg shadow-md p-6 mb-6 border-t-4 border-pink-500">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">รายละเอียดครุภัณฑ์</h3>
-            <div id="detailContent" class="text-sm space-y-2 text-gray-600">
+    <!-- Main Content -->
+    <div id="mainApp" class="hidden">
+        <header class="pink-gradient text-white p-4 shadow-lg no-print rounded-b-[40px]">
+            <div class="max-w-6xl mx-auto flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-16 w-16 bg-white p-1 rounded-full shadow-md">
+                    <div class="text-left">
+                        <h1 class="text-xl font-bold leading-tight">ตรวจสอบครุภัณฑ์ IT</h1>
+                        <p id="userDisplay" class="text-xs opacity-90 font-medium">ยินดีต้อนรับ: ...</p>
+                    </div>
                 </div>
-            
-            <hr class="my-4">
-            
-            <form id="surveyForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase">ระดับความสำคัญ (Priority)</label>
-                    <select id="priority" class="w-full border rounded-lg p-2 mt-1">
-                        <option value="PIO-001">ตรวจรักษา(แพทย์)</option>
-                        <option value="PIO-002">ข้อมูลผู้ป่วย (พยาบาล)</option>
-                        <option value="PIO-003">การเงิน/ห้องยา/Lab</option>
-                        <option value="PIO-004">งานเอกสาร/ธุรการ</option>
-                        <option value="PIO-005">บริการทั่วไป/ช่าง</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase">สถานะการใช้งาน</label>
-                    <select id="coStatus" class="w-full border rounded-lg p-2 mt-1">
-                        <option value="COS-001">ใช้งานปกติ</option>
-                        <option value="COS-002">ชำรุด/รอซ่อม</option>
-                    </select>
-                </div>
-                <button type="button" onclick="submitSurvey()" 
-                        class="w-full bg-pink-600 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-pink-700 transition">
-                    บันทึกข้อมูลการสำรวจ
+                <button onclick="handleLogout()" class="text-xs bg-white/20 border border-white/30 text-white px-4 py-2 rounded-full hover:bg-white/30 transition">ออกจากระบบ</button>
+            </div>
+        </header>
+
+        <main class="max-w-6xl mx-auto p-4 md:p-8">
+            <!-- Dashboard Buttons -->
+            <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <button onclick="openScanner()" class="flex flex-col items-center justify-center bg-white p-6 rounded-[30px] card-shadow border-b-4 border-pink-500 hover:scale-105 transition transform">
+                    <span class="text-3xl mb-2">📸</span>
+                    <span class="font-bold text-pink-600">สแกน QR</span>
                 </button>
-            </form>
-        </div>
+                <button onclick="alert('เร็วๆ นี้')" class="flex flex-col items-center justify-center bg-white p-6 rounded-[30px] card-shadow border-b-4 border-blue-500 hover:scale-105 transition transform">
+                    <span class="text-3xl mb-2">➕</span>
+                    <span class="font-bold text-blue-600">นอกระบบ</span>
+                </button>
+                <button onclick="alert('เร็วๆ นี้')" class="flex flex-col items-center justify-center bg-white p-6 rounded-[30px] card-shadow border-b-4 border-green-500 hover:scale-105 transition transform">
+                    <span class="text-3xl mb-2">✍️</span>
+                    <span class="font-bold text-green-600 text-center leading-tight">ลงชื่อรับรอง</span>
+                </button>
+                <button onclick="window.print()" class="flex flex-col items-center justify-center bg-white p-6 rounded-[30px] card-shadow border-b-4 border-orange-500 hover:scale-105 transition transform">
+                    <span class="text-3xl mb-2">🖨️</span>
+                    <span class="font-bold text-orange-600">พิมพ์เอกสาร</span>
+                </button>
+            </section>
 
+            <!-- Table Section -->
+            <section class="bg-white rounded-[35px] card-shadow overflow-hidden mb-8">
+                <div class="p-6 bg-pink-50 border-b border-pink-100 flex flex-col md:flex-row justify-between gap-4">
+                    <h2 class="font-bold text-pink-700 flex items-center gap-2">รายการที่ค้นหาพบ</h2>
+                    <div class="flex gap-2 w-full md:w-auto">
+                       <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') handleSearch(this.value)" placeholder="เลขครุภัณฑ์ / S/N..." class="text-sm border border-pink-200 rounded-full px-5 py-2 focus:outline-none w-full md:w-64">
+                    </div>
+                </div>
+                <div class="overflow-x-auto p-4">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-pink-600 uppercase text-xs font-bold">
+                            <tr>
+                                <th class="p-4">รหัสครุภัณฑ์</th>
+                                <th class="p-4">รายการ</th>
+                                <th class="p-4">Serial No.</th>
+                                <th class="p-4 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assetTableBody">
+                            <tr><td colspan="4" class="p-10 text-center text-gray-400">ระบุเลขครุภัณฑ์เพื่อเริ่มการค้นหา...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals (Scanner, Survey) - Same as previous version but kept for completeness -->
+    <div id="scannerModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-lg rounded-[40px] shadow-2xl p-6 text-center">
+            <h3 class="text-pink-600 font-bold text-xl mb-4">สแกน QR Code</h3>
+            <div id="reader" class="bg-black rounded-3xl overflow-hidden mb-4"></div>
+            <button onclick="closeScanner()" class="w-full bg-gray-100 py-3 rounded-full font-bold text-gray-500">ยกเลิก</button>
+        </div>
+    </div>
+
+    <div id="surveyModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-slide-up">
+            <div class="pink-gradient p-6 text-white flex justify-between items-center">
+                <h3 class="font-bold">แบบฟอร์มตรวจสอบ</h3>
+                <button onclick="closeModal('surveyModal')" class="text-2xl">×</button>
+            </div>
+            <div id="surveyFormContent" class="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
+                <!-- Content will be injected by openSurveyModal -->
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="fixed inset-0 modal-overlay z-[200] flex flex-col items-center justify-center hidden">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mb-4"></div>
+        <p class="text-white text-sm animate-pulse">กำลังดำเนินการ...</p>
     </div>
 
     <script>
-        // 🚩 สำคัญ: เปลี่ยน URL เป็นของ Web App ที่คุณ Deploy
-        const DISCOVERY_API = "URL_APPSCRIPT_DISCOVERY_API";
-        const TRANSACTION_API = "URL_APPSCRIPT_TRANSACTION_API";
+        const DISCOVERY_API = "https://script.google.com/macros/s/AKfycbxWen2TesZqgTrmFVOHmeiqRv9qZPZCgjHC93oSeWGIxoSubocHP7kDdgaz4xVSGie8/exec";
+        const TRANSACTION_API = "https://script.google.com/macros/s/AKfycbyoXfR15wrbTV0aTkuyl-JnzgaJLFeDPfT3xUebTdm2reo_k-Y3GSaAhHoqujhIihS8Jw/exec";
+        
+        let html5QrCode;
+        let currentAsset = null;
 
-        // --- 1. ระบบสแกน QR Code ---
-        const html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        // --- AUTH LOGIC ---
+        async function handleLogin() {
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const msg = document.getElementById('loginMsg');
+            const btn = document.getElementById('loginBtn');
 
-        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-            document.getElementById('searchInput').value = decodedText;
-            handleSearch(decodedText);
-        });
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!email || !password) {
+                msg.innerText = "❌ กรุณากรอกอีเมลและรหัสผ่าน";
+                return;
+            }
 
-        // --- 2. ฟังก์ชันค้นหา (Discovery API) ---
-        async function handleSearch(query) {
+            showLoading(true);
+            btn.disabled = true;
+            msg.innerText = "";
+
             try {
-                // เรียก API ฝั่งค้นหา
-                const response = await fetch(`${DISCOVERY_API}?action=search&query=${encodeURIComponent(query)}`);
-                const data = await response.json();
+                // ใช้การส่ง POST แบบ JSON stringify ให้ตรงกับ request.postData.contents ใน Apps Script
+                const response = await fetch(DISCOVERY_API, {
+                    method: 'POST',
+                    mode: 'no-cors', // ลองใช้ no-cors หากติดปัญหา CORS แต่แนะนำให้แก้ที่ฝั่ง Apps Script ให้รองรับ OPTIONS
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: 'login', 
+                        email: email, 
+                        password: password 
+                    })
+                });
 
-                if (data && data.length > 0) {
-                    const asset = data[0]; // ดึงตัวแรกที่เจอ
-                    showDetail(asset);
+                /** * หมายเหตุ: หากใช้ mode: 'no-cors' จะไม่สามารถอ่าน response body ได้ 
+                 * ถ้าฝั่ง Apps Script ตั้งค่าไว้อย่างถูกต้อง ควรใช้ mode: 'cors' (ซึ่งเป็นค่าเริ่มต้น)
+                 */
+                
+                const resNormal = await fetch(DISCOVERY_API, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'login', email: email, password: password })
+                });
+                
+                const result = await resNormal.json();
+
+                if (result.status === 'success') {
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('userMail', result.userData.mail);
+                    sessionStorage.setItem('userName', result.userData.name);
+                    checkAuth();
                 } else {
-                    alert("ไม่พบข้อมูลครุภัณฑ์นี้");
+                    msg.innerText = "❌ " + (result.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
                 }
-            } catch (err) {
-                console.error("Search Error:", err);
+            } catch (e) {
+                console.error("Login Error:", e);
+                msg.innerText = "❌ การเชื่อมต่อล้มเหลว หรือ Server ไม่ตอบกลับ";
+            } finally {
+                showLoading(false);
+                btn.disabled = false;
             }
         }
 
-        function showDetail(asset) {
-            const detailDiv = document.getElementById('assetDetail');
-            const content = document.getElementById('detailContent');
-            
-            detailDiv.classList.remove('hidden');
-            content.innerHTML = `
-                <p><b>รหัสครุภัณฑ์:</b> ${asset.AssetID}</p>
-                <p><b>ชื่อรายการ:</b> ${asset['ชื่อรายการครุภัณฑ์']}</p>
-                <p><b>สเปค:</b> ${asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']}</p>
-                <p><b>หน่วยงาน:</b> ${asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']}</p>
-                <input type="hidden" id="currentAssetID" value="${asset.AssetID}">
-                <input type="hidden" id="currentNOID" value="${asset.NOID}">
-            `;
+        function checkAuth() {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('userDisplay').innerText = `ยินดีต้อนรับ: ${sessionStorage.getItem('userName')}`;
+            }
         }
 
-        // --- 3. ฟังก์ชันบันทึกข้อมูล (Transaction API) ---
+        function handleLogout() {
+            sessionStorage.clear();
+            location.reload();
+        }
+
+        // --- SEARCH LOGIC ---
+        async function handleSearch(query) {
+            if (!query) return;
+            showLoading(true);
+            try {
+                const res = await fetch(`${DISCOVERY_API}?action=search&query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    renderTable(data);
+                } else {
+                    alert("ไม่พบข้อมูลครุภัณฑ์");
+                    document.getElementById('assetTableBody').innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">ไม่พบข้อมูล...</td></tr>';
+                }
+            } catch (e) {
+                alert("ค้นหาไม่สำเร็จ กรุณาลองใหม่");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('assetTableBody');
+            tbody.innerHTML = data.map(item => `
+                <tr class="border-b border-gray-50 hover:bg-pink-50 transition">
+                    <td class="p-4 font-bold text-pink-600">${item.AssetID}</td>
+                    <td class="p-4 font-medium text-gray-700">${item.AssetName || '-'}</td>
+                    <td class="p-4 text-gray-400">${item.Serial || '-'}</td>
+                    <td class="p-4 text-center">
+                        <button onclick='openSurveyModal(${JSON.stringify(item)})' class="bg-pink-100 text-pink-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-pink-600 hover:text-white transition">ตรวจสอบ</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- SURVEY & GPS ---
+        async function openSurveyModal(asset) {
+            currentAsset = asset;
+            const content = document.getElementById('surveyFormContent');
+            content.innerHTML = `
+                <div class="bg-pink-50 p-4 rounded-3xl flex gap-4 border border-pink-100 mb-6">
+                    <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-pink-100">
+                        <img src="${asset.imageUrl || ''}" onerror="this.src='https://via.placeholder.com/150?text=No+Image'" class="object-cover w-full h-full">
+                    </div>
+                    <div>
+                        <p class="text-pink-600 font-bold text-lg leading-tight">${asset.AssetID}</p>
+                        <p class="text-sm text-gray-700">${asset.AssetName || '-'}</p>
+                        <p class="text-xs text-gray-400">S/N: ${asset.Serial || '-'}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">ประเภท</label>
+                        <select id="assetType" class="w-full border-b-2 py-2 focus:border-pink-500 outline-none">
+                            <option value="COM-01">PC Desktop</option>
+                            <option value="COM-02">Laptop</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">พิกัด GPS</label>
+                        <input type="text" id="gpsDisplay" readonly class="w-full border-b-2 py-2 text-pink-500 italic outline-none" value="กำลังระบุพิกัด...">
+                    </div>
+                </div>
+                <button onclick="submitSurvey()" class="w-full pink-gradient text-white font-bold py-4 rounded-full mt-6 shadow-lg">บันทึกข้อมูล</button>
+            `;
+            document.getElementById('surveyModal').classList.remove('hidden');
+            
+            try {
+                const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+                document.getElementById('gpsDisplay').value = `${pos.coords.latitude},${pos.coords.longitude}`;
+            } catch (e) {
+                document.getElementById('gpsDisplay').value = "ไม่พบพิกัด";
+            }
+        }
+
         async function submitSurvey() {
+            showLoading(true);
             const payload = {
                 action: 'saveSurvey',
                 data: {
-                    Asset_ID: document.getElementById('currentAssetID').value,
-                    NOID: document.getElementById('currentNOID').value,
-                    PIORITY_ID: document.getElementById('priority').value,
-                    CoStatus: document.getElementById('coStatus').value,
-                    IT_User_Mail: "it_staff@udh.go.th", // ตัวอย่าง
-                    Action_ID: "ACT-" + Date.now()
+                    Asset_ID: currentAsset.AssetID,
+                    Asset_Gps: document.getElementById('gpsDisplay').value,
+                    IT_User_Mail: sessionStorage.getItem('userMail')
                 }
             };
-
             try {
-                const response = await fetch(TRANSACTION_API, {
+                const res = await fetch(TRANSACTION_API, {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-                const result = await response.json();
-
+                const result = await res.json();
                 if (result.status === 'success') {
-                    alert("✅ บันทึกข้อมูลลง Google Sheets เรียบร้อย!");
-                    location.reload(); // รีโหลดหน้าเพื่อเริ่มใหม่
+                    alert("บันทึกสำเร็จ");
+                    closeModal('surveyModal');
                 }
-            } catch (err) {
-                alert("❌ เกิดข้อผิดพลาดในการบันทึก");
+            } catch (e) {
+                alert("บันทึกล้มเหลว");
+            } finally {
+                showLoading(false);
             }
         }
 
-        function handleManualSearch() {
-            const val = document.getElementById('searchInput').value;
-            handleSearch(val);
+        // --- SCANNER ---
+        function openScanner() {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+                let id = text.split("/").pop();
+                closeScanner();
+                handleSearch(id);
+            }).catch(e => {
+                alert("เปิดกล้องไม่ได้: " + e);
+                closeScanner();
+            });
         }
+
+        function closeScanner() {
+            if(html5QrCode) html5QrCode.stop().then(() => {
+                document.getElementById('scannerModal').classList.add('hidden');
+            }).catch(() => document.getElementById('scannerModal').classList.add('hidden'));
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function showLoading(show) { document.getElementById('loadingOverlay').classList.toggle('hidden', !show); }
+
+        window.onload = checkAuth;
     </script>
 </body>
 </html>
