@@ -209,25 +209,38 @@
             </section>
         
             <section id="step-survey" class="hidden space-y-6">
-                <div class="card p-6 border-l-8 border-pink-400">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h3 id="display-dept-name" class="text-xl font-bold text-gray-800">ชื่อหน่วยงาน</h3>
-                            <p id="display-dept-info" class="text-gray-500 text-sm">ตึก: - | ชั้น: -</p>
-                        </div>
-                        <button onclick="resetApp()" class="text-sm text-pink-500 hover:underline font-medium">เปลี่ยนหน่วยงาน</button>
+    
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-pink-400 flex justify-between items-center">
+                    <div>
+                        <h3 id="display-dept-name" class="text-xl font-bold text-gray-800 tracking-tight">-</h3>
+                        <p id="display-dept-info" class="text-xs text-gray-400 mt-1 uppercase font-bold">-</p>
                     </div>
+                    <button onclick="resetApp()" class="text-xs font-bold text-pink-500 bg-pink-50 px-4 py-2 rounded-full">เปลี่ยนหน่วยงาน</button>
                 </div>
-        
-                <div class="card p-6">
-                    <div class="flex justify-between items-center mb-4 border-b border-gray-50 pb-4">
-                        <h3 class="font-semibold text-gray-700 flex items-center gap-2">
-                            <span class="w-1.5 h-5 bg-pink-400 rounded-full"></span> รายการครุภัณฑ์ที่พบ
-                        </h3>
-                        <button onclick="openSearchModal()" class="btn-pink px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-md font-bold">
-                            <span>🔍</span> ค้นหาครุภัณฑ์
-                        </button>
+            
+                <div id="scanner-section" class="hidden rounded-[2rem] overflow-hidden border-4 border-white shadow-xl relative bg-black aspect-video max-w-md mx-auto mb-2 group">
+                    <div id="reader" class="w-full h-full"></div>
+                    <div class="absolute inset-0 border-[30px] border-black/20 pointer-events-none"></div> <button type="button" onclick="stopScanner()" class="absolute bottom-4 right-4 bg-red-500/80 backdrop-blur-md text-white px-6 py-2 rounded-full text-xs font-bold shadow-lg">
+                        ปิดกล้อง
+                    </button>
+                </div>
+            
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="asset-search-input" placeholder="สแกนหรือพิมพ์รหัสครุภัณฑ์..." 
+                               class="w-full p-5 pl-14 rounded-[1.5rem] border-none shadow-inner bg-white outline-none focus:ring-2 focus:ring-pink-300 text-lg">
+                        <span class="absolute left-5 top-5 text-2xl opacity-20">🔍</span>
                     </div>
+                    <button type="button" onclick="toggleScanner('search')" id="btn-toggle-scan" class="p-5 bg-pink-500 text-white rounded-[1.5rem] shadow-lg shadow-pink-200 active:scale-95 transition-transform">
+                        <span id="scan-icon" class="text-xl">📸</span>
+                    </button>
+                </div>
+            
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-50 overflow-hidden">
+                    ... (โค้ดตารางเดิมของคุณ) ...
+                </div>
+
+
         
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
