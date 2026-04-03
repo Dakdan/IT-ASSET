@@ -64,7 +64,7 @@
                     <span class="text-3xl mb-2">📸</span>
                     <span class="font-bold text-pink-600">สแกน QR</span>
                 </button>
-                <button onclick="alert('เร็วๆ นี้')" class="flex flex-col items-center justify-center bg-white p-6 rounded-[30px] card-shadow border-b-4 border-blue-500">
+                <button onclick="openNonNumberModal()" class="flex flex-col items-center justify-center bg-white p-6 rounded-[30px] card-shadow border-b-4 border-blue-500">
                     <span class="text-3xl mb-2">➕</span>
                     <span class="font-bold text-blue-600">นอกระบบ</span>
                 </button>
@@ -73,7 +73,10 @@
             <section class="bg-white rounded-[35px] card-shadow overflow-hidden">
                 <div class="p-6 bg-pink-50 border-b border-pink-100 flex flex-col md:flex-row justify-between gap-4">
                     <h2 class="font-bold text-pink-700">ผลการค้นหา</h2>
-                    <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') handleSearch(this.value)" placeholder="เลขครุภัณฑ์ / S/N..." class="text-sm border border-pink-200 rounded-full px-5 py-2 w-full md:w-64">
+                    <div class="flex gap-2">
+                        <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') handleSearch(this.value)" placeholder="เลขครุภัณฑ์ / S/N..." class="text-sm border border-pink-200 rounded-full px-5 py-2 w-full md:w-64 outline-none focus:ring-2 focus:ring-pink-500">
+                        <button onclick="handleSearch(document.getElementById('searchInput').value)" class="bg-pink-500 text-white p-2 rounded-full px-4 text-xs font-bold">ค้นหา</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto p-4">
                     <table class="w-full text-sm">
@@ -95,7 +98,7 @@
 
     <!-- Modals -->
     <div id="scannerModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white w-full max-w-lg rounded-[40px] p-6 text-center">
+        <div class="bg-white w-full max-w-lg rounded-[40px] p-6 text-center shadow-2xl">
             <h3 class="text-pink-600 font-bold mb-4">สแกน QR Code</h3>
             <div id="reader" class="bg-black rounded-3xl overflow-hidden mb-4"></div>
             <button onclick="closeScanner()" class="w-full bg-gray-100 py-3 rounded-full font-bold">ยกเลิก</button>
@@ -109,6 +112,23 @@
                 <button onclick="closeModal('surveyModal')" class="text-2xl">×</button>
             </div>
             <div id="surveyFormContent" class="p-8 space-y-6 max-h-[80vh] overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <div id="nonNumberModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden">
+            <div class="bg-blue-600 p-6 text-white flex justify-between items-center">
+                <h3 class="font-bold">เพิ่มครุภัณฑ์นอกระบบ</h3>
+                <button onclick="closeModal('nonNumberModal')" class="text-2xl">×</button>
+            </div>
+            <div class="p-8 space-y-4">
+                <input type="text" id="nonAssetName" placeholder="ชื่อรายการครุภัณฑ์" class="w-full border-b py-2 outline-none">
+                <input type="text" id="nonSerial" placeholder="Serial Number" class="w-full border-b py-2 outline-none">
+                <select id="nonAssetType" class="w-full border-b py-2 outline-none bg-transparent">
+                    <option value="">เลือกประเภทครุภัณฑ์</option>
+                </select>
+                <button onclick="submitNonNumber()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-full shadow-lg">บันทึกข้อมูล</button>
+            </div>
         </div>
     </div>
 
@@ -126,24 +146,30 @@
         
         let html5QrCode;
         let currentAsset = null;
+        let initialData = null;
 
         async function handleLogin() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             const msg = document.getElementById('loginMsg');
+            const btn = document.getElementById('loginBtn');
             
             if (!email || !password) {
                 msg.innerText = "❌ กรุณากรอกข้อมูลให้ครบ";
                 return;
             }
 
+            btn.disabled = true;
             showLoading(true, "กำลังตรวจสอบสิทธิ์...");
+            
             try {
+                // ใช้ POST แบบส่งเป็น text/plain เพื่อเลี่ยงปัญหา CORS ใน Apps Script
                 const response = await fetch(APP_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({ action: 'login', email, password })
+                    mode: 'cors',
+                    body: JSON.stringify({ action: 'login', email: email, password: password })
                 });
+                
                 const result = await response.json();
 
                 if (result.status === 'success') {
@@ -152,20 +178,43 @@
                     sessionStorage.setItem('userName', result.userData.name);
                     checkAuth();
                 } else {
-                    msg.innerText = "❌ " + result.message;
+                    msg.innerText = "❌ " + (result.message || "Email หรือ Password ไม่ถูกต้อง");
                 }
             } catch (e) {
-                msg.innerText = "❌ ไม่สามารถเชื่อมต่อ API ได้";
+                console.error("Login Error:", e);
+                msg.innerText = "❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์";
             } finally {
+                btn.disabled = false;
                 showLoading(false);
             }
         }
 
-        function checkAuth() {
+        async function checkAuth() {
             if (sessionStorage.getItem('isLoggedIn') === 'true') {
                 document.getElementById('loginPage').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
                 document.getElementById('userDisplay').innerText = `ยินดีต้อนรับ: ${sessionStorage.getItem('userName')}`;
+                
+                // โหลดข้อมูลเบื้องต้น
+                if (!initialData) await loadInitialData();
+            }
+        }
+
+        async function loadInitialData() {
+            try {
+                const res = await fetch(`${APP_URL}?action=getInitialData`);
+                initialData = await res.json();
+                
+                // ใส่ข้อมูลในตัวเลือกประเภทครุภัณฑ์ (นอกระบบ)
+                const nonAssetTypeSelect = document.getElementById('nonAssetType');
+                initialData.assetTypes.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.name;
+                    nonAssetTypeSelect.appendChild(opt);
+                });
+            } catch (e) {
+                console.error("Initial Data Error:", e);
             }
         }
 
@@ -178,7 +227,6 @@
             if (!query) return;
             showLoading(true, "กำลังค้นหาครุภัณฑ์...");
             try {
-                // อิงตาม action 'searchAsset' ใน doGet
                 const res = await fetch(`${APP_URL}?action=searchAsset&query=${encodeURIComponent(query)}`);
                 const data = await res.json();
                 renderTable(data);
@@ -192,15 +240,15 @@
         function renderTable(data) {
             const tbody = document.getElementById('assetTableBody');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-gray-400">ไม่พบข้อมูล...</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-gray-400">ไม่พบข้อมูลครุภัณฑ์...</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
-                <tr class="border-b hover:bg-pink-50 cursor-pointer">
+                <tr class="border-b hover:bg-pink-50 cursor-pointer transition-colors">
                     <td class="p-4 font-bold text-pink-600">${item.AssetID || '-'}</td>
                     <td class="p-4 text-gray-700">${item.AssetName || '-'}</td>
                     <td class="p-4 text-center">
-                        <button onclick='openSurveyModal(${JSON.stringify(item)})' class="bg-pink-500 text-white px-4 py-2 rounded-full text-xs font-bold">สำรวจ</button>
+                        <button onclick='openSurveyModal(${JSON.stringify(item).replace(/'/g, "&apos;")})' class="bg-pink-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:bg-pink-600 transition">สำรวจ</button>
                     </td>
                 </tr>
             `).join('');
@@ -209,66 +257,83 @@
         async function openSurveyModal(asset) {
             currentAsset = asset;
             const content = document.getElementById('surveyFormContent');
+            
+            // ดึงพิกัด GPS ก่อน
+            let gps = "กำลังระบุพิกัด...";
+            
             content.innerHTML = `
-                <div class="bg-pink-50 p-6 rounded-3xl flex items-center gap-4 border border-pink-100">
-                    <img src="${asset.imageUrl || ''}" onerror="this.src='https://via.placeholder.com/150?text=No+Photo'" class="w-20 h-20 bg-white rounded-2xl object-cover shadow-sm">
+                <div class="bg-pink-50 p-6 rounded-3xl flex items-center gap-4 border border-pink-100 shadow-sm">
+                    <img src="${asset.imageUrl || ''}" onerror="this.src='https://via.placeholder.com/150?text=No+Photo'" class="w-20 h-20 bg-white rounded-2xl object-cover">
                     <div>
                         <p class="text-pink-600 font-bold">${asset.AssetID}</p>
                         <p class="text-xs text-gray-600">${asset.AssetName || '-'}</p>
                         <p class="text-[10px] text-gray-400 uppercase">S/N: ${asset.Serial || '-'}</p>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="text-[10px] font-bold text-gray-400 uppercase">สถานะ (MAStatus)</label>
-                        <select id="maStatus" class="w-full border-b-2 py-2 outline-none bg-transparent">
-                            <option value="ใช้งานปกติ">ใช้งานปกติ</option>
-                            <option value="ชำรุด">ชำรุด</option>
-                            <option value="รอซ่อม">รอซ่อม</option>
+                        <select id="maStatus" class="w-full border-b-2 py-2 outline-none bg-transparent focus:border-pink-500 transition">
+                            <option value="ใช้งานปกติ">✅ ใช้งานปกติ</option>
+                            <option value="ชำรุด">❌ ชำรุด</option>
+                            <option value="รอซ่อม">⚠️ รอซ่อม</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">ลำดับความสำคัญ</label>
+                        <select id="priorityId" class="w-full border-b-2 py-2 outline-none bg-transparent focus:border-pink-500 transition">
+                            ${initialData?.priorities.map(p => `<option value="${p.id}">${p.name}</option>`).join('') || '<option value="PIO-001">ทั่วไป</option>'}
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">เวรปฏิบัติงาน</label>
+                        <select id="shiftWork" class="w-full border-b-2 py-2 outline-none bg-transparent focus:border-pink-500 transition">
+                            ${initialData?.shifts.map(s => `<option value="${s}">${s}</option>`).join('') || '<option value="เช้า">เช้า</option>'}
                         </select>
                     </div>
                     <div class="space-y-2">
                         <label class="text-[10px] font-bold text-gray-400 uppercase">พิกัด GPS</label>
-                        <input type="text" id="gpsDisplay" readonly class="w-full border-b-2 py-2 text-pink-500 text-sm italic" value="กำลังระบุพิกัด...">
+                        <input type="text" id="gpsDisplay" readonly class="w-full border-b-2 py-2 text-pink-500 text-sm italic outline-none" value="${gps}">
                     </div>
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold text-gray-400 uppercase">หมายเหตุ (Note1)</label>
-                    <textarea id="note1" class="w-full border-2 border-gray-50 rounded-2xl p-4 outline-none focus:border-pink-200" rows="2" placeholder="ระบุรายละเอียด..."></textarea>
+                    <textarea id="note1" class="w-full border-2 border-gray-50 rounded-2xl p-4 outline-none focus:border-pink-200 transition" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
                 </div>
                 <button onclick="submitSurvey()" class="w-full pink-gradient text-white font-bold py-4 rounded-full shadow-lg active:scale-95 transition">บันทึกข้อมูลการสำรวจ</button>
             `;
             document.getElementById('surveyModal').classList.remove('hidden');
             
-            try {
-                const pos = await new Promise((res, rej) => {
-                    navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true });
-                });
-                document.getElementById('gpsDisplay').value = `${pos.coords.latitude},${pos.coords.longitude}`;
-            } catch (e) {
-                document.getElementById('gpsDisplay').value = "ไม่พบพิกัด";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        document.getElementById('gpsDisplay').value = `${pos.coords.latitude},${pos.coords.longitude}`;
+                    },
+                    (err) => {
+                        document.getElementById('gpsDisplay').value = "ไม่สามารถระบุพิกัดได้";
+                    }
+                );
             }
         }
 
         async function submitSurvey() {
-            showLoading(true, "กำลังบันทึกข้อมูล...");
+            showLoading(true, "กำลังส่งข้อมูล...");
             
-            // เตรียมข้อมูลตามฟังก์ชัน saveSurveyData ใน Code.gs
             const payload = {
                 action: 'saveSurvey',
                 data: {
-                    Asset_NO: currentAsset.No || "",      // อ้างอิงลำดับใน Sheet Asset_DB
+                    Asset_NO: currentAsset.No || "",
                     NOID: currentAsset.NOID || "",
                     Asset_ID: currentAsset.AssetID,
                     Serial: currentAsset.Serial,
                     Asset_Type_ID: currentAsset.AssetTypeID || "",
                     Detail_ID: currentAsset.DetailID || "",
                     DEPT_ID: currentAsset.DeptID || "",
-                    Job_Type_ID: "SURVEY-2024",           // ค่าคงที่ตัวอย่าง
-                    PIORITY_ID: "PIO-001",               // ค่าคงที่ตัวอย่าง
+                    Job_Type_ID: "SURVEY-" + new Date().getFullYear(),
+                    PIORITY_ID: document.getElementById('priorityId').value,
                     MAStatus: document.getElementById('maStatus').value,
-                    CoStatus: "PENDING",                  // ค่าคงที่ตัวอย่าง
-                    Shift_Work: "เช้า",                   // ค่าคงที่ตัวอย่าง
+                    CoStatus: "SURVEYED",
+                    Shift_Work: document.getElementById('shiftWork').value,
                     IT_User_Mail: sessionStorage.getItem('userMail'),
                     IMAGE_NAME: currentAsset.AssetID + ".jpg",
                     Asset_Gps: document.getElementById('gpsDisplay').value,
@@ -282,14 +347,60 @@
             try {
                 const res = await fetch(APP_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    alert("✅ บันทึกสำเร็จ: " + result.message);
+                    alert("✅ บันทึกข้อมูลสำเร็จ");
                     closeModal('surveyModal');
-                    handleSearch(currentAsset.AssetID); // Refresh data
+                } else {
+                    alert("❌ เกิดข้อผิดพลาด: " + result.message);
+                }
+            } catch (e) {
+                alert("❌ ไม่สามารถบันทึกข้อมูลได้");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function openNonNumberModal() {
+            document.getElementById('nonNumberModal').classList.remove('hidden');
+        }
+
+        async function submitNonNumber() {
+            const name = document.getElementById('nonAssetName').value.trim();
+            const serial = document.getElementById('nonSerial').value.trim();
+            const type = document.getElementById('nonAssetType').value;
+
+            if (!name || !serial || !type) {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+                return;
+            }
+
+            showLoading(true, "กำลังบันทึก...");
+            const payload = {
+                action: 'saveNonNumberAsset',
+                data: {
+                    NOID: "NON-" + Date.now(),
+                    Asset_ID: "NEW-" + Date.now(),
+                    Serial: serial,
+                    Asset_Name: name,
+                    Asset_Type_ID: type,
+                    DEPT_ID: "UNKNOWN",
+                    IT_User_Mail: sessionStorage.getItem('userMail'),
+                    Action_ID: "LOG-" + Date.now()
+                }
+            };
+
+            try {
+                const res = await fetch(APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert("✅ บันทึกครุภัณฑ์นอกระบบสำเร็จ");
+                    closeModal('nonNumberModal');
                 }
             } catch (e) {
                 alert("❌ บันทึกล้มเหลว");
@@ -305,12 +416,20 @@
                 let id = text.includes("/") ? text.split("/").pop() : text;
                 closeScanner();
                 handleSearch(id);
+            }).catch(err => {
+                alert("ไม่สามารถเปิดกล้องได้");
+                closeScanner();
             });
         }
 
         function closeScanner() {
-            if(html5QrCode) html5QrCode.stop().finally(() => document.getElementById('scannerModal').classList.add('hidden'));
-            else document.getElementById('scannerModal').classList.add('hidden');
+            if(html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('scannerModal').classList.add('hidden');
+            }
         }
 
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
