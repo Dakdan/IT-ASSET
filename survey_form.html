@@ -9,10 +9,23 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        body {
+          body {
             font-family: 'Kanit', sans-serif;
             background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
             min-height: 100vh;
+            position: relative;
+        }
+        body::before {
+            content: "IT UDON HOSP";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 5rem;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: -1;
+            white-space: nowrap;
         }
         .card {
             background: rgba(255, 255, 255, 0.9);
@@ -29,6 +42,13 @@
             background: #ff6384;
             transform: translateY(-2px);
         }
+        .signature-pad {
+            border: 2px dashed #ffb3c1;
+            border-radius: 10px;
+            background: white;
+            cursor: crosshair;
+            touch-action: none; /* สำคัญ: ป้องกันการเลื่อนหน้าจอขณะลงชื่อ */
+        }
         .loading-overlay {
             position: fixed;
             inset: 0;
@@ -42,6 +62,13 @@
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
         }
+        .highlight {
+            background-color: #ffdae0;
+            font-weight: bold;
+            color: #d63384;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
         .img-preview {
             width: 100%;
             max-height: 200px;
@@ -49,6 +76,73 @@
             border-radius: 12px;
             border: 1px solid #eee;
         }
+        .back-btn {
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(6px);
+            background: rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, #ff85a1, #ffc0cb, #ff85a1);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 0;
+        }
+        
+        .back-btn * {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 10px 25px rgba(255, 133, 161, 0.3);
+            color: #ff4d6d;
+        }
+        
+        .back-btn:hover::before {
+            opacity: 0.15;
+        }
+        
+        .back-btn svg {
+            transition: transform 0.3s ease;
+        }
+        
+        .back-btn:hover svg {
+            transform: translateX(-3px);
+        }
+        .header-border {
+            border: 2px solid #ff85a1;
+            border-radius: 24px;
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 8px 20px rgba(255, 133, 161, 0.08);
+            backdrop-filter: blur(4px);
+        }
+        #reader {
+            width: 500px; /* ความกว้างสูงสุดของพื้นที่กล้อง */
+            max-width: 90%; /* ยืดหยุ่นบนมือถือ */
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden; /* ป้องกันเนื้อหาล้น */
+            background-color: white;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 8px;
+            max-width: 90%;
+            word-wrap: break-word; /* ให้ข้อความยาวขึ้นบรรทัดใหม่ */
+            display: none; /* ซ่อนไว้ก่อนจนกว่าจะสแกนเจอ */
+        }
+       
         /* Scanner Container Style */
         .scanner-wrapper {
             position: relative;
