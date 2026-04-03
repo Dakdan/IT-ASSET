@@ -14,6 +14,11 @@
         .signature-pad { border: 2px dashed #cbd5e1; border-radius: 1rem; background: #fff; cursor: crosshair; }
         .custom-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04); }
         .tab-active { border-bottom: 4px solid #ec4899; color: #ec4899; }
+        .modal-enter { animation: modalFadeIn 0.3s ease-out; }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body class="text-slate-700 pb-20">
@@ -38,6 +43,7 @@
 
     <main class="max-w-6xl mx-auto px-4 mt-6">
         
+        <!-- View: Dashboard -->
         <div id="view-dashboard" class="space-y-6">
             <div id="statsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-[2rem] custom-shadow animate-pulse">
@@ -74,10 +80,11 @@
             </div>
         </div>
 
+        <!-- View: Survey -->
         <div id="view-survey" class="hidden space-y-6">
             <div class="bg-white p-8 rounded-[2.5rem] custom-shadow border border-slate-100">
                 <h3 class="text-md font-bold mb-6 flex items-center gap-2 text-blue-600">
-                    <span class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-xs">1</span>
+                    <span class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-xs text-blue-600">1</span>
                     เลือกหน่วยงานเพื่อเริ่มสำรวจ
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -96,28 +103,102 @@
             <div id="assetSearchContainer" class="hidden bg-white p-8 rounded-[2.5rem] custom-shadow border border-slate-100">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-md font-bold flex items-center gap-2 text-pink-600">
-                        <span class="w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-xs">2</span>
+                        <span class="w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-xs text-pink-600">2</span>
                         ตรวจสอบ/เพิ่มข้อมูลครุภัณฑ์
                     </h3>
                     <div id="activeDeptBadge" class="bg-slate-800 text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider">---</div>
                 </div>
-                <input type="text" id="assetSearchInput" oninput="handleAssetLiveSearch(this.value)" placeholder="ค้นหาด้วยรหัสครุภัณฑ์ หรือชื่อรายการ..." 
-                       class="w-full bg-slate-50 border-2 border-transparent focus:border-pink-200 rounded-3xl px-6 py-5 outline-none text-sm font-medium">
+                <div class="flex gap-2">
+                    <input type="text" id="assetSearchInput" oninput="handleAssetLiveSearch(this.value)" placeholder="ค้นหาด้วยรหัสครุภัณฑ์ หรือชื่อรายการ..." 
+                           class="flex-1 bg-slate-50 border-2 border-transparent focus:border-pink-200 rounded-3xl px-6 py-5 outline-none text-sm font-medium">
+                    <button onclick="openScanner()" class="bg-pink-100 text-pink-600 p-5 rounded-3xl hover:bg-pink-200 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                        </svg>
+                    </button>
+                </div>
                 <div id="assetSearchResults" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
+                
+                <div id="actionButtons" class="mt-10 flex flex-wrap gap-4 justify-center border-t border-slate-100 pt-8">
+                    <button onclick="saveDraft()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-3xl text-sm font-bold hover:bg-slate-200 transition">บันทึกฉบับร่าง</button>
+                    <button onclick="openAssetConfirmModal()" class="pink-gradient text-white px-10 py-4 rounded-3xl text-sm font-bold shadow-lg shadow-pink-200 hover:scale-105 transition active:scale-95">บันทึกการตรวจสอบ</button>
+                </div>
             </div>
         </div>
     </main>
 
+    <!-- Modal: Asset_Confirm -->
+    <div id="modalAssetConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+        <div class="bg-white w-full max-w-lg mx-4 rounded-[2.5rem] shadow-2xl overflow-hidden modal-enter">
+            <div class="p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-slate-800">ยืนยันการตรวจสอบ</h3>
+                    <button onclick="closeModal('modalAssetConfirm')" class="text-slate-400 hover:text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="space-y-4 mb-8">
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">หน่วยงานที่ตรวจสอบ</p>
+                        <p id="confirmDeptName" class="text-sm font-bold text-slate-700">-</p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 text-pink-500">ลายมือชื่อผู้รับรองข้อมูล</label>
+                        <canvas id="signaturePad" class="signature-pad w-full h-40"></canvas>
+                        <div class="flex justify-end">
+                            <button onclick="clearSignature()" class="text-[10px] font-bold text-pink-500 uppercase tracking-widest hover:underline">ล้างลายเซ็น</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="closeModal('modalAssetConfirm')" class="py-4 bg-slate-100 text-slate-500 rounded-3xl text-sm font-bold">ยกเลิก</button>
+                    <button onclick="submitFullSurvey()" class="py-4 pink-gradient text-white rounded-3xl text-sm font-bold shadow-lg shadow-pink-100">ยืนยันและบันทึก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Success Status -->
+    <div id="modalSuccess" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+        <div class="bg-white w-full max-w-sm mx-4 rounded-[2.5rem] shadow-2xl p-10 text-center modal-enter">
+            <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">ข้อมูลบันทึกแล้ว</h3>
+            <p class="text-sm text-slate-500 mb-8">การตรวจสอบครุภัณฑ์เสร็จสมบูรณ์ระบบได้อัปเดตข้อมูลลงฐานข้อมูลเรียบร้อยแล้ว</p>
+            
+            <div class="space-y-3" id="postActionButtons">
+                <button onclick="window.location.reload()" class="w-full py-4 pink-gradient text-white rounded-3xl text-sm font-bold">กลับหน้าหลัก</button>
+                <button onclick="printCertificate()" class="w-full py-4 border-2 border-slate-100 text-slate-600 rounded-3xl text-sm font-bold flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    พิมพ์เอกสารรับรอง
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="loading" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm hidden">
         <div class="bg-white p-8 rounded-[2rem] text-center shadow-2xl">
             <div class="animate-spin rounded-full h-10 w-10 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
-            <p class="text-xs font-bold text-slate-500 tracking-widest uppercase">กำลังโหลดข้อมูล...</p>
+            <p class="text-xs font-bold text-slate-500 tracking-widest uppercase">กำลังส่งข้อมูล...</p>
         </div>
     </div>
 
     <script>
         const APP_URL = "https://script.google.com/macros/s/AKfycbxWen2TesZqgTrmFVOHmeiqRv9qZPZCgjHC93oSeWGIxoSubocHP7kDdgaz4xVSGie8/exec";
         let masterData = null;
+        let selectedDept = { id: '', name: '' };
+        let signaturePad = null;
+        let canvas = null;
+        let isDrawing = false;
 
         async function initApp() {
             toggleLoading(true);
@@ -127,10 +208,12 @@
                 renderDashboard();
                 renderLogsTable();
                 setupSurveyFilters();
+                initSignaturePad();
             } catch (e) { console.error(e); } 
             finally { toggleLoading(false); }
         }
 
+        // --- Core Rendering ---
         function renderDashboard() {
             const container = document.getElementById('statsContainer');
             if (!masterData.dashboard) return;
@@ -159,12 +242,13 @@
                         <span class="bg-green-50 text-green-600 px-3 py-1 rounded-full text-xs font-bold">${log.assetCount} รายการเสร็จสิ้น</span>
                     </td>
                     <td class="px-6 py-4 text-center">
-                        <button class="bg-slate-100 hover:bg-pink-500 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition">ตรวจสอบข้อมูล</button>
+                        <button onclick="viewReport('${log.deptId}')" class="bg-slate-100 hover:bg-pink-500 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition">ตรวจสอบข้อมูล</button>
                     </td>
                 </tr>
             `).join('');
         }
 
+        // --- Survey Logic ---
         function setupSurveyFilters() {
             const bSelect = document.getElementById('surveyBuilding');
             const buildings = Object.keys(masterData.buildingMap || {});
@@ -196,10 +280,124 @@
         }
 
         function selectDeptForSurvey(id, name) {
+            selectedDept = { id, name };
             document.getElementById('activeDeptBadge').innerText = name;
             document.getElementById('assetSearchContainer').classList.remove('hidden');
+            document.getElementById('assetSearchContainer').scrollIntoView({ behavior: 'smooth' });
         }
 
+        // --- Modal & Action Logic ---
+        function openAssetConfirmModal() {
+            document.getElementById('confirmDeptName').innerText = selectedDept.name;
+            document.getElementById('modalAssetConfirm').classList.remove('hidden');
+            // Re-init canvas size for signature pad
+            resizeCanvas();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function saveDraft() {
+            // ในที่นี้สมมติเป็นการแจ้งเตือน แต่ในงานจริงสามารถส่งไปบันทึกด้วย action: 'saveDraft'
+            toggleLoading(true);
+            setTimeout(() => {
+                toggleLoading(false);
+                showNotification("บันทึกฉบับร่างเรียบร้อยแล้ว (ยังไม่ได้ลงชื่อรับรอง)");
+            }, 1000);
+        }
+
+        async function submitFullSurvey() {
+            const signature = canvas.toDataURL();
+            // ตรวจสอบว่าเซ็นหรือยัง (เช็ค pixel ขาว)
+            if (isCanvasBlank()) {
+                alert("กรุณาลงลายมือชื่อผู้รับรองข้อมูล");
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch(APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'saveFullSurvey',
+                        data: {
+                            deptId: selectedDept.id,
+                            signature: signature,
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    closeModal('modalAssetConfirm');
+                    document.getElementById('modalSuccess').classList.remove('hidden');
+                }
+            } catch (e) {
+                alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // --- Signature Pad Logic ---
+        function initSignaturePad() {
+            canvas = document.getElementById('signaturePad');
+            const ctx = canvas.getContext('2d');
+            
+            const startPosition = (e) => {
+                isDrawing = true;
+                draw(e);
+            }
+            const finishedPosition = () => {
+                isDrawing = false;
+                ctx.beginPath();
+            }
+            const draw = (e) => {
+                if (!isDrawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#1e293b';
+                
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                e.preventDefault();
+            }
+
+            canvas.addEventListener('mousedown', startPosition);
+            canvas.addEventListener('mouseup', finishedPosition);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', startPosition);
+            canvas.addEventListener('touchend', finishedPosition);
+            canvas.addEventListener('touchmove', draw);
+        }
+
+        function clearSignature() {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+        }
+
+        function isCanvasBlank() {
+            const blank = document.createElement('canvas');
+            blank.width = canvas.width;
+            blank.height = canvas.height;
+            return canvas.toDataURL() === blank.toDataURL();
+        }
+
+        // --- Utility ---
         function switchTab(tab) {
             const isDash = tab === 'dashboard';
             document.getElementById('view-dashboard').classList.toggle('hidden', !isDash);
@@ -209,6 +407,19 @@
         }
 
         function toggleLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
+
+        function showNotification(msg) {
+            const div = document.createElement('div');
+            div.className = "fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl z-[100] animate-bounce";
+            div.innerText = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        function printCertificate() {
+            alert("กำลังเตรียมไฟล์ PDF สำหรับพิมพ์เอกสารรับรอง...");
+        }
+
         window.onload = initApp;
     </script>
 </body>
