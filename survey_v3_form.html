@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์ - IT UDON HOSP</title>
+    <title>ระบบตรวจสอบครุภัณฑ์คอมพิตเตอร์ - IT UDON HOSP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -13,6 +13,19 @@
             font-family: 'Kanit', sans-serif;
             background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
             min-height: 100vh;
+            position: relative;
+        }
+        body::before {
+            content: "IT UDON HOSP";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 5rem;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: -1;
+            white-space: nowrap;
         }
         .card {
             background: rgba(255, 255, 255, 0.9);
@@ -29,6 +42,13 @@
             background: #ff6384;
             transform: translateY(-2px);
         }
+        .signature-pad {
+            border: 2px dashed #ffb3c1;
+            border-radius: 10px;
+            background: white;
+            cursor: crosshair;
+            touch-action: none; /* สำคัญ: ป้องกันการเลื่อนหน้าจอขณะลงชื่อ */
+        }
         .loading-overlay {
             position: fixed;
             inset: 0;
@@ -42,6 +62,13 @@
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
         }
+        .highlight {
+            background-color: #ffdae0;
+            font-weight: bold;
+            color: #d63384;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
         .img-preview {
             width: 100%;
             max-height: 200px;
@@ -49,144 +76,360 @@
             border-radius: 12px;
             border: 1px solid #eee;
         }
-        /* Scanner Container Style */
-        .scanner-wrapper {
+        .back-btn {
             position: relative;
-            width: 100%;
-            background: #000;
-            border-radius: 1.5rem;
             overflow: hidden;
-            border: 4px solid #ff85a1;
-            margin-bottom: 1rem;
+            backdrop-filter: blur(6px);
+            background: rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, #ff85a1, #ffc0cb, #ff85a1);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 0;
+        }
+        
+        .back-btn * {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 10px 25px rgba(255, 133, 161, 0.3);
+            color: #ff4d6d;
+        }
+        
+        .back-btn:hover::before {
+            opacity: 0.15;
+        }
+        
+        .back-btn svg {
+            transition: transform 0.3s ease;
+        }
+        
+        .back-btn:hover svg {
+            transform: translateX(-3px);
+        }
+        .header-border {
+            border: 2px solid #ff85a1;
+            border-radius: 24px;
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 8px 20px rgba(255, 133, 161, 0.08);
+            backdrop-filter: blur(4px);
         }
         #reader {
-            width: 100% !important;
-            border: none !important;
+            width: 500px; /* ความกว้างสูงสุดของพื้นที่กล้อง */
+            max-width: 90%; /* ยืดหยุ่นบนมือถือ */
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden; /* ป้องกันเนื้อหาล้น */
+            background-color: white;
         }
-        #reader video {
-            object-fit: cover !important;
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 8px;
+            max-width: 90%;
+            word-wrap: break-word; /* ให้ข้อความยาวขึ้นบรรทัดใหม่ */
+            display: none; /* ซ่อนไว้ก่อนจนกว่าจะสแกนเจอ */
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-
-    <div id="loading" class="loading-overlay">
-        <div class="text-center">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent"></div>
-            <p class="mt-2 text-pink-600">กำลังดำเนินการ...</p>
-        </div>
-    </div>
-
-    <header class="max-w-4xl mx-auto mb-8 p-6 bg-white/80 rounded-[24px] border-2 border-pink-200 shadow-sm relative flex items-center gap-4">
-        <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-12 object-contain">
-        <div>
-            <h1 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight">It Asset Survey</h1>
-            <h2 class="text-pink-600 font-medium text-sm md:text-base">ตรวจสอบครุภัณฑ์คอมพิวเตอร์ 2569</h2>
-        </div>
-    </header>
-
-    <main class="max-w-4xl mx-auto space-y-6">
+        <body class="p-4 md:p-8">
         
-        <section id="scanner-section" class="hidden max-w-lg mx-auto">
-            <div class="scanner-wrapper shadow-2xl">
-                <div id="reader"></div>
-                <div class="bg-pink-600 text-white text-center py-2 text-sm font-light flex justify-between px-4 items-center">
-                    <span>กำลังสแกน...</span>
-                    <button onclick="stopScanner()" class="bg-white/20 px-3 py-1 rounded-lg">✕ ปิดกล้อง</button>
+            <div id="loading" class="loading-overlay">
+                <div class="text-center">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent"></div>
+                    <p class="mt-2 text-pink-600">กำลังดำเนินการ...</p>
                 </div>
             </div>
-        </section>
-
+        
+            <!-- Header Section -->
+           <header class="max-w-4xl mx-auto mb-8 header-border p-6 relative">
+            <a href="asset_survey.html" 
+               class="back-btn absolute right-3 top-3 md:right-4 md:top-4 flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl text-gray-500">                
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span class="hidden md:inline">หน้าหลัก</span>
+            </a>         
+            <div class="flex items-center gap-3">
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" 
+                     alt="Logo" 
+                     class="h-10 md:h-12 object-contain shrink-0">            
+                
+                <div class="text-left">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight">
+                        It Asset Survey
+                    </h1>
+                    <h2 class="text-pink-600 font-medium text-sm md:text-base leading-tight">
+                        ตรวจสอบครุภัณฑ์คอมพิวเตอร์ 2569
+                    </h2>
+                </div>            
+            </div>        
+        </header>
+    <main class="max-w-4xl mx-auto space-y-6">        
+        <!-- Step 1: Department Selection -->
         <section id="step-dept" class="card p-6">
-            <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">🏢 เลือกหน่วยงาน</h2>
+            <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                <span class="mr-2">🏢</span> เลือกหน่วยงานที่สำรวจ
+            </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <select id="select-building" class="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-pink-300">
-                    <option value="">-- เลือกตึก --</option>
-                </select>
-                <select id="select-floor" class="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-pink-300" disabled>
-                    <option value="">-- เลือกชั้น --</option>
-                </select>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">เลือกตึก/อาคาร</label>
+                    <select id="select-building" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300">
+                        <option value="">-- กรุณาเลือกตึก --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">เลือกชั้น</label>
+                    <select id="select-floor" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300" disabled>
+                        <option value="">-- กรุณาเลือกชั้น --</option>
+                    </select>
+                </div>
             </div>
             <div id="dept-list" class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
         </section>
 
+        <!-- Step 2: Survey Form -->
         <section id="step-survey" class="hidden space-y-6">
             <div class="card p-6 border-l-8 border-pink-400">
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="relative flex-1">
-                        <input type="text" id="asset-search-input" placeholder="พิมพ์รหัสครุภัณฑ์..." 
-                               class="w-full p-4 pl-12 rounded-2xl border-none bg-gray-100 focus:ring-2 focus:ring-pink-300">
-                        <span class="absolute left-4 top-4 opacity-40 text-xl">🔍</span>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 id="display-dept-name" class="text-xl font-bold text-gray-800">ชื่อหน่วยงาน</h3>
+                        <p id="display-dept-info" class="text-gray-500 text-sm">ตึก: - | ชั้น: -</p>
                     </div>
-                    <button onclick="toggleScanner('search')" class="p-4 bg-pink-100 text-pink-600 rounded-2xl hover:bg-pink-200 flex items-center justify-center gap-2 shadow-sm font-bold">
-                        <span id="scan-icon">📸</span> สแกน QR
-                    </button>
+                    <button onclick="resetApp()" class="text-sm text-pink-500 hover:underline">เปลี่ยนหน่วยงาน</button>
                 </div>
-                <button onclick="openNonNumberForm()" class="mt-4 w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm hover:text-pink-500 hover:border-pink-300 transition-all">
-                    ➕ ไม่พบรหัส? เพิ่มครุภัณฑ์นอกทะเบียน
-                </button>
             </div>
 
-            <div class="card p-6 overflow-hidden">
-                <h3 class="font-semibold text-gray-700 mb-4">รายการที่พบในหน่วยงานนี้</h3>
+            <!-- Asset List -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-gray-700">รายการครุภัณฑ์ที่พบ</h3>
+                    <div class="flex gap-2">
+                        <button onclick="openSearchModal()" class="btn-pink px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-md">
+                            <span>🔍</span> ค้นหาครุภัณฑ์
+                        </button>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead class="text-xs text-gray-400 uppercase border-b">
                             <tr>
-                                <th class="pb-2">รายการ</th>
-                                <th class="pb-2 text-center">รูป</th>
-                                <th class="pb-2 text-right">จัดการ</th>
+                                <th class="pb-2 font-medium">รหัสครุภัณฑ์ / รายการ</th>
+                                <th class="pb-2 font-medium text-center">รูป</th>
+                                <th class="pb-2 font-medium">รายละเอียดสำรวจ</th>
+                                <th class="pb-2 font-medium text-right">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="survey-list" class="divide-y"></tbody>
+                        <tbody id="survey-list" class="divide-y">
+                            <!-- Items will appear here -->
+                        </tbody>
                     </table>
-                    <div id="empty-list-msg" class="py-10 text-center text-gray-400 text-sm italic">
-                        ยังไม่มีรายการสำรวจ...
+                    <div id="empty-list-msg" class="py-10 text-center text-gray-400 text-sm">
+                        ยังไม่มีรายการครุภัณฑ์ กด "ค้นหาครุภัณฑ์" เพื่อเริ่มเพิ่มข้อมูล
                     </div>
                 </div>
             </div>
 
-            <button onclick="openConfirmModal()" class="w-full btn-pink py-4 rounded-2xl font-bold shadow-lg text-lg">
-                บันทึกและลงชื่อตรวจสอบ
-            </button>
+            <div class="flex flex-col gap-4">
+                <button onclick="openConfirmModal()" class="btn-pink py-4 rounded-2xl font-bold shadow-lg text-lg">
+                    บันทึกและลงชื่อตรวจสอบ
+                </button>
+            </div>
         </section>
 
+        <!-- Final Step: Success -->
+        <section id="step-result" class="hidden card p-8 text-center">
+            <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">บันทึกข้อมูลสำเร็จ</h2>
+            <p class="text-gray-500 mb-6">รหัสอ้างอิง: <span id="res-act-no" class="font-mono font-bold text-pink-600"></span></p>
+            <div id="qrcode-result" class="flex justify-center mb-6"></div>
+            <button onclick="resetApp()" class="w-full p-4 bg-gray-100 rounded-xl font-medium">กลับ</button>
+        </section>
     </main>
 
+    <!-- Modal: Search Asset & QR Scanner -->
+    <div id="modal-search" class="fixed inset-0 modal-bg hidden z-50 flex items-start justify-center p-4 pt-6 md:pt-10">
+        <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+                <h3 class="font-bold text-lg">ค้นหาครุภัณฑ์</h3>
+                <button onclick="closeModal('modal-search')" class="text-gray-400 hover:text-gray-600 p-2 text-xl">✕</button>
+            </div>
+            
+            <div class="p-4 bg-gray-50 space-y-3">
+                <div class="relative flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="asset-search-input" placeholder="พิมพ์รหัสครุภัณฑ์..." class="w-full p-4 pl-12 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-pink-300">
+                        <span class="absolute left-4 top-4 opacity-40 text-xl">🔍</span>
+                    </div>
+                    <button onclick="toggleScanner('search')" id="btn-toggle-scan" class="p-4 bg-pink-100 text-pink-600 rounded-2xl hover:bg-pink-200 transition shadow-sm" title="สแกน QR Code">
+                        <span id="scan-icon">📸</span>
+                    </button>
+                </div>
+
+                <div id="scanner-container" class="hidden overflow-hidden rounded-2xl border-2 border-pink-200 relative bg-black aspect-video">
+                    <div id="reader" class="w-full h-full"></div>
+                    <div class="absolute inset-0 border-2 border-pink-400 opacity-30 pointer-events-none m-16 rounded-3xl"></div>
+                    <button onclick="stopScanner()" class="absolute bottom-4 right-4 bg-red-500/80 text-white px-4 py-2 rounded-full text-xs backdrop-blur-sm">ปิดกล้อง</button>
+                </div>
+
+                <button onclick="openNonNumberForm()" class="w-full py-3 bg-white border-2 border-dashed border-gray-300 rounded-2xl text-gray-500 text-sm hover:border-pink-300 hover:text-pink-500 transition-all flex items-center justify-center gap-2">
+                    <span>➕</span> ไม่พบรหัส? เพิ่มครุภัณฑ์นอกทะเบียน
+                </button>
+            </div>
+
+            <div id="search-results-container" class="flex-1 overflow-y-auto p-2 min-h-[200px]">
+                <div class="p-10 text-center text-gray-400">ระบุรหัสครุภัณฑ์หรือสแกน QR เพื่อค้นหา</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Asset Detail Form -->
     <div id="modal-asset-detail" class="fixed inset-0 modal-bg hidden z-[60] flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
-            <div class="p-5 bg-pink-50 border-b flex justify-between items-center">
-                <h3 class="font-bold text-pink-700">รายละเอียดครุภัณฑ์</h3>
+            <div class="p-5 bg-pink-50 border-b flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-pink-700" id="detail-modal-title">รายละเอียดครุภัณฑ์</h3>
                 <button onclick="closeModal('modal-asset-detail')" class="text-gray-400 p-2">✕</button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
-                <div id="non-number-fields" class="hidden space-y-3 p-4 bg-gray-50 rounded-xl border-2 border-dashed">
-                    <input type="text" id="field-asset-id-input" class="w-full p-3 rounded-lg border focus:ring-pink-300" placeholder="ระบุรหัสครุภัณฑ์">
-                    <div class="flex gap-2">
-                        <input type="text" id="field-serial-input" class="flex-1 p-3 rounded-lg border focus:ring-pink-300" placeholder="Serial Number">
-                        <button onclick="toggleScanner('serial')" class="px-4 bg-gray-800 text-white rounded-lg">📸</button>
+                <div class="bg-gray-50 p-4 rounded-xl border border-dashed space-y-3">
+                    <div id="non-number-fields" class="hidden space-y-3">
+                        <div>
+                            <label class="text-xs font-semibold text-pink-500">Asset ID (พิมพ์ได้)</label>
+                            <input type="text" id="field-asset-id-input" class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-300 outline-none" placeholder="ระบุรหัสครุภัณฑ์">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-pink-500">Serial Number</label>
+                            <div class="flex gap-1">
+                                <input type="text" id="field-serial-input" class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-300 outline-none" placeholder="พิมพ์หรือสแกน Serial">
+                                <button onclick="toggleScanner('serial')" class="px-3 bg-pink-500 text-white rounded-lg text-xs">สแกน</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs font-semibold text-pink-500">ยี่ห้อ (Brand)</label>
+                                <input type="text" id="field-brand-input" class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-300 outline-none" placeholder="ระบุยี่ห้อ">
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-pink-500">รายละเอียด</label>
+                                <input type="text" id="field-detail-input" class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-300 outline-none" placeholder="Model/Color">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-pink-500">วันที่รับเข้า (Date In)</label>
+                            <input type="date" id="field-date-in" class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-300 outline-none">
+                        </div>
                     </div>
-                    <input type="text" id="field-brand-input" class="w-full p-3 rounded-lg border focus:ring-pink-300" placeholder="ยี่ห้อ (Brand)">
-                </div>
 
-                <div id="regular-asset-header" class="p-4 bg-gray-50 rounded-xl">
-                    <div class="text-xs text-gray-400">รหัสครุภัณฑ์</div>
-                    <div id="detail-asset-id" class="font-mono font-bold text-lg text-gray-800">-</div>
+                    <div id="regular-asset-header">
+                        <div class="text-xs text-gray-400 mb-1">รหัสครุภัณฑ์</div>
+                        <div id="detail-asset-id" class="font-mono font-bold text-gray-800">-</div>
+                        <div id="name-container-readonly" class="text-sm text-gray-500 mt-1">-</div>
+                    </div>
+                    
+                    <div class="pt-3 border-t border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">ภาพครุภัณฑ์</label>
+                        <div id="image-upload-area" class="space-y-2">
+                            <div id="image-preview-container" class="hidden relative">
+                                <img id="asset-image-preview" src="" class="img-preview">
+                                <button onclick="removeSelectedImage()" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md">✕</button>
+                            </div>
+                            <div id="image-placeholder-area">
+                                <button onclick="document.getElementById('asset-image-input').click()" class="w-full py-3 px-4 bg-white border-2 border-dashed border-pink-200 rounded-xl text-pink-500 text-sm flex items-center justify-center gap-2 hover:bg-pink-50 transition">
+                                    <span>📷</span> ถ่ายรูป หรือ เลือกภาพ
+                                </button>
+                                <input type="file" id="asset-image-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelect(event)">
+                            </div>
+                            <div class="text-[10px] text-gray-400 mt-1">
+                                Image Ref: <span id="detail-image-name">-</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">ประเภทอุปกรณ์</label>
-                    <select id="field-asset-type" class="w-full p-3 rounded-xl border border-gray-200">
-                        <option value="">-- เลือกประเภท --</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทอุปกรณ์</label>
+                    <select id="field-asset-type" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300">
+                        <option value="">-- กรุณาเลือกประเภท --</option>
                     </select>
                 </div>
 
-                <div class="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
-                    <input type="checkbox" id="field-is-pace" class="w-6 h-6 accent-pink-500">
-                    <label for="field-is-pace" class="text-sm font-medium text-blue-800">เครื่องนี้ใช้ในระบบ PACE</label>
+                <div class="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <input type="checkbox" id="field-is-pace" class="w-6 h-6 rounded-md accent-pink-500 cursor-pointer">
+                    <label for="field-is-pace" class="text-sm font-medium text-blue-800 cursor-pointer select-none">เครื่องนี้ใช้ในระบบ PACE</label>
                 </div>
 
-                <button onclick="confirmAddAsset()" class="w-full btn-pink py-4 rounded-2xl font-bold">เพิ่มลงในรายการ</button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ช่วงเวลาที่ใช้งาน (Shift Work)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-pink-50 transition">
+                            <input type="checkbox" name="shift-work" value="เช้า" class="w-4 h-4 accent-pink-500">
+                            <span class="text-sm">เช้า</span>
+                        </label>
+                        <label class="flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-pink-50 transition">
+                            <input type="checkbox" name="shift-work" value="บ่าย" class="w-4 h-4 accent-pink-500">
+                            <span class="text-sm">บ่าย</span>
+                        </label>
+                        <label class="flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-pink-50 transition">
+                            <input type="checkbox" name="shift-work" value="ดึก" class="w-4 h-4 accent-pink-500">
+                            <span class="text-sm">ดึก</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เลือกลักษณะการใช้งาน (Priority)</label>
+                    <select id="field-priority" class="w-full p-3 rounded-xl border-gray-200 border outline-none focus:ring-2 focus:ring-pink-300">
+                        <option value="">-- กรุณาเลือกลำดับความสำคัญ --</option>
+                        <option value="ตรวจรักษา(แพทย์)">ตรวจรักษา(แพทย์)</option>
+                        <option value="ข้อมูลผู้ป่วย (พยาบาล)">ข้อมูลผู้ป่วย (พยาบาล)</option>
+                        <option value="บริการ การเงิน ห้องบัตร ห้องยา Lab สนับสนุนการรักษา">บริการ การเงิน ห้องบัตร ห้องยา...</option>
+                        <option value="งานเอกสาร งานธุรการ">งานเอกสาร งานธุรการ</option>
+                        <option value="บริการทั่วไป ซ่อมบำรุง ช่างต่างๆ โรงรถ">บริการทั่วไป ซ่อมบำรุง...</option>
+                    </select>
+                </div>
+
+                <button onclick="confirmAddAsset()" class="w-full btn-pink py-4 rounded-2xl font-bold shadow-md shrink-0">เพิ่มลงในรายการ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Sign & Confirm -->
+    <div id="modal-confirm" class="fixed inset-0 modal-bg hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">ยืนยันและลงชื่อ</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1">ชื่อผู้รับรองข้อมูล (หัวหน้าหน่วยงาน)</label>
+                    <input type="text" id="signer-name" placeholder="ระบุชื่อ-นามสกุล" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-300 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1">ลายมือชื่อ</label>
+                    <canvas id="signature-pad" class="signature-pad w-full h-40" style="touch-action: none;"></canvas>
+                    <button onclick="clearSignature()" class="text-xs text-red-400 mt-1 underline">ล้างลายเซ็น</button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-2 mt-6">
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="closeModal('modal-confirm')" class="p-3 border rounded-xl hover:bg-gray-50 text-sm">ยกเลิก</button>
+                    <button onclick="submitFinalSurvey(true)" class="p-3 bg-gray-100 border border-gray-200 rounded-xl font-medium hover:bg-gray-200 transition text-sm">บันทึกฉบับร่าง</button>
+                </div>
+                <button onclick="submitFinalSurvey(false)" class="w-full p-4 btn-pink rounded-xl font-bold shadow-md">บันทึกข้อมูลและลงลายมือชื่อ</button>
             </div>
         </div>
     </div>
@@ -307,80 +550,77 @@
             document.getElementById('asset-search-input').focus();
         }
 
-    async function toggleScanner(target = 'search') {
-            currentScanTarget = target;
-            const section = document.getElementById('scanner-section');
-            const icon = document.getElementById('scan-icon');
+     async function toggleScanner(target = 'search') {
+                currentScanTarget = target;
+                if (isScannerOpen) { await stopScanner(); return; }
+            
+                document.getElementById('scanner-container').classList.remove('hidden');
+                document.getElementById('scan-icon').textContent = "✕";
+                isScannerOpen = true;
+                isScanningLocked = false; 
+            
+                html5QrCode = new Html5Qrcode("reader");
+                const config = { fps: 25, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+            
+                html5QrCode.start({ facingMode: "environment" }, config, 
+                    async (decodedText) => {
+                        if (isScanningLocked) return;
+                        isScanningLocked = true;
+                        await stopScanner();
+            
+                       // --- ⚡️ ส่วนที่ต้องแก้ไขใน toggleScanner ⚡️ ---
 
-            if (isScannerOpen) { 
-                await stopScanner(); 
-                return; 
-            }
-
-            section.classList.remove('hidden');
-            if(icon) icon.textContent = "✕";
-            isScannerOpen = true;
-            isScanningLocked = false; 
-
-            // เลื่อนไปที่ตำแหน่งกล้อง
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-            html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 20, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
-
-            html5QrCode.start({ facingMode: "environment" }, config, 
-                async (decodedText) => {
-                    if (isScanningLocked) return;
-                    isScanningLocked = true;
-                    await stopScanner();
-
-                    // --- Logic การ Extract ID (ของคุณ) ---
-                    let raw = decodedText.trim();
-                    let finalId = raw;
-                    if (raw.toLowerCase().includes('http')) {
-                        try {
-                            const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
-                            const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
-                            const candidates = parts.filter(p => {
-                                const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
-                                return isNotIgnore && /\d/.test(p) && p.length >= 4;
-                            });
-                            if (candidates.length > 0) finalId = candidates[candidates.length - 1];
-                        } catch (e) { console.error(e); }
+                        let raw = decodedText.trim();
+                        let finalId = raw;
+                        
+                        if (raw.toLowerCase().includes('http')) {
+                            try {
+                                // 1. แยกส่วนประกอบของ URL ออกมาเป็นคำๆ โดยใช้ / และ ? เป็นตัวตัด
+                                // เช่น https://dakdan.github.io/IT-ASSET/ABC-123/view -> ["https:", "", "dakdan.github.io", "IT-ASSET", "ABC-123", "view"]
+                                const parts = raw.split(/[\/?& =]/).filter(p => p.length > 0);
+                                
+                                // 2. รายชื่อคำที่ "ไม่ใช่" รหัสครุภัณฑ์ (คำต้องห้าม)
+                                const ignoreList = ['http', 'https', 'github', 'io', 'view', 'edit', 'assets', 'it-asset', 'department_asset', 'html', 'www'];
+                        
+                                // 3. กรองเอาเฉพาะคำที่ไม่อยู่ใน ignoreList และมีความยาวเหมาะสม
+                                // ส่วนใหญ่รหัสครุภัณฑ์มักจะมี "ตัวเลข" ผสมอยู่ด้วย เราจะเช็คตรงนี้
+                                const candidates = parts.filter(p => {
+                                    const isNotIgnore = !ignoreList.some(ignore => p.toLowerCase().includes(ignore.toLowerCase()));
+                                    const hasNumber = /\d/.test(p); // ต้องมีตัวเลขอย่างน้อย 1 ตัว
+                                    return isNotIgnore && hasNumber && p.length >= 4; 
+                                });
+                        
+                                if (candidates.length > 0) {
+                                    // เลือกตัวที่ดูเหมือน ID ที่สุด (ปกติจะเป็นตัวสุดท้ายที่เหลืออยู่)
+                                    finalId = candidates[candidates.length - 1]; 
+                                }
+                            } catch (e) {
+                                console.error("Parsing error:", e);
+                                finalId = raw;
+                            }
+                        }
+                        
+                        // ล้างช่องว่างและทำเป็นตัวพิมพ์ใหญ่
+                        finalId = finalId.replace(/\s/g, '').toUpperCase();
+                        // ------------------------------------------
+                        if (currentScanTarget === 'search') {
+                            const input = document.getElementById('asset-search-input');
+                            input.value = finalId;
+                            // สั่งให้ระบบเริ่มค้นหาอัตโนมัติ
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                        } else {
+                            document.getElementById('field-serial-input').value = finalId;
+                        }
                     }
-                    finalId = finalId.replace(/\s/g, '').toUpperCase();
-                    // ----------------------------------
-
-                    if (currentScanTarget === 'search') {
-                        const input = document.getElementById('asset-search-input');
-                        input.value = finalId;
-                        input.dispatchEvent(new Event('input', { bubbles: true }));
-                    } else {
-                        document.getElementById('field-serial-input').value = finalId;
-                    }
-                }
-            ).catch(() => stopScanner());
-        }
-
-        async function stopScanner() {
-            if (html5QrCode) { 
-                await html5QrCode.stop().catch(() => {}); 
-                html5QrCode = null; 
+                ).catch(() => stopScanner());
             }
-            document.getElementById('scanner-section').classList.add('hidden');
-            const icon = document.getElementById('scan-icon');
-            if(icon) icon.textContent = "📸";
-            isScannerOpen = false;
-            isScanningLocked = false;
-        }
-
             async function stopScanner() {
                 if (html5QrCode) { 
                     await html5QrCode.stop().catch(() => {}); 
                     html5QrCode = null; 
                 }
             
-                document.getElementById('scanner-section').classList.add('hidden');
+                document.getElementById('scanner-container').classList.add('hidden');
                 document.getElementById('scan-icon').textContent = "📸";
                 isScannerOpen = false;
             
@@ -392,7 +632,6 @@
             const container = document.getElementById('search-results-container');
             if (q.length < 1) { container.innerHTML = ''; return; }
             container.innerHTML = '<div class="p-10 text-center"><div class="animate-spin inline-block w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full"></div></div>';
-    
             try {
                 const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'searchAssets', query: q }) });
                 const results = await resp.json();
@@ -688,7 +927,7 @@
                     deptId: selectedDept.DEP_ID || selectedDept.DEPT_ID,
                     deptName: selectedDept.DEPNAME || selectedDept.DEPT_NAME,
                     jobeSystem: selectedDept.JOBE_SYSTEMP || "", 
-                    userEmail: "dakdan224@gmail.com",      
+                    userEmail: "khanitbonroum1@gmail.com",      
                     approverName: name || "Draft",
                     signature: signature,
                     isDraft: isDraft,
