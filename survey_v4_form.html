@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ตรวจสอบครุภัณฑ์คอมพิวเตอร์ 2569</title>
+    <title>IT Asset Audit System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -12,6 +12,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap');
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
         .pink-gradient { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
+        .signature-pad { border: 2px dashed #e2e8f0; border-radius: 1rem; background: #fff; width: 100%; height: 200px; touch-action: none; }
+        
         .selectable-box:checked + label { background-color: #ec4899; color: white; border-color: #ec4899; }
         .priority-box:checked + label { background-color: #1e293b; color: white; border-color: #1e293b; }
 
@@ -23,28 +25,8 @@
             border-radius: 50%;
             animation: spinner 0.8s linear infinite;
         }
-        .image-preview { width: 100%; height: 160px; object-fit: cover; border-radius: 1.5rem; border: 2px solid #fce7f3; }
-        .banner-img { width: 100%; height: 120px; object-fit: cover; border-radius: 1.5rem; margin-bottom: 1rem; }
-        
-        .slip-container {
-            background: white;
-            border-radius: 2rem;
-            padding: 2rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            border: 1px solid #f1f5f9;
-            text-align: left;
-        }
-        .slip-header { border-bottom: 2px dashed #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem; text-align: center; }
-
-        /* Highlight classes สำหรับรายการที่บันทึกแล้ว */
-        .asset-item-checked { 
-            background-color: #f0fdf4 !important; 
-            border: 2px solid #22c55e !important; 
-            box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.1);
-        }
-        .badge-checked { background-color: #22c55e; color: white; padding: 2px 8px; border-radius: 99px; font-size: 9px; font-weight: bold; }
-        
-        #signature-pad { border: 2px dashed #e2e8f0; border-radius: 1rem; background: #fff; width: 100%; height: 200px; }
+        .image-preview { width: 100%; height: 160px; object-fit: cover; border-radius: 1rem; border: 2px solid #f1f5f9; }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
     </style>
 </head>
 <body class="min-h-screen pb-24">
@@ -68,12 +50,6 @@
     </header>
 
     <main class="max-w-md mx-auto p-4 space-y-6">
-        <!-- Banner Section -->
-        <div class="px-2 text-center">
-            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="ตรวจสอบครุภัณฑ์คอมพิวเตอร์ 2569" class="banner-img shadow-lg shadow-pink-100">
-            <h2 class="text-xl font-extrabold text-gray-800 mb-2">ตรวจสอบครุภัณฑ์คอมพิวเตอร์ 2569</h2>
-            <div class="h-1 w-20 pink-gradient mx-auto rounded-full"></div>
-        </div>
 
         <!-- Section 1: Dept Selection -->
         <section id="locationPickerSection" class="space-y-4">
@@ -82,10 +58,10 @@
                     <i data-lucide="map-pin" class="w-4 h-4 text-pink-500"></i>เลือกสถานที่ตรวจสอบ
                 </h2>
                 <div class="space-y-3">
-                    <select id="selBuilding" onchange="onBuildingChange()" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none appearance-none focus:ring-2 focus:ring-pink-100">
+                    <select id="selBuilding" onchange="onBuildingChange()" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none appearance-none">
                         <option value="" disabled selected>-- เลือกตึก/อาคาร --</option>
                     </select>
-                    <select id="selFloor" onchange="renderDeptList()" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none appearance-none focus:ring-2 focus:ring-pink-100">
+                    <select id="selFloor" onchange="renderDeptList()" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none appearance-none">
                         <option value="" disabled selected>-- เลือกชั้น --</option>
                     </select>
                 </div>
@@ -97,23 +73,16 @@
         <section id="selectedDeptSection" class="hidden">
             <div class="pink-gradient p-6 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
                 <div class="relative z-10">
-                    <button onclick="confirmResetDept()" class="absolute top-0 right-0 p-3 bg-white/20 rounded-full hover:bg-white/40 transition-all active:scale-90">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <button onclick="resetDeptSelection()" class="absolute top-0 right-0 p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                     </button>
-                    <h2 id="displayDeptName" class="text-xl font-bold mb-1 pr-10">ชื่อหน่วยงาน</h2>
+                    <h2 id="displayDeptName" class="text-xl font-bold mb-1">ชื่อหน่วยงาน</h2>
                     <p id="displayDeptLoc" class="text-xs opacity-90 flex items-center gap-1">ตึก • ชั้น</p>
                     <input type="hidden" id="selectedDeptId">
                 </div>
                 <div class="absolute -right-4 -bottom-4 opacity-10">
                     <i data-lucide="building-2" class="w-32 h-32"></i>
                 </div>
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="flex gap-2 mt-4">
-                <button onclick="openFinalSignModal()" class="flex-1 py-4 bg-gray-900 text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg">
-                    <i data-lucide="pen-tool" class="w-4 h-4"></i> สรุปและลงนามปิดงาน
-                </button>
             </div>
         </section>
 
@@ -128,18 +97,34 @@
                     <i data-lucide="scan-barcode" class="w-6 h-6"></i>
                 </button>
             </div>
-            
-            <button onclick="openNonNumberModal()" class="w-full py-4 border-2 border-dashed border-pink-200 text-pink-500 font-bold rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-pink-50 transition-all">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i> ไม่มีหมายเลขครุภัณฑ์ (เพิ่มนอกทะเบียน)
-            </button>
 
             <div id="resultsArea" class="space-y-3 hidden"></div>
+
+            <!-- Queue Area -->
+            <div class="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">รายการตรวจสอบที่รอส่ง</h3>
+                    <span id="auditCount" class="text-xs font-bold text-white bg-pink-500 px-3 py-1 rounded-full">0</span>
+                </div>
+                <div id="auditListItems" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                    <p class="text-xs text-gray-300 italic text-center py-12">ยังไม่มีรายการในคิว</p>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-3 mt-8">
+                    <button id="btnDraftSubmit" onclick="openConfirmModal('DRAFT')" class="py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl btn-disabled transition-all" disabled>
+                        บันทึกฉบับร่าง
+                    </button>
+                    <button id="btnFinalSubmit" onclick="openConfirmModal('FINAL')" class="py-4 pink-gradient text-white font-bold rounded-2xl shadow-xl shadow-pink-100 btn-disabled transition-all" disabled>
+                        ยืนยันการตรวจสอบ
+                    </button>
+                </div>
+            </div>
         </section>
     </main>
 
-    <!-- Modal: Audit Form (In-Register) -->
+    <!-- Modal: Form -->
     <div id="auditFormModal" class="fixed inset-0 z-50 bg-black/60 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
             <div class="p-6 bg-gray-50 border-b border-gray-100 flex justify-between items-start">
                 <div>
                     <h3 id="modalAssetName" class="text-lg font-bold text-gray-800 leading-tight">ชื่อครุภัณฑ์</h3>
@@ -158,11 +143,11 @@
                         <i data-lucide="camera" class="w-6 h-6"></i>
                         <span class="text-[11px] font-bold">ถ่ายภาพครุภัณฑ์</span>
                     </button>
-                    <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden" onchange="handlePhoto(this, 'photoPreview')">
+                    <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden" onchange="handlePhoto(this)">
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase mb-3 block tracking-widest">1. ประเภทอุปกรณ์ *</label>
-                    <select id="assetTypeId" class="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm outline-none appearance-none focus:ring-2 focus:ring-pink-100"></select>
+                    <select id="assetTypeId" class="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm outline-none appearance-none"></select>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase mb-3 block tracking-widest">2. เวรการทำงาน *</label>
@@ -173,114 +158,63 @@
                     <div id="priorityContainer" class="grid grid-cols-2 gap-2"></div>
                 </div>
                 <div class="pt-4">
-                    <button onclick="saveAuditData('IN')" class="w-full py-4 pink-gradient text-white font-bold rounded-2xl shadow-lg shadow-pink-100 active:scale-95 flex items-center justify-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> บันทึกข้อมูลการตรวจสอบ
-                    </button>
+                    <button onclick="validateAndSubmitAudit()" class="w-full py-4 pink-gradient text-white font-bold rounded-2xl shadow-lg shadow-pink-100">บันทึกลงคิว</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Non-Number (Off-Register) -->
-    <div id="nonNumberModal" class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl">
-            <div class="p-6 bg-pink-50 border-b border-pink-100 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-pink-600 tracking-tight">เพิ่มครุภัณฑ์นอกทะเบียน</h3>
-                <button onclick="closeModal('nonNumberModal')" class="text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <!-- Modal: Confirmation & Signature -->
+    <div id="confirmModal" class="fixed inset-0 z-50 bg-black/70 hidden flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl">
+            <div class="p-8 text-center">
+                <div id="confirmIcon" class="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="pen-tool" class="w-8 h-8"></i>
+                </div>
+                <h3 id="confirmTitle" class="text-xl font-bold text-gray-800">ยืนยันข้อมูล</h3>
+                <p id="confirmSub" class="text-xs text-gray-400 mt-2">กรุณาลงลายมือชื่อรับรองการตรวจสอบ</p>
             </div>
-            <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-                <div>
-                    <label class="text-[10px] font-bold text-pink-500 uppercase mb-2 block tracking-widest">0. รูปภาพหลักฐาน</label>
-                    <div id="nonPhotoPreviewContainer" class="hidden mb-3 relative">
-                        <img id="nonPhotoPreview" src="" class="image-preview">
-                        <button onclick="clearNonPhoto()" class="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
-                    </div>
-                    <button onclick="document.getElementById('nonPhotoInput').click()" class="w-full py-3 border-2 border-dashed border-pink-200 rounded-2xl flex flex-col items-center justify-center gap-1 text-pink-300">
-                        <i data-lucide="camera" class="w-5 h-5"></i>
-                        <span class="text-[10px] font-bold">ถ่ายรูป</span>
-                    </button>
-                    <input type="file" id="nonPhotoInput" accept="image/*" capture="environment" class="hidden" onchange="handleNonPhoto(this)">
+            <div class="px-8 pb-8 space-y-4">
+                <div class="relative bg-gray-50 rounded-[2rem] p-2 border border-gray-100">
+                    <canvas id="signature-pad" class="signature-pad"></canvas>
+                    <button onclick="signaturePad.clear()" class="absolute bottom-4 right-4 text-[10px] text-pink-500 font-bold bg-white/80 shadow-sm border px-3 py-1.5 rounded-full backdrop-blur-sm">ล้างชื่อ</button>
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest">1. หมายเลข Serial *</label>
-                    <input type="text" id="nonSerial" class="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm outline-none" placeholder="ระบุ Serial หรือ NO-SERIAL">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest">2. รายละเอียด/ยี่ห้อ *</label>
-                    <textarea id="nonDetail" rows="2" class="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm outline-none" placeholder="ยี่ห้อ รุ่น หรือสเปคเครื่อง..."></textarea>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest">3. ประเภทอุปกรณ์ *</label>
-                    <select id="nonAssetType" class="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm outline-none appearance-none"></select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest">4. เวรการทำงาน *</label>
-                    <div id="nonShiftContainer" class="grid grid-cols-3 gap-2"></div>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest">5. ระดับความสำคัญ *</label>
-                    <div id="nonPriorityContainer" class="grid grid-cols-2 gap-2"></div>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button onclick="closeModal('nonNumberModal')" class="flex-1 py-4 text-sm font-bold text-gray-400">ยกเลิก</button>
-                    <button onclick="saveAuditData('NON')" class="flex-[2] py-4 pink-gradient text-white font-bold rounded-2xl shadow-lg shadow-pink-100 active:scale-95 flex items-center justify-center gap-2">
-                         <i data-lucide="save" class="w-4 h-4"></i> บันทึกข้อมูล
-                    </button>
-                </div>
+                <button onclick="processFinalSubmit()" id="btnExecuteSubmit" class="w-full py-4 pink-gradient text-white font-bold rounded-2xl shadow-xl shadow-pink-100">บันทึกและส่งข้อมูล</button>
+                <button onclick="closeModal('confirmModal')" class="w-full py-2 text-gray-300 font-bold text-xs uppercase tracking-widest">ยกเลิก</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Final Signature -->
-    <div id="finalSignModal" class="fixed inset-0 z-50 bg-black/60 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl">
-            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-900 text-white">
-                <h3 class="font-bold">สรุปและยืนยันการตรวจสอบ</h3>
-                <button onclick="closeModal('finalSignModal')"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <!-- Modal: Success & Actions -->
+    <div id="successModal" class="fixed inset-0 z-[100] bg-black/80 hidden flex items-center justify-center p-6 backdrop-blur-xl">
+        <div class="bg-white p-10 rounded-[3.5rem] text-center max-w-xs w-full shadow-2xl animate-in zoom-in duration-500">
+            <div id="successIconBox" class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <i data-lucide="check-circle-2" class="w-10 h-10"></i>
             </div>
-            <div class="p-6 space-y-5">
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest">ชื่อผู้ส่งมอบการตรวจสอบ *</label>
-                    <input type="text" id="inspectorName" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-pink-100" placeholder="ระบุชื่อ-นามสกุล">
+            <h3 id="successStatusTitle" class="text-2xl font-bold text-gray-800 mb-2">บันทึกสำเร็จ!</h3>
+            
+            <div class="bg-gray-50 rounded-2xl p-4 mb-8 text-left border border-gray-100">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">รายละเอียดรายการ</p>
+                <div id="successDetailList" class="space-y-1">
+                    <!-- จะถูกเขียนทับด้วย JS -->
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest">ลายมือชื่อ *</label>
-                    <canvas id="signature-pad"></canvas>
-                    <button onclick="signaturePad.clear()" class="mt-2 text-[10px] font-bold text-pink-500 uppercase flex items-center gap-1">
-                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i> ล้างลายเซ็น
-                    </button>
-                </div>
-                <button onclick="submitFinalAudit()" class="w-full py-4 pink-gradient text-white font-bold rounded-2xl shadow-lg active:scale-95">
-                    ยืนยันปิดการตรวจสอบหน่วยงาน
+            </div>
+            
+            <div class="space-y-3">
+                <button onclick="printSlip()" class="w-full py-4 bg-pink-50 text-pink-600 font-bold rounded-2xl border border-pink-100 flex items-center justify-center gap-3 active:scale-95 transition-all">
+                    <i data-lucide="printer" class="w-5 h-5"></i> พิมพ์สลิปรายการ
+                </button>
+                <button id="btnCertDoc" onclick="printCert()" class="w-full py-4 bg-blue-50 text-blue-600 font-bold rounded-2xl border border-blue-100 flex items-center justify-center gap-3 hidden active:scale-95 transition-all">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> พิมพ์เอกสารรับรอง
+                </button>
+                <button onclick="location.reload()" class="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl mt-6 shadow-xl shadow-gray-200">
+                    กลับหน้าหลัก
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Success Slip Modal -->
-    <div id="successModal" class="fixed inset-0 z-[100] bg-black/80 hidden flex items-center justify-center p-4 backdrop-blur-lg">
-        <div class="max-w-xs w-full py-10">
-            <div class="slip-container relative">
-                <div class="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg">
-                    <i data-lucide="check" class="w-6 h-6"></i>
-                </div>
-                <div class="slip-header mt-4 text-center">
-                    <h3 class="text-lg font-extrabold text-gray-800">บันทึกสำเร็จ</h3>
-                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-widest">Audit Saved Successfully</p>
-                </div>
-                <div class="space-y-4 text-xs">
-                    <div class="flex justify-between"><span class="text-gray-400">วันที่:</span><span id="slipDate" class="font-bold text-gray-700">-</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">รายการ:</span><span id="slipAsset" class="font-bold text-gray-700 text-right">-</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">หน่วยงาน:</span><span id="slipDept" class="font-bold text-gray-700 text-right">-</span></div>
-                </div>
-                <div class="mt-8">
-                    <button id="btnConfirmSuccess" class="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl shadow-lg active:scale-95">ตกลง</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scanner & Overlay -->
+    <!-- Overlays -->
     <div id="scannerModal" class="fixed inset-0 z-[60] bg-black hidden flex flex-col">
         <div class="p-6 flex justify-between items-center text-white"><h3>Scan QR/Barcode</h3><button onclick="closeScanner()"><i data-lucide="x"></i></button></div>
         <div id="reader" class="flex-1 bg-gray-900"></div>
@@ -288,7 +222,8 @@
 
     <div id="processOverlay" class="fixed inset-0 z-[110] bg-white/95 hidden flex flex-col items-center justify-center text-center p-10">
         <div class="spinner mb-6"></div>
-        <p id="processMessage" class="text-sm font-bold text-pink-600 uppercase tracking-widest">Processing...</p>
+        <p id="processMessage" class="text-sm font-bold text-pink-600 uppercase tracking-[0.3em] mb-2">กำลังประมวลผล...</p>
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-medium">Please wait while we sync your data</p>
     </div>
 
     <script>
@@ -297,31 +232,18 @@
         let masterDeptList = [];
         let configData = { priorities: [], assetTypes: [] };
         let currentAsset = null;
-        let html5QrCode = null;
+        let auditQueue = [];
         let signaturePad = null;
+        let html5QrCode = null;
+        let submitMode = 'FINAL';
         let currentPhotoBase64 = null;
-        let currentNonPhotoBase64 = null;
 
         window.onload = () => {
             lucide.createIcons();
             initApp();
+            signaturePad = new SignaturePad(document.getElementById('signature-pad'));
             html5QrCode = new Html5Qrcode("reader");
-            initSignature();
         };
-
-        function initSignature() {
-            const canvas = document.getElementById('signature-pad');
-            signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
-            const resizeCanvas = () => {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-                signaturePad.clear();
-            };
-            window.onresize = resizeCanvas;
-            setTimeout(resizeCanvas, 500);
-        }
 
         async function initApp() {
             showProcess("กำลังโหลดข้อมูลพื้นฐาน...");
@@ -333,26 +255,32 @@
                 configData = await resConfig.json();
                 masterDeptList = await resDept.json();
                 renderConfigUI();
+                
+                const buildings = [...new Set(masterDeptList.map(item => item.BUILDING))].filter(Boolean).sort();
                 const bSel = document.getElementById('selBuilding');
-                [...new Set(masterDeptList.map(item => item.BUILDING))].filter(Boolean).sort().forEach(b => bSel.add(new Option(b, b)));
+                buildings.forEach(b => bSel.add(new Option(b, b)));
+                
                 document.getElementById('statusIndicator').innerText = "ONLINE";
-                document.getElementById('statusIndicator').className = "text-[10px] text-green-500 font-bold uppercase tracking-wider";
+                document.getElementById('statusIndicator').classList.replace('text-pink-500', 'text-green-500');
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const deptIdFromUrl = urlParams.get('dept_id');
+                if (deptIdFromUrl) {
+                    const found = masterDeptList.find(d => String(d.DEP_ID) === String(deptIdFromUrl));
+                    if (found) selectDept(found);
+                }
+
             } catch (e) {
-                document.getElementById('statusIndicator').innerText = "OFFLINE";
+                document.getElementById('statusIndicator').innerText = "CONNECTION ERROR";
             } finally { hideProcess(); }
         }
 
         function renderConfigUI() {
             renderSelectionGroup('priorityContainer', configData.priorities, 'priority_select', 'radio', 'priority-box');
             renderSelectionGroup('shiftContainer', ["เช้า", "บ่าย", "ดึก"], 'shift_check', 'checkbox', 'selectable-box');
-            renderSelectionGroup('nonPriorityContainer', configData.priorities, 'non_priority_select', 'radio', 'priority-box');
-            renderSelectionGroup('nonShiftContainer', ["เช้า", "บ่าย", "ดึก"], 'non_shift_check', 'checkbox', 'selectable-box');
             const atSel = document.getElementById('assetTypeId');
-            const atSelNon = document.getElementById('nonAssetType');
-            [atSel, atSelNon].forEach(sel => {
-                sel.innerHTML = '<option value="" disabled selected>-- เลือกประเภท --</option>';
-                configData.assetTypes.forEach(a => sel.add(new Option(a.name, a.id)));
-            });
+            atSel.innerHTML = '<option value="" disabled selected>-- เลือกประเภท --</option>';
+            configData.assetTypes.forEach(a => atSel.add(new Option(a.name, a.id)));
         }
 
         function renderSelectionGroup(containerId, data, name, type, className) {
@@ -364,7 +292,7 @@
                 const div = document.createElement('div');
                 div.innerHTML = `
                     <input type="${type}" id="${name}_${idx}_${containerId}" name="${name}" value="${val}" class="hidden ${className}">
-                    <label for="${name}_${idx}_${containerId}" class="block text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[10px] font-bold text-gray-500 cursor-pointer transition-all">
+                    <label for="${name}_${idx}_${containerId}" class="block text-center p-3.5 rounded-2xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer transition-all">
                         ${label}
                     </label>
                 `;
@@ -372,187 +300,167 @@
             });
         }
 
-        async function searchAsset() {
-            const q = document.getElementById('assetQuery').value.trim();
-            if (!q) return document.getElementById('resultsArea').classList.add('hidden');
-            const area = document.getElementById('resultsArea');
-            // ไม่ต้องใส่ spinner ถ้าเป็นการค้นหาซ้ำหลังบันทึก เพื่อความรวดเร็ว
-            area.classList.remove('hidden');
-            try {
-                const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
-                const data = await res.json();
-                area.innerHTML = '';
-                if (data.length === 0) {
-                    area.innerHTML = '<p class="p-8 text-center text-xs text-red-400 font-bold">ไม่พบข้อมูลครุภัณฑ์นี้</p>';
-                } else {
-                    data.forEach(item => {
-                        const isChecked = item.IsChecked === "YES";
-                        const d = document.createElement('div');
-                        // ใส่ class asset-item-checked ถ้าตรวจแล้ว
-                        d.className = `p-5 rounded-2xl border mb-2 cursor-pointer shadow-sm active:scale-95 flex justify-between items-center transition-all ${isChecked ? 'asset-item-checked' : 'bg-white border-pink-50 hover:bg-pink-50'}`;
-                        d.innerHTML = `
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <p class="text-[10px] font-mono ${isChecked ? 'text-green-600' : 'text-pink-500'} font-bold">${item.AssetID}</p>
-                                    ${isChecked ? '<span class="badge-checked">ตรวจสอบแล้ว</span>' : ''}
-                                </div>
-                                <p class="text-xs font-bold text-gray-800">${item.AssetName}</p>
-                            </div>
-                            <div class="${isChecked ? 'text-green-600' : 'text-pink-400'}">
-                                <i data-lucide="${isChecked ? 'check-circle-2' : 'plus-circle'}" class="w-5 h-5"></i>
-                            </div>
-                        `;
-                        d.onclick = () => { 
-                            if(isChecked && !confirm("ครุภัณฑ์นี้ตรวจสอบไปแล้ว ต้องการตรวจสอบซ้ำหรือไม่?")) return;
-                            currentAsset = item; 
-                            openAuditModal(item); 
-                        };
-                        area.appendChild(d);
-                    });
-                }
-                lucide.createIcons();
-            } catch (e) { area.innerHTML = '<p class="p-8 text-xs text-red-500 text-center">Connection Error</p>'; }
-        }
-
-        function debouncedSearch() {
-            clearTimeout(window.sTimeout);
-            const q = document.getElementById('assetQuery').value.trim();
-            if (q.length >= 2) window.sTimeout = setTimeout(searchAsset, 400);
-            else document.getElementById('resultsArea').classList.add('hidden');
-        }
-
-        async function saveAuditData(mode) {
-            let payload = null;
-            let displayName = "";
-
-            if (mode === 'IN') {
-                const typeId = document.getElementById('assetTypeId').value;
-                const priorityId = document.querySelector('input[name="priority_select"]:checked')?.value;
-                const shifts = Array.from(document.querySelectorAll('input[name="shift_check"]:checked')).map(c => c.value);
-                if (!typeId || !priorityId || shifts.length === 0) return alert("กรุณาระบุข้อมูลให้ครบถ้วน (*)");
-
-                displayName = currentAsset.AssetName;
-                payload = {
-                    action: 'saveSurvey',
-                    data: {
-                        Asset_ID: currentAsset.AssetID,
-                        Serial: currentAsset.Serial,
-                        Asset_Type_ID: typeId,
-                        DEPT_ID: document.getElementById('selectedDeptId').value,
-                        PIORITY_ID: priorityId,
-                        Shift_Work: shifts.join(','),
-                        Asset_Photo: currentPhotoBase64,
-                        Is_Draft: 0
-                    }
-                };
-            } else {
-                const serial = document.getElementById('nonSerial').value.trim();
-                const detail = document.getElementById('nonDetail').value.trim();
-                const typeId = document.getElementById('nonAssetType').value;
-                const priorityId = document.querySelector('input[name="non_priority_select"]:checked')?.value;
-                const shifts = Array.from(document.querySelectorAll('input[name="non_shift_check"]:checked')).map(c => c.value);
-                if (!serial || !detail || !typeId || !priorityId || shifts.length === 0) return alert("กรุณากรอกข้อมูลให้ครบถ้วน (*)");
-
-                displayName = detail;
-                payload = {
-                    action: 'saveNonNumber',
-                    data: {
-                        Asset_ID: "NON-" + Date.now(),
-                        Serial: serial,
-                        AssetName: detail,
-                        Asset_Type_ID: typeId,
-                        DEPT_ID: document.getElementById('selectedDeptId').value,
-                        PIORITY_ID: priorityId,
-                        Shift_Work: shifts.join(','),
-                        Asset_Photo: currentNonPhotoBase64,
-                        Is_Draft: 0
-                    }
-                };
-            }
-
-            showProcess("กำลังบันทึกข้อมูล...");
-            try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    if(mode === 'IN') closeModal('auditFormModal');
-                    else closeModal('nonNumberModal');
-                    
-                    // ปรับปรุงการจบการทำงาน: ไม่ Reset ค้นหาทิ้ง แต่ให้ Refresh รายการเดิม
-                    renderSuccessSlip(displayName, true); 
-                } else { throw new Error(result.message || "Unknown error"); }
-            } catch (e) { alert("เกิดข้อผิดพลาดในการบันทึก: " + e.message); } finally { hideProcess(); }
-        }
-
-        async function submitFinalAudit() {
-            const name = document.getElementById('inspectorName').value.trim();
-            if (!name) return alert("กรุณาระบุชื่อผู้ตรวจสอบ");
-            if (signaturePad.isEmpty()) return alert("กรุณาลงลายมือชื่อ");
-
-            const signatureBase64 = signaturePad.toDataURL();
-            const payload = {
-                action: 'submitFinalAudit',
-                data: {
-                    DEPT_ID: document.getElementById('selectedDeptId').value,
-                    Inspector_Name: name,
-                    Signature: signatureBase64
-                }
-            };
-
-            showProcess("กำลังส่งข้อมูลปิดงาน...");
-            try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    closeModal('finalSignModal');
-                    renderSuccessSlip("สรุปผลการตรวจสอบหน่วยงาน", false); // ส่ง false เพื่อให้ reload หน้าใหม่เลย
-                } else { throw new Error(result.message); }
-            } catch (e) { alert("เกิดข้อผิดพลาด: " + e.message); } finally { hideProcess(); }
-        }
-
-        function renderSuccessSlip(itemName, shouldRefreshSearch) {
-            document.getElementById('slipDate').innerText = new Date().toLocaleString('th-TH');
-            document.getElementById('slipAsset').innerText = itemName;
-            document.getElementById('slipDept').innerText = document.getElementById('displayDeptName').innerText;
-            document.getElementById('successModal').classList.remove('hidden');
-            
-            const btn = document.getElementById('btnConfirmSuccess');
-            btn.onclick = () => {
-                closeModal('successModal');
-                if (shouldRefreshSearch) {
-                    // แทนที่จะล้างช่องค้นหา ให้สั่งค้นหาใหม่ทันทีเพื่อแสดงไฮไลท์สีเขียว
-                    searchAsset();
-                } else {
-                    // กรณีปิดงานหน่วยงาน ให้โหลดหน้าใหม่เพื่อเริ่มใหม่
-                    location.reload();
-                }
-            };
-            lucide.createIcons();
-        }
-
-        // --- Other UI Helpers ---
-        function handlePhoto(input, previewId) {
-            const file = input.files[0]; if (!file) return;
+        function handlePhoto(input) {
+            const file = input.files[0];
+            if (!file) return;
+            showProcess("กำลังประมวลผลรูปภาพ...");
             const reader = new FileReader();
             reader.onload = (e) => {
                 currentPhotoBase64 = e.target.result;
-                const p = document.getElementById(previewId); p.src = currentPhotoBase64;
-                p.parentElement.classList.remove('hidden');
+                document.getElementById('photoPreview').src = currentPhotoBase64;
+                document.getElementById('photoPreviewContainer').classList.remove('hidden');
+                hideProcess();
             };
             reader.readAsDataURL(file);
         }
-        function clearPhoto() { currentPhotoBase64 = null; document.getElementById('photoInput').value = ''; document.getElementById('photoPreviewContainer').classList.add('hidden'); }
-        function handleNonPhoto(input) {
-            const file = input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                currentNonPhotoBase64 = e.target.result;
-                const p = document.getElementById('nonPhotoPreview'); p.src = currentNonPhotoBase64;
-                p.parentElement.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
+
+        function clearPhoto() {
+            currentPhotoBase64 = null;
+            document.getElementById('photoInput').value = '';
+            document.getElementById('photoPreviewContainer').classList.add('hidden');
         }
-        function clearNonPhoto() { currentNonPhotoBase64 = null; document.getElementById('nonPhotoInput').value = ''; document.getElementById('nonPhotoPreviewContainer').classList.add('hidden'); }
+
+        function openConfirmModal(mode) {
+            submitMode = mode;
+            document.getElementById('confirmTitle').innerText = mode === 'DRAFT' ? 'บันทึกฉบับร่าง' : 'ยืนยันการรับรอง';
+            document.getElementById('confirmSub').innerText = mode === 'DRAFT' ? 'ลงชื่อเพื่อเก็บรายการเป็นฉบับร่าง' : 'รับรองว่าข้อมูลการตรวจสอบถูกต้องครบถ้วน';
+            document.getElementById('confirmModal').classList.remove('hidden');
+            setTimeout(() => {
+                const c = document.getElementById('signature-pad');
+                c.width = c.parentElement.offsetWidth - 16;
+                c.height = 200;
+                signaturePad.clear();
+            }, 300);
+        }
+
+        async function processFinalSubmit() {
+            if (signaturePad.isEmpty()) return alert("กรุณาลงลายมือชื่อก่อนบันทึก");
+            
+            showProcess("กำลังนำส่งข้อมูล...");
+            try {
+                let lastActionId = "";
+                for (let i = 0; i < auditQueue.length; i++) {
+                    showProcess(`บันทึกรายการที่ ${i+1}/${auditQueue.length}`);
+                    const res = await fetch(API_URL, { 
+                        method: 'POST', 
+                        body: JSON.stringify({ action: auditQueue[i].Action, data: auditQueue[i].data }) 
+                    });
+                    const result = await res.json();
+                    lastActionId = result.actionId;
+                }
+
+                showProcess("บันทึกการยืนยันและลายเซ็น...");
+                await fetch(API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        action: 'saveConfirm', 
+                        data: { 
+                            Action_ID: lastActionId, 
+                            Activity_ID: "ACT-ANNUAL-2024", 
+                            Con_Signature: signaturePad.toDataURL(),
+                            Is_Draft: submitMode === 'DRAFT' ? 1 : 0
+                        } 
+                    }) 
+                });
+
+                closeModal('confirmModal');
+                
+                // ปรับปรุง Success Modal
+                const detailBox = document.getElementById('successDetailList');
+                detailBox.innerHTML = `
+                    <div class="flex justify-between text-xs"><span class="text-gray-400">หน่วยงาน:</span> <span class="font-bold text-gray-700">${document.getElementById('displayDeptName').innerText}</span></div>
+                    <div class="flex justify-between text-xs"><span class="text-gray-400">จำนวนรายการ:</span> <span class="font-bold text-gray-700">${auditQueue.length} รายการ</span></div>
+                    <div class="flex justify-between text-xs"><span class="text-gray-400">สถานะ:</span> <span class="font-bold ${submitMode === 'DRAFT' ? 'text-orange-500' : 'text-green-500'}">${submitMode === 'DRAFT' ? 'บันทึกฉบับร่าง' : 'ตรวจสอบสมบูรณ์'}</span></div>
+                `;
+
+                const iconBox = document.getElementById('successIconBox');
+                if(submitMode === 'DRAFT') {
+                    document.getElementById('successStatusTitle').innerText = "บันทึกฉบับร่างแล้ว";
+                    iconBox.className = "w-20 h-20 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner";
+                    iconBox.innerHTML = '<i data-lucide="file-edit" class="w-10 h-10"></i>';
+                    document.getElementById('btnCertDoc').classList.add('hidden');
+                } else {
+                    document.getElementById('successStatusTitle').innerText = "บันทึกสำเร็จ!";
+                    iconBox.className = "w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner";
+                    iconBox.innerHTML = '<i data-lucide="check-circle-2" class="w-10 h-10"></i>';
+                    document.getElementById('btnCertDoc').classList.remove('hidden');
+                }
+                
+                document.getElementById('successModal').classList.remove('hidden');
+                lucide.createIcons();
+
+            } catch (e) {
+                alert("เกิดข้อผิดพลาด: ระบบไม่สามารถเชื่อมต่อได้");
+            } finally { hideProcess(); }
+        }
+
+        function validateAndSubmitAudit() {
+            const typeId = document.getElementById('assetTypeId').value;
+            const priorityId = document.querySelector('input[name="priority_select"]:checked')?.value;
+            const shifts = Array.from(document.querySelectorAll('input[name="shift_check"]:checked')).map(c => c.value);
+
+            if (!typeId || !priorityId || shifts.length === 0) return alert("กรุณาระบุข้อมูลที่จำเป็นให้ครบถ้วน");
+
+            auditQueue.unshift({
+                Action: 'saveSurvey',
+                DisplayName: currentAsset.AssetName,
+                data: {
+                    Asset_ID: currentAsset.AssetID,
+                    Serial: currentAsset.Serial,
+                    Asset_Type_ID: typeId,
+                    DEPT_ID: document.getElementById('selectedDeptId').value,
+                    PIORITY_ID: priorityId,
+                    Shift_Work: shifts.join(','),
+                    Asset_Photo: currentPhotoBase64
+                }
+            });
+            closeModal('auditFormModal');
+            updateQueueUI();
+            resetSearchState();
+        }
+
+        function updateQueueUI() {
+            const list = document.getElementById('auditListItems');
+            const count = document.getElementById('auditCount');
+            const bDraft = document.getElementById('btnDraftSubmit');
+            const bFinal = document.getElementById('btnFinalSubmit');
+            
+            count.innerText = auditQueue.length;
+            if (auditQueue.length === 0) {
+                list.innerHTML = '<p class="text-xs text-gray-300 italic text-center py-12">ไม่มีรายการในคิว</p>';
+                bDraft.disabled = bFinal.disabled = true;
+                bDraft.classList.add('btn-disabled'); bFinal.classList.add('btn-disabled');
+                return;
+            }
+            bDraft.disabled = bFinal.disabled = false;
+            bDraft.classList.remove('btn-disabled'); bFinal.classList.remove('btn-disabled');
+            
+            list.innerHTML = auditQueue.map((a, i) => `
+                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center group transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm flex-shrink-0">
+                            ${a.data.Asset_Photo ? `<img src="${a.data.Asset_Photo}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-gray-200"><i data-lucide="image" class="w-5 h-5"></i></div>`}
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-800 leading-none mb-1">${a.DisplayName}</p>
+                            <p class="text-[9px] text-pink-500 font-bold uppercase tracking-wider">${a.data.Asset_ID}</p>
+                        </div>
+                    </div>
+                    <button onclick="auditQueue.splice(${i},1);updateQueueUI()" class="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function printSlip() { alert("ระบบกำลังสร้างสลิปรายการตรวจสอบ " + auditQueue.length + " รายการ..."); }
+        function printCert() { alert("ระบบกำลังสร้างใบรับรองการตรวจสอบประจำปี..."); }
+
+        function showProcess(m) { document.getElementById('processMessage').innerText = m; document.getElementById('processOverlay').classList.remove('hidden'); }
+        function hideProcess() { document.getElementById('processOverlay').classList.add('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function resetSearchState() { clearPhoto(); document.getElementById('assetQuery').value = ''; document.getElementById('resultsArea').classList.add('hidden'); }
 
         function onBuildingChange() {
             const b = document.getElementById('selBuilding').value;
@@ -565,7 +473,8 @@
         function renderDeptList() {
             const b = document.getElementById('selBuilding').value;
             const f = document.getElementById('selFloor').value;
-            const container = document.getElementById('deptList'); container.innerHTML = '';
+            const container = document.getElementById('deptList');
+            container.innerHTML = '';
             masterDeptList.filter(d => d.BUILDING === b && String(d.FL) === String(f)).forEach(dept => {
                 const card = document.createElement('div');
                 card.className = "p-5 bg-white rounded-[2rem] border border-gray-100 cursor-pointer active:scale-95 shadow-sm transition-all flex justify-between items-center";
@@ -586,54 +495,64 @@
             lucide.createIcons();
         }
 
-        function openAuditModal(asset) {
-            clearPhoto();
-            document.getElementById('modalAssetName').innerText = asset.AssetName;
-            document.getElementById('modalAssetId').innerText = `ID: ${asset.AssetID}`;
-            document.querySelectorAll('input[name="priority_select"], input[name="shift_check"]').forEach(i => i.checked = false);
-            document.getElementById('assetTypeId').selectedIndex = 0;
-            document.getElementById('auditFormModal').classList.remove('hidden');
-        }
-
-        function openNonNumberModal() {
-            clearNonPhoto();
-            document.getElementById('nonSerial').value = '';
-            document.getElementById('nonDetail').value = '';
-            document.getElementById('nonAssetType').selectedIndex = 0;
-            document.querySelectorAll('input[name="non_priority_select"], input[name="non_shift_check"]').forEach(i => i.checked = false);
-            document.getElementById('nonNumberModal').classList.remove('hidden');
-        }
-
-        function confirmResetDept() { if (confirm("ต้องการเปลี่ยนหน่วยงานใช่หรือไม่?")) resetDeptSelection(); }
         function resetDeptSelection() {
             document.getElementById('locationPickerSection').classList.remove('hidden');
             document.getElementById('selectedDeptSection').classList.add('hidden');
             document.getElementById('searchAreaSection').classList.add('hidden');
-            document.getElementById('assetQuery').value = '';
-            document.getElementById('resultsArea').classList.add('hidden');
+            auditQueue = []; updateQueueUI();
         }
 
-        function showProcess(m) { document.getElementById('processMessage').innerText = m; document.getElementById('processOverlay').classList.remove('hidden'); }
-        function hideProcess() { document.getElementById('processOverlay').classList.add('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function openFinalSignModal() {
-            document.getElementById('inspectorName').value = '';
-            signaturePad.clear();
-            document.getElementById('finalSignModal').classList.remove('hidden');
-            setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+        function debouncedSearch() {
+            clearTimeout(window.sTimeout);
+            const q = document.getElementById('assetQuery').value.trim();
+            if (q.length >= 2) window.sTimeout = setTimeout(searchAsset, 500);
+            else document.getElementById('resultsArea').classList.add('hidden');
         }
 
-        async function openScanner(targetId) {
+        async function searchAsset() {
+            const q = document.getElementById('assetQuery').value.trim();
+            const area = document.getElementById('resultsArea');
+            area.innerHTML = '<div class="p-8 text-center"><div class="spinner mx-auto scale-50 mb-2"></div><p class="text-[10px] font-bold text-gray-400">SEARCHING...</p></div>';
+            area.classList.remove('hidden');
+            try {
+                const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                area.innerHTML = '';
+                if (data.length === 0) {
+                    area.innerHTML = '<p class="p-8 text-center text-xs text-red-400 font-bold">ไม่พบข้อมูลในระบบ</p>';
+                } else {
+                    data.forEach(item => {
+                        const d = document.createElement('div');
+                        d.className = "p-5 bg-white rounded-2xl border border-pink-50 mb-2 cursor-pointer shadow-sm active:scale-95 transition-all flex justify-between items-center";
+                        d.innerHTML = `<div><p class="text-[9px] font-bold text-pink-500 uppercase">${item.AssetID}</p><p class="text-xs font-bold text-gray-800">${item.AssetName}</p></div><i data-lucide="plus-circle" class="w-5 h-5 text-pink-100"></i>`;
+                        d.onclick = () => { currentAsset = item; openAuditModal(item); };
+                        area.appendChild(d);
+                    });
+                }
+                lucide.createIcons();
+            } catch (e) { area.innerHTML = '<p class="p-8 text-[10px] text-red-500 text-center uppercase font-bold">Search Failure</p>'; }
+        }
+
+        function openAuditModal(asset) {
+            document.getElementById('modalAssetName').innerText = asset.AssetName;
+            document.getElementById('modalAssetId').innerText = `ASSET ID: ${asset.AssetID}`;
+            document.getElementById('auditFormModal').classList.remove('hidden');
+        }
+
+        async function openScanner(id) {
             document.getElementById('scannerModal').classList.remove('hidden');
             try {
                 await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
-                    document.getElementById(targetId).value = text;
+                    document.getElementById(id).value = text;
                     closeScanner();
-                    if(targetId === 'assetQuery') searchAsset();
+                    if(id === 'assetQuery') searchAsset();
                 });
-            } catch (e) { closeScanner(); }
+            } catch (e) { alert("ไม่สามารถเข้าถึงกล้องได้"); closeScanner(); }
         }
-        async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); document.getElementById('scannerModal').classList.add('hidden'); }
+        async function closeScanner() { 
+            if(html5QrCode.isScanning) await html5QrCode.stop(); 
+            document.getElementById('scannerModal').classList.add('hidden'); 
+        }
     </script>
 </body>
 </html>
