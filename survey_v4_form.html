@@ -529,16 +529,24 @@
             document.getElementById('scannerModal').classList.add('hidden'); 
         }
         // ตัวอย่างส่วนที่จะไปอยู่ในปุ่ม "บันทึก"
-        async function handleFinalSubmit(mode) {
-            showProcess("กำลังบันทึกข้อมูล..."); // แสดง Overlay ทันที
+       async function handleFinalSubmit(mode) {
+            if (signaturePad.isEmpty()) return alert("กรุณาลงลายมือชื่อก่อนบันทึก");
+            if (auditQueue.length === 0) return alert("ไม่มีรายการในคิว");
+        
+            showProcess("กำลังดึงพิกัด GPS และบันทึกข้อมูล..."); 
+        
+            // ดึงพิกัดก่อนส่ง
+            const coords = await getGPSLocation(); 
         
             const payload = {
                 action: 'saveBulkSurvey',
                 data: {
-                    items: auditQueue, // มัดรวมรายการในคิวทั้งหมด
+                    // ดึงเฉพาะ data object จากใน Queue
+                    items: auditQueue.map(item => item.data), 
                     deptId: document.getElementById('selectedDeptId').value,
-                    IT_User_Mail: userEmail, // อีเมลผู้ใช้งาน
-                    signature: signaturePad.toDataURL(), // ลายเซ็น
+                    IT_User_Mail: "staff_it@udonhospital.com", // เปลี่ยนเป็นตัวแปร User ของคุณ
+                    signature: signaturePad.toDataURL(),
+                    gps: coords, // ส่ง gps เข้าไปที่ก้อนใหญ่ (ตามโครงสร้าง Backend)
                     isDraft: mode === 'DRAFT' ? 1 : 0,
                     activityId: "ANNUAL_2026"
                 }
@@ -552,13 +560,18 @@
                 const result = await response.json();
         
                 if (result.status === 'success') {
-                    // เมื่อสำเร็จ ให้เปิดหน้าสลิปและสร้าง QR Code
-                    showSuccessSlip(result.actionId, payload.deptId);
+                    // เมื่อสำเร็จ ล้างคิวและแสดงสลิป
+                    auditQueue = [];
+                    updateQueueUI();
+                    closeModal('confirmModal');
+                    showSuccessSlip(result.actionId, payload.data.deptId);
+                } else {
+                    throw new Error(result.message);
                 }
             } catch (error) {
-                alert("เกิดข้อผิดพลาดในการบันทึก");
+                alert("เกิดข้อผิดพลาด: " + error.message);
             } finally {
-                hideProcess(); // เอา Overlay ออกเมื่อทำงานเสร็จ
+                hideProcess();
             }
         }
     </script>
