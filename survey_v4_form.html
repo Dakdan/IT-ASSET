@@ -574,6 +574,20 @@
                 hideProcess();
             }
         }
+        // ฟังก์ชันดึงพิกัด GPS แบบ Promise
+        function getGPSLocation() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve("Not Supported");
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`),
+                    (err) => resolve("Permission Denied"),
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            });
+        }
     </script>
 </body>
 </html>
