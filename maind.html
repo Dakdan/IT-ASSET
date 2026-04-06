@@ -3,424 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Audit System - UDH</title>
+    <title>IT Audit Dashboard - UDH</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
         .pink-gradient { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
-        .blue-gradient { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
-        .signature-pad { border: 2px dashed #cbd5e1; border-radius: 1rem; background: #fff; cursor: crosshair; }
-        .custom-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04); }
-        .tab-active { border-bottom: 4px solid #ec4899; color: #ec4899; }
-        .modal-enter { animation: modalFadeIn 0.3s ease-out; }
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        .spec-text { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; font-size: 11px; }
+        .modal-enter { animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .building-card { transition: all 0.3s ease; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="text-slate-700 pb-20">
+<body class="text-slate-700 pb-10">
 
-    <nav class="bg-white sticky top-0 z-40 border-b border-slate-200 px-4 py-3 shadow-sm">
+    <nav class="bg-white sticky top-0 z-40 border-b border-slate-200 px-4 py-4 shadow-sm">
         <div class="max-w-6xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 pink-gradient rounded-xl flex items-center justify-center shadow-lg">
-                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-7 h-7 brightness-110" alt="Logo">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 pink-gradient rounded-xl flex items-center justify-center shadow-md">
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-6 h-6 brightness-110" alt="Logo">
                 </div>
                 <div>
-                    <h1 class="text-sm font-bold text-slate-800 leading-tight">IT ASSET AUDIT</h1>
-                    <p class="text-[10px] text-pink-500 font-medium uppercase tracking-widest">Udon Thani Hospital</p>
+                    <h1 class="text-md font-bold text-slate-800 leading-tight">IT ASSET AUDIT</h1>
+                    <p class="text-[9px] text-pink-500 font-bold uppercase tracking-wider">Udonthani Hospital</p>
                 </div>
             </div>
-            <div class="flex bg-slate-100 p-1 rounded-xl">
-                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-4 py-2 text-xs font-bold rounded-lg transition-all tab-active">หน้าหลัก</button>
-                <button onclick="switchTab('survey')" id="btn-survey" class="px-4 py-2 text-xs font-bold rounded-lg transition-all text-slate-500">บันทึกข้อมูล</button>
-            </div>
+            <div id="lastUpdate" class="text-[10px] text-slate-400 font-medium bg-slate-50 px-3 py-1 rounded-full">กำลังโหลดข้อมูล...</div>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-4 mt-6">
-        
-        <!-- View: Dashboard -->
-        <div id="view-dashboard" class="space-y-6">
-            <div id="statsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-[2rem] custom-shadow animate-pulse">
-                    <div class="w-8 h-8 bg-slate-100 rounded-lg mb-3"></div>
-                    <div class="h-4 bg-slate-100 w-2/3 rounded mb-2"></div>
-                    <div class="h-6 bg-slate-100 w-1/2 rounded"></div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-[2.5rem] custom-shadow overflow-hidden border border-slate-100">
-                <div class="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h2 class="text-lg font-bold flex items-center gap-2 text-slate-800">
-                        <span class="w-2 h-6 pink-gradient rounded-full"></span>
-                        รายการที่ดำเนินการเสร็จแล้ว (กรุปตามตึก/ชั้น)
-                    </h2>
-                    <div class="relative w-full md:w-72">
-                        <input type="text" id="tableSearch" oninput="filterTable()" placeholder="ค้นหาชื่อหน่วยงาน..." 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-pink-100">
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            <tr>
-                                <th class="px-6 py-4">อาคาร / ชั้น</th>
-                                <th class="px-6 py-4">หน่วยงาน</th>
-                                <th class="px-6 py-4">สถานะการสำรวจ</th>
-                                <th class="px-6 py-4 text-center">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logsTableBody" class="text-sm divide-y divide-slate-50"></tbody>
-                    </table>
-                </div>
-            </div>
+    <main class="max-w-6xl mx-auto px-4 mt-8">
+        <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-1.5 h-6 pink-gradient rounded-full"></span>
+                สรุปผลการตรวจสอบรายอาคาร
+            </h2>
+            <input type="text" id="searchInput" oninput="renderDashboard()" placeholder="ค้นหาหน่วยงาน/อาคาร..." 
+                   class="w-full md:w-72 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 ring-pink-500/20">
         </div>
 
-        <!-- View: Survey -->
-        <div id="view-survey" class="hidden space-y-6">
-            <div class="bg-white p-8 rounded-[2.5rem] custom-shadow border border-slate-100">
-                <h3 class="text-md font-bold mb-6 flex items-center gap-2 text-blue-600">
-                    <span class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-xs text-blue-600">1</span>
-                    เลือกหน่วยงานเพื่อเริ่มสำรวจ
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">เลือกอาคาร (Building)</label>
-                        <select id="surveyBuilding" onchange="loadFloorsForSurvey()" class="w-full bg-slate-50 p-4 rounded-2xl text-sm border-2 border-transparent focus:border-blue-200 outline-none transition-all"></select>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">เลือกชั้น (Floor)</label>
-                        <select id="surveyFloor" onchange="loadDeptsForSurvey()" class="w-full bg-slate-50 p-4 rounded-2xl text-sm border-2 border-transparent focus:border-blue-200 outline-none transition-all"></select>
-                    </div>
-                </div>
-                <div id="deptSelectionGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-8"></div>
-            </div>
-
-            <div id="assetSearchContainer" class="hidden bg-white p-8 rounded-[2.5rem] custom-shadow border border-slate-100">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-md font-bold flex items-center gap-2 text-pink-600">
-                        <span class="w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-xs text-pink-600">2</span>
-                        ตรวจสอบ/เพิ่มข้อมูลครุภัณฑ์
-                    </h3>
-                    <div id="activeDeptBadge" class="bg-slate-800 text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider">---</div>
-                </div>
-                <div class="flex gap-2">
-                    <input type="text" id="assetSearchInput" oninput="handleAssetLiveSearch(this.value)" placeholder="ค้นหาด้วยรหัสครุภัณฑ์ หรือชื่อรายการ..." 
-                           class="flex-1 bg-slate-50 border-2 border-transparent focus:border-pink-200 rounded-3xl px-6 py-5 outline-none text-sm font-medium">
-                    <button onclick="openScanner()" class="bg-pink-100 text-pink-600 p-5 rounded-3xl hover:bg-pink-200 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                        </svg>
-                    </button>
-                </div>
-                <div id="assetSearchResults" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
-                
-                <div id="actionButtons" class="mt-10 flex flex-wrap gap-4 justify-center border-t border-slate-100 pt-8">
-                    <button onclick="saveDraft()" class="bg-slate-100 text-slate-600 px-8 py-4 rounded-3xl text-sm font-bold hover:bg-slate-200 transition">บันทึกฉบับร่าง</button>
-                    <button onclick="openAssetConfirmModal()" class="pink-gradient text-white px-10 py-4 rounded-3xl text-sm font-bold shadow-lg shadow-pink-200 hover:scale-105 transition active:scale-95">บันทึกการตรวจสอบ</button>
-                </div>
-            </div>
+        <div id="dashboardContent" class="space-y-8">
+            <!-- ข้อมูลจะถูกเติมที่นี่ในรูปแบบ Group by Building > Floor -->
         </div>
     </main>
 
-    <!-- Modal: Asset_Confirm -->
-    <div id="modalAssetConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
-        <div class="bg-white w-full max-w-lg mx-4 rounded-[2.5rem] shadow-2xl overflow-hidden modal-enter">
-            <div class="p-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-slate-800">ยืนยันการตรวจสอบ</h3>
-                    <button onclick="closeModal('modalAssetConfirm')" class="text-slate-400 hover:text-slate-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="space-y-4 mb-8">
-                    <div class="bg-slate-50 p-4 rounded-2xl">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">หน่วยงานที่ตรวจสอบ</p>
-                        <p id="confirmDeptName" class="text-sm font-bold text-slate-700">-</p>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 text-pink-500">ลายมือชื่อผู้รับรองข้อมูล</label>
-                        <canvas id="signaturePad" class="signature-pad w-full h-40"></canvas>
-                        <div class="flex justify-end">
-                            <button onclick="clearSignature()" class="text-[10px] font-bold text-pink-500 uppercase tracking-widest hover:underline">ล้างลายเซ็น</button>
+    <!-- Modal: Dept Detail -->
+    <div id="modalDept" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-4">
+        <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden modal-enter flex flex-col max-h-[90vh]">
+            <!-- Header & Dept Info (แสดงบนสุด) -->
+            <div class="p-6 border-b border-slate-100 bg-slate-50/80">
+                <div class="flex justify-between items-start">
+                    <div class="flex gap-5 items-center">
+                        <div id="mDeptPic" class="w-20 h-20 rounded-2xl bg-white border-2 border-white flex items-center justify-center overflow-hidden shadow-lg">
+                             <img src="" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-pink-500 uppercase tracking-widest bg-pink-50 px-2 py-0.5 rounded mb-1 inline-block">ข้อมูลหน่วยงาน</span>
+                            <h3 id="mDeptName" class="text-2xl font-bold text-slate-800 tracking-tight">ชื่อหน่วยงาน</h3>
+                            <div class="flex flex-wrap gap-x-6 gap-y-1 mt-2">
+                                <p id="mDeptLoc" class="text-sm text-slate-500 flex items-center gap-1.5 font-medium">
+                                    <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    ที่ตั้ง
+                                </p>
+                                <p id="mDeptTel" class="text-sm text-slate-500 flex items-center gap-1.5 font-medium">
+                                    <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                    โทร: -
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="closeModal('modalAssetConfirm')" class="py-4 bg-slate-100 text-slate-500 rounded-3xl text-sm font-bold">ยกเลิก</button>
-                    <button onclick="submitFullSurvey()" class="py-4 pink-gradient text-white rounded-3xl text-sm font-bold shadow-lg shadow-pink-100">ยืนยันและบันทึก</button>
+                    <button onclick="closeModal()" class="p-2.5 bg-white rounded-full text-slate-400 hover:text-pink-600 shadow-sm border border-slate-100 hover:border-pink-100 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Modal: Success Status -->
-    <div id="modalSuccess" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
-        <div class="bg-white w-full max-w-sm mx-4 rounded-[2.5rem] shadow-2xl p-10 text-center modal-enter">
-            <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                </svg>
-            </div>
-            <h3 class="text-xl font-bold text-slate-800 mb-2">ข้อมูลบันทึกแล้ว</h3>
-            <p class="text-sm text-slate-500 mb-8">การตรวจสอบครุภัณฑ์เสร็จสมบูรณ์ระบบได้อัปเดตข้อมูลลงฐานข้อมูลเรียบร้อยแล้ว</p>
             
-            <div class="space-y-3" id="postActionButtons">
-                <button onclick="window.location.reload()" class="w-full py-4 pink-gradient text-white rounded-3xl text-sm font-bold">กลับหน้าหลัก</button>
-                <button onclick="printCertificate()" class="w-full py-4 border-2 border-slate-100 text-slate-600 rounded-3xl text-sm font-bold flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    พิมพ์เอกสารรับรอง
-                </button>
+            <!-- Asset Lists Grouped by Category -->
+            <div class="p-6 overflow-y-auto flex-1 bg-white">
+                <div id="mAssetGroupContainer" class="space-y-8">
+                    <!-- รายการครุภัณฑ์แยกประเภทจะถูกเติมที่นี่ -->
+                </div>
             </div>
-        </div>
-    </div>
 
-    <div id="loading" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm hidden">
-        <div class="bg-white p-8 rounded-[2rem] text-center shadow-2xl">
-            <div class="animate-spin rounded-full h-10 w-10 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
-            <p class="text-xs font-bold text-slate-500 tracking-widest uppercase">กำลังส่งข้อมูล...</p>
+            <div class="p-5 border-t border-slate-100 text-center bg-slate-50/50">
+                <button onclick="closeModal()" class="px-12 py-3 pink-gradient text-white rounded-2xl text-sm font-bold shadow-lg shadow-pink-500/20 active:scale-95 transition-transform">ปิดหน้าต่าง</button>
+            </div>
         </div>
     </div>
 
     <script>
         const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
-        let masterData = null;
-        let selectedDept = { id: '', name: '' };
-        let signaturePad = null;
-        let canvas = null;
-        let isDrawing = false;
+        let state = { logs: [], depts: [], assetTypes: [] };
 
-        async function initApp() {
-            toggleLoading(true);
+        async function init() {
             try {
-                const res = await fetch(`${APP_URL}?action=getInitialData`);
-                masterData = await res.json();
+                const ts = new Date().getTime();
+                const [logRes, deptRes, initRes] = await Promise.all([
+                    fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
+                    fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
+                    fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
+                ]);
+                state.logs = logRes || [];
+                state.depts = deptRes || [];
+                state.assetTypes = initRes.assetTypes || [];
+                document.getElementById('lastUpdate').innerText = "อัปเดต: " + new Date().toLocaleTimeString('th-TH');
                 renderDashboard();
-                renderLogsTable();
-                setupSurveyFilters();
-                initSignaturePad();
-            } catch (e) { console.error(e); } 
-            finally { toggleLoading(false); }
+            } catch (err) {
+                console.error(err);
+            }
         }
 
-        // --- Core Rendering ---
         function renderDashboard() {
-            const container = document.getElementById('statsContainer');
-            if (!masterData.dashboard) return;
-            container.innerHTML = masterData.dashboard.map(stat => `
-                <div class="bg-white p-5 rounded-[2rem] custom-shadow border-b-4 border-b-pink-400">
-                    <div class="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center text-pink-500 mb-3 font-bold text-xs">${stat.typeId}</div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${stat.typeName}</p>
-                    <h3 class="text-2xl font-bold text-slate-800">${stat.count} <span class="text-xs font-normal text-slate-400">รายการ</span></h3>
-                </div>
-            `).join('');
-        }
+            const container = document.getElementById('dashboardContent');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            
+            const auditDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
+            const filteredDepts = state.depts.filter(d => 
+                auditDeptIds.includes(String(d.DEP_ID).trim()) &&
+                (d.DEPNAME.toLowerCase().includes(search) || d.BUILDING.toLowerCase().includes(search))
+            );
 
-        function renderLogsTable() {
-            const tbody = document.getElementById('logsTableBody');
-            if (!masterData.recentLogs) return;
-            tbody.innerHTML = masterData.recentLogs.map(log => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4">
-                        <div class="flex flex-col">
-                            <span class="font-bold text-slate-700">${log.building}</span>
-                            <span class="text-[10px] text-slate-400 uppercase">ชั้น ${log.floor}</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 font-medium text-slate-600">${log.deptName}</td>
-                    <td class="px-6 py-4">
-                        <span class="bg-green-50 text-green-600 px-3 py-1 rounded-full text-xs font-bold">${log.assetCount} รายการเสร็จสิ้น</span>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        <button onclick="viewReport('${log.deptId}')" class="bg-slate-100 hover:bg-pink-500 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition">ตรวจสอบข้อมูล</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+            const grouped = {};
+            filteredDepts.forEach(d => {
+                if (!grouped[d.BUILDING]) grouped[d.BUILDING] = {};
+                if (!grouped[d.BUILDING][d.FL]) grouped[d.BUILDING][d.FL] = [];
+                grouped[d.BUILDING][d.FL].push(d);
+            });
 
-        // --- Survey Logic ---
-        function setupSurveyFilters() {
-            const bSelect = document.getElementById('surveyBuilding');
-            const buildings = Object.keys(masterData.buildingMap || {});
-            bSelect.innerHTML = '<option value="">-- เลือกอาคาร --</option>' + 
-                buildings.map(b => `<option value="${b}">${b}</option>`).join('');
-        }
-
-        function loadFloorsForSurvey() {
-            const b = document.getElementById('surveyBuilding').value;
-            const fSelect = document.getElementById('surveyFloor');
-            if(!b) { fSelect.innerHTML = ''; return; }
-            const floors = Object.keys(masterData.buildingMap[b]);
-            fSelect.innerHTML = '<option value="">-- เลือกชั้น --</option>' + 
-                floors.map(f => `<option value="${f}">ชั้น ${f}</option>`).join('');
-        }
-
-        function loadDeptsForSurvey() {
-            const b = document.getElementById('surveyBuilding').value;
-            const f = document.getElementById('surveyFloor').value;
-            const container = document.getElementById('deptSelectionGrid');
-            if(!b || !f) return;
-            const depts = masterData.buildingMap[b][f] || [];
-            container.innerHTML = depts.map(d => `
-                <div onclick="selectDeptForSurvey('${d.id}', '${d.name}')" 
-                     class="p-4 bg-white border border-slate-100 rounded-2xl hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all custom-shadow">
-                    <p class="text-xs font-bold text-slate-700">${d.name}</p>
-                </div>
-            `).join('');
-        }
-
-        function selectDeptForSurvey(id, name) {
-            selectedDept = { id, name };
-            document.getElementById('activeDeptBadge').innerText = name;
-            document.getElementById('assetSearchContainer').classList.remove('hidden');
-            document.getElementById('assetSearchContainer').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // --- Modal & Action Logic ---
-        function openAssetConfirmModal() {
-            document.getElementById('confirmDeptName').innerText = selectedDept.name;
-            document.getElementById('modalAssetConfirm').classList.remove('hidden');
-            // Re-init canvas size for signature pad
-            resizeCanvas();
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function saveDraft() {
-            // ในที่นี้สมมติเป็นการแจ้งเตือน แต่ในงานจริงสามารถส่งไปบันทึกด้วย action: 'saveDraft'
-            toggleLoading(true);
-            setTimeout(() => {
-                toggleLoading(false);
-                showNotification("บันทึกฉบับร่างเรียบร้อยแล้ว (ยังไม่ได้ลงชื่อรับรอง)");
-            }, 1000);
-        }
-
-        async function submitFullSurvey() {
-            const signature = canvas.toDataURL();
-            // ตรวจสอบว่าเซ็นหรือยัง (เช็ค pixel ขาว)
-            if (isCanvasBlank()) {
-                alert("กรุณาลงลายมือชื่อผู้รับรองข้อมูล");
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-slate-400 font-light"> ไม่พบข้อมูลที่ค้นหา </div>`;
                 return;
             }
 
-            toggleLoading(true);
-            try {
-                const response = await fetch(APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'saveFullSurvey',
-                        data: {
-                            deptId: selectedDept.id,
-                            signature: signature,
-                            timestamp: new Date().toISOString()
-                        }
-                    })
-                });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    closeModal('modalAssetConfirm');
-                    document.getElementById('modalSuccess').classList.remove('hidden');
-                }
-            } catch (e) {
-                alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-            } finally {
-                toggleLoading(false);
-            }
+            container.innerHTML = Object.keys(grouped).sort().map(building => `
+                <div class="building-section">
+                    <h3 class="text-sm font-bold text-pink-600 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0z"></path></svg>
+                        ${building}
+                    </h3>
+                    <div class="space-y-6">
+                        ${Object.keys(grouped[building]).sort((a,b) => a-b).map(floor => `
+                            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">ชั้น ${floor}</span>
+                                    <div class="h-px bg-slate-50 flex-1"></div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    ${grouped[building][floor].map(dept => {
+                                        const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
+                                        const count = deptLogs.length;
+                                        const typeCounts = {};
+                                        deptLogs.forEach(l => {
+                                            const type = state.assetTypes.find(t => String(t.id).trim() === String(l.Asset_Type_ID).trim());
+                                            const name = type ? type.name.split(' ')[0] : 'อื่นๆ';
+                                            typeCounts[name] = (typeCounts[name] || 0) + 1;
+                                        });
+
+                                        // เปลี่ยนมาดึงรูปจาก Google Drive ตาม PIC_ID (ที่เก็บ NOTE1 มา)
+                                        const deptImgUrl = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,1)}`;
+
+                                        return `
+                                        <div onclick="showDetail('${dept.DEP_ID}')" class="p-4 rounded-2xl border border-slate-50 hover:border-pink-200 hover:bg-pink-50/20 transition-all cursor-pointer group bg-slate-50/40 relative overflow-hidden shadow-sm hover:shadow-md">
+                                            <div class="flex gap-4 items-start relative z-10">
+                                                <div class="w-14 h-14 rounded-xl bg-white border border-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
+                                                     <img src="${deptImgUrl}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,1)}'">
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex justify-between items-center mb-1">
+                                                        <h4 class="text-sm font-bold text-slate-700 group-hover:text-pink-700 truncate">${dept.DEPNAME}</h4>
+                                                        <span class="text-xs font-black text-pink-500 ml-2">${count}</span>
+                                                    </div>
+                                                    <div class="flex flex-wrap gap-1 mt-2 hide-scrollbar">
+                                                        ${Object.entries(typeCounts).map(([name, val]) => `
+                                                            <span class="text-[9px] bg-white border border-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md font-medium">
+                                                                ${name}: ${val}
+                                                            </span>
+                                                        `).join('')}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // --- Signature Pad Logic ---
-        function initSignaturePad() {
-            canvas = document.getElementById('signaturePad');
-            const ctx = canvas.getContext('2d');
+        function showDetail(deptId) {
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
+            const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
             
-            const startPosition = (e) => {
-                isDrawing = true;
-                draw(e);
+            document.getElementById('mDeptName').innerText = dept.DEPNAME;
+            document.getElementById('mDeptLoc').innerText = `${dept.BUILDING} ชั้น ${dept.FL}`;
+            document.getElementById('mDeptTel').innerText = `โทร: ${dept.PIC_ID_PHONE || '-'}`; // เปลี่ยนมาใช้เบอร์โทรหากมี
+            
+            const deptPicImg = document.getElementById('mDeptPic').querySelector('img');
+            deptPicImg.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,2)}`;
+
+            const groupedAssets = {};
+            deptLogs.forEach(a => {
+                const type = state.assetTypes.find(t => String(t.id).trim() === String(a.Asset_Type_ID).trim());
+                const typeName = type ? type.name : 'อื่น ๆ / ไม่ระบุประเภท';
+                if (!groupedAssets[typeName]) groupedAssets[typeName] = [];
+                groupedAssets[typeName].push(a);
+            });
+
+            const container = document.getElementById('mAssetGroupContainer');
+            if (deptLogs.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 italic">ไม่พบประวัติการตรวจสอบ</div>`;
+            } else {
+                container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
+                    <div class="category-block">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span class="w-1 h-3 bg-pink-500 rounded-full"></span>
+                            ${cat} (${groupedAssets[cat].length})
+                        </h4>
+                        <div class="grid grid-cols-1 gap-4">
+                            ${groupedAssets[cat].map(a => `
+                                <div class="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 items-start hover:bg-white hover:shadow-md transition-all">
+                                    <div class="w-20 h-20 bg-white rounded-xl border border-slate-200 flex-shrink-0 overflow-hidden shadow-sm">
+                                        <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/' + a.ASSET_IMG_DB : 'https://placehold.co/100x100?text=NO+IMG'}" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="text-[10px] font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded border border-pink-100 uppercase leading-none">ID: ${a.NOID}</span>
+                                            <span class="text-[9px] font-bold text-slate-400">อายุ: ${a.ASSET_AGE} ปี</span>
+                                        </div>
+                                        <h5 class="text-sm font-bold text-slate-800 leading-tight truncate">${a.Asset_ID}</h5>
+                                        <p class="text-[10px] text-slate-400 mb-2">Serial: ${a.Serial || '-'}</p>
+                                        <div class="bg-white/60 p-2 rounded-xl border border-slate-100 shadow-inner">
+                                             <p class="spec-text text-slate-500 leading-normal">${a.SPEC_DETAIL}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
             }
-            const finishedPosition = () => {
-                isDrawing = false;
-                ctx.beginPath();
-            }
-            const draw = (e) => {
-                if (!isDrawing) return;
-                const rect = canvas.getBoundingClientRect();
-                const x = (e.clientX || e.touches[0].clientX) - rect.left;
-                const y = (e.clientY || e.touches[0].clientY) - rect.top;
-                
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-                ctx.strokeStyle = '#1e293b';
-                
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                e.preventDefault();
-            }
-
-            canvas.addEventListener('mousedown', startPosition);
-            canvas.addEventListener('mouseup', finishedPosition);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('touchstart', startPosition);
-            canvas.addEventListener('touchend', finishedPosition);
-            canvas.addEventListener('touchmove', draw);
+            document.getElementById('modalDept').classList.remove('hidden');
         }
 
-        function clearSignature() {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function resizeCanvas() {
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-        }
-
-        function isCanvasBlank() {
-            const blank = document.createElement('canvas');
-            blank.width = canvas.width;
-            blank.height = canvas.height;
-            return canvas.toDataURL() === blank.toDataURL();
-        }
-
-        // --- Utility ---
-        function switchTab(tab) {
-            const isDash = tab === 'dashboard';
-            document.getElementById('view-dashboard').classList.toggle('hidden', !isDash);
-            document.getElementById('view-survey').classList.toggle('hidden', isDash);
-            document.getElementById('btn-dashboard').className = `px-4 py-2 text-xs font-bold rounded-lg transition-all ${isDash ? 'tab-active' : 'text-slate-500'}`;
-            document.getElementById('btn-survey').className = `px-4 py-2 text-xs font-bold rounded-lg transition-all ${!isDash ? 'tab-active' : 'text-slate-500'}`;
-        }
-
-        function toggleLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
-
-        function showNotification(msg) {
-            const div = document.createElement('div');
-            div.className = "fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl z-[100] animate-bounce";
-            div.innerText = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 3000);
-        }
-
-        function printCertificate() {
-            alert("กำลังเตรียมไฟล์ PDF สำหรับพิมพ์เอกสารรับรอง...");
-        }
-
-        window.onload = initApp;
+        function closeModal() { document.getElementById('modalDept').classList.add('hidden'); }
+        window.onload = init;
     </script>
 </body>
 </html>
