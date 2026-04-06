@@ -333,67 +333,42 @@
             }, 300);
         }
 
-        async function processFinalSubmit() {
+       async function processFinalSubmit() {
             if (signaturePad.isEmpty()) return alert("กรุณาลงลายมือชื่อก่อนบันทึก");
-            
-            showProcess("กำลังนำส่งข้อมูล...");
+            if (auditQueue.length === 0) return alert("ไม่มีรายการในคิว");
+        
+            showProcess("กำลังบันทึกข้อมูลทั้งหมด...");
             try {
-                let lastActionId = "";
-                for (let i = 0; i < auditQueue.length; i++) {
-                    showProcess(`บันทึกรายการที่ ${i+1}/${auditQueue.length}`);
-                    const res = await fetch(API_URL, { 
-                        method: 'POST', 
-                        body: JSON.stringify({ action: auditQueue[i].Action, data: auditQueue[i].data }) 
-                    });
-                    const result = await res.json();
-                    lastActionId = result.actionId;
-                }
-
-                showProcess("บันทึกการยืนยันและลายเซ็น...");
-                await fetch(API_URL, { 
+                const payload = {
+                    action: 'saveBulkSurvey', // เปลี่ยนชื่อ action เพื่อให้ฝั่ง GS จัดการแบบก้อนเดียว
+                    data: {
+                        items: auditQueue.map(item => item.data), // ส่งรายการทั้งหมดไปเป็น Array
+                        signature: signaturePad.toDataURL(),
+                        deptId: document.getElementById('selectedDeptId').value,
+                        isDraft: submitMode === 'DRAFT' ? 1 : 0,
+                        activityId: "ACT-ANNUAL-2024"
+                    }
+                };
+        
+                const res = await fetch(API_URL, { 
                     method: 'POST', 
-                    body: JSON.stringify({ 
-                        action: 'saveConfirm', 
-                        data: { 
-                            Action_ID: lastActionId, 
-                            Activity_ID: "ACT-ANNUAL-2024", 
-                            Con_Signature: signaturePad.toDataURL(),
-                            Is_Draft: submitMode === 'DRAFT' ? 1 : 0
-                        } 
-                    }) 
+                    body: JSON.stringify(payload) 
                 });
-
-                closeModal('confirmModal');
-                
-                // ปรับปรุง Success Modal
-                const detailBox = document.getElementById('successDetailList');
-                detailBox.innerHTML = `
-                    <div class="flex justify-between text-xs"><span class="text-gray-400">หน่วยงาน:</span> <span class="font-bold text-gray-700">${document.getElementById('displayDeptName').innerText}</span></div>
-                    <div class="flex justify-between text-xs"><span class="text-gray-400">จำนวนรายการ:</span> <span class="font-bold text-gray-700">${auditQueue.length} รายการ</span></div>
-                    <div class="flex justify-between text-xs"><span class="text-gray-400">สถานะ:</span> <span class="font-bold ${submitMode === 'DRAFT' ? 'text-orange-500' : 'text-green-500'}">${submitMode === 'DRAFT' ? 'บันทึกฉบับร่าง' : 'ตรวจสอบสมบูรณ์'}</span></div>
-                `;
-
-                const iconBox = document.getElementById('successIconBox');
-                if(submitMode === 'DRAFT') {
-                    document.getElementById('successStatusTitle').innerText = "บันทึกฉบับร่างแล้ว";
-                    iconBox.className = "w-20 h-20 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner";
-                    iconBox.innerHTML = '<i data-lucide="file-edit" class="w-10 h-10"></i>';
-                    document.getElementById('btnCertDoc').classList.add('hidden');
+                const result = await res.json();
+        
+                if (result.status === 'success') {
+                    closeModal('confirmModal');
+                    renderSuccessSlip(result.actionId); // ส่ง actionId ไปสร้างสลิป
                 } else {
-                    document.getElementById('successStatusTitle').innerText = "บันทึกสำเร็จ!";
-                    iconBox.className = "w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner";
-                    iconBox.innerHTML = '<i data-lucide="check-circle-2" class="w-10 h-10"></i>';
-                    document.getElementById('btnCertDoc').classList.remove('hidden');
+                    throw new Error(result.message);
                 }
-                
-                document.getElementById('successModal').classList.remove('hidden');
-                lucide.createIcons();
-
+        
             } catch (e) {
-                alert("เกิดข้อผิดพลาด: ระบบไม่สามารถเชื่อมต่อได้");
-            } finally { hideProcess(); }
+                alert("เกิดข้อผิดพลาด: " + e.message);
+            } finally {
+                hideProcess();
+            }
         }
-
         function validateAndSubmitAudit() {
             const typeId = document.getElementById('assetTypeId').value;
             const priorityId = document.querySelector('input[name="priority_select"]:checked')?.value;
