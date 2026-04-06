@@ -528,6 +528,39 @@
             if(html5QrCode.isScanning) await html5QrCode.stop(); 
             document.getElementById('scannerModal').classList.add('hidden'); 
         }
+        // ตัวอย่างส่วนที่จะไปอยู่ในปุ่ม "บันทึก"
+        async function handleFinalSubmit(mode) {
+            showProcess("กำลังบันทึกข้อมูล..."); // แสดง Overlay ทันที
+        
+            const payload = {
+                action: 'saveBulkSurvey',
+                data: {
+                    items: auditQueue, // มัดรวมรายการในคิวทั้งหมด
+                    deptId: document.getElementById('selectedDeptId').value,
+                    IT_User_Mail: userEmail, // อีเมลผู้ใช้งาน
+                    signature: signaturePad.toDataURL(), // ลายเซ็น
+                    isDraft: mode === 'DRAFT' ? 1 : 0,
+                    activityId: "ANNUAL_2026"
+                }
+            };
+        
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+        
+                if (result.status === 'success') {
+                    // เมื่อสำเร็จ ให้เปิดหน้าสลิปและสร้าง QR Code
+                    showSuccessSlip(result.actionId, payload.deptId);
+                }
+            } catch (error) {
+                alert("เกิดข้อผิดพลาดในการบันทึก");
+            } finally {
+                hideProcess(); // เอา Overlay ออกเมื่อทำงานเสร็จ
+            }
+        }
     </script>
 </body>
 </html>
