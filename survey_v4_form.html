@@ -27,7 +27,7 @@
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .priority-box:checked + label, .shift-box:checked + label {
+        .shift-checkbox:checked + label {
             background-color: #ec4899;
             color: white;
             border-color: #ec4899;
@@ -39,17 +39,60 @@
             border-color: #1e293b;
         }
 
-        .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .image-preview-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background-color: #f1f5f9;
+            border: 2px dashed #e2e8f0;
+            border-radius: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .image-preview-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Responsive Modal adjustments for Desktop */
+        @media (min-width: 768px) {
+            .modal-content-container {
+                max-width: 600px;
+                margin: auto;
+                border-radius: 3rem !important;
+                height: fit-content;
+                max-height: 90vh;
+            }
+            .modal-wrapper {
+                align-items: center !important;
+                justify-content: center !important;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; background: white !important; }
+            #successModal, #successModal * { visibility: visible; }
+            #successModal { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; background: white !important; }
+            .no-print { display: none !important; }
+            #successModal > div { border: none !important; shadow: none !important; width: 100% !important; max-width: none !important; box-shadow: none !important; }
+        }
     </style>
 </head>
 <body class="pb-24">
 
     <!-- Header -->
     <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 p-4">
-        <div class="max-w-md mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-lg font-bold text-gray-800">Asset Audit</h1>
-                <p id="statusIndicator" class="text-[10px] font-bold text-pink-500 tracking-widest uppercase">Connecting...</p>
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-10 h-10 object-contain">
+                <div>
+                    <h1 class="text-lg font-bold text-gray-800 leading-tight">Asset Audit</h1>
+                    <p id="statusIndicator" class="text-[10px] font-bold text-pink-500 tracking-widest uppercase">Connecting...</p>
+                </div>
             </div>
             <div class="flex items-center gap-2">
                 <span id="auditCount" class="bg-pink-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">0</span>
@@ -60,15 +103,14 @@
         </div>
     </header>
 
-    <main class="max-w-md mx-auto p-4 space-y-6">
-
-        <!-- Section 1: Location Picker -->
-        <section id="locationPickerSection" class="space-y-4">
-            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
-                <h2 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+    <main class="max-w-6xl mx-auto p-4 md:p-8">
+        <!-- Section: Location Selection -->
+        <section id="locationPickerSection" class="space-y-6">
+            <div class="max-w-2xl mx-auto bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-50">
+                <h2 class="text-sm font-bold text-gray-700 mb-6 flex items-center gap-2">
                     <i data-lucide="map-pin" class="w-4 h-4 text-pink-500"></i> เลือกสถานที่ตรวจสอบ
                 </h2>
-                <div class="space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <select id="selBuilding" onchange="onBuildingChange()" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 focus:ring-2 focus:ring-pink-500/20">
                         <option value="" disabled selected>-- เลือกอาคาร --</option>
                     </select>
@@ -77,91 +119,103 @@
                     </select>
                 </div>
             </div>
-            <div id="deptList" class="grid gap-2"></div>
+            <!-- Department list -->
+            <div id="deptList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </section>
 
-        <!-- Section 2: Selected Dept Header -->
-        <section id="selectedDeptSection" class="hidden animate-in fade-in slide-in-from-top-4">
-            <div class="bg-gradient-to-br from-pink-500 to-rose-500 p-6 rounded-[2.5rem] text-white shadow-lg shadow-pink-200 relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">กำลังตรวจสอบหน่วยงาน</p>
-                    <h2 id="displayDeptName" class="text-xl font-bold leading-tight mb-1">---</h2>
-                    <p id="displayDeptLoc" class="text-xs opacity-90">---</p>
-                </div>
-                <button onclick="resetDeptSelection()" class="absolute top-6 right-6 p-2 bg-white/20 rounded-full backdrop-blur-md">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
+        <!-- Section: Search & Add Non-Register -->
+        <section id="searchAreaSection" class="hidden space-y-4 max-w-4xl mx-auto">
+            <div id="selectedDeptHeader" class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 md:p-8 rounded-[2.5rem] text-white relative overflow-hidden mb-4">
+                <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">หน่วยงานที่เลือก</p>
+                <h2 id="displayDeptName" class="text-lg md:text-xl font-bold leading-tight">---</h2>
+                <button onclick="resetDeptSelection()" class="absolute top-4 right-4 p-2 bg-white/10 rounded-full"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
             </div>
-        </section>
 
-        <!-- Section 3: Search & Add Non-Register Area -->
-        <section id="searchAreaSection" class="hidden space-y-4">
             <div class="flex gap-2">
                 <div class="relative flex-grow">
-                    <input type="text" id="assetQuery" oninput="debouncedSearch()" placeholder="ค้นหา รหัสสินทรัพย์..." 
-                        class="w-full p-5 pl-12 bg-white border border-gray-100 rounded-3xl shadow-sm text-sm font-semibold focus:ring-4 focus:ring-pink-500/5 transition-all">
+                    <input type="text" id="assetQuery" oninput="debouncedSearch()" placeholder="ค้นหา รหัสสินทรัพย์..." class="w-full p-5 pl-12 bg-white border border-gray-100 rounded-3xl shadow-sm text-sm font-semibold">
                     <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
                 </div>
-                <button onclick="openScanner('assetQuery')" class="p-4 bg-pink-50 text-pink-500 rounded-3xl active:scale-90 transition-transform">
-                    <i data-lucide="qr-code" class="w-6 h-6"></i>
-                </button>
+                <button onclick="openScanner('assetQuery')" class="p-4 bg-pink-50 text-pink-500 rounded-3xl"><i data-lucide="qr-code" class="w-6 h-6"></i></button>
             </div>
-            
+
             <button onclick="openNonRegisterModal()" class="w-full py-4 bg-gray-100 text-gray-600 rounded-3xl text-xs font-bold flex items-center justify-center gap-2 border border-dashed border-gray-300">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มครุภัณฑ์นอกทะเบียน
             </button>
 
-            <div id="resultsArea" class="hidden space-y-2"></div>
+            <!-- Results Grid -->
+            <div id="resultsArea" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3"></div>
         </section>
-
     </main>
 
-    <!-- Modal: Audit Form (For Existing Assets) -->
-    <div id="auditFormModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end">
-        <div class="w-full bg-white rounded-t-[3rem] max-h-[92vh] overflow-y-auto p-8 animate-in slide-in-from-bottom-full duration-300">
+    <!-- Modal: Audit Form -->
+    <div id="auditFormModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end modal-wrapper">
+        <div class="w-full bg-white rounded-t-[3rem] max-h-[92vh] overflow-y-auto p-8 animate-in slide-in-from-bottom-full duration-300 modal-content-container">
             <div class="flex justify-between items-start mb-6">
                 <div>
-                    <p id="modalAssetId" class="text-[10px] font-bold text-pink-500 tracking-widest uppercase">ASSET ID: ---</p>
-                    <h3 id="modalAssetName" class="text-xl font-bold text-gray-800">Asset Name</h3>
+                    <p class="text-[10px] font-bold text-pink-500 tracking-widest uppercase">แสดงรายละเอียดครุภัณฑ์</p>
+                    <h3 id="modalAssetName" class="text-xl font-bold text-gray-800 leading-tight">Asset Name</h3>
                 </div>
                 <button onclick="closeModal('auditFormModal')" class="p-2 bg-gray-50 rounded-full text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
+            <div class="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">รหัสครุภัณฑ์</p>
+                    <p id="detailAssetID" class="text-xs font-bold text-gray-700">--</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">อายุการใช้งาน</p>
+                    <p id="detailAssetAge" class="text-xs font-bold text-pink-500">--</p>
+                </div>
+                <div class="col-span-2">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">รายละเอียด</p>
+                    <p id="detailAssetDesc" class="text-xs font-medium text-gray-500 leading-relaxed italic">--</p>
+                </div>
+            </div>
+
             <div class="space-y-5">
-                <!-- PAC System Radio -->
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-3">ใช้งานระบบ PAC?</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="radio" id="pac_yes" name="is_pac" value="YES" class="hidden pac-radio">
-                        <label for="pac_yes" class="block text-center p-3 rounded-2xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ใช่ (แนบ /PAC)</label>
-                        <input type="radio" id="pac_no" name="is_pac" value="NO" class="hidden pac-radio" checked>
-                        <label for="pac_no" class="block text-center p-3 rounded-2xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ไม่ใช่</label>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รูปภาพครุภัณฑ์</label>
+                    <div id="imgPreviewContainer" class="image-preview-container cursor-pointer mb-2" onclick="document.getElementById('imgInput').click()">
+                        <div id="imgPlaceholder" class="text-center">
+                            <i data-lucide="camera" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">แตะเพื่อถ่ายรูป</p>
+                        </div>
+                        <img id="imgPreview" class="hidden">
                     </div>
+                    <input type="file" id="imgInput" accept="image/*" class="hidden" onchange="handleImageSelection(this, 'imgPreview', 'imgPlaceholder')">
                 </div>
 
-                <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์ (Asset Type ID)</label>
-                    <select id="assetTypeId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 focus:ring-2 focus:ring-pink-500/20"></select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
+                        <select id="assetTypeId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 mb-2"></select>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="pac_toggle" class="hidden pac-radio">
+                            <label for="pac_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer transition-all text-[10px]">ใช้งานระบบ PAC</label>
+                        </div>
+                    </div>
                     <div>
                         <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ลำดับความสำคัญ</label>
-                        <select id="priorityId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 focus:ring-2 focus:ring-pink-500/20"></select>
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน</label>
-                        <select id="shiftWork" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 focus:ring-2 focus:ring-pink-500/20">
-                            <option value="เช้า">เช้า</option>
-                            <option value="บ่าย">บ่าย</option>
-                            <option value="ดึก">ดึก</option>
-                            <option value="24 ชม.">24 ชม.</option>
-                        </select>
+                        <select id="priorityId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600"></select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">หมายเหตุเพิ่มเติม (Note2)</label>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift_Work)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="checkbox" name="shift_work" value="เช้า" id="shift_m" class="hidden shift-checkbox">
+                        <label for="shift_m" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">เช้า</label>
+                        <input type="checkbox" name="shift_work" value="บ่าย" id="shift_a" class="hidden shift-checkbox">
+                        <label for="shift_a" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">บ่าย</label>
+                        <input type="checkbox" name="shift_work" value="ดึก" id="shift_n" class="hidden shift-checkbox">
+                        <label for="shift_n" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ดึก</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Note2 (Column U)</label>
                     <textarea id="note2" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm text-gray-600"></textarea>
                 </div>
 
@@ -173,12 +227,12 @@
         </div>
     </div>
 
-    <!-- Modal: Add Non-Register Asset -->
-    <div id="nonRegisterModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end">
-        <div class="w-full bg-white rounded-t-[3rem] max-h-[92vh] overflow-y-auto p-8 animate-in slide-in-from-bottom-full duration-300">
+    <!-- Modal: Non-Register Form -->
+    <div id="nonRegisterModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end modal-wrapper">
+        <div class="w-full bg-white rounded-t-[3rem] max-h-[92vh] overflow-y-auto p-8 animate-in slide-in-from-bottom-full duration-300 modal-content-container">
             <div class="flex justify-between items-start mb-6">
                 <div>
-                    <p class="text-[10px] font-bold text-orange-500 tracking-widest uppercase">NEW ASSET</p>
+                    <p class="text-[10px] font-bold text-orange-500 tracking-widest uppercase">New Asset</p>
                     <h3 class="text-xl font-bold text-gray-800">เพิ่มครุภัณฑ์นอกทะเบียน</h3>
                 </div>
                 <button onclick="closeModal('nonRegisterModal')" class="p-2 bg-gray-50 rounded-full text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -186,15 +240,28 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รหัสครุภัณฑ์</label>
-                    <input type="text" id="nr_asset_id" placeholder="Ex. 7440-001-XXXX" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold">
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รูปภาพ</label>
+                    <div id="nr_imgPreviewContainer" class="image-preview-container cursor-pointer mb-2" onclick="document.getElementById('nr_imgInput').click()">
+                        <div id="nr_imgPlaceholder" class="text-center">
+                            <i data-lucide="camera" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">TAP TO TAKE PHOTO</p>
+                        </div>
+                        <img id="nr_imgPreview" class="hidden">
+                    </div>
+                    <input type="file" id="nr_imgInput" accept="image/*" class="hidden" onchange="handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')">
                 </div>
-                
-                <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Serial Number</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="nr_serial" placeholder="S/N..." class="flex-grow p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold">
-                        <button onclick="openScanner('nr_serial')" class="p-4 bg-gray-100 text-gray-500 rounded-2xl"><i data-lucide="scan" class="w-5 h-5"></i></button>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รหัสครุภัณฑ์</label>
+                        <input type="text" id="nr_asset_id" placeholder="ป้อนรหัสครุภัณฑ์..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Serial Number</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="nr_serial" placeholder="Serial No..." class="flex-grow p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold">
+                            <button onclick="openScanner('nr_serial')" class="p-4 bg-gray-100 text-gray-500 rounded-2xl active:scale-90"><i data-lucide="scan" class="w-5 h-5"></i></button>
+                        </div>
                     </div>
                 </div>
 
@@ -203,105 +270,135 @@
                     <input type="text" id="nr_brand_detail" placeholder="ยี่ห้อ, รุ่น, สเปค..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold">
                 </div>
 
-                <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-3">ใช้งานระบบ PAC?</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="radio" id="nr_pac_yes" name="nr_is_pac" value="YES" class="hidden pac-radio">
-                        <label for="nr_pac_yes" class="block text-center p-3 rounded-2xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ใช่ (แนบ /PAC)</label>
-                        <input type="radio" id="nr_pac_no" name="nr_is_pac" value="NO" class="hidden pac-radio" checked>
-                        <label for="nr_pac_no" class="block text-center p-3 rounded-2xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ไม่ใช่</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
+                        <select id="nr_asset_type_id" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 mb-2"></select>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="nr_pac_toggle" class="hidden pac-radio">
+                            <label for="nr_pac_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer text-[10px]">ใช้งานระบบ PAC</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">PIORITY_ID</label>
+                        <select id="nr_priorityId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600"></select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
-                    <select id="nr_asset_type_id" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600"></select>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Shift_Work</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="checkbox" name="nr_shift_work" value="เช้า" id="nr_shift_m" class="hidden shift-checkbox">
+                        <label for="nr_shift_m" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">เช้า</label>
+                        <input type="checkbox" name="nr_shift_work" value="บ่าย" id="nr_shift_a" class="hidden shift-checkbox">
+                        <label for="nr_shift_a" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">บ่าย</label>
+                        <input type="checkbox" name="nr_shift_work" value="ดึก" id="nr_shift_n" class="hidden shift-checkbox">
+                        <label for="nr_shift_n" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ดึก</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Note2 (Column U)</label>
+                    <textarea id="nr_note2" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm text-gray-600"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
                     <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">ยกเลิก</button>
-                    <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-100">บันทึกเพิ่ม</button>
+                    <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold">บันทึก</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Queue List -->
-    <div id="queueModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end">
-        <div class="w-full bg-white rounded-t-[3rem] max-h-[80vh] overflow-y-auto p-8">
+    <!-- Modal: Queue -->
+    <div id="queueModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end modal-wrapper">
+        <div class="w-full bg-white rounded-t-[3rem] max-h-[85vh] overflow-y-auto p-8 modal-content-container">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-800">รายการที่รอการบันทึก</h3>
+                <h3 class="text-xl font-bold text-gray-800">รายการที่ตรวจสอบแล้ว</h3>
                 <button onclick="closeModal('queueModal')" class="p-2 bg-gray-50 rounded-full text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div id="auditListItems" class="space-y-2 mb-8"></div>
+            <div id="auditListItems" class="space-y-3 mb-8"></div>
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="openConfirmModal('DRAFT')" class="py-4 border-2 border-gray-100 text-gray-600 rounded-2xl font-bold">บันทึกร่าง</button>
-                <button onclick="openConfirmModal('FINAL')" class="py-4 bg-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-pink-100">ยืนยันและลงชื่อ</button>
+                <button onclick="submitImmediately('DRAFT')" class="py-4 border-2 border-gray-100 text-gray-500 rounded-2xl font-bold">บันทึกฉบับร่าง</button>
+                <button onclick="openConfirmModal('FINAL')" class="py-4 bg-pink-500 text-white rounded-2xl font-bold">ยืนยันและลงชื่อ</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Signature -->
+    <!-- Modal: Confirmation & Signature -->
     <div id="confirmModal" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 text-center animate-in zoom-in-95 duration-200">
-            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 mb-6">ลงลายมือชื่อยืนยัน</h3>
+        <div class="w-full max-w-md bg-white rounded-[2.5rem] p-8 text-center shadow-2xl">
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 mb-2">ลงชื่อรับรองข้อมูล</h3>
+            <p id="confirmSub" class="text-xs text-gray-400 mb-6">รับรองความถูกต้องของข้อมูล</p>
             <div class="bg-gray-50 rounded-2xl p-2 mb-6 border border-gray-100">
-                <canvas id="signature-pad" class="w-full h-48 bg-white rounded-xl"></canvas>
-                <button onclick="signaturePad.clear()" class="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">ล้างลายเซ็น</button>
+                <canvas id="signature-pad" class="w-full h-48 bg-white rounded-xl touch-none"></canvas>
+                <button onclick="signaturePad.clear()" class="mt-2 text-[10px] font-bold text-gray-400 uppercase">ล้างลายเซ็น</button>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <button onclick="closeModal('confirmModal')" class="py-4 text-sm font-bold text-gray-400">ยกเลิก</button>
-                <button onclick="handleFinalSubmit()" class="py-4 bg-gray-900 text-white rounded-2xl text-sm font-bold">ส่งข้อมูล</button>
+                <button onclick="handleFinalSubmit()" class="py-4 bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl">บันทึกข้อมูล</button>
             </div>
         </div>
     </div>
 
-    <!-- Scanner & Overlay -->
-    <div id="scannerModal" class="fixed inset-0 z-[70] hidden bg-black flex flex-col">
-        <div class="p-6 flex justify-between items-center text-white">
-            <p class="text-xs font-bold tracking-widest">SCANNER</p>
-            <button onclick="closeScanner()" class="p-2 bg-white/10 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <!-- Modal: Success Receipt / Slip -->
+    <div id="successModal" class="fixed inset-0 z-[120] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-6 overflow-y-auto">
+        <div class="bg-white rounded-[2.5rem] p-8 w-full max-w-sm text-center shadow-2xl my-auto">
+            <div class="no-print">
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-16 h-16 mx-auto mb-4 object-contain">
+                <h4 id="successStatusTitle" class="text-lg font-bold text-gray-800 mb-1">บันทึกสำเร็จ!</h4>
+                <p class="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-6">Audit Completion Slip</p>
+            </div>
+            <div id="successDetailList" class="bg-white text-left"></div>
+            <div class="space-y-2 pt-6 no-print">
+                <button onclick="window.print()" class="w-full py-4 bg-gray-100 text-gray-700 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95">
+                    <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์สลิป
+                </button>
+                <button onclick="location.reload()" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold active:scale-95">กลับหน้าหลัก</button>
+            </div>
         </div>
-        <div id="reader" class="flex-grow"></div>
     </div>
 
+    <!-- Overlays -->
     <div id="processOverlay" class="fixed inset-0 z-[100] hidden bg-white/90 backdrop-blur-md flex flex-col items-center justify-center">
         <div class="spinner mb-6"></div>
         <p id="processMessage" class="text-xs font-bold text-gray-400 uppercase tracking-widest">Processing...</p>
     </div>
 
-    <!-- Alert Modal -->
-    <div id="customAlert" class="fixed inset-0 z-[110] hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
-        <div class="bg-white rounded-[2rem] p-8 w-full max-w-xs text-center shadow-2xl">
-            <div id="alertIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
-            <h4 id="alertTitle" class="text-lg font-bold text-gray-800 mb-2"></h4>
-            <p id="alertMsg" class="text-sm text-gray-500 mb-6"></p>
-            <button onclick="closeAlert()" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold">ตกลง</button>
+    <div id="scannerModal" class="fixed inset-0 z-[70] hidden bg-black flex flex-col">
+        <div class="p-6 flex justify-between items-center text-white">
+            <p class="text-xs font-bold tracking-widest uppercase">Scanner</p>
+            <button onclick="closeScanner()" class="p-2 bg-white/10 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
+        <div id="reader" class="flex-grow"></div>
     </div>
-
-    <input type="hidden" id="selectedDeptId">
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
+        const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/department_asset.html?DEP_ID=";
         
-        let masterDeptList = [];
-        let configData = { priorities: [], assetTypes: [] };
-        let currentAsset = null;
-        let auditQueue = [];
-        let signaturePad = null;
-        let html5QrCode = null;
-        let submitMode = 'FINAL';
+        let masterDeptList = [], configData = { priorities: [], assetTypes: [] }, auditQueue = [], currentAsset = null, signaturePad = null;
+        let html5QrCode = null, currentBase64Image = "", submitMode = 'FINAL';
 
         window.onload = () => {
             lucide.createIcons();
             initApp();
             signaturePad = new SignaturePad(document.getElementById('signature-pad'));
             html5QrCode = new Html5Qrcode("reader");
+            window.addEventListener('resize', handleResize);
         };
 
+        function handleResize() {
+            if (document.getElementById('confirmModal').classList.contains('hidden')) return;
+            const canvas = document.getElementById('signature-pad');
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").setTransform(ratio, 0, 0, ratio, 0, 0);
+        }
+
         async function initApp() {
-            showProcess("กำลังเตรียมข้อมูล...");
+            showProcess("กำลังโหลดข้อมูล...");
             try {
                 const [resConfig, resDept] = await Promise.all([
                     fetch(`${API_URL}?action=getInitialData`),
@@ -309,71 +406,65 @@
                 ]);
                 configData = await resConfig.json();
                 masterDeptList = await resDept.json();
-                
                 populateSelects();
-
-                const buildings = [...new Set(masterDeptList.map(item => item.BUILDING))].filter(Boolean).sort();
                 const bSel = document.getElementById('selBuilding');
-                buildings.forEach(b => bSel.add(new Option(b, b)));
-                
+                [...new Set(masterDeptList.map(i => i.BUILDING))].filter(Boolean).sort().forEach(b => bSel.add(new Option(b, b)));
                 document.getElementById('statusIndicator').innerText = "ONLINE";
                 document.getElementById('statusIndicator').classList.replace('text-pink-500', 'text-green-500');
-            } catch (e) {
-                showAlert('Error', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
-            } finally { hideProcess(); }
+            } catch (e) { console.error(e); }
+            finally { hideProcess(); }
         }
 
         function populateSelects() {
-            const atSels = [document.getElementById('assetTypeId'), document.getElementById('nr_asset_type_id')];
-            const pSel = document.getElementById('priorityId');
-            
-            atSels.forEach(s => {
-                s.innerHTML = '<option value="" disabled selected>-- เลือกประเภท --</option>';
+            const types = [document.getElementById('assetTypeId'), document.getElementById('nr_asset_type_id')];
+            const priors = [document.getElementById('priorityId'), document.getElementById('nr_priorityId')];
+            types.forEach(s => {
+                s.innerHTML = '<option value="" disabled selected>-- ประเภท --</option>';
                 configData.assetTypes.forEach(a => s.add(new Option(a.name, a.id)));
             });
+            priors.forEach(s => {
+                s.innerHTML = '<option value="" disabled selected>-- ความสำคัญ --</option>';
+                configData.priorities.forEach(p => s.add(new Option(p.name, p.id)));
+            });
+        }
 
-            pSel.innerHTML = '<option value="" disabled selected>-- เลือกความสำคัญ --</option>';
-            configData.priorities.forEach(p => pSel.add(new Option(p.name, p.id)));
+        function handleImageSelection(input, pId, hId) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentBase64Image = e.target.result;
+                const img = document.getElementById(pId);
+                img.src = e.target.result; img.classList.remove('hidden');
+                document.getElementById(hId).classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
         }
 
         function onBuildingChange() {
             const b = document.getElementById('selBuilding').value;
             const floors = [...new Set(masterDeptList.filter(i => i.BUILDING === b).map(i => i.FL))].sort((a,b)=>a-b);
             const fSel = document.getElementById('selFloor');
-            fSel.innerHTML = '<option value="" disabled selected>-- เลือกชั้น --</option>';
+            fSel.innerHTML = '<option value="" disabled selected>-- ชั้น --</option>';
             floors.forEach(f => fSel.add(new Option(`ชั้น ${f}`, f)));
         }
 
         function renderDeptList() {
-            const b = document.getElementById('selBuilding').value;
-            const f = document.getElementById('selFloor').value;
-            const container = document.getElementById('deptList');
-            container.innerHTML = '';
+            const b = document.getElementById('selBuilding').value, f = document.getElementById('selFloor').value;
+            const container = document.getElementById('deptList'); container.innerHTML = '';
             masterDeptList.filter(d => d.BUILDING === b && String(d.FL) === String(f)).forEach(dept => {
                 const card = document.createElement('div');
-                card.className = "p-5 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer active:scale-95 transition-all shadow-sm";
+                card.className = "p-5 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm hover:border-pink-200 transition-all";
                 card.innerHTML = `<p class="text-[13px] font-bold text-gray-700">${dept.DEPNAME}</p><i data-lucide="chevron-right" class="w-4 h-4 text-pink-300"></i>`;
-                card.onclick = () => selectDept(dept);
+                card.onclick = () => {
+                    document.getElementById('displayDeptName').innerText = dept.DEPNAME;
+                    document.getElementById('locationPickerSection').classList.add('hidden');
+                    document.getElementById('searchAreaSection').classList.remove('hidden');
+                    document.getElementById('selectedDeptId').value = dept.DEP_ID;
+                };
                 container.appendChild(card);
             });
             lucide.createIcons();
-        }
-
-        function selectDept(dept) {
-            document.getElementById('selectedDeptId').value = dept.DEP_ID;
-            document.getElementById('displayDeptName').innerText = dept.DEPNAME;
-            document.getElementById('displayDeptLoc').innerText = `${dept.BUILDING} • ชั้น ${dept.FL}`;
-            document.getElementById('locationPickerSection').classList.add('hidden');
-            document.getElementById('selectedDeptSection').classList.remove('hidden');
-            document.getElementById('searchAreaSection').classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function resetDeptSelection() {
-            document.getElementById('locationPickerSection').classList.remove('hidden');
-            document.getElementById('selectedDeptSection').classList.add('hidden');
-            document.getElementById('searchAreaSection').classList.add('hidden');
-            auditQueue = []; updateQueueUI();
         }
 
         function debouncedSearch() {
@@ -383,165 +474,225 @@
             else document.getElementById('resultsArea').classList.add('hidden');
         }
 
+        function highlightText(fullText, query) {
+            if (!query || !fullText) return fullText || "";
+            const regex = new RegExp(`(${query})`, 'gi');
+            return String(fullText).replace(regex, '<span class="text-green-500 font-bold">$1</span>');
+        }
+
         async function searchAsset() {
             const q = document.getElementById('assetQuery').value.trim();
             const area = document.getElementById('resultsArea');
-            area.innerHTML = '<div class="p-8 text-center"><div class="spinner mx-auto scale-50 mb-2"></div></div>';
+            area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto"></div></div>';
             area.classList.remove('hidden');
             try {
                 const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
-                const data = await res.json();
-                area.innerHTML = '';
-                if (data.length === 0) area.innerHTML = '<p class="text-center p-4 text-xs text-gray-400">ไม่พบข้อมูล</p>';
-                else {
-                    data.forEach(item => {
-                        const d = document.createElement('div');
-                        d.className = "p-4 bg-white rounded-2xl border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-95";
-                        d.innerHTML = `<div><p class="text-[10px] font-bold text-pink-500">${item.AssetID}</p><p class="text-xs font-bold text-gray-700">${item.AssetName}</p></div><i data-lucide="plus" class="w-4 h-4 text-pink-200"></i>`;
-                        d.onclick = () => { currentAsset = item; openAuditModal(item); };
-                        area.appendChild(d);
-                    });
+                const data = await res.json(); area.innerHTML = '';
+                
+                if (data.length === 0) {
+                    area.innerHTML = '<p class="col-span-full text-center p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบข้อมูล</p>';
+                    return;
                 }
+
+                data.forEach(item => {
+                    const d = document.createElement('div');
+                    d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all relative overflow-hidden";
+                    const highlightedID = highlightText(item.AssetID, q);
+                    const highlightedName = highlightText(item.AssetName, q);
+                    // Use SPEC_DETAIL and ASSET_AGE from the backend mapping
+                    const assetAge = item.Age || item.ASSET_AGE || "--";
+
+                    d.innerHTML = `
+                        <div class="flex-grow pr-4">
+                            <p class="text-[9px] font-bold text-pink-500 uppercase tracking-tighter mb-0.5">${highlightedID}</p>
+                            <p class="text-xs font-bold text-gray-700 leading-tight mb-1">${highlightedName}</p>
+                            <p class="text-[10px] text-gray-400 truncate">${item.Description || item.Description || 'ไม่มีรายละเอียด'}</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="px-2 py-1 bg-pink-50 text-pink-500 text-[8px] font-bold rounded-lg border border-pink-100 whitespace-nowrap">อายุ: ${assetAge}</span>
+                            <i data-lucide="plus-circle" class="w-5 h-5 text-gray-200"></i>
+                        </div>
+                    `;
+                    d.onclick = () => { currentAsset = item; openAuditModal(); };
+                    area.appendChild(d);
+                });
                 lucide.createIcons();
-            } catch (e) { area.innerHTML = '<p class="text-center p-4 text-xs text-red-400">Search Error</p>'; }
+            } catch (e) { area.innerHTML = '<p class="text-center text-red-400">Search Error</p>'; }
         }
 
-        function openAuditModal(asset) {
-            document.getElementById('modalAssetName').innerText = asset.AssetName;
-            document.getElementById('modalAssetId').innerText = `ASSET ID: ${asset.AssetID}`;
+        function openAuditModal() {
+            resetImage('imgPreview', 'imgPlaceholder', 'imgInput');
+            // Mapping values from currentAsset based on search results
+            document.getElementById('modalAssetName').innerText = currentAsset.AssetName;
+            document.getElementById('detailAssetID').innerText = currentAsset.AssetID || '--';
+            
+            // Backend in code.gs provides 'Description' and 'Age' for searchAsset results
+            document.getElementById('detailAssetDesc').innerText = currentAsset.Description || '--';
+            document.getElementById('detailAssetAge').innerText = currentAsset.Age || '--';
+            
             document.getElementById('auditFormModal').classList.remove('hidden');
-            lucide.createIcons();
         }
 
         function openNonRegisterModal() {
+            resetImage('nr_imgPreview', 'nr_imgPlaceholder', 'nr_imgInput');
             document.getElementById('nonRegisterModal').classList.remove('hidden');
-            lucide.createIcons();
+        }
+
+        function resetImage(pId, hId, iId) {
+            currentBase64Image = "";
+            document.getElementById(pId).classList.add('hidden');
+            document.getElementById(hId).classList.remove('hidden');
+            document.getElementById(iId).value = "";
         }
 
         function submitAudit(type) {
             let data = {};
-            if (type === 'EXISTING') {
-                const isPac = document.querySelector('input[name="is_pac"]:checked').value === 'YES';
-                const assetTypeId = document.getElementById('assetTypeId').value;
-                if (!assetTypeId) return showAlert('คำเตือน', 'กรุณาเลือกประเภทอุปกรณ์', 'warning');
+            const suffix = type === 'EXISTING' ? '' : 'nr_';
+            const shifts = Array.from(document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`)).map(c => c.value).join(',');
+            const isPac = document.getElementById(`${suffix}pac_toggle`).checked;
+            const typeIdSelect = document.getElementById(suffix + (type === 'EXISTING' ? 'assetTypeId' : 'asset_type_id'));
+            const typeId = typeIdSelect.value;
 
+            if (type === 'EXISTING') {
                 data = {
-                    NOID: currentAsset.NoID,
                     Asset_ID: currentAsset.AssetID,
-                    Serial: currentAsset.Serial,
-                    Asset_Type_ID: isPac ? assetTypeId + "/PAC" : assetTypeId,
+                    Asset_Type_ID: isPac ? typeId + "/PAC" : typeId,
                     PIORITY_ID: document.getElementById('priorityId').value,
-                    Shift_Work: document.getElementById('shiftWork').value,
-                    Note1: document.getElementById('note2').value, // Map Note2 -> คอลัมน์ U (Note1 ใน Payload)
-                    AssetName: currentAsset.AssetName
+                    Shift_Work: shifts,
+                    Note2: document.getElementById('note2').value,
+                    AssetName: currentAsset.AssetName,
+                    ImageData: currentBase64Image
                 };
                 closeModal('auditFormModal');
             } else {
-                const isPac = document.querySelector('input[name="nr_is_pac"]:checked').value === 'YES';
                 const assetId = document.getElementById('nr_asset_id').value;
-                const assetTypeId = document.getElementById('nr_asset_type_id').value;
-                if (!assetId || !assetTypeId) return showAlert('คำเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
-
+                const brand = document.getElementById('nr_brand_detail').value;
                 data = {
-                    NOID: "",
                     Asset_ID: assetId,
-                    Serial: document.getElementById('nr_serial').value,
-                    Asset_Type_ID: isPac ? assetTypeId + "/PAC" : assetTypeId,
-                    PIORITY_ID: "PIO-004", // Default for Non-Reg
-                    Shift_Work: "เช้า",
-                    Note1: document.getElementById('nr_brand_detail').value,
-                    AssetName: "[นอกทะเบียน] " + document.getElementById('nr_brand_detail').value
+                    Asset_Type_ID: isPac ? typeId + "/PAC" : typeId,
+                    PIORITY_ID: document.getElementById('nr_priorityId').value,
+                    Shift_Work: shifts,
+                    Note2: document.getElementById('nr_note2').value,
+                    AssetName: "[นอกทะเบียน] " + brand,
+                    ImageData: currentBase64Image,
+                    Serial: document.getElementById('nr_serial').value
                 };
                 closeModal('nonRegisterModal');
             }
-
             auditQueue.unshift({ DisplayName: data.AssetName, data: data });
             updateQueueUI();
-            showAlert('สำเร็จ', 'เพิ่มรายการลงในคิวเรียบร้อย', 'success');
-            resetSearchState();
         }
 
         function updateQueueUI() {
-            const list = document.getElementById('auditListItems');
             document.getElementById('auditCount').innerText = auditQueue.length;
-            if (auditQueue.length === 0) {
-                list.innerHTML = '<p class="text-xs text-gray-300 text-center py-12">ไม่มีรายการ</p>';
-                return;
-            }
+            const list = document.getElementById('auditListItems');
             list.innerHTML = auditQueue.map((a, i) => `
-                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] font-bold text-gray-800 mb-1">${a.DisplayName}</p>
-                        <p class="text-[9px] text-pink-500 font-bold uppercase">${a.data.Asset_ID}</p>
+                <div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center border border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
+                            ${a.data.ImageData ? `<img src="${a.data.ImageData}" class="w-full h-full object-cover">` : `<i data-lucide="image" class="w-4 h-4 text-gray-200"></i>`}
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-800 leading-none mb-1">${a.DisplayName}</p>
+                            <p class="text-[9px] text-pink-500 font-bold">${a.data.Asset_ID}</p>
+                        </div>
                     </div>
-                    <button onclick="auditQueue.splice(${i},1);updateQueueUI()" class="p-2 text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <button onclick="auditQueue.splice(${i},1);updateQueueUI();" class="text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
             `).join('');
             lucide.createIcons();
         }
 
-        function openConfirmModal(mode) {
-            if (auditQueue.length === 0) return showAlert('คำเตือน', 'ไม่มีรายการให้บันทึก', 'warning');
+        function submitImmediately(mode) {
+            if (!auditQueue.length) return;
             submitMode = mode;
-            document.getElementById('confirmTitle').innerText = mode === 'DRAFT' ? 'บันทึกฉบับร่าง' : 'ยืนยันการบันทึก';
+            executeSave(null); 
+        }
+
+        function openConfirmModal(mode) {
+            if (!auditQueue.length) return;
+            submitMode = mode;
+            document.getElementById('confirmTitle').innerText = 'ยืนยันการตรวจสอบ';
             document.getElementById('confirmModal').classList.remove('hidden');
-            setTimeout(() => {
-                const c = document.getElementById('signature-pad');
-                c.width = c.parentElement.offsetWidth - 16;
-                c.height = 200;
-                signaturePad.clear();
-            }, 300);
+            handleResize();
         }
 
         async function handleFinalSubmit() {
-            if (signaturePad.isEmpty()) return showAlert('คำเตือน', 'กรุณาลงลายมือชื่อ', 'warning');
-            showProcess("กำลังบันทึกข้อมูล...");
-            
-            const payload = {
-                action: 'saveBulkSurvey',
-                data: {
-                    items: auditQueue.map(item => item.data),
-                    deptId: document.getElementById('selectedDeptId').value,
-                    IT_User_Mail: "staff_it@udonhospital.com",
-                    signature: signaturePad.toDataURL(),
-                    isDraft: submitMode === 'DRAFT' ? 1 : 0,
-                    activityId: "ANNUAL_2026"
-                }
-            };
+            if (signaturePad.isEmpty()) return;
+            executeSave(signaturePad.toDataURL());
+        }
 
+        async function executeSave(signatureData) {
+            const savedItems = [...auditQueue]; 
+            showProcess("กำลังส่งข้อมูล...");
             try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'saveBulkSurvey',
+                        data: {
+                            items: auditQueue.map(i => i.data),
+                            deptId: document.getElementById('selectedDeptId').value,
+                            signature: signatureData,
+                            isDraft: submitMode === 'DRAFT'
+                        }
+                    })
+                });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    auditQueue = []; updateQueueUI();
-                    closeModal('confirmModal'); closeModal('queueModal');
-                    showAlert('สำเร็จ', `บันทึกข้อมูลเรียบร้อยแล้ว`, 'success');
-                } else throw new Error(result.message);
-            } catch (e) {
-                showAlert('Error', 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
-            } finally { hideProcess(); }
+                    closeModal('confirmModal');
+                    closeModal('queueModal');
+                    renderSuccessSlip(result.actionId, savedItems);
+                }
+            } catch (e) { alert("Error: " + e.message); }
+            finally { hideProcess(); }
         }
 
-        function showAlert(title, msg, type) {
-            const modal = document.getElementById('customAlert');
-            const icon = document.getElementById('alertIcon');
-            document.getElementById('alertTitle').innerText = title;
-            document.getElementById('alertMsg').innerText = msg;
-            
-            icon.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ";
-            if (type === 'success') { icon.classList.add('bg-green-50', 'text-green-500'); icon.innerHTML = '<i data-lucide="check-circle" class="w-8 h-8"></i>'; }
-            else if (type === 'error') { icon.classList.add('bg-red-50', 'text-red-500'); icon.innerHTML = '<i data-lucide="alert-triangle" class="w-8 h-8"></i>'; }
-            else { icon.classList.add('bg-orange-50', 'text-orange-500'); icon.innerHTML = '<i data-lucide="info" class="w-8 h-8"></i>'; }
-            
-            modal.classList.remove('hidden');
+        function renderSuccessSlip(actionId, items) {
+            const deptId = document.getElementById('selectedDeptId').value;
+            const deptName = document.getElementById('displayDeptName').innerText;
+            const detailBox = document.getElementById('successDetailList');
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const targetUrl = DEPT_VIEW_URL + encodeURIComponent(deptId);
+            const qrImageUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8&chld=L|1`;
+            const itemsListHtml = items.map(i => `
+                <div class="flex justify-between items-start py-1 border-b border-gray-50 last:border-0">
+                    <span class="text-[9px] text-gray-500 flex-grow pr-2">${i.DisplayName}</span>
+                    <span class="text-[9px] font-bold text-gray-400 whitespace-nowrap">${i.data.Asset_ID}</span>
+                </div>
+            `).join('');
+
+            detailBox.innerHTML = `
+                <div class="flex flex-col items-center mb-6 pt-4 border-t border-dashed border-gray-200">
+                    <div class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm mb-3">
+                        <img id="slipQrImg" src="${qrImageUrl}" class="w-32 h-32" crossorigin="anonymous" onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}';">
+                    </div>
+                    <p class="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em] mb-1">SCAN TO VIEW DEPARTMENT ASSETS</p>
+                    <p class="text-[8px] text-blue-500 underline truncate max-w-full px-4 overflow-hidden break-all">${targetUrl}</p>
+                </div>
+                <div class="space-y-2 border-t border-gray-100 pt-4 mb-4">
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">ลงวันที่:</span> <span class="text-[10px] font-bold text-gray-700">${dateStr} น.</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">หน่วยงาน:</span> <span class="text-[10px] font-bold text-gray-700">${deptName}</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">ACTION ID:</span> <span class="text-[10px] font-bold text-pink-500">${actionId || 'N/A'}</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">จำนวน:</span> <span class="text-[10px] font-bold text-gray-700">${items.length} รายการ</span></div>
+                </div>
+                <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-50">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-1">รายการครุภัณฑ์</p>
+                    <div class="max-h-40 overflow-y-auto">${itemsListHtml}</div>
+                </div>
+                <div class="mt-6 pt-4 border-t border-dashed border-gray-200 text-center">
+                    <p class="text-[9px] text-gray-300">ขอบคุณที่ทำการตรวจสอบระบบครุภัณฑ์</p>
+                    <p class="text-[8px] text-gray-200 uppercase mt-1">Udon Thani Hospital Asset Audit System</p>
+                </div>
+            `;
+
+            document.getElementById('successStatusTitle').innerText = submitMode === 'DRAFT' ? "บันทึกฉบับร่างแล้ว" : "บันทึกสำเร็จ!";
+            document.getElementById('successModal').classList.remove('hidden');
+            auditQueue = []; 
+            updateQueueUI();
             lucide.createIcons();
         }
-
-        function closeAlert() { document.getElementById('customAlert').classList.add('hidden'); }
-        function showProcess(m) { document.getElementById('processMessage').innerText = m; document.getElementById('processOverlay').classList.remove('hidden'); }
-        function hideProcess() { document.getElementById('processOverlay').classList.add('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function resetSearchState() { document.getElementById('assetQuery').value = ''; document.getElementById('resultsArea').classList.add('hidden'); }
 
         async function openScanner(id) {
             document.getElementById('scannerModal').classList.remove('hidden');
@@ -549,11 +700,16 @@
                 await html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
                     document.getElementById(id).value = text;
                     closeScanner();
-                    if(id === 'assetQuery') searchAsset();
+                    if (id === 'assetQuery') searchAsset();
                 });
-            } catch (e) { showAlert('Error', 'ไม่สามารถเปิดกล้องได้', 'error'); closeScanner(); }
+            } catch (e) { alert("Camera error"); closeScanner(); }
         }
-        async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); document.getElementById('scannerModal').classList.add('hidden'); }
+        async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); closeModal('scannerModal'); }
+        function showProcess(m) { document.getElementById('processMessage').innerText = m; document.getElementById('processOverlay').classList.remove('hidden'); }
+        function hideProcess() { document.getElementById('processOverlay').classList.add('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function resetDeptSelection() { location.reload(); }
     </script>
+    <input type="hidden" id="selectedDeptId">
 </body>
 </html>
