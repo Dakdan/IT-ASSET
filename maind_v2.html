@@ -152,19 +152,8 @@
         }
 
         function getTypeName(typeId) {
-            if (!typeId) return 'ไม่ระบุประเภท';
-            
-            // ทำความสะอาดข้อมูลเบื้องต้น
-            const cleanId = String(typeId).trim().toUpperCase();
-        
-            // ค้นหาใน state.assetTypes (ที่ดึงมาจาก InitialData)
-            // ใช้ startsWith เพื่อรองรับกรณีรหัสมีชื่อต่อท้ายมา
-            const t = state.assetTypes.find(x => 
-                cleanId.startsWith(String(x.id).trim().toUpperCase()) || 
-                String(x.id).trim().toUpperCase() === cleanId
-            );
-            
-            return t ? t.name : `อื่นๆ (${typeId})`;
+            const t = state.assetTypes.find(x => String(x.id).trim() === String(typeId).trim());
+            return t ? t.name : 'อุปกรณ์อื่นๆ';
         }
 
         function renderDashboard() {
@@ -274,11 +263,10 @@
             pic.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,2)}`;
 
             const groupedAssets = {};
-            deptLogs.forEach(l => {
-                // แก้ไขบรรทัดล่างนี้เพื่อให้รองรับชื่อ Property ที่หลากหลาย
-                const tID = l.Asset_Type_ID || l.Asset_type_id || l.type_id; 
-                const tName = getTypeName(tID);
-                typeCounts[tName] = (typeCounts[tName] || 0) + 1;
+            deptLogs.forEach(a => {
+                const typeName = getTypeName(a.Asset_Type_ID);
+                if (!groupedAssets[typeName]) groupedAssets[typeName] = [];
+                groupedAssets[typeName].push(a);
             });
 
             const container = document.getElementById('mAssetGroupContainer');
