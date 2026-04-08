@@ -513,8 +513,8 @@
                         d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all relative overflow-hidden mb-2";
                         
                         const highlightedID = highlightText(item.AssetID, q);
-                        const highlightedName = highlightText(item.AssetName, q);
-                        const assetAge = item.Age || item.ASSET_AGE || "--";
+                        const highlightedName = highlightText(item.FullDescription, q); // ใช้ตามที่ Code.gs ส่งมา
+                        const assetAge = item.AgeInfo || "--"; // ใช้ตามที่ Code.gs ส่งมา
             
                         d.innerHTML = `
                             <div class="flex-grow pr-4">
@@ -542,8 +542,8 @@
             document.getElementById('detailAssetID').innerText = currentAsset.AssetID || '--';
             
             // Backend in code.gs provides 'Description' and 'Age' for searchAsset results
-            document.getElementById('detailAssetDesc').innerText = currentAsset.Description || '--';
-            document.getElementById('detailAssetAge').innerText = currentAsset.Age || '--';
+            document.getElementById('modalAssetName').innerText = currentAsset.FullDescription; 
+            document.getElementById('detailAssetAge').innerText = currentAsset.AgeInfo || '--';
             
             document.getElementById('auditFormModal').classList.remove('hidden');
         }
@@ -575,7 +575,7 @@
                     PIORITY_ID: document.getElementById('priorityId').value,
                     Shift_Work: shifts,
                     Note2: document.getElementById('note2').value,
-                    AssetName: currentAsset.AssetName,
+                    AssetName: currentAsset.FullDescription,
                     ImageData: currentBase64Image
                 };
                 closeModal('auditFormModal');
