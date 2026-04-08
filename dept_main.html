@@ -234,35 +234,6 @@ function goToDetail() {
     window.location.href = targetUrl;
 }
 
-/**
- * 3. ตรวจสอบสถานะการทำงาน (Mapping กับ Code.gs)
- * ถ้า URL มี ?DEP_ID=... ให้ทำการ Fetch ข้อมูลมาแสดงผลก่อนหน้าจะเปลี่ยน
- */
-async function fetchFullData(id) {
-    currentDeptId = id;
-    const loader = document.getElementById('loaderModal');
-    loader.classList.remove('hidden');
-
-    try {
-        // ดึงข้อมูลผ่าน Web App (Code.gs)
-        const res = await fetch(`${API_URL}?action=getFullData&DEP_ID=${id}`);
-        const data = await res.json();
-        
-        if (data.error || !data.department) {
-            throw new Error("ไม่พบข้อมูลหน่วยงานในระบบ");
-        }
-
-        // อัปเดต UI หน้าหลัก (เผื่อผู้ใช้ต้องการดูสรุปในหน้านี้ก่อนกดไปต่อ)
-        updateDepartmentUI(data);
-
-    } catch (e) {
-        console.error("Error fetching data:", e);
-        // หากไม่พบข้อมูล ให้แจ้งเตือนและกลับไปหน้าหลัก
-        alert("ไม่พบข้อมูลหน่วยงานรหัสนี้ในฐานข้อมูลโรงพยาบาล");
-    } finally {
-        loader.classList.add('hidden');
-    }
-}
 
         // 2. Fetch ข้อมูลหลัก (Mapping Code.gs)
         async function fetchFullData(id) {
