@@ -189,27 +189,26 @@
             data.forEach((item, idx) => {
                 const row = `
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-center text-slate-400 font-mono text-[11px]" data-label="ลำดับ">${idx + 1}</td>
-                        <td class="px-6 py-4 font-bold text-pink-700" data-label="รหัสครุภัณฑ์">${item.Asset_ID || item.NOID || '-'}</td>
-                        <td class="px-6 py-4" data-label="ประเภท">
-                            <div class="font-medium">${item.Asset_Type || '-'}</div>
-                            <div class="text-[10px] text-slate-400">${item.Priority || '-'}</div>
+                        <td class="px-6 py-4 text-center text-slate-400 font-mono text-[11px]">${idx + 1}</td>
+                        <td class="px-6 py-4 font-bold text-pink-700">${item.Asset_ID || item.NOID}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-medium">${item.Asset_Type}</div>
+                            <div class="text-[10px] text-slate-400">${item.Priority}</div>
                         </td>
-                        <td class="px-6 py-4 text-slate-500 leading-snug max-w-xs" data-label="รายละเอียด">${item.DB_Detail || '-'}</td>
-                        <td class="px-6 py-4 text-center font-bold text-pink-600" data-label="อายุ">${item.DB_Age || '0'}</td>
-                        <td class="px-6 py-4 text-center" data-label="สถานะ">
+                        <td class="px-6 py-4 text-slate-500 leading-snug max-w-xs">${item.DB_Detail || '-'}</td>
+                        <td class="px-6 py-4 text-center font-bold text-pink-600">${item.DB_Age || '0'}</td>
+                        <td class="px-6 py-4 text-center">
                             <span class="px-2 py-1 rounded-md text-[10px] font-bold ${item.CoStatus === 'ปกติ' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
-                                ${item.CoStatus || 'ปกติ'}
+                                ${item.CoStatus}
                             </span>
                         </td>
-                        <td class="px-6 py-4" data-label="ประเภทรายการ">
-                            <span class="text-[10px] text-slate-400"><i class="fas fa-tag mr-1"></i>${item.RegStatus || '-'}</span>
+                        <td class="px-6 py-4">
+                            <span class="text-[10px] text-slate-400">${item.RegStatus}</span>
                         </td>
                     </tr>
                 `;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
-        }
         
         // 2. แก้ไขส่วนสร้างตารางสำหรับพิมพ์ (Print)
         function handlePrint() {
