@@ -272,46 +272,55 @@
             const container = document.getElementById('mAssetGroupContainer');
             
             container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
-                <div>
-                    <div class="flex items-center gap-4 mb-6">
-                        <span class="w-2 h-6 pink-gradient rounded-full"></span>
-                        <h4 class="text-lg font-black text-slate-800 tracking-tight">${cat} <span class="text-pink-500 ml-1">(${groupedAssets[cat].length})</span></h4>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        ${groupedAssets[cat].map(a => `
-                            <div class="flex flex-col sm:flex-row gap-6 p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
-                                <div class="w-full sm:w-32 h-32 bg-slate-50 rounded-3xl border border-slate-100 flex-shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
-                                    <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/' + a.ASSET_IMG_DB : 'https://placehold.co/300x300/f1f5f9/94a3b8?text=NO+IMAGE'}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x300/f1f5f9/94a3b8?text=ERROR'">
+            <div class="mb-10">
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="w-2 h-6 bg-gradient-to-b from-pink-500 to-pink-300 rounded-full"></span>
+                    <h4 class="text-lg font-black text-slate-800 tracking-tight">${cat} <span class="text-pink-500 ml-1">(${groupedAssets[cat].length})</span></h4>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    ${groupedAssets[cat].map(a => `
+                        <div class="flex flex-col sm:flex-row gap-6 p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+                            <div class="w-full sm:w-32 h-32 bg-slate-50 rounded-3xl border border-slate-100 flex-shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
+                                <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/' + a.ASSET_IMG_DB : 'https://placehold.co/300x300/f1f5f9/94a3b8?text=NO+IMAGE'}" 
+                                     class="w-full h-full object-cover" 
+                                     onerror="this.src='https://placehold.co/300x300/f1f5f9/94a3b8?text=ERROR'">
+                            </div>
+        
+                            <div class="flex-1 min-w-0 flex flex-col">
+                                <div class="flex items-center justify-between gap-2 mb-4">
+                                    <div class="flex-1 bg-slate-800 text-white rounded-xl px-4 py-2 shadow-lg shadow-slate-200">
+                                        <span class="block text-[8px] uppercase tracking-widest text-slate-400 font-black">รหัสครุภัณฑ์</span>
+                                        <span class="text-sm font-black tracking-tight">${a.AssetID || '-'}</span>
+                                    </div>
+                                    <div class="bg-pink-500 text-white rounded-xl px-4 py-2 shadow-lg shadow-pink-200 text-center min-w-[90px]">
+                                        <span class="block text-[8px] uppercase tracking-widest text-pink-200 font-black">อายุการใช้งาน</span>
+                                        <span class="text-[11px] font-black leading-none">${a.AgeInfo}</span>
+                                    </div>
                                 </div>
-                                <div class="flex-1 min-w-0 flex flex-col">
-                                    <!-- Highlight Row: Asset ID & Age -->
-                                    <div class="flex items-center justify-between gap-2 mb-4">
-                                        <div class="flex-1 bg-slate-800 text-white rounded-xl px-4 py-2 shadow-lg shadow-slate-200">
-                                            <span class="block text-[8px] uppercase tracking-widest text-slate-400 font-black">รหัสครุภัณฑ์ (Asset ID)</span>
-                                            <span class="text-sm font-black tracking-tight">${a.Asset_ID || 'N/A'}</span>
-                                        </div>
-                                        <div class="bg-pink-500 text-white rounded-xl px-4 py-2 shadow-lg shadow-pink-200 text-center min-w-[70px]">
-                                            <span class="block text-[8px] uppercase tracking-widest text-pink-200 font-black">อายุการใช้งาน</span>
-                                            <span class="text-lg font-black leading-none">${a.AgeInfo || '-'} <small class="text-[9px]"></small></span>
-                                        </div>
-                                    </div>
-                                    <h5 class="text-base font-black text-slate-800 mb-1 truncate">${a.AssetName || 'ไม่ระบุชื่อครุภัณฑ์'}</h5>
-                                    <div class="flex items-center gap-3 mb-4 text-[11px] font-bold">
-                                        <span class="text-slate-400">S/N:</span>
-                                        <span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg">${a.Serial || 'N/A'}</span>
-                                        <span class="text-slate-200">|</span>
-                                        <span class="text-slate-400">NOID:</span>
-                                        <span class="text-slate-500">${a.NOID || '-'}</span>
-                                    </div>
-                                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-dashed border-slate-200 flex-1">
-                                         <p class="spec-text text-slate-500 font-medium leading-relaxed">${a.SPEC_DETAIL || 'ไม่มีข้อมูลรายละเอียดสเปค'}</p>
-                                    </div>
+        
+                                <h5 class="text-base font-black text-slate-800 mb-1 leading-tight line-clamp-2">
+                                    ${a.FullDescription}
+                                </h5>
+        
+                                <div class="flex items-center gap-3 mb-4 text-[11px] font-bold">
+                                    <span class="text-slate-400">S/N:</span>
+                                    <span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg">${a.Serial || 'N/A'}</span>
+                                    <span class="text-slate-200">|</span>
+                                    <span class="text-slate-400">NOID:</span>
+                                    <span class="text-slate-500">${a.NOID || '-'}</span>
+                                </div>
+        
+                                <div class="bg-slate-50/80 p-4 rounded-2xl border border-dashed border-slate-200 flex-1">
+                                     <p class="spec-text text-slate-500 font-medium leading-relaxed text-[11px]">
+                                        ${a.SPEC_DETAIL}
+                                     </p>
                                 </div>
                             </div>
-                        `).join('')}
-                    </div>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('');
+            </div>
+        `).join('');
             
             document.getElementById('modalDept').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
