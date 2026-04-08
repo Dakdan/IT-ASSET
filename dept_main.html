@@ -130,73 +130,32 @@
 
         window.onload = fetchDashboard;
 
-        async function fetchDashboard() {
-            try {
-                const res = await fetch(`${API_URL}?action=getGlobalDashboard`);
-                const data = await res.json();
+       async function init() {
+            const res = await fetch(`${API_URL}?action=getGlobalDashboard`);
+            const data = await res.json();
+            
+            // Render Priorities
+            const pList = document.getElementById('pList');
+            Object.entries(LOOKUP.priorities).forEach(([id, name]) => {
+                const val = data.priorityStats[name] || 0;
+                pList.innerHTML += `<div class="flex justify-between p-3 bg-pink-50 rounded-xl">
+                    <span>${name}</span> <span class="font-bold text-pink-700">${val}</span>
+                </div>`;
+            });
 
-                // 1. อัปเดตกล่องสถิติ
-                document.getElementById('statTotal').innerText = data.totalRecords || 0;
-                document.getElementById('statNormal').innerText = data.statusSummary["ปกติ"] || 0;
-                document.getElementById('statAbnormal').innerText = data.statusSummary["ไม่ปกติ"] || 0;
-                const regRate = data.totalRecords > 0 ? ((data.registryStats["มีทะเบียน"] / data.totalRecords) * 100).toFixed(0) : 0;
-                document.getElementById('statReg').innerText = `${regRate}%`;
-
-                // 2. แสดงรายการ Priorities ตาม LOOKUP
-                renderDistribution('priorityList', data.priorityDistribution, LOOKUP.priorities);
-
-                // 3. แสดงรายการ Types ตาม LOOKUP
-                renderDistribution('typeList', data.typeDistribution, LOOKUP.assetTypes);
-
-                // 4. แสดงตาราง Logs
-                renderLogs(data.allLogs);
-
-            } catch (err) {
-                console.error("Dashboard Error:", err);
-            } finally {
-                document.getElementById('loader').classList.add('hidden');
-            }
+            // Render Asset Types
+            const tList = document.getElementById('tList');
+            Object.entries(LOOKUP.assetTypes).forEach(([id, name]) => {
+                const val = data.typeStats[name] || 0;
+                tList.innerHTML += `<div class="flex justify-between py-2 border-b">
+                    <span class="text-slate-500">${name}</span> <span class="font-bold">${val}</span>
+                </div>`;
+            });
         }
 
-        function renderDistribution(elementId, distData, lookupTable) {
-            const container = document.getElementById(elementId);
-            container.innerHTML = Object.entries(lookupTable).map(([id, name]) => {
-                const count = distData[name] || 0;
-                return `
-                    <div class="flex justify-between items-center p-2 hover:bg-slate-50 rounded-lg">
-                        <span class="text-slate-600">${name}</span>
-                        <span class="font-bold text-pink-600 bg-pink-50 px-2 py-1 rounded">${count}</span>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderLogs(logs) {
-            const tbody = document.getElementById('logTbody');
-            tbody.classList.remove('italic', 'text-slate-400');
-            tbody.innerHTML = logs.map(item => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 font-bold text-pink-700 font-mono">${item.Asset_ID}</td>
-                    <td class="px-6 py-4 text-slate-600 font-medium">
-                        ${item.Asset_Type_Name}<br>
-                        <span class="text-[10px] text-pink-400 font-bold">${item.Priority_Name}</span>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="px-2 py-1 rounded-md font-bold ${item.CoStatus === 'ปกติ' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}">
-                            ${item.CoStatus}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function checkEnter(e) {
-            if (e.key === 'Enter') {
-                const depId = document.getElementById('deptInput').value.trim();
-                if (depId) {
-                    window.location.href = `dept_detail.html?DEP_ID=${depId}`;
-                }
-            }
+        function goToDetail() {
+            const id = document.getElementById('targetDep').value.trim();
+            if (id) window.location.href = `https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=${id}`;
         }
     </script>
 </body>
