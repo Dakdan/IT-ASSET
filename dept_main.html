@@ -172,37 +172,44 @@
         };
 
         // 1. ระบบค้นหาหน่วยงาน
-        function initSearch() {
-            const input = document.getElementById('deptSearchInput');
-            const resultBox = document.getElementById('searchResult');
+       // แก้ไขส่วน initSearch ใน HTML
+function initSearch() {
+    const input = document.getElementById('deptSearchInput');
+    const resultBox = document.getElementById('searchResult');
+    let timeout = null;
 
-            input.oninput = async () => {
-                const q = input.value.trim();
-                if(q.length < 2) { resultBox.classList.add('hidden'); return; }
-
-                // ในกรณีนี้เราจะดึงข้อมูลจาก Master_Department ผ่าน API
-                // สมมติว่าสร้างฟังก์ชันค้นหาเบื้องต้นจาก API คุณ
-                try {
-                    // หมายเหตุ: คุณอาจต้องเพิ่ม action searchDept ใน Code.gs 
-                    // หรือดึง Department ทั้งหมดมาเก็บไว้ใน Local
-                    const res = await fetch(`${API_URL}?action=getFullData&DEP_ID=${q}`);
-                    const data = await res.json();
-                    
-                    if(data.department) {
-                        resultBox.innerHTML = `
-                            <div onclick="selectDept('${data.department.DEP_ID}')" class="p-4 hover:bg-pink-50 cursor-pointer border-b border-slate-50 transition-colors">
-                                <p class="font-black text-slate-800">${data.department.DEPNAME}</p>
-                                <p class="text-xs text-slate-400">ID: ${data.department.DEP_ID} | ${data.department.LOCATION_NAME || ''}</p>
-                            </div>
-                        `;
-                        resultBox.classList.remove('hidden');
-                    } else {
-                        resultBox.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm italic">ไม่พบรหัสแผนกนี้</div>`;
-                        resultBox.classList.remove('hidden');
-                    }
-                } catch(e) { console.error(e); }
-            };
+    input.oninput = () => {
+        clearTimeout(timeout); // เคลียร์คิวเดิมทิ้งถ้าพิมพ์เร็วๆ
+        const q = input.value.trim();
+        
+        if(q.length < 1) { 
+            resultBox.classList.add('hidden'); 
+            return; 
         }
+
+        // รอให้หยุดพิมพ์ 500ms ถึงจะยิง API (ช่วยลดภาระ Server)
+        timeout = setTimeout(async () => {
+            try {
+                // แนะนำ: สร้าง action=searchDept สั้นๆ ใน Code.gs ที่ดึงแค่ชื่อแผนก ไม่ต้องดึง Log
+                const res = await fetch(`${API_URL}?action=getFullData&DEP_ID=${q}`);
+                const data = await res.json();
+                
+                if(data.department) {
+                    resultBox.innerHTML = `
+                        <div onclick="selectDept('${data.department.DEP_ID}')" class="p-4 hover:bg-pink-50 cursor-pointer border-b border-slate-50 transition-colors">
+                            <p class="font-black text-slate-800">${data.department.DEPNAME}</p>
+                            <p class="text-xs text-slate-400">ID: ${data.department.DEP_ID} | ${data.department.LOCATION_NAME || ''}</p>
+                        </div>
+                    `;
+                    resultBox.classList.remove('hidden');
+                } else {
+                    resultBox.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm italic">ไม่พบข้อมูล</div>`;
+                    resultBox.classList.remove('hidden');
+                }
+            } catch(e) { console.error("Search error:", e); }
+        }, 500); 
+    };
+}
 
        /**
  * 1. ฟังก์ชันเมื่อเลือกหน่วยงานจากรายการค้นหา
@@ -236,45 +243,37 @@ function goToDetail() {
 
 
         // 2. Fetch ข้อมูลหลัก (Mapping Code.gs)
-        async function fetchFullData(id) {
-            currentDeptId = id;
-            const loader = document.getElementById('loaderModal');
-            loader.classList.remove('hidden');
+       // ตัวอย่างแนวทางการเขียน Code.gs ให้เร็ว (Fast Lookup)
+function getFullData(depId) {
+  const ssDept = SpreadsheetApp.openById("ID_MASTER_DEPT");
+  const deptSheet = ssDept.getSheetByName("DEPT_MASTER");
+  const deptData = deptSheet.getDataRange().getValues();
+  
+  // สร้าง Map สำหรับค้นหา (เร็วกว่า Loop ปกติมาก)
+  const deptMap = {};
+  for(let i=1; i<deptData.length; i++) {
+    deptMap[deptData[i][0]] = { // สมมติ DEP_ID อยู่คอลัมน์ A
+      DEP_ID: deptData[i][0],
+      DEPNAME: deptData[i][1],
+      LOCATION_NAME: deptData[i][2],
+      FL: deptData[i][3],
+      Tell: deptData[i][4]
+    };
+  }
+  
+  const dept = deptMap[depId];
+  if (!dept) return { error: "Not found" };
 
-            try {
-                const res = await fetch(`${API_URL}?action=getFullData&DEP_ID=${id}`);
-                const data = await res.json();
-                
-                if(data.error || !data.department) throw new Error("ไม่พบข้อมูลหน่วยงาน");
+  // ดึง Log เฉพาะที่จำเป็น (ใช้ Filter บน Array แทนการอ่านทีละบรรทัด)
+  const ssLog = SpreadsheetApp.openById("ID_MASTER_LOGS");
+  const logValues = ssLog.getSheetByName("ASSET_LOGS").getDataRange().getValues();
+  const logs = logValues.filter(row => row[1] == depId); // สมมติ DEP_ID อยู่คอลัมน์ B
 
-                // แสดงผลส่วนข้อมูล
-                document.getElementById('deptInfo').classList.remove('hidden');
-                document.getElementById('logSection').classList.remove('hidden');
-                
-                const d = data.department;
-                document.getElementById('deptName').innerText = d.DEPNAME;
-                document.getElementById('deptIdDisplay').innerText = `ID: ${d.DEP_ID}`;
-                document.getElementById('locName').innerText = d.LOCATION_NAME || '-';
-                document.getElementById('locFloor').innerText = `ชั้น ${d.FL || '-'}`;
-                document.getElementById('locPhone').innerText = d.Tell || '-';
-
-                if(d.photoUrl) {
-                    const img = document.getElementById('deptAvatar');
-                    img.src = d.photoUrl;
-                    img.classList.remove('hidden');
-                    document.getElementById('deptAvatarPlaceholder').classList.add('hidden');
-                }
-
-                allLogs = data.auditLogs || [];
-                renderTable(allLogs);
-
-            } catch(e) {
-                alert(e.message);
-                document.getElementById('deptInfo').classList.add('hidden');
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
+  return {
+    department: dept,
+    auditLogs: logs.map(row => ({ Asset_ID: row[0], Asset_Type: row[2], CoStatus: row[5] })) // ส่งแค่ที่ต้องใช้
+  };
+}
 
         // 3. แสดงผลตาราง
         function renderTable(data) {
