@@ -264,25 +264,27 @@
             const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
             const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
             
-            document.getElementById('mDeptName').innerText = dept.DEPNAME;
-            document.getElementById('mDeptLoc').innerHTML = `
-                <svg class="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-                ${dept.BUILDING} ชั้น ${dept.FL}
-            `;
-            
+            // 1. แก้ไข Syntax รูปภาพ (เติม $ และตัดเลข 0 ที่เกินมา)
             const pic = document.getElementById('mDeptPic').querySelector('img');
-            pic.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,2)}`;
-
+            pic.src = dept.PIC_ID ? `http://googleusercontent.com/profile/picture/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,2)}`;
+        
+            // 2. แก้ไข Logic การเก็บข้อมูล (เพิ่มการ push ข้อมูลลง groupedAssets)
             const groupedAssets = {};
             deptLogs.forEach(l => {
-                // แก้ไขบรรทัดล่างนี้เพื่อให้รองรับชื่อ Property ที่หลากหลาย
                 const tID = l.Asset_Type_ID || l.Asset_type_id || l.type_id; 
                 const tName = getTypeName(tID);
-                typeCounts[tName] = (typeCounts[tName] || 0) + 1;
+                
+                // เก็บข้อมูล Asset ลงกลุ่ม (ถ้าไม่มีบรรทัดนี้ groupedAssets จะว่าง และ Modal จะไม่แสดงอะไร)
+                if (!groupedAssets[tName]) groupedAssets[tName] = [];
+                groupedAssets[tName].push(l); 
+                
+                // ลบหรือ Comment บรรทัด typeCounts ออก เพราะมันทำให้เกิด Error: typeCounts is not defined
+                // typeCounts[tName] = (typeCounts[tName] || 0) + 1; 
             });
-
+        
             const container = document.getElementById('mAssetGroupContainer');
             
+            // 3. Render โดยใช้ตัวแปรเดิมของคุณ (a.AgeInfo, a.FullDescription) ห้ามเปลี่ยนชื่อ
             container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
             <div class="mb-10">
                 <div class="flex items-center gap-4 mb-6">
@@ -299,20 +301,20 @@
                             </div>
         
                             <div class="flex-1 min-w-0 flex flex-col">
-                                    <div class="flex items-center justify-between gap-2 mb-4">
-                                        <div class="flex-1 bg-slate-800 text-white rounded-xl px-4 py-2 shadow-lg">
-                                            <span class="block text-[8px] uppercase text-slate-400 font-black">รหัสครุภัณฑ์</span>
-                                            <span class="text-sm font-black">${a.AssetID || '-'}</span>
-                                        </div>
-                                        <div class="bg-pink-500 text-white rounded-xl px-4 py-2 shadow-lg text-center min-w-[85px]">
-                                            <span class="block text-[8px] uppercase text-pink-200 font-black">อายุการใช้งาน</span>
-                                            <span class="text-[11px] font-black leading-none">${a.AgeInfo}</span>
-                                        </div>
+                                <div class="flex items-center justify-between gap-2 mb-4">
+                                    <div class="flex-1 bg-slate-800 text-white rounded-xl px-4 py-2 shadow-lg">
+                                        <span class="block text-[8px] uppercase text-slate-400 font-black">รหัสครุภัณฑ์</span>
+                                        <span class="text-sm font-black">${a.AssetID || '-'}</span>
                                     </div>
-                                    
-                                    <h5 class="text-base font-black text-slate-800 mb-1 leading-tight line-clamp-2">
-                                        ${a.SPEC_DETAIL}
-                                    </h5>       
+                                    <div class="bg-pink-500 text-white rounded-xl px-4 py-2 shadow-lg text-center min-w-[85px]">
+                                        <span class="block text-[8px] uppercase text-pink-200 font-black">อายุการใช้งาน</span>
+                                        <span class="text-[11px] font-black leading-none">${a.AgeInfo}</span>
+                                    </div>
+                                </div>
+                                
+                                <h5 class="text-base font-black text-slate-800 mb-1 leading-tight line-clamp-2">
+                                    ${a.SPEC_DETAIL}
+                                </h5>        
                                      
                                 <div class="flex items-center gap-3 mb-4 text-[11px] font-bold">
                                     <span class="text-slate-400">S/N:</span>
@@ -332,8 +334,9 @@
                     `).join('')}
                 </div>
             </div>
-        `).join('');
+            `).join('');
             
+            // บรรทัดเปิด Modal
             document.getElementById('modalDept').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
