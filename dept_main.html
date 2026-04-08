@@ -6,34 +6,21 @@
     <title>IT ASSET DASHBOARD - รพ.อุดรธานี</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --pink-primary: #be185d; --pink-light: #fdf2f8; }
-        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
-        .pink-gradient { background: linear-gradient(135deg, #9d174d 0%, #be185d 50%, #f472b6 100%); }
-        .glass-card { background: white; border-radius: 20px; border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 20px -5px rgba(0,0,0,0.05); }
+        body { font-family: 'Kanit', sans-serif; background-color: #fff1f2; }
+        .pink-header { background: linear-gradient(135deg, #be185d 0%, #9d174d 100%); }
     </style>
 </head>
-<body class="text-slate-800">
+<body>
 
-    <div id="loader" class="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-sm">
-        <div class="text-center">
-            <div class="w-12 h-12 border-4 border-pink-100 border-t-pink-600 rounded-full animate-spin mb-2"></div>
-            <p class="text-pink-800 text-sm font-bold">กำลังประมวลผลตามโครงสร้าง LOOKUP...</p>
-        </div>
-    </div>
-
-    <header class="pink-gradient px-4 py-12 shadow-xl no-print">
-        <div class="container mx-auto">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
-                <div class="flex items-center gap-4">
-                    <div class="bg-white p-2 rounded-xl"><img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="h-10"></div>
-                    <div class="text-white">
-                        <h1 class="text-2xl font-bold tracking-tight">ระบบตรวจสอบครุภัณฑ์ไอที (DASHBOARD)</h1>
-                        <p class="text-white/80 text-sm font-light uppercase tracking-wider">IT Department - Udon Thani Hospital</p>
-                    </div>
-                </div>
-               <div class="w-full md:w-96 flex gap-2">
+    <header class="pink-header px-4 py-12 shadow-xl">
+        <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="text-white">
+                <h1 class="text-3xl font-bold">IT ASSET DASHBOARD</h1>
+                <p class="opacity-80">รพ.อุดรธานี - ข้อมูลจริงจากฐานข้อมูล</p>
+            </div>
+            
+            <div class="w-full md:w-96 flex gap-2">
                 <input type="text" id="targetDep" placeholder="ระบุรหัสหน่วยงาน (DEP_ID)..." 
                     class="w-full px-4 py-3 rounded-xl outline-none shadow-lg">
                 <button onclick="goToDetail()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold">ไป</button>
@@ -52,55 +39,8 @@
             <div id="tList" class="space-y-2 text-sm"></div>
         </div>
     </main>
- 
-
-    <main class="container mx-auto px-4 -mt-8 pb-20">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 space-y-6">
-                <div class="glass-card p-6">
-                    <h4 class="font-bold text-slate-700 mb-4 flex items-center gap-2 border-b pb-2 text-sm uppercase">
-                        <i class="fas fa-layer-group text-pink-600"></i> แยกตามกลุ่มงาน (Priorities)
-                    </h4>
-                    <div id="priorityList" class="space-y-3 text-xs">
-                        </div>
-                </div>
-
-                <div class="glass-card p-6">
-                    <h4 class="font-bold text-slate-700 mb-4 flex items-center gap-2 border-b pb-2 text-sm uppercase">
-                        <i class="fas fa-desktop text-pink-600"></i> แยกตามประเภท (Asset Types)
-                    </h4>
-                    <div id="typeList" class="space-y-3 text-xs">
-                        </div>
-                </div>
-            </div>
-
-            <div class="lg:col-span-2">
-                <div class="glass-card overflow-hidden">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                        <h4 class="font-bold text-slate-700 text-sm">ประวัติการตรวจสอบล่าสุด</h4>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
-                            <thead>
-                                <tr class="bg-white text-slate-400 border-b uppercase font-semibold">
-                                    <th class="px-6 py-4">รหัสครุภัณฑ์</th>
-                                    <th class="px-6 py-4">ประเภท/กลุ่มงาน</th>
-                                    <th class="px-6 py-4 text-center">สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logTbody" class="divide-y divide-slate-100 italic text-slate-400">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbznFwIHQsiqqydWSyR7eweKVsfchRyWtbQPZ_ogHma4ZL2X9QnHFb6sqVXvEeXJqwTx/exec';
-        
-        // คัดลอก LOOKUP มาไว้ฝั่ง Client เพื่อแสดงผลชื่อไทยให้ตรงกับ Backend
         const LOOKUP = {
             priorities: {
                 "PIO-001": "ตรวจรักษา (แพทย์)",
@@ -121,9 +61,9 @@
             }
         };
 
-        window.onload = fetchDashboard;
+        const API_URL = 'https://script.google.com/macros/s/AKfycbznFwIHQsiqqydWSyR7eweKVsfchRyWtbQPZ_ogHma4ZL2X9QnHFb6sqVXvEeXJqwTx/exec';
 
-       async function init() {
+        async function init() {
             const res = await fetch(`${API_URL}?action=getGlobalDashboard`);
             const data = await res.json();
             
@@ -150,6 +90,8 @@
             const id = document.getElementById('targetDep').value.trim();
             if (id) window.location.href = `https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=${id}`;
         }
+
+        init();
     </script>
 </body>
 </html>
