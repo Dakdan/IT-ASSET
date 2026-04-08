@@ -16,13 +16,9 @@
         body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .soft-card { background: white; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #f1f5f9; }
         .pink-header { background: var(--gradient-header); border-bottom-left-radius: 32px; border-bottom-right-radius: 32px; }
-        .search-focus:focus-within { ring: 4px; ring-color: rgba(190, 24, 93, 0.1); border-color: var(--primary-pink); }
-        
-        /* ลายน้ำ IT UDH */
         .watermark-bg {
             background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='16' fill='%23be185d' fill-opacity='0.03' font-family='Kanit' text-anchor='middle' transform='rotate(-30 200 200)'%3EIT UDH HOSPITAL%3C/text%3E%3C/svg%3E");
         }
-
         @media (max-width: 768px) {
             .asset-table thead { display: none; }
             .asset-table tr { display: block; margin-bottom: 1rem; padding: 1rem; background: white; border-radius: 16px; border: 1px solid #fce7f3; }
@@ -62,8 +58,7 @@
                 <div class="w-full md:w-96 relative">
                     <div class="flex items-center bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-transparent focus-within:border-pink-500 transition-all">
                         <span class="pl-4 text-slate-400"><i class="fas fa-search"></i></span>
-                        <input type="text" id="deptSearchInput" placeholder="ค้นหาหน่วยงานที่นี่..." 
-                            class="w-full p-4 outline-none text-sm font-medium" autocomplete="off">
+                        <input type="text" id="deptSearchInput" placeholder="ค้นหาหน่วยงานที่นี่..." class="w-full p-4 outline-none text-sm font-medium" autocomplete="off">
                     </div>
                     <div id="searchResult" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 max-h-60 overflow-y-auto z-50 hidden"></div>
                 </div>
@@ -86,7 +81,7 @@
                         <span class="bg-pink-600 text-white text-[10px] px-3 py-1 rounded-lg font-black tracking-widest uppercase">Department Info</span>
                         <span id="deptIdDisplay" class="text-xs font-bold text-slate-400"></span>
                     </div>
-                    <h2 id="deptName" class="text-4xl font-black text-slate-900 mb-6 leading-tight">เลือกหน่วยงานเพื่อดูข้อมูล</h2>
+                    <h2 id="deptName" class="text-4xl font-black text-slate-900 mb-6 leading-tight">กรุณาเลือกหน่วยงาน</h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
@@ -141,8 +136,7 @@
                                 <th class="px-6 py-5 text-center">ลงทะเบียน</th>
                             </tr>
                         </thead>
-                        <tbody id="logTbody" class="divide-y divide-slate-100 text-sm font-medium">
-                            </tbody>
+                        <tbody id="logTbody" class="divide-y divide-slate-100 text-sm font-medium"></tbody>
                     </table>
                 </div>
             </div>
@@ -163,7 +157,6 @@
         let allLogs = [];
         let currentDeptId = null;
 
-        // เริ่มต้นตรวจสอบ URL Params
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
             const depId = params.get('DEP_ID');
@@ -171,124 +164,79 @@
             initSearch();
         };
 
-        // 1. ระบบค้นหาหน่วยงาน
-       // แก้ไขส่วน initSearch ใน HTML
-function initSearch() {
-    const input = document.getElementById('deptSearchInput');
-    const resultBox = document.getElementById('searchResult');
-    let timeout = null;
+        function initSearch() {
+            const input = document.getElementById('deptSearchInput');
+            const resultBox = document.getElementById('searchResult');
+            let timeout = null;
 
-    input.oninput = () => {
-        clearTimeout(timeout); // เคลียร์คิวเดิมทิ้งถ้าพิมพ์เร็วๆ
-        const q = input.value.trim();
-        
-        if(q.length < 1) { 
-            resultBox.classList.add('hidden'); 
-            return; 
+            input.oninput = () => {
+                clearTimeout(timeout);
+                const q = input.value.trim();
+                if(q.length < 1) { resultBox.classList.add('hidden'); return; }
+
+                timeout = setTimeout(async () => {
+                    try {
+                        const res = await fetch(`${API_URL}?action=getFullData&DEP_ID=${encodeURIComponent(q)}`);
+                        const data = await res.json();
+                        if(data.department) {
+                            resultBox.innerHTML = `
+                                <div onclick="fetchFullData('${data.department.DEP_ID}')" class="p-4 hover:bg-pink-50 cursor-pointer border-b border-slate-50 transition-colors">
+                                    <p class="font-black text-slate-800">${data.department.DEPNAME}</p>
+                                    <p class="text-xs text-slate-400">ID: ${data.department.DEP_ID} | ${data.department.LOCATION_NAME || ''}</p>
+                                </div>`;
+                            resultBox.classList.remove('hidden');
+                        } else {
+                            resultBox.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm italic">ไม่พบข้อมูล</div>`;
+                            resultBox.classList.remove('hidden');
+                        }
+                    } catch(e) { console.error("Search error:", e); }
+                }, 500);
+            };
         }
 
-        // รอให้หยุดพิมพ์ 500ms ถึงจะยิง API (ช่วยลดภาระ Server)
-        timeout = setTimeout(async () => {
+        async function fetchFullData(depId) {
+            const loader = document.getElementById('loaderModal');
+            const resultBox = document.getElementById('searchResult');
+            loader.classList.remove('hidden');
+            resultBox.classList.add('hidden');
+            currentDeptId = depId;
+
             try {
-                // แนะนำ: สร้าง action=searchDept สั้นๆ ใน Code.gs ที่ดึงแค่ชื่อแผนก ไม่ต้องดึง Log
-                const res = await fetch(`${API_URL}?action=getFullData&DEP_ID=${q}`);
+                const res = await fetch(`${API_URL}?action=getFullData&DEP_ID=${depId}`);
                 const data = await res.json();
-                
-                if(data.department) {
-                    resultBox.innerHTML = `
-                        <div onclick="selectDept('${data.department.DEP_ID}')" class="p-4 hover:bg-pink-50 cursor-pointer border-b border-slate-50 transition-colors">
-                            <p class="font-black text-slate-800">${data.department.DEPNAME}</p>
-                            <p class="text-xs text-slate-400">ID: ${data.department.DEP_ID} | ${data.department.LOCATION_NAME || ''}</p>
-                        </div>
-                    `;
-                    resultBox.classList.remove('hidden');
-                } else {
-                    resultBox.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm italic">ไม่พบข้อมูล</div>`;
-                    resultBox.classList.remove('hidden');
+
+                if (data.department) {
+                    document.getElementById('deptName').innerText = data.department.DEPNAME;
+                    document.getElementById('deptIdDisplay').innerText = `ID: ${data.department.DEP_ID}`;
+                    document.getElementById('locName').innerText = data.department.LOCATION_NAME || '-';
+                    document.getElementById('locFloor').innerText = data.department.FL || '-';
+                    document.getElementById('locPhone').innerText = data.department.Tell || '-';
+
+                    allLogs = data.auditLogs || [];
+                    renderTable(allLogs);
+
+                    document.getElementById('deptInfo').classList.remove('hidden');
+                    document.getElementById('logSection').classList.remove('hidden');
                 }
-            } catch(e) { console.error("Search error:", e); }
-        }, 500); 
-    };
-}
+            } catch (e) {
+                console.error("Fetch error:", e);
+                alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
 
-       /**
- * 1. ฟังก์ชันเมื่อเลือกหน่วยงานจากรายการค้นหา
- */
-function selectDept(id) {
-    // ซ่อน Dropdown ค้นหา
-    document.getElementById('searchResult').classList.add('hidden');
-    document.getElementById('deptSearchInput').value = '';
-    
-    // นำทางไปยังหน้ารายละเอียดพร้อม DEP_ID ทันที
-    const targetUrl = `https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=${id}`;
-    window.location.href = targetUrl;
-}
-
-/**
- * 2. ปรับปรุงปุ่ม "ดูรายละเอียดเชิงลึก" ในหน้าจอ
- */
-function goToDetail() {
-    // ตรวจสอบว่ามี currentDeptId หรือไม่ (กรณีโหลดหน้าจาก URL เดิม)
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('DEP_ID') || currentDeptId;
-
-    if (!id) {
-        alert("กรุณาเลือกหน่วยงานก่อน");
-        return;
-    }
-
-    const targetUrl = `https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=${id}`;
-    window.location.href = targetUrl;
-}
-
-
-        // 2. Fetch ข้อมูลหลัก (Mapping Code.gs)
-       // ตัวอย่างแนวทางการเขียน Code.gs ให้เร็ว (Fast Lookup)
-function getFullData(depId) {
-  const ssDept = SpreadsheetApp.openById("ID_MASTER_DEPT");
-  const deptSheet = ssDept.getSheetByName("DEPT_MASTER");
-  const deptData = deptSheet.getDataRange().getValues();
-  
-  // สร้าง Map สำหรับค้นหา (เร็วกว่า Loop ปกติมาก)
-  const deptMap = {};
-  for(let i=1; i<deptData.length; i++) {
-    deptMap[deptData[i][0]] = { // สมมติ DEP_ID อยู่คอลัมน์ A
-      DEP_ID: deptData[i][0],
-      DEPNAME: deptData[i][1],
-      LOCATION_NAME: deptData[i][2],
-      FL: deptData[i][3],
-      Tell: deptData[i][4]
-    };
-  }
-  
-  const dept = deptMap[depId];
-  if (!dept) return { error: "Not found" };
-
-  // ดึง Log เฉพาะที่จำเป็น (ใช้ Filter บน Array แทนการอ่านทีละบรรทัด)
-  const ssLog = SpreadsheetApp.openById("ID_MASTER_LOGS");
-  const logValues = ssLog.getSheetByName("ASSET_LOGS").getDataRange().getValues();
-  const logs = logValues.filter(row => row[1] == depId); // สมมติ DEP_ID อยู่คอลัมน์ B
-
-  return {
-    department: dept,
-    auditLogs: logs.map(row => ({ Asset_ID: row[0], Asset_Type: row[2], CoStatus: row[5] })) // ส่งแค่ที่ต้องใช้
-  };
-}
-
-        // 3. แสดงผลตาราง
         function renderTable(data) {
             const tbody = document.getElementById('logTbody');
             document.getElementById('recordCount').innerText = data.length;
             tbody.innerHTML = '';
-
             data.forEach((item, idx) => {
                 const row = `
                     <tr class="hover:bg-pink-50/30 transition-colors">
                         <td class="px-6 py-5 text-center text-slate-400 font-bold" data-label="#">${idx + 1}</td>
-                        <td class="px-6 py-5 font-black text-pink-700" data-label="รหัส">${item.Asset_ID || item.NOID}</td>
+                        <td class="px-6 py-5 font-black text-pink-700" data-label="รหัส">${item.Asset_ID || item.NOID || '-'}</td>
                         <td class="px-6 py-5" data-label="ประเภท">
                             <div class="text-slate-900 font-bold">${item.Asset_Type || '-'}</div>
-                            <div class="text-[10px] text-slate-400 uppercase tracking-tighter">${item.Priority || '-'}</div>
                         </td>
                         <td class="px-6 py-5 text-slate-600 max-w-xs truncate" data-label="รายละเอียด">${item.DB_Detail || '-'}</td>
                         <td class="px-6 py-5 text-center font-black text-pink-600" data-label="อายุ">${item.DB_Age || '0'}</td>
@@ -300,35 +248,22 @@ function getFullData(depId) {
                         <td class="px-6 py-5 text-center" data-label="ทะเบียน">
                             <span class="text-[10px] font-bold text-slate-400">${item.RegStatus || '-'}</span>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
         }
 
-        // 4. ฟังชั่นอื่นๆ (Print, Excel, Navigation)
-       
+        function goToDetail() {
+            if (!currentDeptId) return alert("กรุณาเลือกหน่วยงาน");
+            window.location.href = `https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=${currentDeptId}`;
+        }
 
         function handlePrint() {
             document.getElementById('printDeptName').innerText = document.getElementById('deptName').innerText;
             document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
-            
-            let html = `<table class="w-full" style="border-collapse: collapse; width: 100%;">
-                <thead><tr style="background:#f1f5f9;">
-                    <th style="border:1px solid #ddd; padding:8px;">รหัส</th>
-                    <th style="border:1px solid #ddd; padding:8px;">รายการ</th>
-                    <th style="border:1px solid #ddd; padding:8px;">สถานะ</th>
-                </tr></thead><tbody>`;
-            
-            allLogs.forEach(item => {
-                html += `<tr>
-                    <td style="border:1px solid #ddd; padding:8px;">${item.Asset_ID || item.NOID}</td>
-                    <td style="border:1px solid #ddd; padding:8px;">${item.Asset_Type}</td>
-                    <td style="border:1px solid #ddd; padding:8px; text-align:center;">${item.CoStatus}</td>
-                </tr>`;
-            });
-            html += `</tbody></table>`;
-            document.getElementById('printTableContainer').innerHTML = html;
+            let html = `<table style="border-collapse:collapse;width:100%;border:1px solid #ddd"><thead><tr style="background:#f1f5f9"><th>รหัส</th><th>รายการ</th><th>สถานะ</th></tr></thead><tbody>`;
+            allLogs.forEach(i => html += `<tr><td style="border:1px solid #ddd;padding:8px">${i.Asset_ID || i.NOID}</td><td style="border:1px solid #ddd;padding:8px">${i.Asset_Type}</td><td style="border:1px solid #ddd;padding:8px">${i.CoStatus}</td></tr>`);
+            document.getElementById('printTableContainer').innerHTML = html + `</tbody></table>`;
             window.print();
         }
 
@@ -341,14 +276,9 @@ function getFullData(depId) {
 
         function filterLogs() {
             const q = document.getElementById('logFilter').value.toLowerCase();
-            const filtered = allLogs.filter(i => 
-                String(i.Asset_ID).toLowerCase().includes(q) || 
-                String(i.Asset_Type).toLowerCase().includes(q)
-            );
+            const filtered = allLogs.filter(i => String(i.Asset_ID).toLowerCase().includes(q) || String(i.Asset_Type).toLowerCase().includes(q));
             renderTable(filtered);
         }
-
-        function goHome() { location.href = "index.html"; }
     </script>
 </body>
 </html>
