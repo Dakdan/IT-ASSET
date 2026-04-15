@@ -182,7 +182,7 @@
                     <i class="fas fa-external-link-alt text-xs"></i> ดูรายละเอียดเพิ่มเติม
                 </a>
                 <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center">
-                    <i class=""></i>❌
+                    ❌
                 </button>
             </div>
         </div>
@@ -312,12 +312,10 @@
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
         if(!dept) return;
         
-        // อัปเดตหัวข้อและลิงก์
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${dept.BUILDING} • ชั้น ${dept.FL}`;
         document.getElementById('mDeptPic').querySelector('img').src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/200x200/fff1f2/ec4899?text=D`;
         
-        // ตั้งค่าลิงก์ไปยังหน้าละเอียดเพิ่มเติม
         document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
 
         const byType = {};
@@ -334,21 +332,26 @@
                         const pri = getPriority(a.PIORITY_ID); 
                         const aImg = a.ASSET_IMG_DB ? `https://lh3.googleusercontent.com/d/${a.ASSET_IMG_DB}` : 'https://placehold.co/400x400/f8fafc/cbd5e1?text=NO+IMAGE'; 
                         return `
-                            <div class="soft-card bg-white p-5 flex gap-6">
-                                <div class="w-24 h-24 rounded-2xl border flex-shrink-0 overflow-hidden bg-slate-50">
+                            <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 hover:border-pink-200">
+                                <div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border flex-shrink-0 overflow-hidden bg-slate-50 shadow-inner">
                                     <img src="${aImg}" class="w-full h-full object-cover">
                                 </div>
                                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                                     <div>
-                                        <div class="flex justify-between items-start mb-2">
-                                            <span class="text-[9px] font-black bg-slate-800 text-white px-2 py-0.5 rounded-lg shadow-sm">#${a.AssetID || 'N/A'}</span>
-                                            <span class="text-[9px] font-black px-2 py-0.5 rounded-lg border ${pri.color} uppercase"><i class="fas ${pri.icon} mr-1.5"></i>${pri.name}</span>
+                                        <div class="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2">
+                                            <!-- ส่วนที่ปรับปรุง: ปรับรหัสครุภัณฑ์เป็นสีชมพูเข้มสดใส และแสดงเต็มแถวบนสมาร์ทโฟน -->
+                                            <div class="bg-pink-600 text-white px-4 py-2 rounded-xl shadow-lg shadow-pink-100 w-full sm:w-auto text-center sm:text-left transition-transform hover:scale-[1.02]">
+                                                <p class="text-[8px] text-pink-200 font-bold uppercase leading-none mb-1 tracking-[0.15em]">ASSET ID</p>
+                                                <p class="text-sm font-black tracking-tight drop-shadow-sm">#${a.AssetID || 'N/A'}</p>
+                                            </div>
+                                           
                                         </div>
-                                        <h5 class="text-xs font-bold text-slate-700 uppercase leading-normal line-clamp-2">${a.FullDescription}</h5>
+                                        <h5 class="text-sm font-bold text-slate-700 uppercase leading-normal line-clamp-2 mb-2">${a.FullDescription}</h5>
                                     </div>
-                                    <div class="mt-4 flex flex-wrap gap-2">
+                                    <div class="mt-2 flex flex-wrap gap-2 pt-2 border-t border-slate-50">
                                         <p class="text-[10px] text-slate-400 font-bold uppercase w-full">S/N: ${a.Serial || '-'}</p>
                                         <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">${a.AgeInfo || 'N/A'}</span>
+                                         <span class="text-[9px] font-black px-3 py-2 rounded-xl border ${pri.color} uppercase w-full sm:w-auto text-center flex items-center justify-center gap-2"><i class="fas ${pri.icon}"></i>${pri.name}</span>
                                     </div>
                                 </div>
                             </div>`; 
