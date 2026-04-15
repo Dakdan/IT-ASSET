@@ -3,218 +3,277 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IT Asset Audit</title>
-
+<title>IT ASSET AUDIT</title>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-    body{
-        background:#f8fafc;
+body { background:#f8fafc; }
+
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    z-index: 10;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    #modalDept > div {
+        border-radius: 1.5rem;
+        max-height: 100vh;
     }
-
-    .pink-gradient{
-        background:linear-gradient(135deg,#ec4899,#f472b6);
-    }
-
-    .main-card{
-        background:white;
-        border-radius:2rem;
-        border:1px solid #f1f5f9;
-        box-shadow:0 10px 30px rgba(0,0,0,0.04);
-    }
-
-    .nav-container{
-        display:flex;
-        gap:1rem;
-        flex-wrap:wrap;
-        justify-content:center;
-        margin-top:1.5rem;
-    }
-
-    .nav-btn{
-        padding:.75rem 1.5rem;
-        border-radius:999px;
-        font-weight:600;
-        font-size:.9rem;
-        transition:.2s;
-    }
-
-    .nav-btn.active{
-        background:#ec4899;
-        color:white;
-    }
-
-    .nav-btn.inactive{
-        background:white;
-        border:1px solid #e2e8f0;
-        color:#334155;
-    }
-
-    /* Responsive container */
-    .page-container{
-        max-width:1400px;
-        margin:auto;
-        padding:1.5rem;
-    }
-
-    @media (max-width:768px){
-        .main-card{
-            padding:2rem !important;
-        }
-
-        .nav-container{
-            flex-direction:column;
-            align-items:stretch;
-        }
-
-        .nav-btn{
-            width:100%;
-        }
-    }
-
-    /* Modal Responsive */
-    .modal-overlay{
-        position:fixed;
-        inset:0;
-        background:rgba(15,23,42,.5);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        padding:1rem;
-        z-index:50;
-    }
-
-    .modal-content{
-        background:white;
-        width:100%;
-        max-width:900px;
-        max-height:90vh;
-        overflow:auto;
-        border-radius:2rem;
-        padding:2rem;
-        box-shadow:0 25px 50px rgba(0,0,0,.15);
-    }
-
-    @media(max-width:640px){
-        .modal-content{
-            border-radius:1.5rem;
-            padding:1.5rem;
-        }
-    }
+}
 </style>
 </head>
 
-<body>
+<body class="min-h-screen">
 
-<div class="page-container">
-
-    <!-- Header -->
-    <div class="flex flex-col items-center text-center mb-8">
-        <div class="text-3xl font-black tracking-wide text-slate-800">Logo</div>
-        <h1 class="text-3xl md:text-4xl font-black text-slate-900 mt-4"># IT ASSET AUDIT</h1>
-        <p class="text-slate-500 mt-2">Udonthani Hospital</p>
-    </div>
-
-    <!-- Navigation -->
-    <div class="nav-container">
-        <button class="nav-btn active">หน้าหลัก</button>
-        <button class="nav-btn inactive" onclick="window.location.href='survey_v4_form.html'">เพิ่มการตรวจสอบ</button>
-    </div>
-
-    <!-- Welcome Card -->
-    <div class="main-card p-10 mb-8 flex flex-col md:flex-row items-start md:items-center gap-8 relative overflow-hidden mt-8">
-        <div class="relative z-10">
-            <div class="w-12 h-12 bg-slate-100 rounded-2xl mb-4"></div>
-            <div class="h-4 w-48 bg-slate-100 rounded-full mb-3"></div>
-            <div class="h-8 w-32 bg-slate-100 rounded-full"></div>
-        </div>
-        <div class="absolute right-0 top-0 w-64 h-64 bg-pink-50 rounded-full -mr-20 -mt-20 opacity-50"></div>
-    </div>
-
-    <!-- Search & Title -->
-    <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<!-- HEADER -->
+<header class="bg-white border-b border-slate-200 px-4 md:px-6 py-4 md:py-5 sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-            <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                <span class="w-2 h-8 pink-gradient rounded-full"></span>
-                หน่วยงานที่ตรวจสอบแล้ว
-            </h2>
-            <p id="lastUpdate" class="text-slate-400 text-sm ml-5 mt-1">
-                สรุปจำนวนอุปกรณ์แยกตามประเภท และรายละเอียดการตรวจสอบ
-            </p>
+            <h1 class="text-xl md:text-2xl font-black text-slate-800">IT ASSET AUDIT</h1>
+            <p id="lastUpdate" class="text-xs text-slate-400 mt-1"></p>
         </div>
 
-        <div class="relative w-full md:w-auto">
-            <input type="text"
-                   id="searchInput"
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <input id="searchInput"
+                   type="text"
                    oninput="renderDashboard()"
-                   placeholder="ค้นหาหน่วยงาน หรือ อาคาร..."
-                   class="w-full md:w-96 bg-white border border-slate-200 rounded-2xl px-6 py-4 text-sm outline-none focus:ring-4 ring-pink-500/10 shadow-sm transition-all">
+                   placeholder="ค้นหาหน่วยงาน / อาคาร"
+                   class="px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm w-full sm:w-64">
 
-            <svg class="w-5 h-5 absolute right-5 top-4 text-slate-300"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      stroke-width="2.5"
-                      stroke-linecap="round">
-                </path>
-            </svg>
-        </div>
-    </div>
+            <div class="text-sm text-slate-600">
+                หน่วยงาน: <span id="statDepts" class="font-bold text-slate-800">0</span>
+            </div>
 
-    <!-- Summary Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                หน่วยงานที่ตรวจแล้ว
-            </p>
-            <div id="statDepts" class="text-3xl font-black text-slate-800">-</div>
-        </div>
-
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                อุปกรณ์ทั้งหมดที่พบ
-            </p>
-            <div id="statAssets" class="text-3xl font-black text-pink-500">-</div>
-        </div>
-
-        <div class="bg-slate-800 p-6 rounded-[2rem] text-white shadow-xl shadow-slate-200">
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                สถานะระบบ
-            </p>
-            <div class="text-sm font-bold text-emerald-400 flex items-center gap-2">
-                <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                พร้อมเชื่อมต่อข้อมูล Master Sheet
+            <div class="text-sm text-slate-600">
+                ครุภัณฑ์: <span id="statAssets" class="font-bold text-slate-800">0</span>
             </div>
         </div>
     </div>
+</header>
 
-    <!-- Content Area (Logic เดิมทำงานที่นี่) -->
-    <div id="contentArea" class="space-y-16">
-        <div class="text-center py-32 text-slate-300 font-medium italic">
-            กำลังรวบรวมข้อมูลจาก Master Sheets...
-        </div>
-    </div>
+<!-- CONTENT -->
+<main class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
+    <div id="contentArea"></div>
+</main>
 
-</div>
+<!-- MODAL -->
+<div id="modalDept"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
 
-<!-- Modal (โครงสร้างเดิม ไม่แตะ logic) -->
-<div id="detailModal" class="modal-overlay hidden">
-    <div class="modal-content">
-        <h3 class="text-2xl font-bold mb-6 text-slate-800">
-            ชื่อหน่วยงาน
-        </h3>
+    <div class="bg-white w-full max-w-7xl max-h-[95vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
 
-        <div id="modalContent">
-            <!-- Logic showDetail() เติมข้อมูลตรงนี้ -->
-        </div>
+        <!-- Header -->
+        <div class="p-6 md:p-8 border-b border-slate-200 flex justify-between items-start gap-4">
 
-        <div class="mt-8 text-right">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6 w-full">
+
+                <div id="mDeptPic"
+                     class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0">
+                    <img src="" class="w-full h-full object-cover">
+                </div>
+
+                <div class="min-w-0">
+                    <h3 id="mDeptName" class="text-xl md:text-3xl font-black text-slate-800 break-words"></h3>
+                    <div id="mDeptLoc" class="text-slate-500 mt-1 text-sm flex items-center gap-2 flex-wrap"></div>
+                </div>
+
+            </div>
+
             <button onclick="closeModal()"
-                    class="px-6 py-3 bg-slate-800 text-white rounded-xl hover:opacity-90 transition">
-                ปิดหน้าต่างนี้
+                    class="text-slate-400 hover:text-slate-700 text-xl font-bold flex-shrink-0">
+                ✕
             </button>
         </div>
+
+        <!-- Detail Container -->
+        <div id="mAssetGroupContainer"
+             class="p-4 md:p-8 overflow-y-auto flex-1 bg-slate-50">
+        </div>
+
     </div>
 </div>
+
+
+<!-- SCRIPT (ไม่แก้ไข) -->
+<script>
+const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
+let state = { logs: [], depts: [], assetTypes: [] };
+
+async function init() {
+    try {
+        const ts = new Date().getTime();
+        const [logRes, deptRes, initRes] = await Promise.all([
+            fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
+            fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
+            fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
+        ]);
+        state.logs = logRes || [];
+        state.depts = deptRes || [];
+        state.assetTypes = initRes.assetTypes || [];
+        document.getElementById('lastUpdate').innerText =
+            `อัปเดตข้อมูลเมื่อ: ${new Date().toLocaleString('th-TH')}`;
+        renderDashboard();
+    } catch (err) {
+        console.error(err);
+        document.getElementById('contentArea').innerHTML =
+            `<p class="text-center py-20 text-red-500 font-bold">ไม่สามารถเชื่อมต่อ Google Sheets ได้</p>`;
+    }
+}
+
+function getTypeName(typeId) {
+    const t = state.assetTypes.find(x =>
+        String(x.id).trim() === String(typeId).trim());
+    return t ? t.name : 'อุปกรณ์อื่นๆ';
+}
+
+function renderDashboard() {
+    const contentArea = document.getElementById('contentArea');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+
+    const activeDeptIds =
+        [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
+
+    let filteredDepts = state.depts.filter(d =>
+        activeDeptIds.includes(String(d.DEP_ID).trim()) &&
+        (d.DEPNAME.toLowerCase().includes(search) ||
+         d.BUILDING.toLowerCase().includes(search))
+    );
+
+    document.getElementById('statDepts').innerText =
+        filteredDepts.length;
+    document.getElementById('statAssets').innerText =
+        state.logs.length.toLocaleString();
+
+    const groupedData = {};
+    filteredDepts.forEach(d => {
+        const b = d.BUILDING || "ไม่ระบุอาคาร";
+        const f = `ชั้น ${d.FL || '?'}`;
+        if (!groupedData[b]) groupedData[b] = {};
+        if (!groupedData[b][f]) groupedData[b][f] = [];
+        groupedData[b][f].push(d);
+    });
+
+    const buildings = Object.keys(groupedData).sort();
+    if (buildings.length === 0) {
+        contentArea.innerHTML =
+            `<div class="text-center py-20 text-slate-400 italic">ไม่พบข้อมูลหน่วยงานที่ตรวจสอบ</div>`;
+        return;
+    }
+
+    let html = "";
+    buildings.forEach(building => {
+        html += `
+        <section>
+            <div class="sticky-header py-4 mb-8 border-b border-slate-200">
+                <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
+            </div>`;
+
+        const floors = Object.keys(groupedData[building]).sort();
+        floors.forEach(floor => {
+            html += `
+            <div class="mb-12">
+                <h4 class="text-xs font-black text-pink-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 ml-2">
+                    ${floor} <span class="flex-1 h-px bg-pink-100"></span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${groupedData[building][floor].map(dept => {
+                        const deptLogs =
+                            state.logs.filter(l =>
+                                String(l.DEPT_ID).trim() ===
+                                String(dept.DEP_ID).trim());
+
+                        const deptImg = dept.PIC_ID
+                            ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}`
+                            : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${dept.DEPNAME.substring(0,1)}`;
+
+                        return `
+                        <div onclick="showDetail('${dept.DEP_ID}')"
+                             class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer">
+                            <div class="flex items-start gap-4 mb-4">
+                                <div class="w-16 h-16 rounded-2xl overflow-hidden border bg-slate-50">
+                                    <img src="${deptImg}" class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0">
+                                    <h5 class="text-sm font-bold text-slate-800 line-clamp-2">${dept.DEPNAME}</h5>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase">${building} • ${floor}</p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-800 rounded-2xl px-4 py-3 text-white text-sm font-bold">
+                                รวมทั้งหมด ${deptLogs.length} เครื่อง
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+        });
+        html += `</section>`;
+    });
+
+    contentArea.innerHTML = html;
+}
+
+function showDetail(deptId) {
+    const dept = state.depts.find(d =>
+        String(d.DEP_ID).trim() === String(deptId).trim());
+
+    const deptLogs =
+        state.logs.filter(l =>
+            String(l.DEPT_ID).trim() === String(deptId).trim());
+
+    document.getElementById('mDeptName').innerText = dept.DEPNAME;
+    document.getElementById('mDeptLoc').innerHTML =
+        `${dept.BUILDING} ชั้น ${dept.FL}`;
+
+    const pic =
+        document.getElementById('mDeptPic').querySelector('img');
+    pic.src = dept.PIC_ID
+        ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}`
+        : '';
+
+    const groupedAssets = {};
+    deptLogs.forEach(a => {
+        const typeName = getTypeName(a.Asset_Type_ID);
+        if (!groupedAssets[typeName]) groupedAssets[typeName] = [];
+        groupedAssets[typeName].push(a);
+    });
+
+    const container =
+        document.getElementById('mAssetGroupContainer');
+
+    container.innerHTML =
+        Object.keys(groupedAssets).sort().map(cat => `
+        <div class="mb-6">
+            <h4 class="text-lg font-bold mb-3">${cat} (${groupedAssets[cat].length})</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${groupedAssets[cat].map(a => `
+                    <div class="p-4 border rounded-xl bg-white">
+                        <div class="font-bold">${a.AssetID || '-'}</div>
+                        <div class="text-sm text-slate-500">${a.specdetail || ''}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('modalDept').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    document.getElementById('modalDept').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+window.onclick = function(e) {
+    if (e.target == document.getElementById('modalDept'))
+        closeModal();
+}
+
+window.onload = init;
+</script>
 
 </body>
 </html>
