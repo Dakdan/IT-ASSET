@@ -169,9 +169,7 @@
 
 <!-- Modal Detail -->
 <div id="modalDept" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[60] p-4">
-    <div class="bg-white w-full max-w-6xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden modal-enter">
-        
-        <!-- Modal Header -->
+    <div class="bg-white w-full max-w-6xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden">
         <div class="p-6 md:p-8 border-b border-pink-50 flex justify-between items-center bg-white">
             <div class="flex items-center gap-5">
                 <div id="mDeptPic" class="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden bg-pink-50 border-2 border-pink-100 p-1 flex-shrink-0">
@@ -186,18 +184,14 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-
-        <!-- Modal Body -->
-        <div id="mAssetGroupContainer" class="p-6 md:p-10 overflow-y-auto flex-1 bg-pink-50/20 space-y-10">
-            <!-- Dynamic Groups here -->
-        </div>
-
-        <!-- Modal Footer -->
+        <!-- แก้ไข: ส่วนแสดงรายการอุปกรณ์ตามตัวอย่างใหม่ -->
+        <div id="mAssetGroupContainer" class="p-6 md:p-10 overflow-y-auto flex-1 bg-pink-50/20 space-y-10"></div>
         <div class="px-8 py-4 bg-white border-t border-pink-50 flex justify-end no-print">
              <button onclick="closeModal()" class="px-8 py-2 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all">ปิดหน้าต่าง</button>
         </div>
     </div>
 </div>
+
 
 <script>
     const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
@@ -330,18 +324,15 @@
         contentArea.innerHTML = html;
     }
 
-    function showDetail(deptId) {
+     function showDetail(deptId) {
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
         const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
+        
+        if(!dept) return;
 
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
-        document.getElementById('mDeptLoc').innerHTML = `
-            <i class="fas fa-map-marker-alt text-pink-500"></i>
-            ${dept.BUILDING} • ชั้น ${dept.FL}
-        `;
-
-        const pic = document.getElementById('mDeptPic').querySelector('img');
-        pic.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/200x200/fff1f2/ec4899?text=${dept.DEPNAME.substring(0,1)}`;
+        document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${dept.BUILDING} • ชั้น ${dept.FL}`;
+        document.getElementById('mDeptPic').querySelector('img').src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/200x200/fff1f2/ec4899?text=${dept.DEPNAME.substring(0,1)}`;
 
         const groupedAssets = {};
         deptLogs.forEach(a => {
@@ -350,22 +341,23 @@
             groupedAssets[typeName].push(a);
         });
 
-        const container = document.getElementById('mAssetGroupContainer');
-        container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
+        document.getElementById('mAssetGroupContainer').innerHTML = Object.keys(groupedAssets).sort().map(cat => `
             <div>
                 <div class="flex items-center gap-3 mb-6">
                     <span class="w-2 h-6 pink-gradient rounded-full"></span>
                     <h4 class="text-lg font-black text-slate-800">${cat} <span class="text-pink-500 ml-1 font-bold text-sm">(${groupedAssets[cat].length})</span></h4>
                 </div>
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    ${groupedAssets[cat].map(a => `
+                    ${groupedAssets[cat].map(a => {
+                        const pri = getPriorityInfo(a.PIORITY_ID);
+                        const assetImg = a.ASSET_IMG_DB ? `https://lh3.googleusercontent.com/d/${a.ASSET_IMG_DB}` : 'https://placehold.co/400x400/fff1f2/94a3b8?text=IT+ASSET';
+                        
+                        return `
                         <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 hover:border-pink-200">
                             <div class="w-full sm:w-40 h-40 bg-pink-50/30 rounded-2xl border border-pink-50 flex-shrink-0 overflow-hidden relative group/asset">
-                                <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/' + a.ASSET_IMG_DB : 'https://placehold.co/400x400/fff1f2/94a3b8?text=IT+ASSET'}" 
-                                     class="w-full h-full object-cover group-hover/asset:scale-110 transition-transform duration-700">
+                                <img src="${assetImg}" class="w-full h-full object-cover group-hover/asset:scale-110 transition-transform duration-700">
                                 <div class="absolute inset-0 bg-gradient-to-t from-pink-900/20 to-transparent"></div>
                             </div>
-        
                             <div class="flex-1 flex flex-col justify-between">
                                 <div>
                                     <div class="flex justify-between items-start mb-3 gap-2">
@@ -373,31 +365,29 @@
                                             <p class="text-[7px] text-slate-400 font-bold uppercase leading-none">Asset ID</p>
                                             <p class="text-xs font-black tracking-tighter">${a.AssetID || '-'}</p>
                                         </div>
-                                        <div class="bg-pink-50 text-pink-600 border border-pink-100 px-3 py-1 rounded-lg text-right">
-                                            <p class="text-[7px] text-pink-400 font-bold uppercase leading-none">Age Info</p>
-                                            <p class="text-[10px] font-black">${a.AgeInfo || 'N/A'}</p>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <div class="bg-pink-50 text-pink-600 border border-pink-100 px-3 py-1 rounded-lg text-right">
+                                                <p class="text-[7px] text-pink-400 font-bold uppercase leading-none">Age</p>
+                                                <p class="text-[10px] font-black">${a.AgeInfo || 'N/A'}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                    
-                                    <h5 class="text-base font-bold text-slate-800 leading-tight mb-2 line-clamp-2">${a.specdetail}</h5>
-                                    
-                                    <div class="flex items-center gap-3 text-[10px] font-bold mb-4">
-                                        <span class="text-slate-400 uppercase">S/N:</span>
-                                        <span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">${a.Serial || 'N/A'}</span>
+                                    <h5 class="text-base font-bold text-slate-800 leading-tight mb-2 line-clamp-2">${a.FullDescription || 'ไม่ระบุรายละเอียด'}</h5>
+                                    <div class="flex flex-wrap items-center gap-2 mb-4">
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase">S/N: ${a.Serial || 'N/A'}</span>
+                                        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${pri.color} text-[10px] font-bold shadow-sm">
+                                            <i class="fas ${pri.icon}"></i> <span>${pri.name}</span>
+                                        </div>
                                     </div>
                                 </div>
-
                                 <div class="bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200">
-                                    <p class="text-[11px] text-slate-500 font-medium leading-relaxed italic line-clamp-3">
-                                        ${a.FullDescription || 'ไม่มีข้อมูลรายละเอียดเพิ่มเติม'}
-                                    </p>
+                                    <p class="text-[11px] text-slate-500 font-medium italic line-clamp-2">สถานะ: ${a.CoStatus || '-'} | งาน: ${a.Shift_Work || '-'}</p>
                                 </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        </div>`;
+                    }).join('')}
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
 
         document.getElementById('modalDept').classList.remove('hidden');
         document.getElementById('modalDept').classList.add('flex');
@@ -407,9 +397,9 @@
     function closeModal() { 
         document.getElementById('modalDept').classList.add('hidden'); 
         document.getElementById('modalDept').classList.remove('flex');
-        document.body.style.overflow = 'auto';
+        document.body.style.overflow = 'auto'; 
     }
-
+    
     window.onclick = function(e) { if (e.target == document.getElementById('modalDept')) closeModal(); }
     window.onload = init;
 </script>
