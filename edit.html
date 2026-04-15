@@ -4,13 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IT ASSET AUDIT</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-body {
-    background: #f8fafc;
-}
+body { background:#f8fafc; }
 .sticky-header {
     position: sticky;
     top: 0;
@@ -48,25 +45,22 @@ body {
     </div>
 </header>
 
-
 <!-- CONTENT -->
 <main class="max-w-7xl mx-auto px-6 py-10">
     <div id="contentArea"></div>
 </main>
 
-
 <!-- MODAL -->
 <div id="modalDept"
      class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50">
 
-    <div class="bg-white w-full max-w-6xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+    <div class="bg-white w-full max-w-7xl max-h-[95vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
 
-        <!-- Modal Header -->
+        <!-- Header -->
         <div class="p-8 border-b border-slate-200 flex justify-between items-start">
 
             <div class="flex items-center gap-6">
 
-                <!-- สำคัญ: ต้องมี id นี้ -->
                 <div id="mDeptPic"
                      class="w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
                     <img src="" class="w-full h-full object-cover">
@@ -85,7 +79,7 @@ body {
             </button>
         </div>
 
-        <!-- Modal Body -->
+        <!-- Detail Container -->
         <div id="mAssetGroupContainer"
              class="p-8 overflow-y-auto flex-1 bg-slate-50">
         </div>
@@ -94,8 +88,7 @@ body {
 </div>
 
 
-
-<!-- SCRIPT (ไม่แก้ไขตามที่คุณกำหนด) -->
+<!-- SCRIPT (ไม่แก้ไข) -->
 <script>
         const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
         let state = { logs: [], depts: [], assetTypes: [] };
@@ -209,10 +202,35 @@ body {
             const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
 
             document.getElementById('mDeptName').innerText = dept.DEPNAME;
-            document.getElementById('mDeptLoc').innerHTML = `${dept.BUILDING} ชั้น ${dept.FL}`;
+            document.getElementById('mDeptLoc').innerHTML = `
+                ${dept.BUILDING} ชั้น ${dept.FL}
+            `;
 
             const pic = document.getElementById('mDeptPic').querySelector('img');
             pic.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : '';
+
+            const groupedAssets = {};
+            deptLogs.forEach(a => {
+                const typeName = getTypeName(a.Asset_Type_ID);
+                if (!groupedAssets[typeName]) groupedAssets[typeName] = [];
+                groupedAssets[typeName].push(a);
+            });
+
+            const container = document.getElementById('mAssetGroupContainer');
+
+            container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold mb-3">${cat} (${groupedAssets[cat].length})</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${groupedAssets[cat].map(a => `
+                            <div class="p-4 border rounded-xl bg-white">
+                                <div class="font-bold">${a.AssetID || '-'}</div>
+                                <div class="text-sm text-slate-500">${a.specdetail || ''}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
 
             document.getElementById('modalDept').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
