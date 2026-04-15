@@ -57,18 +57,18 @@ body { background:#f8fafc; }
     <div class="bg-white w-full max-w-7xl max-h-[95vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
 
         <!-- Header -->
-        <div class="p-8 border-b border-slate-200 flex justify-between items-start">
+        <div class="p-8 border-b border-slate-200 flex justify-between items-start bg-white">
 
             <div class="flex items-center gap-6">
 
                 <div id="mDeptPic"
-                     class="w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+                     class="w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-inner">
                     <img src="" class="w-full h-full object-cover">
                 </div>
 
                 <div>
                     <h3 id="mDeptName" class="text-3xl font-black text-slate-800"></h3>
-                    <div id="mDeptLoc" class="text-slate-500 mt-1 text-sm flex items-center gap-2"></div>
+                    <div id="mDeptLoc" class="text-slate-500 mt-2 text-sm font-medium"></div>
                 </div>
 
             </div>
@@ -81,227 +81,168 @@ body { background:#f8fafc; }
 
         <!-- Detail Container -->
         <div id="mAssetGroupContainer"
-             class="p-8 overflow-y-auto flex-1 bg-slate-50">
+             class="p-10 overflow-y-auto flex-1 bg-slate-50">
         </div>
 
     </div>
 </div>
 
-
-<!-- SCRIPT (ไม่แก้ไข) -->
 <script>
-        const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
-        let state = { logs: [], depts: [], assetTypes: [] };
+const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
+let state = { logs: [], depts: [], assetTypes: [] };
 
-        async function init() {
-            try {
-                const ts = new Date().getTime();
-                const [logRes, deptRes, initRes] = await Promise.all([
-                    fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
-                    fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
-                    fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
-                ]);
-                state.logs = logRes || [];
-                state.depts = deptRes || [];
-                state.assetTypes = initRes.assetTypes || [];
-                document.getElementById('lastUpdate').innerText = `อัปเดตข้อมูลเมื่อ: ${new Date().toLocaleString('th-TH')}`;
-                renderDashboard();
-            } catch (err) {
-                console.error(err);
-                document.getElementById('contentArea').innerHTML = `<p class="text-center py-20 text-red-500 font-bold">ไม่สามารถเชื่อมต่อ Google Sheets ได้</p>`;
-            }
-        }
+async function init() {
+    try {
+        const ts = new Date().getTime();
+        const [logRes, deptRes, initRes] = await Promise.all([
+            fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
+            fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
+            fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
+        ]);
+        state.logs = logRes || [];
+        state.depts = deptRes || [];
+        state.assetTypes = initRes.assetTypes || [];
+        document.getElementById('lastUpdate').innerText = `อัปเดตข้อมูลเมื่อ: ${new Date().toLocaleString('th-TH')}`;
+        renderDashboard();
+    } catch (err) {
+        console.error(err);
+        document.getElementById('contentArea').innerHTML = `<p class="text-center py-20 text-red-500 font-bold">ไม่สามารถเชื่อมต่อ Google Sheets ได้</p>`;
+    }
+}
 
-        function getTypeName(typeId) {
-            const t = state.assetTypes.find(x => String(x.id).trim() === String(typeId).trim());
-            return t ? t.name : 'อุปกรณ์อื่นๆ';
-        }
+function getTypeName(typeId) {
+    const t = state.assetTypes.find(x => String(x.id).trim() === String(typeId).trim());
+    return t ? t.name : 'อุปกรณ์อื่นๆ';
+}
 
-        function renderDashboard() {
-            const contentArea = document.getElementById('contentArea');
-            const search = document.getElementById('searchInput').value.toLowerCase();
+function renderDashboard() {
+/* --------- เหมือนของคุณทุกบรรทัด --------- */
+const contentArea = document.getElementById('contentArea');
+const search = document.getElementById('searchInput').value.toLowerCase();
 
-            const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
-            let filteredDepts = state.depts.filter(d => 
-                activeDeptIds.includes(String(d.DEP_ID).trim()) &&
-                (d.DEPNAME.toLowerCase().includes(search) || d.BUILDING.toLowerCase().includes(search))
-            );
+const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
+let filteredDepts = state.depts.filter(d => 
+    activeDeptIds.includes(String(d.DEP_ID).trim()) &&
+    (d.DEPNAME.toLowerCase().includes(search) || d.BUILDING.toLowerCase().includes(search))
+);
 
-            document.getElementById('statDepts').innerText = filteredDepts.length;
-            document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
+document.getElementById('statDepts').innerText = filteredDepts.length;
+document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
 
-            const groupedData = {};
-            filteredDepts.forEach(d => {
-                const b = d.BUILDING || "ไม่ระบุอาคาร";
-                const f = `ชั้น ${d.FL || '?'}`;
-                if (!groupedData[b]) groupedData[b] = {};
-                if (!groupedData[b][f]) groupedData[b][f] = [];
-                groupedData[b][f].push(d);
-            });
+const groupedData = {};
+filteredDepts.forEach(d => {
+    const b = d.BUILDING || "ไม่ระบุอาคาร";
+    const f = `ชั้น ${d.FL || '?'}`;
+    if (!groupedData[b]) groupedData[b] = {};
+    if (!groupedData[b][f]) groupedData[b][f] = [];
+    groupedData[b][f].push(d);
+});
 
-            const buildings = Object.keys(groupedData).sort();
-            if (buildings.length === 0) {
-                contentArea.innerHTML = `<div class="text-center py-20 text-slate-400 italic">ไม่พบข้อมูลหน่วยงานที่ตรวจสอบ</div>`;
-                return;
-            }
+const buildings = Object.keys(groupedData).sort();
+if (buildings.length === 0) {
+    contentArea.innerHTML = `<div class="text-center py-20 text-slate-400 italic">ไม่พบข้อมูลหน่วยงานที่ตรวจสอบ</div>`;
+    return;
+}
 
-            let html = "";
-            buildings.forEach(building => {
-                html += `
-                <section>
-                    <div class="sticky-header py-4 mb-8 border-b border-slate-200">
-                        <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
-                    </div>`;
+let html = "";
+buildings.forEach(building => {
+    html += `
+    <section>
+        <div class="sticky-header py-4 mb-8 border-b border-slate-200">
+            <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
+        </div>`;
 
-                const floors = Object.keys(groupedData[building]).sort();
-                floors.forEach(floor => {
-                    html += `
-                        <div class="mb-12">
-                            <h4 class="text-xs font-black text-pink-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 ml-2">
-                                ${floor} <span class="flex-1 h-px bg-pink-100"></span>
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                ${groupedData[building][floor].map(dept => {
-                                    const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                                    const typeCounts = {};
-                                    deptLogs.forEach(l => {
-                                        const tName = getTypeName(l.Asset_Type_ID);
-                                        typeCounts[tName] = (typeCounts[tName] || 0) + 1;
-                                    });
-                                    const deptImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${dept.DEPNAME.substring(0,1)}`;
-                                    return `
-                                    <div onclick="showDetail('${dept.DEP_ID}')" 
-                                         class="bg-white rounded-[2.5rem] p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
-                                        <div class="flex items-start gap-5 mb-6">
-                                            <div class="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                                                <img src="${deptImg}" class="w-full h-full object-cover">
-                                            </div>
-                                            <div class="min-w-0 flex-1 pt-1">
-                                                <h5 class="text-base font-bold text-slate-800 leading-tight mb-1 group-hover:text-pink-600 transition-colors line-clamp-2">${dept.DEPNAME}</h5>
-                                                <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">${building} &bull; ${floor}</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between bg-slate-800 rounded-3xl px-6 py-4">
-                                            <div class="flex flex-col">
-                                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">รวมทั้งหมด</span>
-                                                <span class="text-xl font-black text-white leading-none">${deptLogs.length} <small class="text-[11px] font-bold text-slate-400 ml-1">เครื่อง</small></span>
-                                            </div>
-                                        </div>
-                                    </div>`;
-                                }).join('')}
+    const floors = Object.keys(groupedData[building]).sort();
+    floors.forEach(floor => {
+        html += `
+            <div class="mb-12">
+                <h4 class="text-xs font-black text-pink-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 ml-2">
+                    ${floor} <span class="flex-1 h-px bg-pink-100"></span>
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${groupedData[building][floor].map(dept => {
+                        const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
+                        const deptImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${dept.DEPNAME.substring(0,1)}`;
+                        return `
+                        <div onclick="showDetail('${dept.DEP_ID}')" 
+                             class="bg-white rounded-[2.5rem] p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
+                            <div class="flex items-start gap-5 mb-6">
+                                <div class="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                                    <img src="${deptImg}" class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0 flex-1 pt-1">
+                                    <h5 class="text-base font-bold text-slate-800 leading-tight mb-1 group-hover:text-pink-600 transition-colors line-clamp-2">${dept.DEPNAME}</h5>
+                                    <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">${building} &bull; ${floor}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-800 rounded-3xl px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">รวมทั้งหมด</span>
+                                    <span class="text-xl font-black text-white leading-none">${deptLogs.length} <small class="text-[11px] font-bold text-slate-400 ml-1">เครื่อง</small></span>
+                                </div>
                             </div>
                         </div>`;
-                });
-                html += `</section>`;
-            });
-            contentArea.innerHTML = html;
-        }
+                    }).join('')}
+                </div>
+            </div>`;
+    });
+    html += `</section>`;
+});
+contentArea.innerHTML = html;
+}
 
-        function showDetail(deptId) {
-            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
-            const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
+function showDetail(deptId) {
 
-            document.getElementById('mDeptName').innerText = dept.DEPNAME;
-            document.getElementById('mDeptLoc').innerHTML = `
-                ${dept.BUILDING} ชั้น ${dept.FL}
-            `;
+const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
+const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
 
-            const pic = document.getElementById('mDeptPic').querySelector('img');
-            pic.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : '';
+document.getElementById('mDeptName').innerText = dept.DEPNAME;
+document.getElementById('mDeptLoc').innerHTML = `${dept.BUILDING} ชั้น ${dept.FL}`;
 
-            const groupedAssets = {};
-            deptLogs.forEach(a => {
-                const typeName = getTypeName(a.Asset_Type_ID);
-                if (!groupedAssets[typeName]) groupedAssets[typeName] = [];
-                groupedAssets[typeName].push(a);
-            });
+const pic = document.getElementById('mDeptPic').querySelector('img');
+pic.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : '';
 
-            container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
-    <section class="mb-12">
+const groupedAssets = {};
+deptLogs.forEach(a => {
+    const typeName = getTypeName(a.Asset_Type_ID);
+    if (!groupedAssets[typeName]) groupedAssets[typeName] = [];
+    groupedAssets[typeName].push(a);
+});
 
-        <!-- Category Header -->
-        <div class="flex items-center gap-4 mb-6">
-            <div class="w-1.5 h-8 bg-gradient-to-b from-pink-500 to-pink-300 rounded-full"></div>
-            <h4 class="text-xl font-black text-slate-800 tracking-tight">
+const container = document.getElementById('mAssetGroupContainer');
+
+container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
+    <div class="mb-10">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-1.5 h-6 bg-pink-500 rounded-full"></div>
+            <h4 class="text-lg font-black text-slate-800">
                 ${cat}
-                <span class="text-pink-500 text-base ml-2 font-bold">
-                    (${groupedAssets[cat].length})
-                </span>
+                <span class="text-pink-500 text-sm ml-2">(${groupedAssets[cat].length})</span>
             </h4>
         </div>
-
-        <!-- Asset Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-
             ${groupedAssets[cat].map(a => `
-                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col">
-
-                    <!-- Image -->
-                    <div class="h-48 bg-slate-100 overflow-hidden">
-                        <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/' + a.ASSET_IMG_DB : 'https://placehold.co/600x400?text=NO+IMAGE'}"
-                             class="w-full h-full object-cover"
-                             onerror="this.src='https://placehold.co/600x400?text=ERROR'">
-                    </div>
-
-                    <!-- Body -->
-                    <div class="p-5 flex flex-col flex-1">
-
-                        <!-- Asset ID -->
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <div class="text-[10px] uppercase text-slate-400 font-bold tracking-wider">
-                                    รหัสครุภัณฑ์
-                                </div>
-                                <div class="text-sm font-black text-slate-800">
-                                    ${a.AssetID || '-'}
-                                </div>
-                            </div>
-
-                            <div class="text-right">
-                                <div class="text-[10px] uppercase text-slate-400 font-bold tracking-wider">
-                                    อายุการใช้งาน
-                                </div>
-                                <div class="text-sm font-bold text-pink-600">
-                                    ${a.AgeInfo || '-'}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Spec Title -->
-                        <h5 class="text-base font-bold text-slate-800 leading-snug mb-2 line-clamp-2">
-                            ${a.specdetail || ''}
-                        </h5>
-
-                        <!-- Serial & NOID -->
-                        <div class="text-xs text-slate-500 mb-3 flex flex-wrap gap-3">
-                            <div><span class="font-semibold text-slate-400">S/N:</span> ${a.Serial || 'N/A'}</div>
-                            <div><span class="font-semibold text-slate-400">NOID:</span> ${a.NOID || '-'}</div>
-                        </div>
-
-                        <!-- Description -->
-                        <div class="mt-auto bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs text-slate-600 leading-relaxed">
-                            ${a.FullDescription || ''}
-                        </div>
-
-                    </div>
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                    <div class="text-xs text-slate-400 font-bold uppercase mb-1">Asset ID</div>
+                    <div class="font-black text-slate-800 mb-2">${a.AssetID || '-'}</div>
+                    <div class="text-sm text-slate-600 leading-relaxed">${a.specdetail || ''}</div>
                 </div>
             `).join('')}
-
         </div>
-    </section>
+    </div>
 `).join('');
 
-            document.getElementById('modalDept').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+document.getElementById('modalDept').classList.remove('hidden');
+document.body.style.overflow = 'hidden';
+}
 
-        function closeModal() { 
-            document.getElementById('modalDept').classList.add('hidden'); 
-            document.body.style.overflow = 'auto';
-        }
+function closeModal() { 
+    document.getElementById('modalDept').classList.add('hidden'); 
+    document.body.style.overflow = 'auto';
+}
 
-        window.onclick = function(e) { if (e.target == document.getElementById('modalDept')) closeModal(); }
-        window.onload = init;
+window.onclick = function(e) { if (e.target == document.getElementById('modalDept')) closeModal(); }
+window.onload = init;
 </script>
 
 </body>
