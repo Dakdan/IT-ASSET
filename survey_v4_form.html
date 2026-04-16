@@ -182,7 +182,10 @@
                         </div>
                         <img id="imgPreview" class="hidden">
                     </div>
-                    <input type="file" id="imgInput" accept="image/*" class="hidden" onchange="handleImageSelection(this, 'imgPreview', 'imgPlaceholder')">
+                    
+                    <input type="file" id="imgInput" accept="image/*" capture="environment" 
+       onchange="await handleImageSelection(this, 'imgPreview', 'imgPlaceholder')" 
+       class="hidden">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -245,7 +248,9 @@
                         </div>
                         <img id="nr_imgPreview" class="hidden">
                     </div>
-                    <input type="file" id="nr_imgInput" accept="image/*" class="hidden" onchange="handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')">
+                   <input type="file" id="nr_imgInput" accept="image/*" capture="environment" 
+       onchange="await handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')" 
+       class="hidden">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
