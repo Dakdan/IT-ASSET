@@ -195,7 +195,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ลำดับความสำคัญ</label>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">กลุ่มผู้ใช้งาน</label>
                         <select id="priorityId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600"></select>
                     </div>
                 </div>
@@ -213,13 +213,13 @@
                 </div>
 
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Note2 (Column U)</label>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">📝Note</label>
                     <textarea id="note2" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm text-gray-600 focus:ring-1 focus:ring-pink-500/30 outline-none"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button onclick="closeModal('auditFormModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">ยกเลิก</button>
-                    <button onclick="submitAudit('EXISTING')" class="py-4 bg-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-pink-100">บันทึก</button>
+                    <button onclick="closeModal('auditFormModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
+                    <button onclick="submitAudit('EXISTING')" class="py-4 bg-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-pink-100">💾บันทึก</button>
                 </div>
             </div>
         </div>
@@ -230,14 +230,14 @@
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <p class="text-[10px] font-bold text-orange-500 tracking-widest uppercase">New Asset</p>
-                    <h3 class="text-xl font-bold text-gray-800">เพิ่มครุภัณฑ์นอกทะเบียน</h3>
+                    <h3 class="text-xl font-bold text-gray-800">➕เพิ่มครุภัณฑ์นอกทะเบียน</h3>
                 </div>
                 <button onclick="closeModal('nonRegisterModal')" class="p-2 bg-gray-50 rounded-full text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
             <div class="space-y-4">
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รูปภาพ</label>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">📸รูปภาพ</label>
                     <div id="nr_imgPreviewContainer" class="image-preview-container cursor-pointer mb-2" onclick="document.getElementById('nr_imgInput').click()">
                         <div id="nr_imgPlaceholder" class="text-center">
                             <i data-lucide="camera" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
@@ -300,8 +300,8 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">ยกเลิก</button>
-                    <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold">บันทึก</button>
+                    <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
+                    <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold">💾บันทึก</button>
                 </div>
             </div>
         </div>
@@ -330,8 +330,8 @@
                 <button onclick="signaturePad.clear()" class="mt-2 text-[10px] font-bold text-gray-400 uppercase">ล้างลายเซ็น</button>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="closeModal('confirmModal')" class="py-4 text-sm font-bold text-gray-400">ยกเลิก</button>
-                <button onclick="handleFinalSubmit()" class="py-4 bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl">บันทึกข้อมูล</button>
+                <button onclick="closeModal('confirmModal')" class="py-4 text-sm font-bold text-gray-400">❌ยกเลิก</button>
+                <button onclick="handleFinalSubmit()" class="py-4 bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl">💾บันทึกข้อมูล</button>
             </div>
         </div>
     </div>
@@ -340,15 +340,15 @@
         <div class="bg-white rounded-[2.5rem] p-8 w-full max-w-sm text-center shadow-2xl my-auto">
             <div class="no-print">
                 <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-16 h-16 mx-auto mb-4 object-contain">
-                <h4 id="successStatusTitle" class="text-lg font-bold text-gray-800 mb-1">บันทึกสำเร็จ!</h4>
+                <h4 id="successStatusTitle" class="text-lg font-bold text-gray-800 mb-1">👌บันทึกสำเร็จ!</h4>
                 <p class="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-6">Audit Completion Slip</p>
             </div>
             <div id="successDetailList" class="bg-white text-left"></div>
             <div class="space-y-2 pt-6 no-print">
                 <button onclick="window.print()" class="w-full py-4 bg-gray-100 text-gray-700 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                    <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์สลิป
+                    <i data-lucide="printer" class="w-4 h-4"></i>🖨️พิมพ์สลิป
                 </button>
-                <button onclick="location.reload()" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold active:scale-95 transition-transform">กลับหน้าหลัก</button>
+                <button onclick="location.reload()" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold active:scale-95 transition-transform">🔙กลับหน้าหลัก</button>
             </div>
         </div>
     </div>
@@ -366,7 +366,7 @@
         <div id="reader" class="flex-grow"></div>
     </div>
         <footer class="mt-12 text-center text-gray-400 text-xs no-print">
-            <p>&copy; ทีม ช่างไอที กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์ โรงพยาบาลอุดรธานี</p>
+            <p>&copy; ทีม 👷ช่างไอที กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์ โรงพยาบาลอุดรธานี</p>
             <p>ระบบตรวจสอบครุภัฑณฑ์ IT </p>
         </footer>
 
