@@ -305,9 +305,9 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
-                    <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold">💾บันทึก</button>
-                </div>
+                <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
+                <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg">💾บันทึก</button>
+            </div>
             </div>
         </div>
     </div>
@@ -613,65 +613,60 @@
         document.getElementById(iId).value = "";
     }
 
-        function submitAudit(type) {
-        const suffix = type === 'EXISTING' ? '' : 'nr_';
+          // --- แก้ไขฟังก์ชัน submitAudit ให้เหลือเพียงอันเดียว และครอบคลุมทุกเงื่อนไข ---
+    function submitAudit(type) {
+        const isExisting = type === 'EXISTING';
+        const suffix = isExisting ? '' : 'nr_';
         
-        // --- เริ่มการตรวจสอบข้อมูล (Validation) ---
-        const typeId = document.getElementById(suffix + (type === 'EXISTING' ? 'assetTypeId' : 'asset_type_id')).value;
-        const priorityId = document.getElementById(suffix + (type === 'EXISTING' ? 'priorityId' : 'nr_priorityId')).value;
+        // 1. ดึงค่าจาก Elements
+        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id').value;
+        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId').value;
+        const isPac = document.getElementById(`${suffix}pac_toggle`).checked;
+        const note2 = document.getElementById(isExisting ? 'note2' : 'nr_note2').value;
+        const shifts = Array.from(document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`)).map(c => c.value).join(',');
         
-        // ตรวจสอบข้อมูลพื้นฐาน
+        // Elements พิเศษสำหรับกรณี NR
+        const brandEl = document.getElementById('nr_brand_detail');
+        const assetIdEl = document.getElementById('nr_asset_id');
+    
+        // 2. ตรวจสอบข้อมูลบังคับ (Mandatory Check)
         if (!typeId || !priorityId) {
-            showAlert("ข้อมูลไม่ครบถ้วน", "กรุณาเลือก 'ประเภท' และ 'ความสำคัญ' ก่อนบันทึก");
-            return;
+            return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณาเลือกประเภทและความสำคัญ");
         }
-    
-        // ตรวจสอบรูปภาพ (ถ้าคุณต้องการบังคับให้ถ่ายรูป)
-        if (!currentBase64Image) {
-            showAlert("ลืมถ่ายรูปหรือเปล่า?", "กรุณาถ่ายภาพครุภัณฑ์เพื่อใช้เป็นหลักฐานการตรวจสอบ");
-            return;
-        }
-    
-        // กรณีเป็นนอกทะเบียน (Non-Register) บังคับกรอกชื่อ/ยี่ห้อ
-        if (type === 'NON_REGISTER') {
-            const brand = document.getElementById('nr_brand_detail').value.trim();
-            if (!brand) {
-                showAlert("ข้อมูลไม่ครบถ้วน", "กรุณากรอกยี่ห้อหรือรายละเอียดครุภัณฑ์นอกทะเบียน");
-                return;
+        
+        // เช็กเฉพาะกรณี "นอกทะเบียน" (NR)
+        if (!isExisting) {
+            if (!brandEl || !brandEl.value.trim()) {
+                return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณาระบุยี่ห้อหรือรายละเอียดครุภัณฑ์");
             }
         }
-        // --- สิ้นสุดการตรวจสอบ ---
     
-        // Logic การจัดเตรียม Data (ใช้ Code เดิมของคุณ)
-        let data = {};
-        const shifts = Array.from(document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`)).map(c => c.value).join(',');
-        const isPac = document.getElementById(`${suffix}pac_toggle`).checked;
+        // 3. ตรวจสอบรูปถ่าย
+        if (!currentBase64Image) {
+            return showAlert("ลืมถ่ายรูปหรือเปล่า?", "กรุณาถ่ายภาพครุภัณฑ์เพื่อใช้เป็นหลักฐาน");
+        }
     
-        if (type === 'EXISTING') {
-            data = {
-                Asset_ID: currentAsset.AssetID,
-                Asset_Type_ID: isPac ? typeId + "/PAC" : typeId,
-                PIORITY_ID: priorityId,
-                Shift_Work: shifts,
-                Note2: document.getElementById('note2').value,
-                AssetName: currentAsset.FullDescription,
-                ImageData: currentBase64Image
-            };
+        // 4. ประกอบข้อมูล (Construct Payload)
+        let data = {
+            Asset_Type_ID: isPac ? typeId + "/PAC" : typeId,
+            PIORITY_ID: priorityId,
+            Shift_Work: shifts,
+            Note2: note2,
+            ImageData: currentBase64Image
+        };
+    
+        if (isExisting) {
+            data.Asset_ID = currentAsset.AssetID;
+            data.AssetName = currentAsset.FullDescription;
             closeModal('auditFormModal');
         } else {
-            data = {
-                Asset_ID: document.getElementById('nr_asset_id').value,
-                Asset_Type_ID: isPac ? typeId + "/PAC" : typeId,
-                PIORITY_ID: priorityId,
-                Shift_Work: shifts,
-                Note2: document.getElementById('nr_note2').value,
-                AssetName: "[นอกทะเบียน] " + document.getElementById('nr_brand_detail').value,
-                ImageData: currentBase64Image,
-                Serial: document.getElementById('nr_serial').value
-            };
+            data.Asset_ID = assetIdEl.value || ("NR-" + Date.now());
+            data.AssetName = "[นอกทะเบียน] " + brandEl.value.trim();
+            data.Serial = document.getElementById('nr_serial')?.value || ""; // เพิ่ม Optional Chain กัน Error
             closeModal('nonRegisterModal');
         }
-        
+    
+        // 5. บันทึกลง Queue และอัปเดตหน้าจอ
         auditQueue.unshift({ DisplayName: data.AssetName, data: data });
         updateQueueUI();
     }
