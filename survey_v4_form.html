@@ -462,21 +462,35 @@
     }
 
     // --- ปรับปรุงฟังก์ชันเลือกรูปภาพให้รองรับ Async/Await ---
+// ปรับปรุงฟังก์ชันเลือกรูปภาพให้รับค่า input และจัดการ preview ให้แม่นยำขึ้น
     async function handleImageSelection(input, pId, hId) {
         const file = input.files[0];
         if (!file) return;
         
         showProcess("กำลังบีบอัดรูปภาพ...");
         try {
-            // บีบอัดและเก็บลงในตัวแปร currentBase64Image เดิมของคุณ
-            currentBase64Image = await compressImage(file);
+            // บีบอัดรูปภาพ
+            const compressedData = await compressImage(file);
             
+            // เก็บค่าลงในตัวแปรหลัก
+            currentBase64Image = compressedData; 
+            
+            // แสดงรูปตัวอย่าง (Preview)
             const img = document.getElementById(pId);
-            img.src = currentBase64Image; 
-            img.classList.remove('hidden');
-            document.getElementById(hId).classList.add('hidden');
+            if (img) {
+                img.src = compressedData; 
+                img.classList.remove('hidden');
+            }
+            
+            // ซ่อนตัว Placeholder (Icon รูปภาพเดิม)
+            const placeholder = document.getElementById(hId);
+            if (placeholder) {
+                placeholder.classList.add('hidden');
+            }
+            
         } catch (e) {
-            console.error("Image error:", e);
+            console.error("Image compression error:", e);
+            showAlert("เกิดข้อผิดพลาด", "ไม่สามารถประมวลผลรูปภาพได้");
         } finally {
             hideProcess();
         }
