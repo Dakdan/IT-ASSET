@@ -826,6 +826,21 @@
             closeScanner(); 
         }
     }
+    function clearAuditForm() {
+        // ล้างรูปภาพ
+        currentBase64Image = "";
+        // รีเซ็ต Input และ Preview (สำหรับทั้ง 2 หน้า)
+        const forms = [
+            {p: 'imgPreview', h: 'imgPlaceholder', i: 'imgInput'},
+            {p: 'nr_imgPreview', h: 'nr_imgPlaceholder', i: 'nr_imgInput'}
+        ];
+        forms.forEach(f => {
+            document.getElementById(f.p).src = "";
+            document.getElementById(f.p).classList.add('hidden');
+            document.getElementById(f.h).classList.remove('hidden');
+            document.getElementById(f.i).value = "";
+        });
+    }
 
     async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); closeModal('scannerModal'); }
     function showProcess(m) { document.getElementById('processMessage').innerText = m; document.getElementById('processOverlay').classList.remove('hidden'); }
