@@ -160,7 +160,7 @@
             <div class="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                 <div>
                     <p class="text-[15px] font-bold text-gray-400 uppercase tracking-widest mb-1">รหัสครุภัณฑ์</p>
-                    <p id="detailAssetID" class="text-xs font-bold text-gray-700">--</p>
+                    <p id="detailAssetID" class="text-xs font-bold text-pink-500">--</p>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">อายุการใช้งาน</p>
@@ -168,17 +168,17 @@
                 </div>
                 <div class="col-span-2">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">รายละเอียด</p>
-                    <p id="detailAssetDesc" class="text-xs font-medium text-gray-500 leading-relaxed italic">--</p>
+                    <p id="detailAssetDesc" class="text-xs font-medium text-pink-500 leading-relaxed italic">--</p>
                 </div>
             </div>
 
             <div class="space-y-5">
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รูปภาพครุภัณฑ์</label>
+                    <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">รูปภาพครุภัณฑ์</label>
                     <div id="imgPreviewContainer" class="image-preview-container cursor-pointer mb-2" onclick="document.getElementById('imgInput').click()">
                         <div id="imgPlaceholder" class="text-center">
                             <i data-lucide="camera" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">แตะเพื่อถ่ายรูป</p>
+                            <p class="text-[10px] font-bold text-pink-500 uppercase">แตะเพื่อถ่ายรูป</p>
                         </div>
                         <img id="imgPreview" class="hidden">
                     </div>
@@ -190,7 +190,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
+                        <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
                         <select id="assetTypeId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 mb-2"></select>
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="pac_toggle" class="hidden pac-radio">
@@ -198,13 +198,13 @@
                         </div>
                     </div>
                     <div>
-                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">กลุ่มผู้ใช้งาน</label>
+                        <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">กลุ่มผู้ใช้งาน</label>
                         <select id="priorityId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600"></select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift_Work)</label>
+                    <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift_Work)</label>
                     <div class="grid grid-cols-3 gap-2">
                         <input type="checkbox" name="shift_work" value="เช้า" id="shift_m" class="hidden shift-checkbox">
                         <label for="shift_m" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">เช้า</label>
@@ -216,12 +216,12 @@
                 </div>
 
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">📝Note</label>
+                    <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">📝Note</label>
                     <textarea id="note2" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm text-gray-600 focus:ring-1 focus:ring-pink-500/30 outline-none"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button onclick="closeModal('auditFormModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
+                    <button onclick="closeModal('auditFormModal')" class="py-4 bg-gray-100 text-pink-500 rounded-2xl font-bold">❌ยกเลิก</button>
                     <button onclick="submitAudit('EXISTING')" class="py-4 bg-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-pink-100">💾บันทึก</button>
                 </div>
             </div>
