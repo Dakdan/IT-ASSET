@@ -175,17 +175,21 @@
             <div class="space-y-5">
                 <div>
                     <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">รูปภาพครุภัณฑ์</label>
-                    <div id="imgPreviewContainer" class="image-preview-container cursor-pointer mb-2" onclick="document.getElementById('imgInput').click()">
-                        <div id="imgPlaceholder" class="text-center">
-                            <i data-lucide="camera" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
-                            <p class="text-[10px] font-bold text-pink-500 uppercase">แตะเพื่อถ่ายรูป</p>
-                        </div>
-                        <img id="imgPreview" class="hidden">
+                    <div id="imgPreviewContainer" 
+                     class="image-preview-container cursor-pointer" 
+                     onclick="document.getElementById('imgInput').click()"> <div id="imgPlaceholder">
+                        <p>แตะเพื่อถ่ายรูป</p>
                     </div>
+                    <img id="imgPreview" class="hidden w-full h-full object-cover">
+                </div>
+                
+                <input type="file" 
+                       id="imgInput" 
+                       accept="image/*" 
+                       capture="environment" 
+                       onchange="handleImageSelection(this, 'imgPreview', 'imgPlaceholder')" 
+                       class="hidden">
                     
-                    <input type="file" id="imgInput" accept="image/*" capture="environment" 
-       onchange="await handleImageSelection(this, 'imgPreview', 'imgPlaceholder')" 
-       class="hidden">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -241,16 +245,20 @@
             <div class="space-y-4">
                 <div>
                     <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">📸รูปภาพ</label>
-                    <div id="nr_imgPreviewContainer" class="image-preview-container cursor-pointer mb-2" onclick="document.getElementById('nr_imgInput').click()">
-                        <div id="nr_imgPlaceholder" class="text-center">
-                            <i data-lucide="camera" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">TAP TO TAKE PHOTO</p>
-                        </div>
-                        <img id="nr_imgPreview" class="hidden">
+                <div id="nr_imgPreviewContainer" 
+                     class="image-preview-container cursor-pointer" 
+                     onclick="document.getElementById('nr_imgInput').click()"> <div id="nr_imgPlaceholder">
+                        <p>TAP TO TAKE PHOTO</p>
                     </div>
-                   <input type="file" id="nr_imgInput" accept="image/*" capture="environment" 
-       onchange="await handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')" 
-       class="hidden">
+                    <img id="nr_imgPreview" class="hidden w-full h-full object-cover">
+                </div>
+                
+                <input type="file" 
+                       id="nr_imgInput" 
+                       accept="image/*" 
+                       capture="environment" 
+                       onchange="handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')" 
+                       class="hidden">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
