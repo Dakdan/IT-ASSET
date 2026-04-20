@@ -4,7 +4,7 @@ function renderSuccessSlip(actionId) {
     const detailBox = document.getElementById('successDetailList');
     
     // สร้าง URL สำหรับ QR Code
-    const targetUrl = `https://your-domain.github.io/department_asset.html?ID=${deptId}`;
+    const targetUrl = `https://your-domain.github.io/dept_detail.html?ID=${deptId}`;
     const qrImageUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8`;
 
     detailBox.innerHTML = `
