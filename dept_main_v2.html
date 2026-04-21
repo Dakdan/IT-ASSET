@@ -230,7 +230,7 @@
             'PIO-003': { color: 'border-emerald-100 text-emerald-500 bg-emerald-50', icon: 'fa-check-circle' },
             'PIO-004': { color: 'border-amber-100 text-amber-500 bg-amber-50', icon: 'fa-clock' }
         };
-        return { name: p ? p.name : 'ปกติ', ...(config[id] || { color: 'border-slate-100 text-slate-400 bg-slate-50', icon: 'fa-info-circle' }) };
+        return { name: p ? p.name : '-', ...(config[id] || { color: 'border-slate-100 text-slate-400 bg-slate-50', icon: 'fa-info-circle' }) };
     }
 
     function renderDashboard() {
