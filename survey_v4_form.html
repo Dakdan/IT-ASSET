@@ -403,18 +403,15 @@
     let masterDeptList = [], configData = { priorities: [], assetTypes: [] }, auditQueue = [], currentAsset = null, signaturePad = null;
     let html5QrCode = null, currentBase64Image = "", submitMode = 'FINAL';
     let selectedJobTypeId = "";
-      window.onload = () => {
+     window.onload = () => {
         lucide.createIcons();
         initApp();
     
-        // ✅ init ครั้งเดียวพอ
         signaturePad = new SignaturePad(document.getElementById('signature-pad'));
         html5QrCode = new Html5Qrcode("reader");
         window.addEventListener('resize', handleResize);
     
-        // ✅ โหลด GPS
         loadGPS();
-    };
     };
     let currentGps = "";
     let gpsReady = false;
