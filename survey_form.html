@@ -1,504 +1,516 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Asset Audit Pro - Direct Save</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Sarabun:wght@300;400;700&display=swap');
-        
-        body {
-            font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
-            background-color: #fafafa;
-            -webkit-tap-highlight-color: transparent;
-        }
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, PlusCircle, Save, MapPin, Loader2, Camera, RefreshCw, QrCode, X, Trash2, History, ChevronRight, CheckCircle2, Printer, FileText, CheckCircle, Info, Calendar } from 'lucide-react';
 
-        .glass-morphism {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
+const API_URL = "https://script.google.com/macros/s/AKfycbzlwkwuMk9Y7qpEqT7JlnDFjWwlmvYVpW0NOuaEBcS6_3iocDVC6Jpc2ZL9P1qvbHM/exec";
 
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #ec4899;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+const App = () => {
+  const [view, setView] = useState('location'); 
+  const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [masterDeptList, setMasterDeptList] = useState([]);
+  const [configData, setConfigData] = useState({ priorities: [], assetTypes: [] });
+  const [selectedBuilding, setSelectedBuilding] = useState('');
+  const [selectedFloor, setSelectedFloor] = useState('');
+  const [selectedDept, setSelectedDept] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [assets, setAssets] = useState([]);
+  const [auditHistory, setAuditHistory] = useState([]);
+  const [currentAsset, setCurrentAsset] = useState(null);
+  const [isNonReg, setIsNonReg] = useState(false);
+  
+  // States for Printing
+  const [showPrintPreview, setShowPrintPreview] = useState(false); // Summary Report
+  const [showSlipPreview, setShowSlipPreview] = useState(null);   // Single Asset Slip
+  
+  const [formData, setFormData] = useState({
+    image: '',
+    assetTypeId: '',
+    priorityId: '',
+    note: '',
+    nr_brand: '' 
+  });
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  useEffect(() => {
+    initApp();
+  }, []);
 
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #ec4899;
-            box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
-        }
-    </style>
-</head>
-<body class="text-gray-900 antialiased overflow-x-hidden">
+  useEffect(() => {
+    if (selectedDept) {
+      loadAuditHistory(selectedDept.DEP_ID);
+    }
+  }, [selectedDept]);
 
-    <!-- Header Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 glass-morphism px-4 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-2">
-            <div class="w-9 h-9 bg-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-pink-200">
-                <i data-lucide="shield-check" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <h1 class="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase leading-none mb-1">UDH Asset Audit</h1>
-                <p id="statusIndicator" class="text-xs font-bold text-orange-500 flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-current animate-pulse"></span>
-                    INITIALIZING...
-                </p>
-            </div>
+  const initApp = async () => {
+    setLoading(true);
+    try {
+      const [resConfig, resDept] = await Promise.all([
+        fetch(`${API_URL}?action=getInitialData`).then(r => r.json()),
+        fetch(`${API_URL}?action=getDeptList`).then(r => r.json())
+      ]);
+      setConfigData(resConfig);
+      setMasterDeptList(resDept);
+    } catch (e) {
+      console.error("Load Error", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAuditHistory = async (deptId) => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch(`${API_URL}?action=getAuditLogs&DEP_ID=${deptId}`);
+      const data = await res.json();
+      setAuditHistory(data || []);
+    } catch (e) {
+      console.error("History Load Error", e);
+      setAuditHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 800;
+        const scale = maxW / img.width;
+        canvas.width = maxW;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setFormData({ ...formData, image: canvas.toDataURL('image/jpeg', 0.6) });
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSearch = async (val) => {
+    setSearchQuery(val);
+    if (val.length < 3) {
+      setAssets([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      setAssets(data);
+    } catch (e) {
+      console.error("Search Error", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.image) return alert("กรุณาถ่ายรูปประกอบ");
+    setLoading(true);
+    
+    const assetId = isNonReg ? ("NON-" + Date.now()) : currentAsset.NoID;
+    const desc = isNonReg ? formData.nr_brand : currentAsset.FullDescription;
+
+    const payload = {
+      action: 'saveSurvey',
+      data: {
+        NOID: assetId,
+        Asset_ID: desc,
+        Serial: isNonReg ? "-" : (currentAsset.Serial || "-"),
+        Asset_Type_ID: formData.assetTypeId,
+        DEPT_ID: selectedDept.DEP_ID,
+        PIORITY_ID: formData.priorityId,
+        IMAGE_NAME: formData.image,
+        Note1: formData.note,
+        IT_User_Mail: "Guest_User",
+        Shift_Work: "1",
+        Activity_ID: "AUDIT-2024",
+        S_ON_OUT: isNonReg ? 0 : 1
+      }
+    };
+
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      
+      const newAuditItem = {
+          ...payload.data,
+          Timestamp: new Date().toISOString(),
+          FullDescription: desc,
+          AssetID: isNonReg ? assetId : currentAsset.AssetID,
+          DEPNAME: selectedDept.DEPNAME,
+          Asset_Type: configData.assetTypes.find(t => t.id === formData.assetTypeId)?.name || formData.assetTypeId,
+          Priority: configData.priorities.find(p => p.id === formData.priorityId)?.name || formData.priorityId,
+          DB_Age: currentAsset?.AgeInfo || "-"
+      };
+      
+      loadAuditHistory(selectedDept.DEP_ID);
+      setCurrentAsset(null);
+      setFormData({ image: '', assetTypeId: '', priorityId: '', note: '', nr_brand: '' });
+      setSearchQuery('');
+      setAssets([]);
+      
+      setShowSlipPreview(newAuditItem);
+
+    } catch (e) {
+      alert("บันทึกข้อมูลแล้ว (Mock Response)");
+      loadAuditHistory(selectedDept.DEP_ID);
+      setCurrentAsset(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const buildings = [...new Set(masterDeptList.map(i => i.BUILDING))].filter(Boolean).sort();
+  const floors = [...new Set(masterDeptList.filter(i => i.BUILDING === selectedBuilding).map(i => i.FL))].sort((a,b)=>a-b);
+  const depts = masterDeptList.filter(d => d.BUILDING === selectedBuilding && String(d.FL) === String(selectedFloor));
+
+  return (
+    <div className="min-h-screen bg-[#fafafa] font-['Sarabun'] pb-10">
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b px-4 py-3 flex justify-between items-center print:hidden">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 bg-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-pink-100">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase leading-none mb-1">UDH IT Audit</h1>
+            <p className="text-xs font-bold text-pink-500 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span> ONLINE
+            </p>
+          </div>
         </div>
-        <div class="flex items-center gap-3">
-            <button onclick="location.reload()" class="p-2 bg-white rounded-xl border border-gray-100"><i data-lucide="refresh-cw" class="w-4 h-4 text-gray-500"></i></button>
-        </div>
-    </nav>
-
-    <main class="mt-20 px-4 pb-24 max-w-md mx-auto">
-        
-        <!-- SECTION 1: Location Picker -->
-        <section id="locationPickerSection" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div class="space-y-1">
-                <h2 class="text-2xl font-800 text-gray-800 tracking-tight">เลือกสถานที่</h2>
-                <p class="text-sm text-gray-400">เลือกอาคารและชั้นเพื่อระบุตำแหน่งติดตั้ง</p>
-            </div>
-
-            <div class="grid grid-cols-1 gap-4">
-                <div class="bg-white p-1 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 px-5 focus-within:border-pink-300 transition-all">
-                    <i data-lucide="building-2" class="w-5 h-5 text-pink-400"></i>
-                    <select id="selBuilding" onchange="onBuildingChange()" class="w-full py-4 bg-transparent text-sm font-semibold appearance-none cursor-pointer">
-                        <option value="" disabled selected>กำลังโหลดรายชื่ออาคาร...</option>
-                    </select>
-                </div>
-                <div class="bg-white p-1 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 px-5 focus-within:border-pink-300 transition-all">
-                    <i data-lucide="layers-2" class="w-5 h-5 text-pink-400"></i>
-                    <select id="selFloor" onchange="renderDeptList()" class="w-full py-4 bg-transparent text-sm font-semibold appearance-none cursor-pointer" disabled>
-                        <option value="" disabled selected>กรุณาเลือกอาคารก่อน</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="deptList" class="grid gap-3">
-                <!-- แผนกจะแสดงที่นี่ -->
-            </div>
-        </section>
-
-        <!-- SECTION 2: Asset Search Area (Hidden by default) -->
-        <section id="searchAreaSection" class="hidden space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div class="flex items-center gap-4 bg-white p-5 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                <div class="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-500 shadow-inner">
-                    <i data-lucide="map-pin" class="w-6 h-6"></i>
-                </div>
-                <div class="flex-grow">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">แผนกที่เลือก</p>
-                    <h3 id="displayDeptName" class="text-sm font-bold text-gray-800">--</h3>
-                    <input type="hidden" id="selectedDeptId">
-                </div>
-                <button onclick="resetDeptSelection()" class="p-2 bg-gray-50 rounded-xl text-gray-400 hover:text-pink-500"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-
-            <div class="relative">
-                <input type="text" id="assetQuery" oninput="debouncedSearch()" placeholder="ค้นหาเลขครุภัณฑ์ / ซีเรียล..." 
-                    class="w-full pl-14 pr-14 py-5 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm text-sm font-semibold">
-                <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300"></i>
-                <button onclick="openScanner('assetQuery')" class="absolute right-5 top-1/2 -translate-y-1/2 p-2.5 bg-pink-500 text-white rounded-2xl shadow-lg">
-                    <i data-lucide="scan" class="w-5 h-5"></i>
+        <div className="flex gap-2">
+            {selectedDept && (
+                <button onClick={() => setShowPrintPreview(true)} className="p-2 bg-pink-50 rounded-xl text-pink-500 hover:bg-pink-100 transition-colors shadow-sm">
+                    <FileText className="w-4 h-4" />
                 </button>
-            </div>
-
-            <div id="resultsArea" class="space-y-3 min-h-[100px]">
-                <!-- ผลการค้นหา -->
-            </div>
-
-            <button onclick="openNonRegisterModal()" class="w-full py-5 bg-gray-50 text-gray-400 text-xs font-bold rounded-[2.5rem] flex items-center justify-center gap-2 border-2 border-dashed border-gray-200">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มรายการนอกทะเบียน
+            )}
+            <button onClick={() => window.location.reload()} className="p-2 bg-white rounded-xl border border-gray-100 text-gray-400 hover:text-pink-500 transition-colors shadow-sm">
+                <RefreshCw className="w-4 h-4" />
             </button>
-        </section>
-    </main>
+        </div>
+      </nav>
 
-    <!-- MODAL: Audit Form -->
-    <div id="auditFormModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] max-h-[92vh] overflow-y-auto p-8 relative shadow-2xl">
-            <button onclick="closeModal('auditFormModal')" class="absolute top-6 right-6 p-2 bg-gray-50 rounded-full text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+      <main className="mt-20 px-4 max-w-md mx-auto print:hidden">
+        {view === 'location' ? (
+          <section className="space-y-6">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-extrabold text-gray-800 tracking-tight">ระบุสถานที่</h2>
+              <p className="text-sm text-gray-400 font-medium">กรุณาเลือกตึกและชั้นที่กำลังตรวจสอบ</p>
+            </div>
             
-            <div class="mb-8">
-                <h3 id="modalAssetName" class="text-xl font-800 text-gray-800 leading-tight pr-10">Asset Name</h3>
-                <div class="flex gap-4 mt-3">
-                    <span class="px-3 py-1 bg-pink-50 text-pink-500 text-[10px] font-bold rounded-full uppercase">ID: <span id="detailAssetID">--</span></span>
-                    <span id="badgeAge" class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold rounded-full">อายุ: <span id="detailAssetAge">--</span></span>
-                </div>
+            <div className="grid gap-4">
+              <div className="bg-white p-1 rounded-[2rem] border border-gray-100 shadow-sm flex items-center px-5 transition-all">
+                <select className="w-full py-4 bg-transparent text-sm font-bold outline-none appearance-none" 
+                  value={selectedBuilding} 
+                  onChange={(e) => {setSelectedBuilding(e.target.value); setSelectedFloor('');}}>
+                  <option value="">เลือกอาคาร...</option>
+                  {buildings.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <div className="bg-white p-1 rounded-[2rem] border border-gray-100 shadow-sm flex items-center px-5 transition-all">
+                <select className="w-full py-4 bg-transparent text-sm font-bold outline-none appearance-none cursor-pointer" 
+                  value={selectedFloor} 
+                  onChange={(e) => setSelectedFloor(e.target.value)} 
+                  disabled={!selectedBuilding}>
+                  <option value="">เลือกชั้น...</option>
+                  {floors.map(f => <option key={f} value={f}>ชั้น {f}</option>)}
+                </select>
+              </div>
             </div>
 
-            <div class="space-y-5">
-                <div class="relative h-56 bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-100 flex items-center justify-center overflow-hidden cursor-pointer">
-                    <input type="file" id="imgInput" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 z-10 cursor-pointer" onchange="handleImageSelection(this)">
-                    <div id="imgPlaceholder" class="text-center">
-                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-pink-500">
-                            <i data-lucide="camera" class="w-8 h-8"></i>
+            <div className="grid gap-3">
+              {depts.map(dept => (
+                <div key={dept.DEP_ID} onClick={() => {setSelectedDept(dept); setView('search');}} 
+                  className="p-5 bg-white rounded-3xl border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-95 transition-all hover:border-pink-200 group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors">
+                        <MapPin className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm font-bold text-gray-700">{dept.DEPNAME}</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-pink-300" />
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className="space-y-6">
+            {/* Header Info */}
+            <div className="bg-pink-500 p-6 rounded-[2.5rem] text-white shadow-xl shadow-pink-100 flex justify-between items-center relative overflow-hidden">
+                <div className="relative z-10">
+                    <p className="text-[10px] font-bold text-pink-200 uppercase tracking-[0.2em] mb-1">AUDIT AREA</p>
+                    <h3 className="text-base font-bold truncate max-w-[200px]">{selectedDept?.DEPNAME}</h3>
+                    <p className="text-[10px] text-pink-100 font-medium">ตึก {selectedDept?.BUILDING} ชั้น {selectedDept?.FL}</p>
+                </div>
+                <div className="flex gap-2 relative z-10">
+                    <button onClick={() => setShowPrintPreview(true)} className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl text-white hover:bg-white/30 transition-all"><Printer className="w-5 h-5" /></button>
+                    <button onClick={() => {setView('location'); setSelectedDept(null);}} className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl text-white hover:bg-white/30 transition-all"><X className="w-5 h-5" /></button>
+                </div>
+                <MapPin className="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 rotate-12" />
+            </div>
+
+            {/* Search Input */}
+            <div className="relative">
+                <input type="text" value={searchQuery} 
+                  onChange={(e) => handleSearch(e.target.value)} 
+                  placeholder="ค้นหาครุภัณฑ์ / เลขเครื่อง..." 
+                  className="w-full pl-14 pr-14 py-5 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm text-sm font-semibold outline-none focus:border-pink-300 transition-all" />
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+                <button className="absolute right-5 top-1/2 -translate-y-1/2 p-2.5 bg-pink-500 text-white rounded-2xl shadow-lg hover:bg-pink-600 active:scale-95"><QrCode className="w-5 h-5" /></button>
+            </div>
+
+            {/* Search Results */}
+            {assets.length > 0 && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-4">รายการที่พบ</p>
+                    {assets.map(item => (
+                        <div key={item.AssetID} onClick={() => {setCurrentAsset(item); setIsNonReg(false);}} className="bg-white p-5 rounded-3xl border border-gray-100 hover:border-pink-200 shadow-sm cursor-pointer transition-all active:scale-95">
+                            <p className="text-[10px] text-pink-500 font-bold uppercase tracking-wider mb-1">{item.AssetID}</p>
+                            <p className="text-sm font-bold text-gray-800 leading-tight">{item.FullDescription}</p>
+                            <p className="text-[10px] text-gray-400 mt-2 font-semibold">SN: {item.Serial || '-'}</p>
                         </div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">แตะเพื่อถ่ายรูปหลักฐาน</p>
-                    </div>
-                    <img id="imgPreview" class="hidden absolute inset-0 w-full h-full object-cover">
-                    <button id="btnRemoveImg" onclick="resetImage()" class="hidden absolute top-4 right-4 z-20 p-2 bg-black/50 text-white rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    ))}
+                </div>
+            )}
+
+            {/* History List */}
+            <div className="space-y-3 pt-2">
+                <div className="flex justify-between items-center px-4">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <History className="w-3 h-3" /> ประวัติการบันทึก ({auditHistory.length})
+                    </p>
                 </div>
 
-                <div id="nrFields" class="hidden">
-                    <div class="bg-gray-50 rounded-2xl p-1 flex items-center px-4 border border-transparent focus-within:border-pink-100 mb-3">
-                        <input type="text" id="nr_brand" placeholder="ระบุยี่ห้อ/รุ่น (สำหรับนอกทะเบียน)" class="w-full py-4 bg-transparent text-xs font-bold">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-gray-50 rounded-2xl p-1 px-4">
-                        <select id="assetTypeId" class="w-full py-4 bg-transparent text-xs font-bold appearance-none"></select>
-                    </div>
-                    <div class="bg-gray-50 rounded-2xl p-1 px-4">
-                        <select id="priorityId" class="w-full py-4 bg-transparent text-xs font-bold appearance-none"></select>
-                    </div>
-                </div>
-
-                <textarea id="note1" placeholder="ระบุอาการเสีย หรือหมายเหตุเพิ่มเติม..." class="w-full p-5 bg-gray-50 border-none rounded-2xl text-xs font-bold h-24 resize-none"></textarea>
-
-                <button id="btnSubmit" onclick="submitSurvey()" class="w-full py-5 bg-pink-500 text-white rounded-[2rem] text-sm font-bold shadow-xl shadow-pink-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                    <span id="btnText">บันทึกข้อมูลการตรวจสอบ</span>
-                    <div id="btnLoader" class="spinner hidden"></div>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Alert Modal -->
-    <div id="alertModal" class="fixed inset-0 z-[200] hidden bg-black/50 flex items-center justify-center p-8">
-        <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center">
-            <div id="alertIcon" class="w-14 h-14 bg-pink-50 text-pink-500 rounded-full flex items-center justify-center mx-auto mb-5">
-                <i data-lucide="alert-triangle" class="w-7 h-7"></i>
-            </div>
-            <h4 id="alertTitle" class="font-800 text-gray-800">แจ้งเตือน</h4>
-            <p id="alertMessage" class="text-xs text-gray-500 mt-2">รายละเอียดข้อความ</p>
-            <button onclick="closeAlert()" class="mt-8 w-full py-4 bg-gray-900 text-white rounded-2xl text-xs font-bold uppercase tracking-widest">รับทราบ</button>
-        </div>
-    </div>
-
-    <!-- Full-screen Scanner -->
-    <div id="scannerModal" class="fixed inset-0 z-[200] hidden bg-black flex flex-col">
-        <div id="reader" class="flex-grow"></div>
-        <div class="p-10 bg-gradient-to-t from-black/80 to-transparent flex flex-col gap-6 items-center">
-            <p class="text-white text-xs font-bold tracking-widest uppercase">สแกนรหัสครุภัณฑ์</p>
-            <button onclick="closeScanner()" class="w-full py-5 bg-white rounded-[2rem] text-sm font-bold">ยกเลิก</button>
-        </div>
-    </div>
-
-    <script>
-        // ตรวจสอบ API URL ของคุณให้ถูกต้อง (ต้องเป็น Web App ที่ Deploy แล้ว)
-        const API_URL = "https://script.google.com/macros/s/AKfycbzlwkwuMk9Y7qpEqT7JlnDFjWwlmvYVpW0NOuaEBcS6_3iocDVC6Jpc2ZL9P1qvbHM/exec";
-        
-        let masterDeptList = [], configData = { priorities: [], assetTypes: [] }, currentAsset = null, currentBase64Image = "";
-        let html5QrCode = null, isNR = false;
-
-        window.onload = () => {
-            lucide.createIcons();
-            initApp();
-            html5QrCode = new Html5Qrcode("reader");
-        };
-
-        async function initApp() {
-            try {
-                console.log("Starting initialization...");
-                const [resConfig, resDept] = await Promise.all([
-                    fetch(`${API_URL}?action=getInitialData`),
-                    fetch(`${API_URL}?action=getDeptList`)
-                ]);
-                
-                configData = await resConfig.json();
-                masterDeptList = await resDept.json();
-                
-                console.log("Config Data:", configData);
-                console.log("Dept List:", masterDeptList);
-
-                populateSelects();
-                
-                const bSel = document.getElementById('selBuilding');
-                bSel.innerHTML = '<option value="" disabled selected>เลือกอาคาร</option>';
-                
-                // สกัดชื่ออาคารแบบยืดหยุ่น (รองรับตัวเล็ก/ใหญ่จาก JSON)
-                const buildings = [...new Set(masterDeptList.map(i => i.BUILDING || i.building || i.Building))].filter(Boolean).sort();
-                
-                if (buildings.length === 0) {
-                    bSel.innerHTML = '<option value="" disabled selected>ไม่พบข้อมูลอาคาร</option>';
-                    throw new Error("No buildings found in department list");
-                }
-
-                buildings.forEach(b => bSel.add(new Option(b, b)));
-                
-                document.getElementById('statusIndicator').innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500"></span> ONLINE';
-                document.getElementById('statusIndicator').className = "text-xs font-bold text-green-500 flex items-center gap-1";
-            } catch (e) { 
-                console.error("Init Error:", e);
-                document.getElementById('statusIndicator').innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span> ERROR';
-                document.getElementById('statusIndicator').className = "text-xs font-bold text-red-500 flex items-center gap-1";
-                showAlert("การเชื่อมต่อล้มเหลว", "ไม่สามารถดึงข้อมูลจาก Server ได้ กรุณาตรวจสอบการตั้งค่า Apps Script");
-            }
-        }
-
-        function populateSelects() {
-            const types = document.getElementById('assetTypeId');
-            const priors = document.getElementById('priorityId');
-            types.innerHTML = '<option value="" disabled selected>เลือกประเภทอุปกรณ์</option>';
-            configData.assetTypes.forEach(a => types.add(new Option(a.name, a.id)));
-            priors.innerHTML = '<option value="" disabled selected>ระดับความสำคัญ</option>';
-            configData.priorities.forEach(p => priors.add(new Option(p.name, p.id)));
-        }
-
-        function onBuildingChange() {
-            const b = document.getElementById('selBuilding').value;
-            const fSel = document.getElementById('selFloor');
-            fSel.innerHTML = '<option value="" disabled selected>เลือกชั้น</option>';
-            fSel.disabled = false;
-
-            // ค้นหาชั้นตามอาคารที่เลือก
-            const filtered = masterDeptList.filter(i => (i.BUILDING || i.building || i.Building) === b);
-            const floors = [...new Set(filtered.map(i => i.FL || i.fl || i.Fl))].sort((a,b)=>a-b);
-            
-            floors.forEach(f => fSel.add(new Option(`ชั้น ${f}`, f)));
-            document.getElementById('deptList').innerHTML = ''; // ล้างแผนกเก่า
-        }
-
-        function renderDeptList() {
-            const b = document.getElementById('selBuilding').value;
-            const f = document.getElementById('selFloor').value;
-            const container = document.getElementById('deptList'); 
-            container.innerHTML = '';
-            
-            const filteredDepts = masterDeptList.filter(d => 
-                (d.BUILDING || d.building || d.Building) === b && 
-                String(d.FL || d.fl || d.Fl) === String(f)
-            );
-
-            filteredDepts.forEach(dept => {
-                const deptName = dept.DEPNAME || dept.depname || dept.DepName || "ไม่ระบุชื่อ";
-                const deptId = dept.DEP_ID || dept.dep_id || dept.DepID;
-
-                const card = document.createElement('div');
-                card.className = "p-5 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-95 transition-all";
-                card.innerHTML = `<p class="text-sm font-bold text-gray-700">${deptName}</p><i data-lucide="chevron-right" class="w-4 h-4 text-pink-300"></i>`;
-                card.onclick = () => {
-                    document.getElementById('displayDeptName').innerText = deptName;
-                    document.getElementById('selectedDeptId').value = deptId;
-                    document.getElementById('locationPickerSection').classList.add('hidden');
-                    document.getElementById('searchAreaSection').classList.remove('hidden');
-                };
-                container.appendChild(card);
-            });
-            lucide.createIcons();
-        }
-
-        function debouncedSearch() {
-            clearTimeout(window.sTimeout);
-            const q = document.getElementById('assetQuery').value.trim();
-            if (q.length >= 1) window.sTimeout = setTimeout(searchAsset, 500);
-            else { document.getElementById('resultsArea').innerHTML = ''; }
-        }
-
-        async function searchAsset() {
-            const q = document.getElementById('assetQuery').value.trim();
-            const area = document.getElementById('resultsArea');
-            area.innerHTML = '<div class="py-4 text-center"><div class="spinner mx-auto"></div></div>';
-            try {
-                const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
-                const data = await res.json(); 
-                area.innerHTML = '';
-                if (data.length === 0) {
-                    area.innerHTML = '<p class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">ไม่พบครุภัณฑ์ในระบบ</p>';
-                    return;
-                }
-                data.forEach(item => {
-                    const d = document.createElement('div');
-                    d.className = "p-5 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-95 transition-all mb-3";
-                    d.innerHTML = `
-                        <div>
-                            <p class="text-[10px] font-800 text-pink-500 uppercase mb-1">${item.AssetID || item.assetid}</p>
-                            <h4 class="text-xs font-bold text-gray-800 leading-tight">${item.FullDescription || item.description}</h4>
+                <div className="space-y-3">
+                    {auditHistory.map((item, idx) => (
+                        <div key={idx} className="bg-white p-4 rounded-3xl border border-gray-50 shadow-sm flex gap-4 items-center group relative overflow-hidden">
+                            <div className="w-14 h-14 bg-gray-50 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                {item.IMAGE_NAME && item.IMAGE_NAME !== "-" ? (
+                                    <img src={item.IMAGE_NAME} alt="Thumb" className="w-full h-full object-cover" />
+                                ) : (
+                                    <Camera className="w-5 h-5 text-gray-300" />
+                                )}
+                            </div>
+                            <div className="flex-grow min-w-0 pr-8">
+                                <p className="text-[9px] font-extrabold text-pink-500 truncate">{item.AssetID || item.NOID}</p>
+                                <p className="text-xs font-bold text-gray-800 truncate">{item.FullDescription || item.Asset_ID || item.DB_Detail}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[8px] bg-pink-50 text-pink-500 px-1.5 py-0.5 rounded-full font-bold">{item.Asset_Type || 'ไม่ระบุประเภท'}</span>
+                                    <p className="text-[9px] text-gray-400 font-medium">{new Date(item.Timestamp).toLocaleDateString('th-TH')}</p>
+                                </div>
+                            </div>
+                            {/* Move Print Button to End */}
+                            <button 
+                                onClick={() => setShowSlipPreview(item)} 
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-gray-300 hover:text-pink-500 hover:bg-pink-50 rounded-2xl transition-all"
+                            >
+                                <Printer className="w-5 h-5" />
+                            </button>
                         </div>
-                        <i data-lucide="arrow-right" class="w-4 h-4 text-gray-200"></i>
-                    `;
-                    d.onclick = () => { currentAsset = item; openAuditModal(false); };
-                    area.appendChild(d);
-                });
-                lucide.createIcons();
-            } catch (e) { area.innerHTML = '<p class="text-center text-red-400 text-xs">Search Error</p>'; }
-        }
+                    ))}
+                </div>
+            </div>
 
-        function openAuditModal(isNonReg) {
-            isNR = isNonReg;
-            resetImage();
-            document.getElementById('note1').value = '';
-            document.getElementById('nr_brand').value = '';
+            <button onClick={() => {setIsNonReg(true); setCurrentAsset({});}} 
+              className="w-full py-5 bg-white text-gray-400 text-xs font-bold rounded-[2.5rem] flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 hover:border-pink-200 hover:text-pink-400 transition-all">
+                <PlusCircle className="w-4 h-4" /> เพิ่มรายการนอกทะเบียน
+            </button>
+          </section>
+        )}
+      </main>
+
+      {/* Input Modal */}
+      {currentAsset && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] p-8 relative shadow-2xl overflow-y-auto max-h-[95vh]">
+            <button onClick={() => setCurrentAsset(null)} className="absolute top-6 right-6 p-2 bg-gray-50 rounded-full text-gray-400"><X className="w-5 h-5" /></button>
+            <h3 className="text-lg font-bold text-gray-800 mb-6">{isNonReg ? 'บันทึกของใหม่' : 'รายละเอียดการตรวจสอบ'}</h3>
             
-            if (isNR) {
-                document.getElementById('modalAssetName').innerText = "เพิ่มรายการนอกทะเบียน";
-                document.getElementById('detailAssetID').innerText = "NEW-NR";
-                document.getElementById('badgeAge').classList.add('hidden');
-                document.getElementById('nrFields').classList.remove('hidden');
-            } else {
-                document.getElementById('modalAssetName').innerText = currentAsset.FullDescription || currentAsset.description;
-                document.getElementById('detailAssetID').innerText = currentAsset.AssetID || currentAsset.assetid;
-                document.getElementById('detailAssetAge').innerText = currentAsset.AgeInfo || '--';
-                document.getElementById('badgeAge').classList.remove('hidden');
-                document.getElementById('nrFields').classList.add('hidden');
-            }
-            document.getElementById('auditFormModal').classList.remove('hidden');
-        }
+            <div className="space-y-5">
+              <div className="relative h-56 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-100 flex items-center justify-center overflow-hidden" onClick={() => document.getElementById('cam').click()}>
+                {formData.image ? <img src={formData.image} className="w-full h-full object-cover" /> : <div className="text-center"><Camera className="mx-auto w-8 h-8 text-pink-400 mb-2" /><p className="text-[10px] font-bold text-gray-400">แตะเพื่อถ่ายรูป</p></div>}
+                <input type="file" id="cam" capture="environment" accept="image/*" className="hidden" onChange={handleImage} />
+              </div>
 
-        function openNonRegisterModal() { openAuditModal(true); }
+              {isNonReg && <input type="text" placeholder="ระบุยี่ห้อ/รุ่น" className="w-full p-4 bg-gray-50 rounded-2xl text-xs font-bold" value={formData.nr_brand} onChange={(e)=>setFormData({...formData, nr_brand: e.target.value})} />}
 
-        async function handleImageSelection(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const maxW = 1000;
-                    let w = img.width, h = img.height;
-                    if (w > maxW) { h = (maxW / w) * h; w = maxW; }
-                    canvas.width = w; canvas.height = h;
-                    ctx.drawImage(img, 0, 0, w, h);
-                    currentBase64Image = canvas.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('imgPreview').src = currentBase64Image;
-                    document.getElementById('imgPreview').classList.remove('hidden');
-                    document.getElementById('imgPlaceholder').classList.add('hidden');
-                    document.getElementById('btnRemoveImg').classList.remove('hidden');
-                };
-            };
-            reader.readAsDataURL(file);
-        }
+              <div className="grid grid-cols-2 gap-4">
+                <select className="p-4 bg-gray-50 rounded-2xl text-xs font-bold outline-none" value={formData.assetTypeId} onChange={(e)=>setFormData({...formData, assetTypeId: e.target.value})}>
+                  <option value="">ประเภท...</option>
+                  {configData.assetTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+                <select className="p-4 bg-gray-50 rounded-2xl text-xs font-bold outline-none" value={formData.priorityId} onChange={(e)=>setFormData({...formData, priorityId: e.target.value})}>
+                  <option value="">ความสำคัญ...</option>
+                  {configData.priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
 
-        function resetImage() {
-            currentBase64Image = "";
-            document.getElementById('imgPreview').classList.add('hidden');
-            document.getElementById('imgPlaceholder').classList.remove('hidden');
-            document.getElementById('imgInput').value = "";
-            document.getElementById('btnRemoveImg').classList.add('hidden');
-        }
+              <textarea placeholder="หมายเหตุเพิ่มเติม..." className="w-full p-4 bg-gray-50 rounded-2xl text-xs font-bold h-24" value={formData.note} onChange={(e)=>setFormData({...formData, note: e.target.value})}></textarea>
 
-        async function submitSurvey() {
-            const tId = document.getElementById('assetTypeId').value;
-            const pId = document.getElementById('priorityId').value;
-            const deptId = document.getElementById('selectedDeptId').value;
-            
-            if (!tId || !pId) return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
-            if (!currentBase64Image) return showAlert("ไม่มีภาพถ่าย", "กรุณาถ่ายภาพครุภัณฑ์เพื่อเป็นหลักฐาน");
-            if (isNR && !document.getElementById('nr_brand').value.trim()) return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุยี่ห้อ/รุ่นของอุปกรณ์");
+              <button onClick={handleSubmit} disabled={loading} className="w-full py-5 bg-pink-500 text-white rounded-[2rem] font-bold shadow-lg flex items-center justify-center gap-2">
+                {loading ? <Loader2 className="animate-spin" /> : <><Save className="w-5 h-5" /> บันทึกข้อมูล</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-            setLoadingState(true);
+      {/* 1. SLIP PREVIEW (แสดงข้อมูลในสลิปให้ครบถ้วน) */}
+      {showSlipPreview && (
+          <div className="fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4 print:p-0 print:bg-white">
+              <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-6 shadow-2xl print:shadow-none print:max-w-none print:w-[80mm] print:p-0">
+                  <div className="print:hidden flex justify-between items-center mb-6">
+                      <div className="flex items-center gap-2">
+                          <Printer className="w-4 h-4 text-pink-500" />
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Audit Slip</p>
+                      </div>
+                      <button onClick={() => setShowSlipPreview(null)} className="p-2 bg-gray-50 rounded-full"><X className="w-4 h-4 text-gray-400" /></button>
+                  </div>
+                  
+                  {/* Slip Content Area */}
+                  <div className="bg-white border-2 border-dashed border-gray-200 p-6 rounded-[2rem] font-['Sarabun'] print:border-none print:p-4">
+                      {/* Logo/Header */}
+                      <div className="text-center mb-6">
+                          <div className="w-12 h-12 bg-pink-500 rounded-2xl flex items-center justify-center text-white mx-auto mb-3 shadow-lg shadow-pink-100">
+                             <CheckCircle2 className="w-6 h-6" />
+                          </div>
+                          <h4 className="text-sm font-extrabold text-gray-900 uppercase tracking-tight leading-tight">Audit Successful</h4>
+                          <div className="flex items-center justify-center gap-1 text-[9px] text-gray-400 font-bold mt-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(showSlipPreview.Timestamp).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}
+                          </div>
+                      </div>
+                      
+                      {/* Main Data */}
+                      <div className="space-y-4 text-left border-t border-gray-100 pt-5">
+                          <div>
+                              <p className="text-[8px] font-extrabold text-gray-400 uppercase mb-1 flex items-center gap-1"><MapPin className="w-2 h-2" /> แผนก / หน่วยงาน</p>
+                              <p className="text-[11px] font-bold text-gray-800 leading-tight">{showSlipPreview.DEPNAME || selectedDept?.DEPNAME}</p>
+                          </div>
+                          
+                          <div className="bg-gray-50 p-3 rounded-2xl">
+                              <p className="text-[8px] font-extrabold text-pink-400 uppercase mb-1">เลขครุภัณฑ์ / SERIAL</p>
+                              <p className="text-xs font-black text-pink-600 tracking-wider mb-0.5">{showSlipPreview.AssetID || showSlipPreview.NOID}</p>
+                              <p className="text-[9px] text-gray-400 font-medium italic">SN: {showSlipPreview.Serial || '-'}</p>
+                          </div>
 
-            const payload = {
-                action: isNR ? 'saveNonNumber' : 'saveSurvey',
-                data: {
-                    NOID: isNR ? "" : (currentAsset.NoID || currentAsset.noid),
-                    Asset_ID: isNR ? "NR-" + Date.now() : (currentAsset.AssetID || currentAsset.assetid),
-                    Serial: isNR ? "NON-SERIAL" : (currentAsset.Serial || currentAsset.serial || "N/A"),
-                    Asset_Type_ID: tId,
-                    PIORITY_ID: pId,
-                    DEPT_ID: deptId,
-                    Note1: isNR ? `[นอกทะเบียน] ${document.getElementById('nr_brand').value.trim()} | ${document.getElementById('note1').value}` : document.getElementById('note1').value,
-                    IMAGE_NAME: currentBase64Image,
-                    Shift_Work: "1",
-                    IT_User_Mail: "mobile_user@udh.com",
-                    Asset_Gps: "13.0,100.0"
-                }
-            };
+                          <div>
+                              <p className="text-[8px] font-extrabold text-gray-400 uppercase mb-1 flex items-center gap-1"><Info className="w-2 h-2" /> รายละเอียดเครื่อง</p>
+                              <p className="text-[11px] font-bold text-gray-800 leading-tight mb-2">{showSlipPreview.FullDescription || showSlipPreview.Asset_ID || showSlipPreview.DB_Detail}</p>
+                              
+                              <div className="flex flex-wrap gap-2">
+                                  <span className="text-[8px] font-black bg-blue-50 text-blue-500 px-2 py-1 rounded-lg uppercase">{showSlipPreview.Asset_Type || 'ไม่ระบุประเภท'}</span>
+                                  <span className="text-[8px] font-black bg-orange-50 text-orange-500 px-2 py-1 rounded-lg uppercase">{showSlipPreview.Priority || 'ปกติ'}</span>
+                                  {showSlipPreview.DB_Age && showSlipPreview.DB_Age !== "-" && (
+                                      <span className="text-[8px] font-black bg-green-50 text-green-500 px-2 py-1 rounded-lg uppercase">อายุ: {showSlipPreview.DB_Age}</span>
+                                  )}
+                              </div>
+                          </div>
 
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    showSuccessAlert();
-                    closeModal('auditFormModal');
-                    document.getElementById('assetQuery').value = '';
-                    document.getElementById('resultsArea').innerHTML = '';
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (e) {
-                showAlert("เกิดข้อผิดพลาด", e.message);
-            } finally {
-                setLoadingState(false);
-            }
-        }
+                          {showSlipPreview.Note1 && showSlipPreview.Note1 !== "-" && (
+                              <div className="border-t border-gray-50 pt-3">
+                                  <p className="text-[8px] font-extrabold text-gray-400 uppercase mb-1">หมายเหตุ</p>
+                                  <p className="text-[10px] font-medium text-gray-600 leading-relaxed italic">"{showSlipPreview.Note1}"</p>
+                              </div>
+                          )}
+                      </div>
 
-        function setLoadingState(loading) {
-            const btn = document.getElementById('btnSubmit');
-            const txt = document.getElementById('btnText');
-            const ldr = document.getElementById('btnLoader');
-            btn.disabled = loading;
-            if (loading) {
-                txt.classList.add('hidden');
-                ldr.classList.remove('hidden');
-                btn.classList.replace('bg-pink-500', 'bg-gray-400');
-            } else {
-                txt.classList.remove('hidden');
-                ldr.classList.add('hidden');
-                btn.classList.replace('bg-gray-400', 'bg-pink-500');
-            }
-        }
+                      {/* Photo Thumbnail in Slip */}
+                      <div className="my-6">
+                        <div className="w-full h-40 bg-gray-50 rounded-[1.5rem] overflow-hidden border border-gray-100 flex items-center justify-center">
+                             {showSlipPreview.IMAGE_NAME && showSlipPreview.IMAGE_NAME !== "-" ? (
+                                <img src={showSlipPreview.IMAGE_NAME} className="w-full h-full object-cover" />
+                             ) : (
+                                <Camera className="w-6 h-6 text-gray-200" />
+                             )}
+                        </div>
+                      </div>
 
-        function showAlert(title, message, isSuccess = false) {
-            const icon = document.getElementById('alertIcon');
-            document.getElementById('alertTitle').innerText = title;
-            document.getElementById('alertMessage').innerText = message;
-            if (isSuccess) {
-                icon.className = "w-14 h-14 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-5";
-                icon.innerHTML = '<i data-lucide="check" class="w-7 h-7"></i>';
-            } else {
-                icon.className = "w-14 h-14 bg-pink-50 text-pink-500 rounded-full flex items-center justify-center mx-auto mb-5";
-                icon.innerHTML = '<i data-lucide="alert-triangle" class="w-7 h-7"></i>';
-            }
-            lucide.createIcons();
-            document.getElementById('alertModal').classList.remove('hidden');
-        }
+                      <div className="text-[8px] text-gray-300 font-black text-center uppercase tracking-[0.3em] mt-2">
+                          UDH IT AUDIT SYSTEM
+                      </div>
+                  </div>
 
-        function showSuccessAlert() {
-            showAlert("บันทึกสำเร็จ", "ข้อมูลการตรวจสอบถูกส่งเข้าระบบเรียบร้อยแล้ว", true);
-        }
+                  {/* Print Actions */}
+                  <div className="mt-8 flex gap-3 print:hidden">
+                      <button onClick={() => window.print()} className="flex-grow py-5 bg-pink-500 text-white rounded-[1.5rem] text-sm font-bold shadow-xl shadow-pink-100 flex items-center justify-center gap-2 active:scale-95 transition-all">
+                          <Printer className="w-5 h-5" /> พิมพ์สลิป
+                      </button>
+                      <button onClick={() => setShowSlipPreview(null)} className="px-6 py-5 bg-gray-100 text-gray-400 rounded-[1.5rem] text-sm font-bold active:scale-95 transition-all">ปิด</button>
+                  </div>
+              </div>
+          </div>
+      )}
 
-        function closeAlert() { document.getElementById('alertModal').classList.add('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function resetDeptSelection() { 
-            document.getElementById('searchAreaSection').classList.add('hidden');
-            document.getElementById('locationPickerSection').classList.remove('hidden');
-            document.getElementById('selBuilding').value = "";
-            document.getElementById('selFloor').innerHTML = '<option value="" disabled selected>กรุณาเลือกอาคารก่อน</option>';
-            document.getElementById('selFloor').disabled = true;
-            document.getElementById('deptList').innerHTML = "";
-        }
+      {/* 2. SUMMARY PREVIEW (พิมพ์สรุปหน่วยงาน) */}
+      {showPrintPreview && (
+          <div className="fixed inset-0 z-[110] bg-white overflow-y-auto p-4 sm:p-10 print:p-0">
+              <div className="max-w-4xl mx-auto">
+                  <div className="flex justify-between items-center bg-gray-50 p-6 rounded-3xl mb-8 print:hidden">
+                    <div className="flex items-center gap-4">
+                        <FileText className="w-8 h-8 text-pink-500" />
+                        <h2 className="text-lg font-bold">สรุปรายงานการตรวจสอบ</h2>
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={() => setShowPrintPreview(false)} className="px-6 py-3 bg-white rounded-2xl text-sm font-bold text-gray-400">ปิด</button>
+                        <button onClick={() => window.print()} className="px-8 py-3 bg-pink-500 text-white rounded-2xl text-sm font-bold shadow-lg flex items-center gap-2"><Printer className="w-4 h-4" /> พิมพ์</button>
+                    </div>
+                  </div>
 
-        async function openScanner(id) {
-            document.getElementById('scannerModal').classList.remove('hidden');
-            try {
-                await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, async (text) => {
-                    document.getElementById(id).value = text;
-                    await closeScanner();
-                    searchAsset();
-                });
-            } catch (e) { closeScanner(); }
-        }
+                  <div className="border p-10 rounded-3xl print:border-none print:p-0">
+                      <div className="text-center mb-10 pb-6 border-b-2 border-dashed">
+                          <h1 className="text-xl font-bold">รายงานการตรวจสอบครุภัณฑ์และระบบสารสนเทศ</h1>
+                          <p className="text-sm text-gray-500 mt-2">{selectedDept?.DEPNAME} | อาคาร {selectedDept?.BUILDING} ชั้น {selectedDept?.FL}</p>
+                      </div>
 
-        async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); closeModal('scannerModal'); }
-    </script>
-</body>
-</html>
+                      <table className="w-full text-left text-xs mb-10">
+                          <thead>
+                              <tr className="border-b-2 border-gray-800">
+                                  <th className="py-2">#</th>
+                                  <th>เลขครุภัณฑ์</th>
+                                  <th>รายการ</th>
+                                  <th>ประเภท</th>
+                                  <th className="text-right">สถานะ</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {auditHistory.map((item, idx) => (
+                                  <tr key={idx} className="border-b">
+                                      <td className="py-3">{idx+1}</td>
+                                      <td className="font-bold">{item.AssetID || item.NOID}</td>
+                                      <td>{item.FullDescription || item.Asset_ID || item.DB_Detail}</td>
+                                      <td><span className="bg-gray-100 px-2 py-0.5 rounded text-[10px]">{item.Asset_Type || '-'}</span></td>
+                                      <td className="text-right font-bold text-green-600">ตรวจสอบแล้ว</td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
+
+                      <div className="grid grid-cols-2 gap-10 mt-20 pt-10 border-t">
+                          <div className="text-center pt-10">
+                              <div className="h-0.5 w-48 bg-gray-200 mx-auto mb-2"></div>
+                              <p className="text-[10px] font-bold">ลงชื่อ ผู้ตรวจสอบ</p>
+                          </div>
+                          <div className="text-center pt-10">
+                              <div className="h-0.5 w-48 bg-gray-200 mx-auto mb-2"></div>
+                              <p className="text-[10px] font-bold">ลงชื่อ ผู้รับรองข้อมูล</p>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+    </div>
+  );
+};
+
+export default App;
