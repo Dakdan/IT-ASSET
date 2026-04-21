@@ -346,10 +346,7 @@
         document.getElementById('mDeptPic').querySelector('img').src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
         
         // แก้ไขปุ่ม: ใส่ค่า href โดยตรงเพื่อให้เปิดหน้าใหม่ได้ (รักษา Logic การเปิดหน้าเดิม)
-        const detailBtn = document.getElementById('mDeptDetailBtn');
-        if(detailBtn) {
-            detailBtn.href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
-        }
+         document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
 
         const byType = {};
         logs.forEach(l => { 
