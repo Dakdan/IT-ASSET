@@ -218,10 +218,7 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">📝Note</label>
-                    <textarea id="note2" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm text-gray-600 focus:ring-1 focus:ring-pink-500/30 outline-none"></textarea>
-                </div>
+               
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
                     <button onclick="closeModal('auditFormModal')" class="py-4 bg-gray-100 text-pink-500 rounded-2xl font-bold">❌ยกเลิก</button>
@@ -308,10 +305,7 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Note2 (Column U)</label>
-                    <textarea id="nr_note2" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm text-gray-600 outline-none focus:ring-1 focus:ring-orange-500/30"></textarea>
-                </div>
+                
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
                 <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
@@ -717,66 +711,72 @@ if (imgData && imgData.includes(",")) {
         const suffix = isExisting ? '' : 'nr_';
         
         // 1. ดึงค่าจาก Elements
-        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id').value;
-        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId').value;
-        const isPac = document.getElementById(`${suffix}pac_toggle`:`${suffix}nr_rent_toggle`).checked;
-        const note2 = document.getElementById(isExisting ? 'note2' : 'nr_note2').value;
-        const shifts = Array.from(document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`)).map(c => c.value).join(',');
+        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
+        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
         
-        // Elements พิเศษสำหรับกรณี NR
-        const brandEl = document.getElementById('nr_brand_detail');
-        const assetIdEl = document.getElementById('nr_asset_id');
+        // ดึงค่า Shift Work
+        const shiftName = isExisting ? "shift_work" : "nr_shift_work";
+        const shifts = Array.from(document.querySelectorAll(`input[name="${shiftName}"]:checked`))
+                            .map(c => c.value)
+                            .join(',');
     
-        // 2. ตรวจสอบข้อมูลบังคับ (Mandatory Check)
+        // 2. ตรวจสอบข้อมูลบังคับ
         if (!typeId || !priorityId) {
             return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณาเลือกประเภทและความสำคัญ");
         }
-        
-        // เช็กเฉพาะกรณี "นอกทะเบียน" (NR)
+    
         if (!isExisting) {
+            const brandEl = document.getElementById('nr_brand_detail');
             if (!brandEl || !brandEl.value.trim()) {
                 return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณาระบุยี่ห้อหรือรายละเอียดครุภัณฑ์");
             }
         }
     
         // 3. ตรวจสอบรูปถ่าย
-        if (!currentBase64Image) {
+        if (typeof currentBase64Image === 'undefined' || !currentBase64Image) {
             return showAlert("ลืมถ่ายรูปหรือเปล่า?", "กรุณาถ่ายภาพครุภัณฑ์เพื่อใช้เป็นหลักฐาน");
         }
     
         // 4. ประกอบข้อมูล (Construct Payload)
-     let data = {
-            Asset_Type_ID: typeId ,
+        let data = {
+            Asset_Type_ID: typeId,
             PIORITY_ID: priorityId,
             Shift_Work: shifts,
-            Note2: isPac,
-            ImageData: currentBase64Image, // ✅ ต้องมี comma
-        
-            Jobe_Type_ID: selectedJobTypeId || "", // ✅ ใช้ตัวนี้แทน
-             gps: currentGps || ""
+            
+            // ✅ บันทึกค่าตามที่ติ๊ก (PAC, Rent หรือทั้งคู่)
+            Note2: [
+                document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
+                document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
+            ].filter(Boolean).join(", "), 
+            
+            ImageData: currentBase64Image,
+            Jobe_Type_ID: typeof selectedJobTypeId !== 'undefined' ? selectedJobTypeId : "",
+            gps: typeof currentGps !== 'undefined' ? currentGps : ""
         };
     
+        // 5. บันทึกข้อมูลแยกตามประเภท
         if (isExisting) {
             data.Asset_ID = currentAsset.AssetID;
             data.AssetName = currentAsset.FullDescription;
-        
-            // ✅ เพิ่มบรรทัดนี้
             data.NOID = currentAsset.NoID;
-        
             closeModal('auditFormModal');
-        
         } else {
-            data.Asset_ID = assetIdEl.value || ("NR-" + Date.now());
-            data.AssetName = "[นอกทะเบียน] " + brandEl.value.trim();
-            data.Serial = document.getElementById('nr_serial')?.value || ""; // เพิ่ม Optional Chain กัน Error
+            const assetIdEl = document.getElementById('nr_asset_id');
+            const brandDetail = document.getElementById('nr_brand_detail').value.trim();
+            
+            data.Asset_ID = (assetIdEl && assetIdEl.value) ? assetIdEl.value : ("NR-" + Date.now());
+            data.AssetName = "[นอกทะเบียน] " + brandDetail;
+            data.Serial = document.getElementById('nr_serial')?.value || "";
             closeModal('nonRegisterModal');
         }
     
-        // 5. บันทึกลง Queue และอัปเดตหน้าจอ
-        auditQueue.unshift({ DisplayName: data.AssetName, data: data });
+        // 6. ส่งเข้าคิว
+        auditQueue.unshift({ 
+            DisplayName: data.AssetName, 
+            data: data 
+        });
         updateQueueUI();
     }
-
     function updateQueueUI() {
         document.getElementById('auditCount').innerText = auditQueue.length;
         const list = document.getElementById('auditListItems');
