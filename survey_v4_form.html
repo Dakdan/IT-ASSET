@@ -398,18 +398,79 @@
    <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
     const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=";
+    const jobTypeId = document.getElementById('jobTypeId')?.value || "";
     
     let masterDeptList = [], configData = { priorities: [], assetTypes: [] }, auditQueue = [], currentAsset = null, signaturePad = null;
     let html5QrCode = null, currentBase64Image = "", submitMode = 'FINAL';
-
-    window.onload = () => {
+    let selectedJobTypeId = "";
+      window.onload = () => {
         lucide.createIcons();
         initApp();
+    
+        // ✅ init ครั้งเดียวพอ
         signaturePad = new SignaturePad(document.getElementById('signature-pad'));
         html5QrCode = new Html5Qrcode("reader");
         window.addEventListener('resize', handleResize);
+    
+        // ✅ โหลด GPS
+        loadGPS();
     };
-
+    };
+    let currentGps = "";
+    let gpsReady = false;
+    
+    // UI helper
+    function setGpsStatus(status, text) {
+        const dot = document.getElementById('gpsDot');
+        const label = document.getElementById('gpsStatusText');
+    
+        dot.className = "w-2 h-2 rounded-full";
+        
+        if (status === "loading") dot.classList.add("gps-loading");
+        if (status === "success") dot.classList.add("gps-success");
+        if (status === "error") dot.classList.add("gps-error");
+    
+        label.innerText = text;
+    }
+    
+    // โหลด GPS
+    function loadGPS() {
+        if (!navigator.geolocation) {
+            setGpsStatus("error", "อุปกรณ์ไม่รองรับ GPS");
+            return;
+        }
+    
+        setGpsStatus("loading", "กำลังขอพิกัด...");
+    
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+    
+                currentGps = `${lat},${lng}`;
+                gpsReady = true;
+    
+                setGpsStatus("success", "พร้อมใช้งาน");
+                console.log("GPS:", currentGps);
+            },
+            (err) => {
+                gpsReady = false;
+    
+                let msg = "ไม่สามารถใช้ GPS";
+                if (err.code === 1) msg = "ผู้ใช้ไม่อนุญาต GPS";
+                if (err.code === 2) msg = "หาตำแหน่งไม่เจอ";
+                if (err.code === 3) msg = "GPS timeout";
+    
+                setGpsStatus("error", msg);
+                console.log("GPS error:", err.message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }
     function handleResize() {
         if (document.getElementById('confirmModal').classList.contains('hidden')) return;
         const canvas = document.getElementById('signature-pad');
@@ -535,6 +596,7 @@
                 document.getElementById('locationPickerSection').classList.add('hidden');
                 document.getElementById('searchAreaSection').classList.remove('hidden');
                 document.getElementById('selectedDeptId').value = dept.DEP_ID;
+                selectedJobTypeId = dept.JOBE_SYSTEMP || "";
             };
             container.appendChild(card);
         });
@@ -665,12 +727,15 @@
         }
     
         // 4. ประกอบข้อมูล (Construct Payload)
-        let data = {
+     let data = {
             Asset_Type_ID: isPac ? typeId + "/PAC" : typeId,
             PIORITY_ID: priorityId,
             Shift_Work: shifts,
             Note2: note2,
-            ImageData: currentBase64Image
+            ImageData: currentBase64Image, // ✅ ต้องมี comma
+        
+            Jobe_Type_ID: selectedJobTypeId || "", // ✅ ใช้ตัวนี้แทน
+            Asset_Gps: currentGps || ""
         };
     
         if (isExisting) {
@@ -745,7 +810,12 @@
                         items: auditQueue.map(i => i.data),
                         deptId: document.getElementById('selectedDeptId').value,
                         signature: signatureData,
-                        isDraft: submitMode === 'DRAFT'
+                        isDraft: submitMode === 'DRAFT',
+                    
+                        // ✅ เพิ่ม 3 ตัวนี้
+                        gps: currentGps,
+                        activityId: "Ac-2569",
+                        IT_User_Mail: "user@mail.com"
                     }
                 })
             });
