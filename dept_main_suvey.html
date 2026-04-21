@@ -1,207 +1,215 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>IT Asset Survey UDH - Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>IT Asset Survey UDH - Dashboard</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<style>
-    :root {
-        --pink-soft: #fdf2f8;
-        --pink-main: #ec4899;
-        --pink-dark: #be185d;
-        --slate-body: #f8fafc;
-    }
+    <style>
+        :root {
+            --pink-main: #ec4899;
+            --slate-body: #f8fafc;
+        }
 
-    body {
-        font-family: 'Kanit', sans-serif;
-        background-color: var(--slate-body);
-        min-height: 100vh;
-    }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--slate-body);
+            min-height: 100vh;
+        }
 
-    .pink-gradient {
-        background: linear-gradient(135deg, #f472b6 0%, #db2777 100%);
-    }
+        .main-nav-head {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 3px solid var(--pink-main);
+        }
 
-    .main-nav-head {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(15px);
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        border-bottom: 2px solid #f1f5f9;
-    }
+        .search-input-box {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
 
-    .nav-search-anchor {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translate(-50%, 50%);
-        width: 100%;
-        max-width: 600px;
-        padding: 0 1.5rem;
-        z-index: 110;
-    }
+        .search-input-box:focus-within { border-color: var(--pink-main); }
 
-    .search-input-box {
-        background: white;
-        border-radius: 1.5rem;
-        box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
-        border: 2px solid #f1f5f9;
-        display: flex;
-        align-items: center;
-        transition: all 0.3s ease;
-    }
+        .building-container {
+            background: white;
+            border-radius: 2.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 3rem;
+        }
 
-    .search-input-box:focus-within {
-        border-color: var(--pink-main);
-        transform: translateY(2px);
-    }
+        .building-header {
+            background: #fff;
+            padding: 2rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
 
-    /* Building Card Design */
-    .building-container {
-        background: white;
-        border-radius: 2.5rem;
-        border: 2px solid #e2e8f0;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
-        margin-bottom: 5rem;
-        overflow: hidden;
-    }
+        .pink-gradient {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
 
-    .building-header {
-        background: linear-gradient(to right, #f8fafc, #fff1f2); /* รูปแบบเดิม: ขาว-ชมพูจาง */
-        padding: 1.75rem 2.5rem;
-        border-bottom: 2px solid #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+        .floor-wrapper {
+            border-radius: 2rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-width: 1px;
+            border-style: solid;
+        }
 
-    /* Floor Separation Logic */
-    .floor-wrapper {
-        padding: 2rem;
-        border-radius: 2rem;
-        margin-bottom: 1.5rem;
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
+        .dept-card {
+            background: white;
+            border-radius: 1.5rem;
+            border-width: 2px;
+            border-style: solid;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
 
-    /* Dept Card Enhancement */
-    .dept-card {
-        background: white;
-        border: 2px solid #f1f5f9;
-        border-radius: 1.5rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-    }
+        .dept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
+        }
 
-    .dept-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
-    }
-
-    .custom-scroll::-webkit-scrollbar { width: 8px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-    @media print {
-        .no-print { display: none !important; }
-        .building-container { border: 2px solid #ccc !important; break-inside: avoid; }
-    }
-</style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        #modalDept.flex { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
 </head>
 
 <body class="text-slate-700">
 
-<nav class="main-nav-head no-print">
-    <div class="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-10">
+<nav class="main-nav-head">
+    <div class="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl overflow-hidden shadow-md border border-slate-100 flex items-center justify-center bg-white">
+                <img src="https://www.udhospital.go.th/images/logo_udh.png" alt="UDH Logo" class="w-full h-full object-contain p-1" onerror="this.src='https://placehold.co/100?text=UDH'">
+            </div>
             <div>
-                <h1 class="text-lg font-black text-slate-800 leading-none uppercase">IT ASSET <span class="text-pink-500">AUDIT</span></h1>
-                <p class="text-[9px] text-slate-400 font-bold tracking-widest mt-1">Udonthani Hospital</p>
+                <h1 class="text-xl font-black text-slate-800 leading-none">IT ASSET <span class="text-pink-500">SURVEY</span></h1>
+                <p class="text-[10px] text-slate-400 font-bold tracking-widest mt-1 uppercase">Udonthani Hospital</p>
             </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="hidden md:flex flex-1 max-w-md mx-10">
+            <div class="search-input-box w-full px-4 py-2">
+                <i class="fas fa-search text-slate-300 mr-3"></i>
+                <input id="searchInput" oninput="renderDashboard()" placeholder="ค้นหาชื่อหน่วยงาน, ตึก หรือชั้น..." class="w-full outline-none text-sm font-semibold text-slate-600 bg-transparent">
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div id="lastUpdate" class="text-[10px] font-bold text-slate-400 text-right leading-tight uppercase">
+                LOADING DATA...
+            </div>
             <button onclick="init()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-50 rounded-xl transition-all">
                 <i id="refreshIcon" class="fas fa-sync-alt"></i>
             </button>
-            <button onclick="window.location.href='survey_v4_form.html'" class="pink-gradient px-6 py-2.5 rounded-xl text-white font-bold text-xs shadow-lg shadow-pink-200">
-                <i class="fas fa-plus mr-2"></i> บันทึกพัสดุ
-            </button>
-        </div>
-
-        <div class="nav-search-anchor">
-            <div class="search-input-box px-6 py-4">
-                <i class="fas fa-search text-slate-300 mr-4 text-xl"></i>
-                <input id="searchInput" oninput="renderDashboard()" placeholder="ค้นหาตึก, ชั้น หรือหน่วยงาน..." class="w-full outline-none text-sm font-semibold text-slate-600">
-                <span id="lastUpdate" class="text-[10px] text-slate-300 font-bold ml-2">Loading...</span>
-            </div>
         </div>
     </div>
 </nav>
 
-<main class="max-w-[1400px] mx-auto px-6 pt-24 pb-20">
-    <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-        <div>
-            <h2 class="text-4xl font-black text-slate-900 tracking-tight">แยกตาม <span class="text-transparent bg-clip-text pink-gradient">พื้นที่ใช้งาน</span></h2>
-            <p class="text-slate-400 font-medium mt-3">ภาพรวมการสำรวจครุภัณฑ์คอมพิวเตอร์ ประจำปี 2569</p>
+<main class="max-w-[1440px] mx-auto px-6 pt-10 pb-20">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="md:col-span-2">
+            <h2 class="text-3xl font-black text-slate-900 tracking-tight">สรุปข้อมูลสำรวจ <span class="text-pink-500">Dashboard</span></h2>
+            <p class="text-slate-500 text-sm font-medium mt-1">จำแนกตามผังอาคารและชั้นหน่วยงานที่ได้รับการสำรวจแล้ว</p>
         </div>
-        <div class="flex gap-4">
-            <div class="bg-white border-2 border-slate-100 px-8 py-5 rounded-3xl shadow-sm">
-                <p id="statDepts" class="text-3xl font-black text-slate-800 leading-none">-</p>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3">หน่วยงาน</p>
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 flex items-center gap-5">
+            <div class="w-12 h-12 bg-pink-50 text-pink-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
+                <i class="fas fa-building"></i>
             </div>
-            <div class="pink-gradient px-8 py-5 rounded-3xl shadow-xl shadow-pink-100">
-                <p id="statAssets" class="text-3xl font-black text-white leading-none">-</p>
-                <p class="text-[10px] font-bold text-pink-100 uppercase tracking-widest mt-3">รายการรวม</p>
+            <div>
+                <p id="statDepts" class="text-2xl font-black text-slate-800">-</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">หน่วยงานที่พบ</p>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 flex items-center gap-5">
+            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
+                <i class="fas fa-box"></i>
+            </div>
+            <div>
+                <p id="statAssets" class="text-2xl font-black text-slate-800">-</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">รายการครุภัณฑ์รวม</p>
             </div>
         </div>
     </div>
-
-    <div id="contentArea" class="space-y-12"></div>
+    <div id="contentArea" class="space-y-6"></div>
 </main>
 
-<!-- Detail Modal -->
-<div id="modalDept" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[200] p-4 no-print" onclick="closeModal()">
-    <div class="bg-white w-full max-w-5xl max-h-[90vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border-4 border-white" onclick="event.stopPropagation()">
-        <div class="p-8 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-            <div class="flex items-center gap-6">
-                <div id="mDeptPic" class="w-24 h-24 rounded-3xl overflow-hidden bg-slate-50 border-2 border-pink-100 shadow-inner flex-shrink-0">
-                    <img src="" class="w-full h-full object-cover">
+<!-- Modal -->
+<div id="modalDept" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[200] p-4" onclick="closeModal()">
+    <div class="bg-white w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+        <div class="p-6 md:p-8 border-b-2 border-slate-50 flex flex-col md:flex-row justify-between items-center bg-white sticky top-0 z-10 gap-4">
+            <div class="flex items-center gap-6 w-full md:w-auto">
+                <div id="mDeptPic" class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-100 flex-shrink-0 shadow-inner">
+                    <img src="" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=DEPT'">
                 </div>
-                <div>
-                    <h3 id="mDeptName" class="text-3xl font-black text-slate-800"></h3>
-                    <div id="mDeptLoc" class="mt-3 flex items-center gap-3"></div>
+                <div class="min-w-0 flex-1">
+                    <h3 id="mDeptName" class="text-xl font-black text-slate-800 truncate"></h3>
+                    <div id="mDeptLoc" class="mt-1 text-xs font-bold text-slate-400 uppercase flex items-center gap-2"></div>
                 </div>
             </div>
-            <button onclick="closeModal()" class="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 hover:bg-pink-50 hover:text-pink-500 transition-all">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                <a id="mDeptDetailBtn" href="#" target="_blank"
+                   class="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-pink-100 text-pink-500 font-bold text-sm hover:bg-pink-50 transition-all">
+                    <i class="fas fa-external-link-alt text-xs"></i> ดูรายละเอียดเพิ่มเติม
+                </a>
+                <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center shadow-sm">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         </div>
-        <div id="mAssetGroupContainer" class="p-8 md:p-12 overflow-y-auto flex-1 bg-slate-50/50 custom-scroll"></div>
+        <div id="mAssetGroupContainer" class="p-8 overflow-y-auto flex-1 bg-slate-50/30 custom-scroll"></div>
     </div>
 </div>
 
 <script>
     const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
+    
     let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
 
-    // แผนผังสีสำหรับแต่ละชั้น (Colors for different floors)
+    /**
+     * ฟังก์ชันดึงระดับความสำคัญ (Priority)
+     * ยึดตาม Logic จริงจาก state.priorities ที่คุณให้ไว้
+     */
+    function getPriority(id) {
+        // ค้นหาจากข้อมูลจริงในระบบเท่านั้น
+        const found = state.priorities.find(p => String(p.id).trim() === String(id).trim());
+        if (found) return found;
+        
+        // ถ้าไม่พบ ให้ส่งค่าพื้นฐานที่มีโครงสร้างถูกต้อง เพื่อไม่ให้ UI พัง (โดยไม่มีคำว่า 'ปกติ' หรือชื่ออื่นๆ ที่ระบบไม่มี)
+        return { 
+            name: '', 
+            color: 'bg-slate-100 text-slate-500 border-slate-200', 
+            icon: 'fa-info-circle' 
+        };
+    }
+
     const floorColorThemes = [
-        { bg: 'bg-blue-50/50', border: 'border-blue-200', text: 'text-blue-600', badge: 'bg-blue-600', accent: 'border-blue-400', cardBorder: 'hover:border-blue-400' },
-        { bg: 'bg-emerald-50/50', border: 'border-emerald-200', text: 'text-emerald-600', badge: 'bg-emerald-600', accent: 'border-emerald-400', cardBorder: 'hover:border-emerald-400' },
-        { bg: 'bg-amber-50/50', border: 'border-amber-200', text: 'text-amber-600', badge: 'bg-amber-600', accent: 'border-amber-400', cardBorder: 'hover:border-amber-400' },
-        { bg: 'bg-violet-50/50', border: 'border-violet-200', text: 'text-violet-600', badge: 'bg-violet-600', accent: 'border-violet-400', cardBorder: 'hover:border-violet-400' },
-        { bg: 'bg-rose-50/50', border: 'border-rose-200', text: 'text-rose-600', badge: 'bg-rose-600', accent: 'border-rose-400', cardBorder: 'hover:border-rose-400' },
-        { bg: 'bg-indigo-50/50', border: 'border-indigo-200', text: 'text-indigo-600', badge: 'bg-indigo-600', accent: 'border-indigo-400', cardBorder: 'hover:border-indigo-400' }
+        { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-500', badge: 'bg-emerald-500', cardBorder: 'border-emerald-50' },
+        { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-500', badge: 'bg-blue-500', cardBorder: 'border-blue-50' },
+        { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-500', badge: 'bg-amber-500', cardBorder: 'border-amber-50' },
+        { bg: 'bg-rose-50', border: 'border-rose-100', text: 'text-rose-500', badge: 'bg-rose-500', cardBorder: 'border-rose-50' },
+        { bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-500', badge: 'bg-purple-500', cardBorder: 'border-purple-50' },
+        { bg: 'bg-cyan-50', border: 'border-cyan-100', text: 'text-cyan-500', badge: 'bg-cyan-500', cardBorder: 'border-cyan-50' }
     ];
 
     async function init() {
@@ -217,18 +225,16 @@
             state.logs = logRes || [];
             state.depts = deptRes || [];
             state.assetTypes = initRes.assetTypes || [];
-            state.priorities = initRes.priorities || [];
-            document.getElementById('lastUpdate').innerText = `อัปเดต: ${new Date().toLocaleTimeString('th-TH')}`;
+            state.priorities = initRes.priorities || []; 
+            
+            document.getElementById('lastUpdate').innerText = `SYNCED AT: ${new Date().toLocaleTimeString('th-TH')}`;
             renderDashboard();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            icon?.classList.remove('animate-spin');
+        } catch (err) { 
+            console.error(err); 
+            document.getElementById('lastUpdate').innerText = "SYNC FAILED";
+        } finally { 
+            icon?.classList.remove('animate-spin'); 
         }
-    }
-
-    function getTypeName(typeId) {
-        return state.assetTypes.find(x => String(x.id).trim() === String(typeId).trim())?.name || 'อื่นๆ';
     }
 
     function renderDashboard() {
@@ -238,7 +244,9 @@
         const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
         const filteredDepts = state.depts.filter(d => 
             activeDeptIds.includes(String(d.DEP_ID).trim()) && 
-            (d.DEPNAME.toLowerCase().includes(search) || (d.BUILDING && d.BUILDING.toLowerCase().includes(search)))
+            (d.DEPNAME.toLowerCase().includes(search) || 
+             (d.BUILDING && d.BUILDING.toLowerCase().includes(search)) || 
+             (d.FL && String(d.FL).includes(search)))
         );
 
         document.getElementById('statDepts').innerText = filteredDepts.length;
@@ -246,7 +254,7 @@
 
         const structure = {};
         filteredDepts.forEach(d => {
-            const b = d.BUILDING || "ตึกทั่วไป";
+            const b = d.BUILDING || "อาคารทั่วไป";
             const f = d.FL || "ชั้น 1";
             if (!structure[b]) structure[b] = {};
             if (!structure[b][f]) structure[b][f] = [];
@@ -254,37 +262,32 @@
         });
 
         let html = "";
-        const buildings = Object.keys(structure).sort();
-
-        buildings.forEach(building => {
+        Object.keys(structure).sort().forEach(building => {
             const floors = Object.keys(structure[building]).sort((a,b) => {
-                const na = parseInt(a.replace(/\D/g,'')), nb = parseInt(b.replace(/\D/g,''));
-                return (isNaN(na) || na === 0) ? a.localeCompare(b) : na - nb;
+                const na = parseInt(String(a).replace(/\D/g,'')), nb = parseInt(String(b).replace(/\D/g,''));
+                return (isNaN(na) || na === 0) ? String(a).localeCompare(String(b)) : na - nb;
             });
-
-            const buildingTotalAssets = filteredDepts
-                .filter(d => d.BUILDING === building)
+            
+            const bTotal = filteredDepts.filter(d => d.BUILDING === building)
                 .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
 
             html += `
                 <div class="building-container">
-                    <!-- กลับมาใช้รูปแบบเดิมที่เป็นสีขาว-ชมพูจาง -->
                     <div class="building-header">
                         <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg shadow-pink-100">
-                                <i class="fas fa-hospital text-2xl"></i>
+                            <div class="w-14 h-14 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-2xl">
+                                <i class="fas fa-hospital"></i>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
-                                <p class="text-[10px] font-bold text-pink-500 uppercase tracking-[0.2em] mt-1">อาคาร / บริเวณ</p>
+                                <h3 class="text-2xl font-black text-slate-800 uppercase">${building}</h3>
+                                <p class="text-[10px] font-bold text-pink-500 tracking-[0.2em]">อาคาร / บริเวณ</p>
                             </div>
                         </div>
                         <div class="bg-white border-2 border-pink-100 px-5 py-2 rounded-2xl text-right">
-                            <p class="text-2xl font-black text-slate-800 leading-none">${buildingTotalAssets}</p>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase mt-1">จำนวนรวม</p>
+                            <p class="text-2xl font-black text-slate-800">${bTotal}</p>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">รวมครุภัณฑ์</p>
                         </div>
                     </div>
-                    
                     <div class="p-8 space-y-12">
                         ${floors.map((floor, idx) => {
                             const depts = structure[building][floor];
@@ -292,32 +295,21 @@
                             return `
                                 <div class="floor-wrapper ${theme.bg} ${theme.border}">
                                     <div class="flex items-center gap-4 mb-8">
-                                        <div class="flex flex-col">
-                                            <span class="text-[10px] font-black uppercase tracking-widest ${theme.text} mb-1">ระดับพื้นที่</span>
-                                            <div class="flex items-center gap-3">
-                                                <span class="${theme.badge} text-white px-4 py-1.5 rounded-xl font-black text-xl shadow-md">${floor}</span>
-                                                <div class="h-2 w-2 rounded-full ${theme.badge}"></div>
-                                                <span class="text-slate-400 font-bold text-sm tracking-tight">${depts.length} หน่วยงาน</span>
-                                            </div>
-                                        </div>
-                                        <div class="flex-1 h-[1px] bg-slate-200"></div>
+                                        <span class="${theme.badge} text-white px-4 py-1.5 rounded-xl font-black text-xl shadow-md">${floor}</span>
+                                        <div class="flex-1 h-[1px] bg-slate-200/50"></div>
                                     </div>
-                                    
                                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                         ${depts.map(dept => {
                                             const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                                            const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100/f8fafc/cbd5e1?text=${dept.DEPNAME.charAt(0)}`;
+                                            const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.charAt(0)}`;
                                             return `
                                                 <div onclick="showDetail('${dept.DEP_ID}')" class="dept-card p-5 flex items-center gap-5 ${theme.cardBorder}">
                                                     <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 flex-shrink-0 shadow-inner">
-                                                        <img src="${dImg}" class="w-full h-full object-cover">
+                                                        <img src="${dImg}" class="w-full h-full object-cover" loading="lazy">
                                                     </div>
                                                     <div class="min-w-0 flex-1">
                                                         <h4 class="text-sm font-bold text-slate-800 leading-tight truncate mb-2">${dept.DEPNAME}</h4>
-                                                        <div class="flex justify-between items-center">
-                                                            <span class="text-[11px] font-black ${theme.text} bg-white px-3 py-1 rounded-lg border ${theme.border}">${dLogs.length} รายการ</span>
-                                                            <i class="fas fa-chevron-right text-[10px] text-slate-300"></i>
-                                                        </div>
+                                                        <span class="text-[11px] font-black ${theme.text} bg-white px-3 py-1 rounded-lg border ${theme.border}">${dLogs.length} รายการ</span>
                                                     </div>
                                                 </div>
                                             `;
@@ -330,7 +322,7 @@
                 </div>
             `;
         });
-        area.innerHTML = html || `<div class="text-center py-32 text-slate-300 font-bold italic border-4 border-dashed rounded-[3rem]">--- ไม่พบข้อมูลพื้นที่ ---</div>`;
+        area.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลที่ค้นหา</div>`;
     }
 
     function showDetail(deptId) {
@@ -339,52 +331,60 @@
         if(!dept) return;
         
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
-        document.getElementById('mDeptLoc').innerHTML = `
-            <span class="text-[12px] font-black px-4 py-2 bg-slate-100 text-slate-600 rounded-xl border border-slate-200">
-                <i class="fas fa-building mr-2 text-pink-500"></i> ${dept.BUILDING}
-            </span>
-            <span class="text-[12px] font-black px-4 py-2 bg-pink-100 text-pink-600 rounded-xl border-2 border-pink-200">
-                <i class="fas fa-layer-group mr-2"></i> ${dept.FL}
-            </span>
-        `;
-        document.getElementById('mDeptPic').querySelector('img').src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100/f8fafc/cbd5e1?text=D`;
-        
+        document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
+        document.getElementById('mDeptPic').querySelector('img').src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
+        document.getElementById('mDeptDetailBtn').href = `https://udh-survey-v2.web.app/dept/${dept.DEP_ID}`;
+
         const byType = {};
-        logs.forEach(l => { const t = getTypeName(l.Asset_Type_ID); if(!byType[t]) byType[t] = []; byType[t].push(l); });
+        logs.forEach(l => { 
+            const typeName = state.assetTypes.find(x => String(x.id) === String(l.Asset_Type_ID))?.name || 'อื่นๆ';
+            if(!byType[typeName]) byType[typeName] = []; 
+            byType[typeName].push(l); 
+        });
         
-        document.getElementById('mAssetGroupContainer').innerHTML = Object.keys(byType).sort().map(type => `
-            <div class="mb-14">
-                <div class="flex items-center gap-4 mb-8">
-                    <div class="w-2.5 h-10 pink-gradient rounded-full shadow-lg shadow-pink-100"></div>
-                    <h4 class="text-2xl font-black text-slate-800">${type} <span class="text-pink-400 font-bold ml-2 text-base">(${byType[type].length})</span></h4>
+        const container = document.getElementById('mAssetGroupContainer');
+        container.innerHTML = Object.keys(byType).sort().map(type => `
+            <div class="mb-10">
+                <div class="flex items-center gap-3 mb-5 border-l-4 border-pink-500 pl-4">
+                    <h4 class="text-sm font-black text-slate-800 uppercase">${type} (${byType[type].length})</h4>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     ${byType[type].map(a => {
-                        const aImg = a.ASSET_IMG_DB ? `https://lh3.googleusercontent.com/d/${a.ASSET_IMG_DB}` : 'https://placehold.co/300x300/f1f5f9/cbd5e1?text=NO+IMAGE'; 
+                        const pri = getPriority(a.Priority_ID);
                         return `
-                            <div class="bg-white border-2 border-slate-100 rounded-[2rem] p-6 flex gap-6 hover:border-pink-300 transition-all shadow-sm hover:shadow-xl">
-                                <div class="w-28 h-28 rounded-3xl overflow-hidden bg-slate-50 flex-shrink-0 border-2 border-slate-50 shadow-inner">
-                                    <img src="${aImg}" class="w-full h-full object-cover">
+                        <div class="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col sm:flex-row gap-5 hover:shadow-xl transition-all duration-300">
+                            <div class="w-full sm:w-24 h-40 sm:h-24 rounded-2xl bg-slate-50 overflow-hidden flex-shrink-0 border-2 border-slate-50 shadow-inner">
+                                <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/'+a.ASSET_IMG_DB : 'https://placehold.co/200?text=NO+IMAGE'}" 
+                                     class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=ERROR'">
+                            </div>
+                            <div class="flex-1 min-w-0 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2">
+                                        <div class="bg-pink-600 text-white px-4 py-2 rounded-xl shadow-lg shadow-pink-100 w-full sm:w-auto text-center sm:text-left transition-transform hover:scale-[1.02]">
+                                            <p class="text-[9px] text-pink-200 font-bold uppercase leading-none mb-1 tracking-[0.15em]">รหัสครุภัณฑ์</p>
+                                            <p class="text-sm font-black tracking-tight drop-shadow-sm">🆔 ${a.AssetID || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <h5 class="text-sm font-bold text-slate-700 uppercase leading-normal line-clamp-2 mb-2">${a.FullDescription || 'ไม่ระบุรายละเอียด'}</h5>
                                 </div>
-                                <div class="min-w-0 flex flex-col justify-between py-1">
-                                    <div>
-                                        <p class="text-[10px] font-black text-pink-500 uppercase tracking-[0.2em] mb-2">ID: ${a.AssetID || 'N/A'}</p>
-                                        <h5 class="text-sm font-bold text-slate-800 leading-snug line-clamp-2">${a.FullDescription}</h5>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2 mt-4">
-                                        <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">S/N: ${a.Serial || '-'}</span>
-                                        <span class="text-[10px] font-bold text-slate-400 bg-white px-3 py-1 rounded-lg border border-slate-100">${a.Brand_Model || '-'}</span>
-                                    </div>
+                                <div class="mt-2 flex flex-wrap gap-2 pt-2 border-t border-slate-50">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase w-full">S/N: ${a.Serial || '-'}</p>
+                                    <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">${a.AgeInfo || 'N/A'}</span>
+                                    ${pri.name ? `
+                                    <span class="text-[9px] font-black px-3 py-2 rounded-xl border ${pri.color || 'border-slate-200'} uppercase w-full sm:w-auto text-center flex items-center justify-center gap-2">
+                                        <i class="fas ${pri.icon || 'fa-info-circle'}"></i>${pri.name}
+                                    </span>
+                                    ` : ''}
                                 </div>
                             </div>
-                        `;
-                    }).join('')}
+                        </div>
+                    `}).join('')}
                 </div>
             </div>
-        `).join('') || `<div class="text-center py-20 text-slate-400 font-bold italic">ไม่พบข้อมูลครุภัณฑ์</div>`;
+        `).join('');
         
-        document.getElementById('modalDept').classList.remove('hidden'); 
-        document.getElementById('modalDept').classList.add('flex'); 
+        document.getElementById('modalDept').classList.remove('hidden');
+        document.getElementById('modalDept').classList.add('flex');
         document.body.style.overflow = 'hidden';
     }
 
@@ -392,7 +392,7 @@
         document.getElementById('modalDept').classList.add('hidden'); 
         document.body.style.overflow = 'auto'; 
     }
-    
+
     window.onload = init;
 </script>
 </body>
