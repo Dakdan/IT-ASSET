@@ -86,6 +86,16 @@
             box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
         }
 
+        .soft-card {
+            border: 1px solid #f1f5f9;
+            border-radius: 2rem;
+            transition: all 0.3s ease;
+        }
+        .soft-card:hover {
+            border-color: #f9a8d4;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
@@ -186,20 +196,18 @@
     
     let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
 
-    /**
-     * ฟังก์ชันดึงระดับความสำคัญ (Priority)
-     * ยึดตาม Logic จริงจาก state.priorities ที่คุณให้ไว้
-     */
+    // คืนค่าฟังก์ชัน getPriority ตามโครงสร้างเดิมที่ถูกต้องของคุณ
     function getPriority(id) {
-        // ค้นหาจากข้อมูลจริงในระบบเท่านั้น
-        const found = state.priorities.find(p => String(p.id).trim() === String(id).trim());
-        if (found) return found;
-        
-        // ถ้าไม่พบ ให้ส่งค่าพื้นฐานที่มีโครงสร้างถูกต้อง เพื่อไม่ให้ UI พัง (โดยไม่มีคำว่า 'ปกติ' หรือชื่ออื่นๆ ที่ระบบไม่มี)
+        const p = state.priorities.find(x => String(x.id).trim() === String(id).trim());
+        const config = {
+            'PIO-001': { color: 'border-red-100 text-red-500 bg-red-50', icon: 'fa-fire' },
+            'PIO-002': { color: 'border-blue-100 text-blue-500 bg-blue-50', icon: 'fa-star' },
+            'PIO-003': { color: 'border-emerald-100 text-emerald-500 bg-emerald-50', icon: 'fa-check-circle' },
+            'PIO-004': { color: 'border-amber-100 text-amber-500 bg-amber-50', icon: 'fa-clock' }
+        };
         return { 
-            name: '', 
-            color: 'bg-slate-100 text-slate-500 border-slate-200', 
-            icon: 'fa-info-circle' 
+            name: p ? p.name : '-', 
+            ...(config[id] || { color: 'border-slate-100 text-slate-400 bg-slate-50', icon: 'fa-info-circle' }) 
         };
     }
 
@@ -351,11 +359,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     ${byType[type].map(a => {
                         const pri = getPriority(a.Priority_ID);
+                        const aImg = a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/'+a.ASSET_IMG_DB : 'https://placehold.co/200?text=NO+IMAGE';
                         return `
-                        <div class="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col sm:flex-row gap-5 hover:shadow-xl transition-all duration-300">
-                            <div class="w-full sm:w-24 h-40 sm:h-24 rounded-2xl bg-slate-50 overflow-hidden flex-shrink-0 border-2 border-slate-50 shadow-inner">
-                                <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/'+a.ASSET_IMG_DB : 'https://placehold.co/200?text=NO+IMAGE'}" 
-                                     class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=ERROR'">
+                        <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 hover:border-pink-200">
+                            <div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border flex-shrink-0 overflow-hidden bg-slate-50 shadow-inner">
+                                <img src="${aImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=ERROR'">
                             </div>
                             <div class="flex-1 min-w-0 flex flex-col justify-between">
                                 <div>
@@ -370,15 +378,14 @@
                                 <div class="mt-2 flex flex-wrap gap-2 pt-2 border-t border-slate-50">
                                     <p class="text-[10px] text-slate-400 font-bold uppercase w-full">S/N: ${a.Serial || '-'}</p>
                                     <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">${a.AgeInfo || 'N/A'}</span>
-                                    ${pri.name ? `
-                                    <span class="text-[9px] font-black px-3 py-2 rounded-xl border ${pri.color || 'border-slate-200'} uppercase w-full sm:w-auto text-center flex items-center justify-center gap-2">
-                                        <i class="fas ${pri.icon || 'fa-info-circle'}"></i>${pri.name}
-                                    </span>
-                                    ` : ''}
+                                    ${pri ? `
+                                    <span class="text-[9px] font-black px-3 py-2 rounded-xl border ${pri.color} uppercase w-full sm:w-auto text-center flex items-center justify-center gap-2">
+                                        <i class="fas ${pri.icon}"></i>${pri.name}
+                                    </span>` : ''}
                                 </div>
                             </div>
-                        </div>
-                    `}).join('')}
+                        </div>`;
+                    }).join('')}
                 </div>
             </div>
         `).join('');
