@@ -196,6 +196,8 @@
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="pac_toggle" class="hidden pac-radio">
                             <label for="pac_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer transition-all">ใช้งานระบบ PAC</label>
+                            <input type="checkbox" id="rent_toggle" class="hidden pac-radio">
+                            <label for="rent_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer">เช่า</label>
                         </div>
                     </div>
                     <div>
@@ -284,6 +286,8 @@
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="nr_pac_toggle" class="hidden pac-radio">
                             <label for="nr_pac_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer">ใช้งานระบบ PAC</label>
+                            <input type="checkbox" id="nr_rent_toggle" class="hidden pac-radio">
+                            <label for="nr_rent_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer">เช่า</label>
                         </div>
                     </div>
                     <div>
@@ -715,7 +719,7 @@ if (imgData && imgData.includes(",")) {
         // 1. ดึงค่าจาก Elements
         const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id').value;
         const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId').value;
-        const isPac = document.getElementById(`${suffix}pac_toggle`).checked;
+        const isPac = document.getElementById(`${suffix}pac_toggle`:`${suffix}nr_rent_toggle`).checked;
         const note2 = document.getElementById(isExisting ? 'note2' : 'nr_note2').value;
         const shifts = Array.from(document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`)).map(c => c.value).join(',');
         
@@ -742,10 +746,10 @@ if (imgData && imgData.includes(",")) {
     
         // 4. ประกอบข้อมูล (Construct Payload)
      let data = {
-            Asset_Type_ID: isPac ? typeId + "/PAC" : typeId,
+            Asset_Type_ID: typeId ,
             PIORITY_ID: priorityId,
             Shift_Work: shifts,
-            Note2: note2,
+            Note2: isPac,
             ImageData: currentBase64Image, // ✅ ต้องมี comma
         
             Jobe_Type_ID: selectedJobTypeId || "", // ✅ ใช้ตัวนี้แทน
