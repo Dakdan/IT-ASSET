@@ -468,6 +468,23 @@
             }
         );
     }
+       let fileName = "";
+let imageUrl = "";
+
+const imgData = item.ImageData || item.IMAGE_NAME;
+
+Logger.log("IMG RAW: " + (imgData ? imgData.substring(0,50) : "EMPTY"));
+
+if (imgData && imgData.includes(",")) {
+  fileName = `ASSET_${item.Asset_ID || 'NON'}_${timestamp.getTime()}_${index}.jpg`;
+
+  imageUrl = uploadImageToDrive(imgData, CONFIG.FOLDER_ASSET, fileName);
+
+  Logger.log("UPLOAD OK: " + imageUrl);
+} else {
+  Logger.log("NO IMAGE DATA");
+  imageUrl = "-";
+}
     function handleResize() {
         if (document.getElementById('confirmModal').classList.contains('hidden')) return;
         const canvas = document.getElementById('signature-pad');
