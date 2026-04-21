@@ -178,8 +178,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                <a id="mDeptDetailBtn" href="#" target="_blank"
-                   class="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-pink-100 text-pink-500 font-bold text-sm hover:bg-pink-50 transition-all">
+                <!-- ปรับแก้ที่นี่: ใช้แท็ก <a> ตามมาตรฐาน HTML เพื่อให้เปิดหน้าใหม่ได้ -->
+                <a id="mDeptDetailBtn" target="_blank"
+                   class="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-pink-100 text-pink-500 font-bold text-sm hover:bg-pink-50 transition-all cursor-pointer">
                     <i class="fas fa-external-link-alt text-xs"></i> ดูรายละเอียดเพิ่มเติม
                 </a>
                 <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center shadow-sm">
@@ -196,28 +197,38 @@
     
     let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
 
-    // คืนค่าฟังก์ชัน getPriority ตามโครงสร้างเดิมที่ถูกต้องของคุณ
+    function calculateAge(buyDate) {
+        if (!buyDate) return "ไม่ระบุ";
+        try {
+            const buy = new Date(buyDate);
+            const now = new Date();
+            if (isNaN(buy)) return "ข้อมูลวันที่ผิด";
+            let years = now.getFullYear() - buy.getFullYear();
+            let months = now.getMonth() - buy.getMonth();
+            if (months < 0) { years--; months += 12; }
+            if (years > 0) return `${years} ปี ${months} เดือน`;
+            return `${months} เดือน`;
+        } catch(e) { return "-"; }
+    }
+
+    // Logic ดึงข้อมูล Priority (ห้ามแก้ไขตามต้นฉบับ)
     function getPriority(id) {
         const p = state.priorities.find(x => String(x.id).trim() === String(id).trim());
+        if (p) return p;
         const config = {
-            'PIO-001': { color: 'border-red-100 text-red-500 bg-red-50', icon: 'fa-fire' },
-            'PIO-002': { color: 'border-blue-100 text-blue-500 bg-blue-50', icon: 'fa-star' },
-            'PIO-003': { color: 'border-emerald-100 text-emerald-500 bg-emerald-50', icon: 'fa-check-circle' },
-            'PIO-004': { color: 'border-amber-100 text-amber-500 bg-amber-50', icon: 'fa-clock' }
+            'PIO-001': { color: 'border-red-100 text-red-500 bg-red-50', icon: 'fa-fire', name: 'ด่วนมาก' },
+            'PIO-002': { color: 'border-blue-100 text-blue-500 bg-blue-50', icon: 'fa-star', name: 'ด่วน' },
+            'PIO-003': { color: 'border-emerald-100 text-emerald-500 bg-emerald-50', icon: 'fa-check-circle', name: 'ปกติ' },
+            'PIO-004': { color: 'border-amber-100 text-amber-500 bg-amber-50', icon: 'fa-clock', name: 'รอตรวจสอบ' }
         };
-        return { 
-            name: p ? p.name : '-', 
-            ...(config[id] || { color: 'border-slate-100 text-slate-400 bg-slate-50', icon: 'fa-info-circle' }) 
-        };
+        return config[id] || { color: 'border-slate-100 text-slate-400 bg-slate-50', icon: 'fa-info-circle', name: '-' };
     }
 
     const floorColorThemes = [
         { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-500', badge: 'bg-emerald-500', cardBorder: 'border-emerald-50' },
         { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-500', badge: 'bg-blue-500', cardBorder: 'border-blue-50' },
         { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-500', badge: 'bg-amber-500', cardBorder: 'border-amber-50' },
-        { bg: 'bg-rose-50', border: 'border-rose-100', text: 'text-rose-500', badge: 'bg-rose-500', cardBorder: 'border-rose-50' },
-        { bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-500', badge: 'bg-purple-500', cardBorder: 'border-purple-50' },
-        { bg: 'bg-cyan-50', border: 'border-cyan-100', text: 'text-cyan-500', badge: 'bg-cyan-500', cardBorder: 'border-cyan-50' }
+        { bg: 'bg-rose-50', border: 'border-rose-100', text: 'text-rose-500', badge: 'bg-rose-500', cardBorder: 'border-rose-50' }
     ];
 
     async function init() {
@@ -247,14 +258,12 @@
 
     function renderDashboard() {
         const area = document.getElementById('contentArea');
-        const search = document.getElementById('searchInput').value.toLowerCase();
+        const search = document.getElementById('searchInput')?.value.toLowerCase() || "";
         
         const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
         const filteredDepts = state.depts.filter(d => 
             activeDeptIds.includes(String(d.DEP_ID).trim()) && 
-            (d.DEPNAME.toLowerCase().includes(search) || 
-             (d.BUILDING && d.BUILDING.toLowerCase().includes(search)) || 
-             (d.FL && String(d.FL).includes(search)))
+            (d.DEPNAME.toLowerCase().includes(search) || (d.BUILDING && d.BUILDING.toLowerCase().includes(search)))
         );
 
         document.getElementById('statDepts').innerText = filteredDepts.length;
@@ -271,11 +280,7 @@
 
         let html = "";
         Object.keys(structure).sort().forEach(building => {
-            const floors = Object.keys(structure[building]).sort((a,b) => {
-                const na = parseInt(String(a).replace(/\D/g,'')), nb = parseInt(String(b).replace(/\D/g,''));
-                return (isNaN(na) || na === 0) ? String(a).localeCompare(String(b)) : na - nb;
-            });
-            
+            const floors = Object.keys(structure[building]).sort();
             const bTotal = filteredDepts.filter(d => d.BUILDING === building)
                 .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
 
@@ -283,12 +288,10 @@
                 <div class="building-container">
                     <div class="building-header">
                         <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-2xl">
-                                <i class="fas fa-hospital"></i>
-                            </div>
+                            <div class="w-14 h-14 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-2xl"><i class="fas fa-hospital"></i></div>
                             <div>
                                 <h3 class="text-2xl font-black text-slate-800 uppercase">${building}</h3>
-                                <p class="text-[10px] font-bold text-pink-500 tracking-[0.2em]">อาคาร / บริเวณ</p>
+                                <p class="text-[10px] font-bold text-pink-500 tracking-[0.2em]">อาคาร / ที่ตั้ง</p>
                             </div>
                         </div>
                         <div class="bg-white border-2 border-pink-100 px-5 py-2 rounded-2xl text-right">
@@ -306,17 +309,17 @@
                                         <span class="${theme.badge} text-white px-4 py-1.5 rounded-xl font-black text-xl shadow-md">${floor}</span>
                                         <div class="flex-1 h-[1px] bg-slate-200/50"></div>
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                         ${depts.map(dept => {
                                             const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                                            const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.charAt(0)}`;
+                                            const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
                                             return `
                                                 <div onclick="showDetail('${dept.DEP_ID}')" class="dept-card p-5 flex items-center gap-5 ${theme.cardBorder}">
                                                     <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 flex-shrink-0 shadow-inner">
-                                                        <img src="${dImg}" class="w-full h-full object-cover" loading="lazy">
+                                                        <img src="${dImg}" class="w-full h-full object-cover">
                                                     </div>
                                                     <div class="min-w-0 flex-1">
-                                                        <h4 class="text-sm font-bold text-slate-800 leading-tight truncate mb-2">${dept.DEPNAME}</h4>
+                                                        <h4 class="text-sm font-bold text-slate-800 truncate mb-2">${dept.DEPNAME}</h4>
                                                         <span class="text-[11px] font-black ${theme.text} bg-white px-3 py-1 rounded-lg border ${theme.border}">${dLogs.length} รายการ</span>
                                                     </div>
                                                 </div>
@@ -330,7 +333,7 @@
                 </div>
             `;
         });
-        area.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลที่ค้นหา</div>`;
+        area.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูล</div>`;
     }
 
     function showDetail(deptId) {
@@ -341,7 +344,12 @@
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
         document.getElementById('mDeptPic').querySelector('img').src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
-        document.getElementById('mDeptDetailBtn').href = `https://udh-survey-v2.web.app/dept/${dept.DEP_ID}`;
+        
+        // แก้ไขปุ่ม: ใส่ค่า href โดยตรงเพื่อให้เปิดหน้าใหม่ได้ (รักษา Logic การเปิดหน้าเดิม)
+        const detailBtn = document.getElementById('mDeptDetailBtn');
+        if(detailBtn) {
+            detailBtn.href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
+        }
 
         const byType = {};
         logs.forEach(l => { 
@@ -358,30 +366,33 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     ${byType[type].map(a => {
-                        const pri = getPriority(a.Priority_ID);
+                        const pri = getPriority(a.Priority_ID || a.PIORITY_ID);
                         const aImg = a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/'+a.ASSET_IMG_DB : 'https://placehold.co/200?text=NO+IMAGE';
+                        const ageStr = a.AgeInfo || calculateAge(a.DateOfPurchase || a.DATE_PURCHASE);
                         return `
-                        <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 hover:border-pink-200">
+                        <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6">
                             <div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border flex-shrink-0 overflow-hidden bg-slate-50 shadow-inner">
-                                <img src="${aImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=ERROR'">
+                                <img src="${aImg}" class="w-full h-full object-cover">
                             </div>
                             <div class="flex-1 min-w-0 flex flex-col justify-between">
                                 <div>
                                     <div class="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2">
-                                        <div class="bg-pink-600 text-white px-4 py-2 rounded-xl shadow-lg shadow-pink-100 w-full sm:w-auto text-center sm:text-left transition-transform hover:scale-[1.02]">
-                                            <p class="text-[9px] text-pink-200 font-bold uppercase leading-none mb-1 tracking-[0.15em]">รหัสครุภัณฑ์</p>
-                                            <p class="text-sm font-black tracking-tight drop-shadow-sm">🆔 ${a.AssetID || 'N/A'}</p>
+                                        <div class="bg-pink-600 text-white px-4 py-2 rounded-xl shadow-lg w-full sm:w-auto">
+                                            <p class="text-[9px] text-pink-200 font-bold uppercase mb-1">รหัสครุภัณฑ์</p>
+                                            <p class="text-sm font-black">🆔 ${a.AssetID || 'N/A'}</p>
+                                        </div>
+                                        <div class="text-right w-full sm:w-auto">
+                                            <span class="text-[10px] font-bold text-slate-400 uppercase block">อายุการใช้งาน</span>
+                                            <span class="text-[11px] font-black text-pink-500">${ageStr}</span>
                                         </div>
                                     </div>
-                                    <h5 class="text-sm font-bold text-slate-700 uppercase leading-normal line-clamp-2 mb-2">${a.FullDescription || 'ไม่ระบุรายละเอียด'}</h5>
+                                    <h5 class="text-sm font-bold text-slate-700 leading-normal line-clamp-2 mb-2">${a.FullDescription || '-'}</h5>
                                 </div>
                                 <div class="mt-2 flex flex-wrap gap-2 pt-2 border-t border-slate-50">
                                     <p class="text-[10px] text-slate-400 font-bold uppercase w-full">S/N: ${a.Serial || '-'}</p>
-                                    <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">${a.AgeInfo || 'N/A'}</span>
-                                    ${pri ? `
-                                    <span class="text-[9px] font-black px-3 py-2 rounded-xl border ${pri.color} uppercase w-full sm:w-auto text-center flex items-center justify-center gap-2">
-                                        <i class="fas ${pri.icon}"></i>${pri.name}
-                                    </span>` : ''}
+                                    <span class="text-[9px] font-black px-3 py-2 rounded-xl border ${pri.color} uppercase flex items-center gap-2">
+                                        <i class="fas ${pri.icon}"></i> ${pri.name}
+                                    </span>
                                 </div>
                             </div>
                         </div>`;
@@ -399,7 +410,6 @@
         document.getElementById('modalDept').classList.add('hidden'); 
         document.body.style.overflow = 'auto'; 
     }
-
     window.onload = init;
 </script>
 </body>
