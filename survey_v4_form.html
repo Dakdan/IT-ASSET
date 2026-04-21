@@ -676,7 +676,12 @@
         if (isExisting) {
             data.Asset_ID = currentAsset.AssetID;
             data.AssetName = currentAsset.FullDescription;
+        
+            // ✅ เพิ่มบรรทัดนี้
+            data.NOID = currentAsset.NoID;
+        
             closeModal('auditFormModal');
+        
         } else {
             data.Asset_ID = assetIdEl.value || ("NR-" + Date.now());
             data.AssetName = "[นอกทะเบียน] " + brandEl.value.trim();
