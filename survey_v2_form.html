@@ -1,84 +1,253 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>Asset Audit</title>
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzlwkwuMk9Y7qpEqT7JlnDFjWwlmvYVpW0NOuaEBcS6_3iocDVC6Jpc2ZL9P1qvbHM/exec";
-
-    let configData = {};
-    let masterDeptList = [];
-
-    async function initApp() {
-      const res = await fetch(API_URL + "?action=getInitialData");
-      configData = await res.json();
-
-      const res2 = await fetch(API_URL + "?action=getDeptList");
-      masterDeptList = await res2.json();
-
-      fillSelect();
-    }
-
-    function fillSelect() {
-      const pri = document.getElementById("priorityId");
-      const type = document.getElementById("assetTypeId");
-
-      configData.priorities.forEach(p => {
-        pri.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-      });
-
-      configData.assetTypes.forEach(t => {
-        type.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-      });
-    }
-
-    async function searchAsset() {
-      const q = document.getElementById("assetQuery").value;
-
-      const res = await fetch(API_URL + "?action=searchAsset&query=" + q);
-      const data = await res.json();
-
-      console.log(data);
-    }
-
-    async function submitAudit() {
-      const payload = {
-        action: "saveBulkSurvey",
-        data: {
-          deptId: document.getElementById("selectedDeptId").value,
-          gps: "",
-          items: [{
-            Asset_ID: "TEST",
-            AssetName: "TEST",
-            Asset_Type_ID: "COM",
-            PIORITY_ID: "PIO-001",
-            Shift_Work: "เช้า",
-            Note2: ""
-          }]
-        }
-      };
-
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-
-      alert("saved");
-    }
-
-    window.onload = initApp;
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IT ASSET AUDIT - UDON HOSPITAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #fdf2f8; }
+        .pink-gradient { background: linear-gradient(to bottom, #ec4899, #f472b6); }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #ec4899; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .gps-loading { background-color: #fbbf24; animation: pulse 1s infinite; }
+        .gps-success { background-color: #10b981; }
+        .gps-error { background-color: #ef4444; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
 </head>
+<body class="min-h-screen pb-20">
 
-<body>
-  <input id="assetQuery" placeholder="search">
-  <button onclick="searchAsset()">ค้นหา</button>
+    <div class="pink-gradient pt-8 pb-12 px-6 rounded-b-[3rem] shadow-lg mb-[-2rem] relative z-10">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-white text-2xl font-bold">IT ASSET <span class="font-light">AUDIT</span></h1>
+            <div id="statusIndicator" class="px-3 py-1 bg-white/20 rounded-full text-[10px] text-pink-100 border border-white/30">OFFLINE</div>
+        </div>
+        <div class="flex items-center gap-2 bg-white/10 p-2 rounded-2xl border border-white/20">
+            <div id="gpsDot" class="w-2 h-2 rounded-full gps-loading"></div>
+            <span id="gpsStatusText" class="text-white text-[11px]">กำลังขอพิกัด...</span>
+        </div>
+    </div>
 
-  <select id="priorityId"></select>
-  <select id="assetTypeId"></select>
+    <main class="px-4 relative z-20">
+        
+        <section id="locationPickerSection" class="space-y-4">
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-pink-50">
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-3 ml-2">อาคารและชั้น</label>
+                <select id="selBuilding" onchange="onBuildingChange()" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-gray-700 mb-3 focus:ring-2 focus:ring-pink-300">
+                    <option value="" disabled selected>เลือกอาคาร</option>
+                </select>
+                <select id="selFloor" onchange="renderDeptList()" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-gray-700 focus:ring-2 focus:ring-pink-300">
+                    <option value="" disabled selected>เลือกชั้น</option>
+                </select>
+            </div>
+            <div id="deptList" class="grid grid-cols-1 gap-3">
+                </div>
+        </section>
 
-  <button onclick="submitAudit()">บันทึก</button>
+        <section id="searchAreaSection" class="hidden space-y-4">
+            <div class="bg-white p-5 rounded-[2.5rem] shadow-md border-2 border-pink-100">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <p id="displayDeptName" class="text-lg font-bold text-gray-800 leading-tight">หน่วยงาน</p>
+                        <p class="text-[10px] text-pink-400 font-bold uppercase tracking-wider">กำลังดำเนินการตรวจสอบ</p>
+                    </div>
+                    <button onclick="resetDeptSelection()" class="p-2 bg-gray-100 rounded-full text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                
+                <div class="relative flex gap-2">
+                    <div class="relative flex-grow">
+                        <input type="text" id="assetQuery" oninput="debouncedSearch()" placeholder="ค้นหารหัสครุภัณฑ์ / ชื่อ..." class="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-pink-300 text-sm">
+                        <i data-lucide="search" class="absolute right-4 top-4 text-gray-300 w-5 h-5"></i>
+                    </div>
+                    <button onclick="openScanner('assetQuery')" class="p-4 bg-pink-500 text-white rounded-2xl shadow-lg shadow-pink-200 active:scale-95 transition-all">
+                        <i data-lucide="qr-code" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
 
-  <input type="hidden" id="selectedDeptId">
+            <div id="resultsArea" class="hidden space-y-2 pb-4">
+                </div>
+
+            <button onclick="openNonRegisterModal()" class="w-full p-4 border-2 border-dashed border-pink-200 rounded-3xl text-pink-400 text-sm font-bold flex items-center justify-center gap-2 hover:bg-pink-50">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i> เพิ่มรายการนอกทะเบียน
+            </button>
+        </section>
+    </main>
+
+    <div id="queueTrigger" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <button onclick="document.getElementById('queueModal').classList.remove('hidden')" class="bg-gray-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 active:scale-95 transition-all">
+            <span class="text-sm font-bold uppercase tracking-widest">ตรวจสอบแล้ว</span>
+            <span id="auditCount" class="bg-pink-500 text-white w-6 h-6 rounded-full text-[12px] flex items-center justify-center">0</span>
+        </button>
+    </div>
+
+    <div id="auditFormModal" class="fixed inset-0 z-[60] bg-black/60 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-lg rounded-t-[3rem] sm:rounded-[3rem] p-8 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 id="modalAssetName" class="text-xl font-bold text-gray-800">ชื่อครุภัณฑ์</h2>
+                    <p class="text-sm text-pink-500 font-bold" id="detailAssetID">ASSET-ID</p>
+                </div>
+                <button onclick="closeModal('auditFormModal')" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="p-4 bg-pink-50 rounded-2xl border border-pink-100">
+                    <p class="text-[10px] text-pink-400 font-bold uppercase">อายุการใช้งาน</p>
+                    <p id="detailAssetAge" class="text-lg font-bold text-pink-600">--</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase">เวรปฏิบัติงาน</p>
+                    <select id="shift_work" class="w-full bg-transparent border-none p-0 text-gray-700 font-bold focus:ring-0">
+                        <option value="1">เช้า</option>
+                        <option value="2">บ่าย</option>
+                        <option value="3">ดึก</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="relative group">
+                    <input type="file" id="imgInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelection(this, 'imgPreview', 'imgPlaceholder')">
+                    <div onclick="document.getElementById('imgInput').click()" class="w-full aspect-video bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative">
+                        <img id="imgPreview" class="w-full h-full object-cover hidden">
+                        <div id="imgPlaceholder" class="text-center">
+                            <i data-lucide="camera" class="w-10 h-10 text-pink-300 mx-auto mb-2"></i>
+                            <p class="text-xs text-gray-400 font-bold">ถ่ายภาพเพื่อยืนยัน</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="assetTypeId" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm"></select>
+                    <select id="priorityId" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm"></select>
+                </div>
+
+                <div class="flex gap-4 p-4 bg-gray-50 rounded-2xl">
+                    <label class="flex items-center gap-2 flex-grow">
+                        <input type="checkbox" id="pac_toggle" class="w-5 h-5 rounded-lg border-gray-300 text-pink-500 focus:ring-pink-500">
+                        <span class="text-sm font-bold text-gray-600">PAC</span>
+                    </label>
+                    <label class="flex items-center gap-2 flex-grow">
+                        <input type="checkbox" id="rent_toggle" class="w-5 h-5 rounded-lg border-gray-300 text-pink-500 focus:ring-pink-500">
+                        <span class="text-sm font-bold text-gray-600">Rent</span>
+                    </label>
+                </div>
+
+                <textarea id="note1" placeholder="หมายเหตุเพิ่มเติม..." class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm h-24"></textarea>
+
+                <button onclick="submitAudit('EXISTING')" class="w-full py-5 bg-pink-500 text-white rounded-[2rem] font-bold shadow-xl shadow-pink-200 active:scale-95 transition-all">เพิ่มเข้าคิวตรวจสอบ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="nonRegisterModal" class="fixed inset-0 z-[60] bg-black/60 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+         <div class="bg-white w-full max-w-lg rounded-t-[3rem] p-8 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">รายการนอกทะเบียน</h2>
+                <button onclick="closeModal('nonRegisterModal')" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="nr_brand_detail" placeholder="ระบุยี่ห้อ/รุ่น/รายละเอียด..." class="w-full p-4 bg-gray-50 rounded-2xl border-none">
+                <div class="relative group">
+                    <input type="file" id="nr_imgInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')">
+                    <div onclick="document.getElementById('nr_imgInput').click()" class="w-full aspect-video bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative">
+                        <img id="nr_imgPreview" class="w-full h-full object-cover hidden">
+                        <div id="nr_imgPlaceholder"><i data-lucide="camera" class="w-10 h-10 text-pink-300 mx-auto"></i></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="nr_asset_type_id" class="w-full p-4 bg-gray-50 rounded-2xl border-none"></select>
+                    <select id="nr_priorityId" class="w-full p-4 bg-gray-50 rounded-2xl border-none"></select>
+                </div>
+                <div class="flex gap-4 p-4 bg-gray-50 rounded-2xl">
+                    <label class="flex items-center gap-2 flex-grow"><input type="checkbox" id="nr_pac_toggle"><span class="text-sm">PAC</span></label>
+                    <label class="flex items-center gap-2 flex-grow"><input type="checkbox" id="nr_rent_toggle"><span class="text-sm">Rent</span></label>
+                </div>
+                <button onclick="submitAudit('NON_REGISTER')" class="w-full py-5 bg-pink-500 text-white rounded-[2rem] font-bold shadow-xl">บันทึกรายการ</button>
+            </div>
+         </div>
+    </div>
+
+    <div id="queueModal" class="fixed inset-0 z-[70] bg-white hidden overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">รายการที่ตรวจสอบแล้ว</h2>
+                <button onclick="closeModal('queueModal')" class="p-3 bg-gray-50 rounded-full"><i data-lucide="chevron-down" class="w-6 h-6 text-gray-400"></i></button>
+            </div>
+            
+            <div id="auditListItems" class="space-y-3 mb-10">
+                </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="submitImmediately('DRAFT')" class="py-5 bg-gray-100 text-gray-600 rounded-[2rem] font-bold">บันทึกร่าง</button>
+                <button onclick="openConfirmModal('FINAL')" class="py-5 bg-gray-900 text-white rounded-[2rem] font-bold shadow-2xl">ส่งตรวจสอบ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="fixed inset-0 z-[80] bg-black/80 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[3rem] p-8 text-center">
+            <h2 id="confirmTitle" class="text-xl font-bold text-gray-800 mb-6">ยืนยันการส่งข้อมูล</h2>
+            <div class="bg-gray-50 rounded-[2rem] p-4 mb-6 border border-gray-100">
+                <p class="text-xs text-gray-400 font-bold uppercase mb-4 tracking-widest">ลงชื่อผู้ตรวจสอบ</p>
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-2">
+                    <canvas id="signature-pad" class="w-full h-40"></canvas>
+                </div>
+                <button onclick="signaturePad.clear()" class="text-[10px] font-bold text-pink-400 uppercase tracking-tighter">ล้างลายเซ็น</button>
+            </div>
+            <button onclick="handleFinalSubmit()" class="w-full py-5 bg-pink-500 text-white rounded-[2rem] font-bold shadow-xl mb-4">ยืนยันบันทึกสำเร็จ</button>
+            <button onclick="closeModal('confirmModal')" class="text-sm text-gray-400 font-bold uppercase">ยกเลิก</button>
+        </div>
+    </div>
+
+    <div id="successModal" class="fixed inset-0 z-[100] bg-white hidden overflow-y-auto">
+        <div class="p-8 flex flex-col items-center">
+            <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
+                <i data-lucide="check-circle" class="w-12 h-12 text-green-500"></i>
+            </div>
+            <h2 id="successStatusTitle" class="text-2xl font-bold text-gray-800 mb-2">บันทึกสำเร็จ!</h2>
+            <p class="text-gray-400 text-sm mb-8">ข้อมูลถูกส่งไปยังฐานข้อมูลแล้ว</p>
+            
+            <div id="successDetailList" class="w-full bg-white border border-gray-100 p-6 rounded-[2.5rem] shadow-sm">
+                </div>
+
+            <button onclick="resetDeptSelection()" class="mt-10 py-5 px-12 bg-gray-900 text-white rounded-full font-bold shadow-xl active:scale-95 transition-all">เสร็จสิ้น</button>
+        </div>
+    </div>
+
+    <div id="scannerModal" class="fixed inset-0 z-[110] bg-black hidden">
+        <div id="reader" class="w-full h-full"></div>
+        <button onclick="closeScanner()" class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white/20 text-white px-8 py-3 rounded-full border border-white/30 backdrop-blur-md">ปิดตัวสแกน</button>
+    </div>
+
+    <div id="processOverlay" class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-[2.5rem] flex flex-col items-center shadow-2xl">
+            <div class="spinner mb-4"></div>
+            <p id="processMessage" class="text-sm font-bold text-gray-700">กำลังประมวลผล...</p>
+        </div>
+    </div>
+
+    <div id="alertModal" class="fixed inset-0 z-[210] bg-black/60 hidden flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center shadow-2xl">
+            <h3 id="alertTitle" class="text-lg font-bold text-gray-800 mb-2 font-kanit">เกิดข้อผิดพลาด</h3>
+            <p id="alertMessage" class="text-sm text-gray-500 mb-6">ข้อความแจ้งเตือน...</p>
+            <button onclick="closeAlert()" class="w-full py-4 bg-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-pink-100">ตกลง</button>
+        </div>
+    </div>
+
+    <input type="hidden" id="selectedDeptId">
+
+    <script>
+        // ใส่ JavaScript ชุดที่คุณส่งมาด้านบนทั้งหมดลงในส่วนนี้
+        // (ส่วนตัวแปร API_URL, DEPT_VIEW_URL และฟังก์ชันทั้งหมด)
+        // ... โค้ด JavaScript ที่เราคุยกันก่อนหน้า ...
+    </script>
 </body>
 </html>
