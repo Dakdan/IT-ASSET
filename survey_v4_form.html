@@ -303,9 +303,7 @@
                         <input type="checkbox" name="nr_shift_work" value="ดึก" id="nr_shift_n" class="hidden shift-checkbox">
                         <label for="nr_shift_n" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ดึก</label>
                     </div>
-                </div>
-
-                
+                </div>               
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
                 <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
@@ -706,77 +704,70 @@ if (imgData && imgData.includes(",")) {
     }
 
           // --- แก้ไขฟังก์ชัน submitAudit ให้เหลือเพียงอันเดียว และครอบคลุมทุกเงื่อนไข ---
-    function submitAudit(type) {
+   function submitAudit(type, event) {
+    // 1. หยุดการรีเฟรชหน้าจอทันที
+    if (event) event.preventDefault();
+
+    try {
         const isExisting = type === 'EXISTING';
         const suffix = isExisting ? '' : 'nr_';
         
-        // 1. ดึงค่าจาก Elements
+        // 2. ดึงค่าจากหน้าจอ (ตรวจสอบ id ให้ตรงกับ HTML ของคุณ)
         const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
         const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
         
-        // ดึงค่า Shift Work
-        const shiftName = isExisting ? "shift_work" : "nr_shift_work";
-        const shifts = Array.from(document.querySelectorAll(`input[name="${shiftName}"]:checked`))
-                            .map(c => c.value)
-                            .join(',');
-    
-        // 2. ตรวจสอบข้อมูลบังคับ
         if (!typeId || !priorityId) {
-            return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณาเลือกประเภทและความสำคัญ");
+            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
         }
-    
-        if (!isExisting) {
-            const brandEl = document.getElementById('nr_brand_detail');
-            if (!brandEl || !brandEl.value.trim()) {
-                return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณาระบุยี่ห้อหรือรายละเอียดครุภัณฑ์");
-            }
-        }
-    
+
         // 3. ตรวจสอบรูปถ่าย
         if (typeof currentBase64Image === 'undefined' || !currentBase64Image) {
-            return showAlert("ลืมถ่ายรูปหรือเปล่า?", "กรุณาถ่ายภาพครุภัณฑ์เพื่อใช้เป็นหลักฐาน");
+            return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพครุภัณฑ์ก่อนบันทึก");
         }
-    
-        // 4. ประกอบข้อมูล (Construct Payload)
+
+        // 4. เตรียมข้อมูลบันทึก
         let data = {
             Asset_Type_ID: typeId,
             PIORITY_ID: priorityId,
-            Shift_Work: shifts,
-            
-            // ✅ บันทึกค่าตามที่ติ๊ก (PAC, Rent หรือทั้งคู่)
+            ImageData: currentBase64Image,
             Note2: [
                 document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
                 document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
-            ].filter(Boolean).join(", "), 
-            
-            ImageData: currentBase64Image,
-            Jobe_Type_ID: typeof selectedJobTypeId !== 'undefined' ? selectedJobTypeId : "",
+            ].filter(Boolean).join(", "),
             gps: typeof currentGps !== 'undefined' ? currentGps : ""
         };
-    
-        // 5. บันทึกข้อมูลแยกตามประเภท
+
+        // 5. แยกบันทึกตามกรณี
         if (isExisting) {
+            if (typeof currentAsset === 'undefined' || !currentAsset) {
+                throw new Error("ระบบหาข้อมูลทรัพย์สินที่เลือกไม่เจอ");
+            }
             data.Asset_ID = currentAsset.AssetID;
             data.AssetName = currentAsset.FullDescription;
-            data.NOID = currentAsset.NoID;
             closeModal('auditFormModal');
         } else {
-            const assetIdEl = document.getElementById('nr_asset_id');
-            const brandDetail = document.getElementById('nr_brand_detail').value.trim();
+            const brandDetail = document.getElementById('nr_brand_detail')?.value.trim();
+            if (!brandDetail) return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุยี่ห้อ/รายละเอียด");
             
-            data.Asset_ID = (assetIdEl && assetIdEl.value) ? assetIdEl.value : ("NR-" + Date.now());
+            data.Asset_ID = "NR-" + Date.now();
             data.AssetName = "[นอกทะเบียน] " + brandDetail;
-            data.Serial = document.getElementById('nr_serial')?.value || "";
             closeModal('nonRegisterModal');
         }
-    
-        // 6. ส่งเข้าคิว
-        auditQueue.unshift({ 
-            DisplayName: data.AssetName, 
-            data: data 
-        });
-        updateQueueUI();
+
+        // 6. บันทึกลง Queue และอัปเดตหน้าจอ
+        if (typeof auditQueue !== 'undefined') {
+            auditQueue.unshift({ DisplayName: data.AssetName, data: data });
+            if (typeof updateQueueUI === 'function') updateQueueUI();
+            console.log("บันทึกสำเร็จลง Queue แล้ว");
+        } else {
+            throw new Error("ไม่พบตัวแปร auditQueue");
+        }
+
+    } catch (err) {
+        console.error("Error details:", err);
+        showAlert("เกิดข้อผิดพลาด", err.message);
     }
+}
     function updateQueueUI() {
         document.getElementById('auditCount').innerText = auditQueue.length;
         const list = document.getElementById('auditListItems');
