@@ -705,66 +705,83 @@ if (imgData && imgData.includes(",")) {
 
           // --- แก้ไขฟังก์ชัน submitAudit ให้เหลือเพียงอันเดียว และครอบคลุมทุกเงื่อนไข ---
    async function submitAudit(type, event) {
-    if (event) event.preventDefault();
-
-    try {
-        const isExisting = type === 'EXISTING';
-        const suffix = isExisting ? '' : 'nr_';
-        
-        // --- คงชื่อ ID เดิมทั้งหมด ---
-        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
-        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
-        
-        if (!typeId || !priorityId) {
-            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
-        }
-
-        // เช็กรูปภาพ (ใช้ตัวแปรเดิม)
-        if (!currentBase64Image) {
-            return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
-        }
-
-        let data = {
-            Asset_Type_ID: typeId,
-            PIORITY_ID: priorityId,
-            ImageData: currentBase64Image,
-            // ใช้ ID เดิม: pac_toggle, rent_toggle
-            Note2: [
-                document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
-                document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
-            ].filter(Boolean).join(", "),
-            gps: currentGps || ""
-        };
-
-        if (isExisting) {
-            // ตรวจสอบ currentAsset (ตัวแปรเดิม) เพื่อไม่ให้ระบบพัง
-            if (!currentAsset || !currentAsset.AssetID) {
-                return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
-            }
-            data.Asset_ID = currentAsset.AssetID;
-            data.AssetName = currentAsset.FullDescription;
-            closeModal('auditFormModal');
-        } else {
-            const brandDetail = document.getElementById('nr_brand_detail')?.value.trim();
-            if (!brandDetail) return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
+        if (event) event.preventDefault();
+    
+        try {
+            const isExisting = type === 'EXISTING';
+            const suffix = isExisting ? '' : 'nr_';
             
-            data.Asset_ID = "NR-" + Date.now();
-            data.AssetName = "[นอกทะเบียน] " + brandDetail;
-            closeModal('nonRegisterModal');
+            // 1. ดึงค่าจาก UI (คงชื่อ ID เดิม)
+            const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
+            const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
+            const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
+            
+            if (!typeId || !priorityId) {
+                return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
+            }
+    
+            if (!currentBase64Image) {
+                return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
+            }
+    
+            // 2. เตรียม Data Object ให้ครบ 21 คอลัมน์ตามโครงสร้าง GS
+            let data = {
+                Asset_Type_ID: typeId,
+                PIORITY_ID: priorityId,
+                ImageData: currentBase64Image,
+                gps: currentGps || "",
+                Note1: note1Value,
+                // รวมค่า PAC/Rent ลง Note2
+                Note2: [
+                    document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
+                    document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
+                ].filter(Boolean).join(", "),
+                // ค่ามาตรฐานอื่น ๆ
+                Shift_Work: document.getElementById('shift_work')?.value || "1",
+                CoStatus: "COS-001",
+                MAStatus: "-",
+                Detail_ID: "-"
+            };
+    
+            if (isExisting) {
+                if (!currentAsset || !currentAsset.AssetID) {
+                    return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
+                }
+                // ดึงค่าจาก currentAsset ที่ได้จากการ Search มาใส่ให้ครบ
+                data.NoID = currentAsset.NoID || "-"; 
+                data.Asset_ID = currentAsset.AssetID;
+                data.AssetName = currentAsset.FullDescription;
+                data.Serial = currentAsset.Serial || "-";
+                
+                closeModal('auditFormModal');
+            } else {
+                const brandDetail = document.getElementById('nr_brand_detail')?.value.trim();
+                if (!brandDetail) return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
+                
+                data.NoID = "NON-" + Date.now();
+                data.Asset_ID = "NR-" + Date.now();
+                data.AssetName = "[นอกทะเบียน] " + brandDetail;
+                data.Serial = "-";
+                
+                closeModal('nonRegisterModal');
+            }
+    
+            // 3. บันทึกเข้า Queue (ใช้ชื่อเดิม auditQueue)
+            auditQueue.unshift({ 
+                DisplayName: data.AssetName, 
+                data: data 
+            });
+            
+            updateQueueUI();
+            
+            // ล้างค่าเตรียมรายการถัดไป
+            currentBase64Image = ""; 
+    
+        } catch (err) {
+            console.error("Critical Error:", err);
+            alert("เกิดข้อผิดพลาด: " + err.message);
         }
-
-        // บันทึกเข้า auditQueue (ชื่อเดิม)
-        auditQueue.unshift({ DisplayName: data.AssetName, data: data });
-        updateQueueUI();
-        
-        // ล้างค่าเพื่อให้พร้อมสำหรับรายการถัดไป
-        currentBase64Image = ""; 
-
-    } catch (err) {
-        console.error("Critical Error:", err);
-        alert("เกิดข้อผิดพลาด: " + err.message);
     }
-}
     function updateQueueUI() {
         document.getElementById('auditCount').innerText = auditQueue.length;
         const list = document.getElementById('auditListItems');
