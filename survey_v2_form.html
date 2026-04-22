@@ -19,6 +19,99 @@
         .gps-success { background-color: #10b981; }
         .gps-error { background-color: #ef4444; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .card {
+  background: rgba(255,255,255,0.95);
+  border-radius: 24px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  backdrop-filter: blur(8px);
+}
+
+/* ===== HEADER ===== */
+.pink-gradient-header {
+  background: linear-gradient(135deg, #ad1457 0%, #f06292 100%);
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+}
+
+/* ===== SCROLL ===== */
+.custom-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #f48fb1;
+  border-radius: 10px;
+}
+
+/* ===== SIGNATURE PAD ===== */
+canvas {
+  border: 2px dashed #f8bbd0;
+  background: #fff5f8;
+  border-radius: 16px;
+  width: 100%;
+  height: 200px;
+}
+
+/* ===== POPUP (SUCCESS / ERROR) ===== */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(55,71,79,0.4);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+}
+
+.popup-overlay.show {
+  display: flex;
+}
+
+.popup-box {
+  background: #fff;
+  padding: 24px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  animation: modalPop 0.25s ease;
+}
+
+.popup-box.success {
+  border-top: 5px solid #2e7d32;
+}
+
+.popup-box.error {
+  border-top: 5px solid #c62828;
+}
+
+/* ===== WATERMARK ===== */
+body::after {
+  content: "IT UDON HOSP";
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  font-size: 40px;
+  color: rgba(233,30,99,0.05);
+  pointer-events: none;
+  font-weight: bold;
+}
+
+/* ===== PRINT MODE ===== */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #eee;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
     </style>
 </head>
 <body class="min-h-screen pb-20">
