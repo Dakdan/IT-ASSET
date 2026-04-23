@@ -379,9 +379,10 @@
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง ---
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น ---
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น (แก้ไขเรื่องรูปภาพ) ---
+// --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น ---
 function renderTableMode(container, filteredDepts) {
     const structure = {};
-    // 1. จัดกลุ่มข้อมูล (ห้ามแก้อะไร)
+    // 1. จัดกลุ่มข้อมูล (Group By Building & Floor)
     filteredDepts.forEach(d => {
         const b = d.BUILDING || "อาคารทั่วไป";
         const f = d.FL || "ชั้น 1";
@@ -391,162 +392,78 @@ function renderTableMode(container, filteredDepts) {
     });
 
     let html = "";
+    
+    // 2. Loop ตามอาคาร
     Object.keys(structure).sort().forEach(building => {
-        // ดึง bTotal กลับมาตามที่คุณต้องการ
-        const bTotal = filteredDepts.filter(d => d.BUILDING === building)
-            .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
-
         html += `
-            <div class="building-container overflow-hidden shadow-sm border border-slate-200 mb-10 bg-white rounded-3xl">
-                <div class="building-header !py-4 !px-6 bg-slate-800 text-white flex justify-between items-center">
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl"><i class="fas fa-hospital"></i></div>
-                        <div>
-                            <h3 class="text-xl font-black uppercase">${building}</h3>
-                            <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">Udon Thani Hospital</p>
-                        </div>
-                    </div>
-                    <div class="bg-white/10 border border-white/20 px-5 py-2 rounded-2xl text-right">
-                        <p class="text-2xl font-black text-white leading-none">${bTotal}</p>
-                        <p class="text-[9px] font-bold text-pink-300 uppercase">รวมครุภัณฑ์</p>
-                    </div>
-                </div>
-                <div class="p-0">`;
-
-        const floors = Object.keys(structure[building]).sort();
-        floors.forEach((floor, idx) => {
-            const theme = floorColorThemes[idx % floorColorThemes.length];
-            html += `
-                <div class="border-b border-slate-100 last:border-0">
-                    <div class="bg-slate-50 px-8 py-3 border-y border-slate-100 flex items-center gap-4">
-                        <span class="${theme.badge} text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span>
-                        <div class="flex-1 h-[1px] bg-slate-200/50"></div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse">
-                            <tbody>`;
-
-            structure[building][floor].forEach(d => {
-                // ดึงข้อมูล Log มานับจำนวน
-                const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-                
-                // --- จุดที่สำคัญที่สุด: ดึง PIC_ID จากตัวแปร d และ URL ต้องไม่มีเลข 0 ---
-                const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
-                
-                html += `
-                    <tr class="hover:bg-pink-50/30 transition-all cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
-                        <td class="py-4 px-8 w-[60%]">
-                            <div class="flex items-center gap-5">
-                                <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 flex-shrink-0 shadow-inner bg-white">
-                                    <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
-                                </div>
-                                <div class="min-w-0">
-                                    <h4 class="text-base font-bold text-slate-800 group-hover:text-pink-600 transition-colors truncate mb-1">${d.DEPNAME}</h4>
-                                    <p class="text-[11px] font-bold text-slate-400">ID: ${d.DEP_ID}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="py-4 px-6 text-center">
-                            <span class="inline-flex items-center px-4 py-2 rounded-xl font-black text-xs ${theme.text} bg-white border ${theme.border} shadow-sm group-hover:bg-pink-500 group-hover:text-white group-hover:border-transparent transition-all">
-                                ${dLogs.length} รายการ
-                            </span>
-                        </td>
-                        <td class="py-4 px-8 text-right">
-                            <i class="fas fa-chevron-right text-slate-200 group-hover:text-pink-500 transition-all"></i>
-                        </td>
-                    </tr>`;
-            });
-            html += `</tbody></table></div></div>`;
-        });
-        html += `</div></div>`;
-    });
-    container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูล</div>`;
-}
-   // --- ฟังก์ชันย่อยสำหรับวาดแบบผังอาคาร (ยกโค้ดเดิมของคุณมาใส่ตรงนี้) ---
-   function renderTableMode(container, filteredDepts) {
-    const structure = {};
-    // 1. จัดกลุ่ม Building/Floor เหมือนเดิม 100%
-    filteredDepts.forEach(d => {
-        const b = d.BUILDING || "อาคารทั่วไป";
-        const f = d.FL || "ชั้น 1";
-        if (!structure[b]) structure[b] = {};
-        if (!structure[b][f]) structure[b][f] = [];
-        structure[b][f].push(d);
-    });
-
-    let html = "";
-    Object.keys(structure).sort().forEach(building => {
-        // ดึง bTotal มาจาก logic เดิมของคุณเป๊ะๆ
-        const bTotal = filteredDepts.filter(d => d.BUILDING === building)
-            .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
-
-        html += `
-            <div class="building-container overflow-hidden shadow-sm border border-slate-200 mb-10 bg-white rounded-3xl">
-                <div class="building-header !py-4 !px-6 bg-slate-800 text-white flex justify-between items-center">
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl">
+            <div class="building-container bg-white mb-10 overflow-hidden">
+                <div class="bg-slate-800 p-6 flex justify-between items-center text-white">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center text-xl">
                             <i class="fas fa-hospital"></i>
                         </div>
-                        <div>
-                            <h3 class="text-xl font-black uppercase">${building}</h3>
-                            <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">Udon Thani Hospital</p>
-                        </div>
-                    </div>
-                    <div class="bg-white/10 border border-white/20 px-5 py-2 rounded-2xl text-right">
-                        <p class="text-2xl font-black text-white leading-none">${bTotal}</p>
-                        <p class="text-[9px] font-bold text-pink-300 uppercase">รวมครุภัณฑ์</p>
+                        <h3 class="text-xl font-black uppercase tracking-tight">${building}</h3>
                     </div>
                 </div>
+                <div class="p-0">`; // ลบ Padding ออกเพื่อให้ตารางชิดขอบ
 
-                <div class="p-0">`;
-
+        // 3. Loop ตามชั้น
         const floors = Object.keys(structure[building]).sort();
-        floors.forEach((floor, idx) => {
-            const theme = floorColorThemes[idx % floorColorThemes.length];
+        floors.forEach(floor => {
             html += `
                 <div class="border-b border-slate-100 last:border-0">
-                    <div class="bg-slate-50 px-8 py-3 border-y border-slate-100 flex items-center gap-4">
-                        <span class="${theme.badge} text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span>
-                        <div class="flex-1 h-[1px] bg-slate-200/50"></div>
+                    <div class="bg-slate-50 px-6 py-3 border-y border-slate-100 flex items-center gap-3">
+                        <span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-md font-bold text-xs">${floor}</span>
+                        <div class="h-[1px] flex-1 bg-slate-200"></div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full border-collapse">
+                        <table class="main-table w-full">
+                            <thead>
+                                <tr>
+                                    <th class="w-[45%]">หน่วยงาน</th>
+                                    <th class="text-center">จำนวนครุภัณฑ์</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
                             <tbody>`;
 
+            // 4. Loop รายชื่อหน่วยงานในชั้นนั้นๆ
             structure[building][floor].forEach(d => {
                 const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-                
-                // --- จุดที่เคยพลาด: ใช้ d.PIC_ID และ URL ตามหน้า Grid เดิมของคุณ ---
-                const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                const dImg = d.PIC_ID ? `https://lh3.googleusercontent.com/d/$${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
                 
                 html += `
-                    <tr class="hover:bg-pink-50/30 transition-all cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
-                        <td class="py-4 px-8 w-[65%]">
-                            <div class="flex items-center gap-5">
-                                <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 flex-shrink-0 shadow-inner bg-white">
-                                    <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
-                                </div>
-                                <div class="min-w-0">
-                                    <h4 class="text-base font-bold text-slate-800 group-hover:text-pink-600 transition-colors truncate mb-1">${d.DEPNAME}</h4>
-                                    <p class="text-[11px] font-bold text-slate-400">ID: ${d.DEP_ID}</p>
-                                </div>
+                    <tr class="hover:bg-pink-50/50 transition-colors cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-4">
+                                <img src="${dImg}" class="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-sm flex-shrink-0">
+                                <span class="font-bold text-slate-700 group-hover:text-pink-600 truncate">${d.DEPNAME}</span>
                             </div>
                         </td>
-                        <td class="py-4 px-6 text-center">
-                            <span class="inline-flex items-center px-4 py-2 rounded-xl font-black text-xs ${theme.text} bg-white border ${theme.border} group-hover:bg-pink-500 group-hover:text-white group-hover:border-transparent transition-all">
+                        <td class="text-center py-4 px-6">
+                            <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-black text-[11px] group-hover:bg-pink-500 group-hover:text-white transition-all">
                                 ${dLogs.length} รายการ
                             </span>
                         </td>
-                        <td class="py-4 px-8 text-right">
-                            <i class="fas fa-chevron-right text-slate-200 group-hover:text-pink-500 transition-all"></i>
+                        <td class="text-center py-4 px-6">
+                            <i class="fas fa-chevron-right text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all"></i>
                         </td>
                     </tr>`;
             });
-            html += `</tbody></table></div></div>`;
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
         });
-        html += `</div></div>`;
+
+        html += `
+                </div>
+            </div>`;
     });
-    container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลหน่วยงาน</div>`;
+
+    container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold text-xl">ไม่พบข้อมูลหน่วยงาน</div>`;
 }
     function showDetail(deptId) {
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
