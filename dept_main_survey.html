@@ -458,6 +458,81 @@ function renderTableMode(container, filteredDepts) {
     });
     container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold text-xl">ไม่พบข้อมูล</div>`;
 }
+    function renderGridMode(area, filteredDepts) {
+    const structure = {};
+    // 1. จัดกลุ่มข้อมูลตามอาคารและชั้น
+    filteredDepts.forEach(d => {
+        const b = d.BUILDING || "อาคารทั่วไป";
+        const f = d.FL || "ชั้น 1";
+        if (!structure[b]) structure[b] = {};
+        if (!structure[b][f]) structure[b][f] = [];
+        structure[b][f].push(d);
+    });
+
+    let html = "";
+    Object.keys(structure).sort().forEach(building => {
+        // คำนวณยอดรวมครุภัณฑ์ในอาคารนั้นๆ
+        const bTotal = filteredDepts.filter(d => d.BUILDING === building)
+            .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
+
+        html += `
+            <div class="building-container">
+                <div class="building-header">
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-black text-slate-800 uppercase">${building}</h3>
+                            <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Udon Thani Hospital</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-3xl font-black text-pink-500 leading-none">${bTotal}</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">รายการครุภัณฑ์</p>
+                    </div>
+                </div>
+                <div class="p-8">`;
+
+        const floors = Object.keys(structure[building]).sort();
+        floors.forEach((floor, idx) => {
+            const theme = floorColorThemes[idx % floorColorThemes.length];
+            html += `
+                <div class="floor-wrapper ${theme.bg} ${theme.border} mb-8 last:mb-0">
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="${theme.badge} text-white px-5 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span>
+                        <div class="flex-1 h-[2px] bg-white/50"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">`;
+
+            structure[building][floor].forEach(dept => {
+                const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
+                // ดึงรูปภาพโดยใช้ Template Literal ที่ถูกต้อง (ไม่มี 0{ หรือ 1{)
+                const dImg = dept.PIC_ID ? `http://googleusercontent.com/profile/picture/${dept.PIC_ID}` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
+                
+                html += `
+                    <div class="dept-card bg-white p-5 border-2 ${theme.cardBorder}" onclick="showDetail('${dept.DEP_ID}')">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 flex-shrink-0 shadow-inner bg-slate-50">
+                                <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}'">
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-black text-slate-800 leading-tight line-clamp-2">${dept.DEPNAME}</h4>
+                                <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">ID: ${dept.DEP_ID}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-50">
+                            <span class="text-[10px] font-black ${theme.text} uppercase">สำรวจแล้ว</span>
+                            <span class="px-3 py-1 rounded-lg ${theme.bg} ${theme.text} font-black text-xs">${dLogs.length} รายการ</span>
+                        </div>
+                    </div>`;
+            });
+            html += `</div></div>`;
+        });
+        html += `</div></div>`;
+    });
+    area.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold text-xl">ไม่พบข้อมูล</div>`;
+}
    function showDetail(deptId) {
     const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
     const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
