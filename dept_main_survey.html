@@ -381,7 +381,7 @@
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น (แก้ไขเรื่องรูปภาพ) ---
 function renderTableMode(container, filteredDepts) {
     const structure = {};
-    // 1. การจัดกลุ่ม (ใช้เหมือนเดิม)
+    // 1. จัดกลุ่มข้อมูล (ห้ามแก้อะไร)
     filteredDepts.forEach(d => {
         const b = d.BUILDING || "อาคารทั่วไป";
         const f = d.FL || "ชั้น 1";
@@ -392,7 +392,7 @@ function renderTableMode(container, filteredDepts) {
 
     let html = "";
     Object.keys(structure).sort().forEach(building => {
-        // ดึง bTotal มาแสดงที่หัวอาคารเหมือนหน้า Grid
+        // ดึง bTotal กลับมาตามที่คุณต้องการ
         const bTotal = filteredDepts.filter(d => d.BUILDING === building)
             .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
 
@@ -427,10 +427,10 @@ function renderTableMode(container, filteredDepts) {
                             <tbody>`;
 
             structure[building][floor].forEach(d => {
+                // ดึงข้อมูล Log มานับจำนวน
                 const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
                 
-                // --- แก้ไขจุดนี้ให้ตรงตาม logic เดิมที่คุณส่งมา ---
-                // ใน loop นี้ใช้ d ดังนั้นต้องเป็น d.PIC_ID และห้ามมีเลข 0
+                // --- จุดที่สำคัญที่สุด: ดึง PIC_ID จากตัวแปร d และ URL ต้องไม่มีเลข 0 ---
                 const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
                 
                 html += `
@@ -452,9 +452,7 @@ function renderTableMode(container, filteredDepts) {
                             </span>
                         </td>
                         <td class="py-4 px-8 text-right">
-                            <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-pink-100 group-hover:text-pink-500 transition-all">
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
+                            <i class="fas fa-chevron-right text-slate-200 group-hover:text-pink-500 transition-all"></i>
                         </td>
                     </tr>`;
             });
@@ -462,7 +460,7 @@ function renderTableMode(container, filteredDepts) {
         });
         html += `</div></div>`;
     });
-    container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลหน่วยงาน</div>`;
+    container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูล</div>`;
 }
    // --- ฟังก์ชันย่อยสำหรับวาดแบบผังอาคาร (ยกโค้ดเดิมของคุณมาใส่ตรงนี้) ---
    function renderTableMode(container, filteredDepts) {
