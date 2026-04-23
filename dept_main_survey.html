@@ -95,6 +95,86 @@
             border-color: #f9a8d4;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         }
+        /* เพิ่มเติมจากเดิม */
+        .custom-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .custom-table th {
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: 2px solid #f1f5f9;
+            text-align: left;
+        }
+        .custom-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.875rem;
+        }
+        /* ส่วนควบคุมการสลับ View ที่หน้าหลัก */
+        .view-controls {
+            display: flex;
+            background: #f1f5f9;
+            padding: 0.25rem;
+            border-radius: 1rem;
+            gap: 0.25rem;
+        }
+        
+        .view-btn-main {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            color: #64748b;
+        }
+        
+        .view-btn-main.active {
+            background: white;
+            color: var(--pink-main);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* สไตล์ตารางหน้าหลัก */
+        .main-table-container {
+            background: white;
+            border-radius: 2rem;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .main-table th {
+            background: #f8fafc;
+            padding: 1.25rem 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        
+        .main-table td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        .view-btn.active {
+            background-color: #ec4899;
+            color: white;
+            border-color: #ec4899;
+        }
 
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -122,9 +202,19 @@
             <div class="search-input-box w-full px-4 py-2">
                 <i class="fas fa-search text-slate-300 mr-3"></i>
                 <input id="searchInput" oninput="renderDashboard()" placeholder="ค้นหาชื่อหน่วยงาน, ตึก หรือชั้น..." class="w-full outline-none text-sm font-semibold text-slate-600 bg-transparent">
+                <div class="flex justify-end mb-6">
+    
             </div>
         </div>
-
+        <div class="view-controls">
+                <button onclick="switchMainView('grid')" id="vGrid" class="view-btn-main active">
+                    <i class="fas fa-th-large mr-2"></i> ผังอาคาร
+                </button>
+                <button onclick="switchMainView('table')" id="vTable" class="view-btn-main">
+                    <i class="fas fa-list mr-2"></i> ตารางสรุป
+                </button>
+            </div>
+        </div>
         <div class="flex items-center gap-4">
             <div id="lastUpdate" class="text-[10px] font-bold text-slate-400 text-right leading-tight uppercase">
                 LOADING DATA...
@@ -256,6 +346,16 @@
         }
     }
 
+    let mainDisplayMode = 'grid'; // เก็บสถานะหน้าหลัก
+
+    // ฟังก์ชันสลับโหมด
+    function switchMainView(mode) {
+        mainDisplayMode = mode;
+        document.getElementById('vGrid').classList.toggle('active', mode === 'grid');
+        document.getElementById('vTable').classList.toggle('active', mode === 'table');
+        renderDashboard();
+    }
+
     function renderDashboard() {
         const area = document.getElementById('contentArea');
         const search = document.getElementById('searchInput')?.value.toLowerCase() || "";
@@ -269,6 +369,62 @@
         document.getElementById('statDepts').innerText = filteredDepts.length;
         document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
 
+        if (mainDisplayMode === 'grid') {
+            renderGridMode(area, filteredDepts);
+        } else {
+            renderTableMode(area, filteredDepts);
+        }
+    }
+
+    // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง ---
+    function renderTableMode(container, depts) {
+        let html = `
+            <div class="main-table-container overflow-x-auto">
+                <table class="main-table">
+                    <thead>
+                        <tr>
+                            <th>หน่วยงาน</th>
+                            <th>อาคาร / ที่ตั้ง</th>
+                            <th class="text-center">จำนวนครุภัณฑ์</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        depts.forEach(d => {
+            const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
+            const dImg = d.PIC_ID ? `https://lh3.googleusercontent.com/d/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+            html += `
+                <tr class="hover:bg-pink-50/50 transition-colors cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
+                    <td>
+                        <div class="flex items-center gap-4">
+                            <img src="${dImg}" class="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-sm">
+                            <span class="font-bold text-slate-700 group-hover:text-pink-600">${d.DEPNAME}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-xs font-bold text-slate-500">${d.BUILDING || 'ไม่ระบุ'}</div>
+                        <div class="text-[10px] text-slate-400 font-medium">ชั้น ${d.FL || '-'}</div>
+                    </td>
+                    <td class="text-center">
+                        <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-black text-[11px] group-hover:bg-pink-500 group-hover:text-white transition-all">
+                            ${dLogs.length} รายการ
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <i class="fas fa-arrow-right text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all"></i>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold text-xl">ไม่พบข้อมูลหน่วยงาน</div>`;
+    }
+
+    // --- ฟังก์ชันย่อยสำหรับวาดแบบผังอาคาร (ยกโค้ดเดิมของคุณมาใส่ตรงนี้) ---
+    function renderGridMode(area, filteredDepts) {
         const structure = {};
         filteredDepts.forEach(d => {
             const b = d.BUILDING || "อาคารทั่วไป";
@@ -335,7 +491,6 @@
         });
         area.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูล</div>`;
     }
-
     function showDetail(deptId) {
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
