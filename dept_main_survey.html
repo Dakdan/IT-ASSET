@@ -381,7 +381,7 @@
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น (แก้ไขเรื่องรูปภาพ) ---
 function renderTableMode(container, filteredDepts) {
     const structure = {};
-    // 1. จัดกลุ่มข้อมูลตาม Building และ Floor
+    // 1. จัดกลุ่มข้อมูลเหมือนตัวเดิมเป๊ะๆ
     filteredDepts.forEach(d => {
         const b = d.BUILDING || "อาคารทั่วไป";
         const f = d.FL || "ชั้น 1";
@@ -392,14 +392,14 @@ function renderTableMode(container, filteredDepts) {
 
     let html = "";
     
-    // 2. วนลูปแยกตามอาคาร
+    // 2. วนลูปอาคาร
     Object.keys(structure).sort().forEach(building => {
-        // --- ส่วนที่เพิ่มกลับมา: คำนวณยอดรวมของแต่ละอาคาร ---
+        // ดึงยอดรวม bTotal กลับมาเหมือนตัวเดิม
         const bTotal = filteredDepts.filter(d => d.BUILDING === building)
             .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
 
         html += `
-            <div class="building-container overflow-hidden shadow-sm border border-slate-200 mb-10 bg-white">
+            <div class="building-container overflow-hidden shadow-sm border border-slate-200 mb-10 bg-white rounded-3xl">
                 <div class="building-header !py-4 !px-6 bg-slate-800 text-white flex justify-between items-center">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 pink-gradient rounded-xl flex items-center justify-center text-white shadow-md text-lg">
@@ -418,7 +418,7 @@ function renderTableMode(container, filteredDepts) {
 
                 <div class="p-0">`;
 
-        // 3. วนลูปแยกตามชั้น
+        // 3. วนลูปชั้น
         const floors = Object.keys(structure[building]).sort();
         floors.forEach((floor, idx) => {
             const theme = floorColorThemes[idx % floorColorThemes.length];
@@ -433,24 +433,28 @@ function renderTableMode(container, filteredDepts) {
                         <table class="w-full">
                             <tbody class="divide-y divide-slate-50">`;
 
+            // 4. วนลูปหน่วยงาน (จุดที่แก้เรื่องรูปภาพ)
             structure[building][floor].forEach(d => {
                 const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
                 
-                // --- จุดแก้ไขเรื่องรูปภาพ: ใช้ d.PIC_ID ให้ตรงกับ Loop ---
+                // --- ทำเหมือนตัวเดิม: ใช้ d.PIC_ID และ URL รูปภาพที่ไม่มีเลข 0 ---
                 const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
                 
                 html += `
                     <tr class="hover:bg-pink-50/40 transition-all cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
                         <td class="py-3 px-8 w-[60%]">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 shadow-sm flex-shrink-0 bg-white">
+                                <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 flex-shrink-0 shadow-inner bg-white">
                                     <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
                                 </div>
-                                <span class="font-bold text-slate-700 group-hover:text-pink-600 transition-colors">${d.DEPNAME}</span>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-slate-700 group-hover:text-pink-600 transition-colors truncate">${d.DEPNAME}</h4>
+                                    <p class="text-[10px] text-slate-400 font-medium">ID: ${d.DEP_ID}</p>
+                                </div>
                             </div>
                         </td>
                         <td class="py-3 px-6 text-center">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-500 font-black text-[10px] group-hover:border-pink-200 group-hover:text-pink-500 transition-all">
+                            <span class="inline-flex items-center px-4 py-1.5 rounded-xl font-black text-[11px] ${theme.text} bg-white border ${theme.border} group-hover:bg-pink-500 group-hover:text-white group-hover:border-transparent transition-all">
                                 ${dLogs.length} รายการ
                             </span>
                         </td>
@@ -467,7 +471,6 @@ function renderTableMode(container, filteredDepts) {
 
     container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลหน่วยงาน</div>`;
 }
-
    // --- ฟังก์ชันย่อยสำหรับวาดแบบผังอาคาร (ยกโค้ดเดิมของคุณมาใส่ตรงนี้) ---
     function renderGridMode(area, filteredDepts) {
         const structure = {};
