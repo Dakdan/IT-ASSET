@@ -555,7 +555,7 @@
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
         const mImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
         document.getElementById('mDeptPic').querySelector('img').src = mImg;
-        ocument.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`
+        document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`
         const byType = {};
         logs.forEach(l => { 
             const typeName = state.assetTypes.find(x => String(x.id) === String(l.Asset_Type_ID))?.name || 'อื่นๆ';
