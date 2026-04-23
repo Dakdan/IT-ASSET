@@ -831,17 +831,7 @@
         document.body.style.overflow = 'hidden';
     }
 
-    function getPriority(id) {
-        const p = state.priorities.find(x => String(x.id).trim() === String(id).trim());
-        if (p) return p;
-        const config = {
-            'PIO-001': { color: 'border-red-200 text-red-500 bg-red-50', icon: 'fa-fire', name: 'ด่วนมาก' },
-            'PIO-002': { color: 'border-blue-200 text-blue-500 bg-blue-50', icon: 'fa-star', name: 'ด่วน' },
-            'PIO-003': { color: 'border-emerald-200 text-emerald-500 bg-emerald-50', icon: 'fa-check-circle', name: 'ปกติ' },
-            'PIO-004': { color: 'border-amber-200 text-amber-500 bg-amber-50', icon: 'fa-clock', name: 'รอตรวจสอบ' }
-        };
-        return config[id] || { color: 'border-slate-100 text-slate-400 bg-slate-50', icon: 'fa-info-circle', name: '-' };
-    }
+   
 
     function closeModal() { 
         document.getElementById('modalDept').classList.add('hidden'); 
