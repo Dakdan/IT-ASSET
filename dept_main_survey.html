@@ -394,9 +394,13 @@ function renderTableMode(container, filteredDepts) {
     
     // 2. วนลูปแยกตามอาคาร
     Object.keys(structure).sort().forEach(building => {
+        // --- ส่วนที่เพิ่มกลับมา: คำนวณยอดรวมของแต่ละอาคาร ---
+        const bTotal = filteredDepts.filter(d => d.BUILDING === building)
+            .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
+
         html += `
             <div class="building-container overflow-hidden shadow-sm border border-slate-200 mb-10 bg-white">
-                <div class="building-header !py-4 !px-6 bg-slate-800 text-white">
+                <div class="building-header !py-4 !px-6 bg-slate-800 text-white flex justify-between items-center">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 pink-gradient rounded-xl flex items-center justify-center text-white shadow-md text-lg">
                             <i class="fas fa-hospital"></i>
@@ -406,11 +410,15 @@ function renderTableMode(container, filteredDepts) {
                             <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">Building Group</p>
                         </div>
                     </div>
+                    <div class="bg-white/10 border border-white/20 px-4 py-1.5 rounded-xl text-right">
+                        <p class="text-xl font-black text-white leading-none">${bTotal}</p>
+                        <p class="text-[8px] font-bold text-pink-300 uppercase">รวมครุภัณฑ์</p>
+                    </div>
                 </div>
 
                 <div class="p-0">`;
 
-        // 3. วนลูปแยกตามชั้นในอาคารนั้นๆ
+        // 3. วนลูปแยกตามชั้น
         const floors = Object.keys(structure[building]).sort();
         floors.forEach((floor, idx) => {
             const theme = floorColorThemes[idx % floorColorThemes.length];
@@ -425,47 +433,42 @@ function renderTableMode(container, filteredDepts) {
                         <table class="w-full">
                             <tbody class="divide-y divide-slate-50">`;
 
-            // ตรวจสอบในฟังก์ชัน renderTableMode
-structure[building][floor].forEach(d => { // <--- ตรงนี้เราใช้ตัวแปร 'd'
-    const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-    
-    // 1. ตรวจสอบชื่อตัวแปรให้ตรงกับที่ระบุใน forEach (ถ้าตรงนี้เป็น d ก็ต้องเป็น d.PIC_ID)
-    // 2. ตรวจสอบเครื่องหมาย ${ } และไม่มีเลข 0 เกินมา
-    const dImg = d.PIC_ID 
-        ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` 
-        : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
-    
-    html += `
-        <tr ...>
-            <td>
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 shadow-sm flex-shrink-0">
-                        <img src="${dImg}" 
-                             class="w-full h-full object-cover" 
-                             onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
-                    </div>
-                    <span class="font-bold text-slate-700">${d.DEPNAME}</span>
-                </div>
-            </td>
-            ...
-        </tr>`;
-});
+            structure[building][floor].forEach(d => {
+                const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
+                
+                // --- จุดแก้ไขเรื่องรูปภาพ: ใช้ d.PIC_ID ให้ตรงกับ Loop ---
+                const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                
+                html += `
+                    <tr class="hover:bg-pink-50/40 transition-all cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
+                        <td class="py-3 px-8 w-[60%]">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 shadow-sm flex-shrink-0 bg-white">
+                                    <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
+                                </div>
+                                <span class="font-bold text-slate-700 group-hover:text-pink-600 transition-colors">${d.DEPNAME}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-6 text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-500 font-black text-[10px] group-hover:border-pink-200 group-hover:text-pink-500 transition-all">
+                                ${dLogs.length} รายการ
+                            </span>
+                        </td>
+                        <td class="py-3 px-8 text-right">
+                            <i class="fas fa-chevron-right text-slate-300 group-hover:text-pink-400 group-hover:translate-x-1 transition-all"></i>
+                        </td>
+                    </tr>`;
+            });
 
-            html += `
-                            </tbody>
-                        </table>
-                    </div>
-                </div>`;
+            html += `</tbody></table></div></div>`;
         });
-
-        html += `
-                </div>
-            </div>`;
+        html += `</div></div>`;
     });
 
     container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลหน่วยงาน</div>`;
 }
-    // --- ฟังก์ชันย่อยสำหรับวาดแบบผังอาคาร (ยกโค้ดเดิมของคุณมาใส่ตรงนี้) ---
+
+   // --- ฟังก์ชันย่อยสำหรับวาดแบบผังอาคาร (ยกโค้ดเดิมของคุณมาใส่ตรงนี้) ---
     function renderGridMode(area, filteredDepts) {
         const structure = {};
         filteredDepts.forEach(d => {
