@@ -558,7 +558,8 @@
                                     <div class="font-bold text-slate-800">${item.FullDescription || '-'}</div>
                                     <div class="text-[10px] text-slate-500 mt-0.5 uppercase">SN: ${item.Serial_Number || 'ไม่ระบุ'}</div>
                                 </td>
-                                <td class="text-center font-black text-slate-600">${age}</td>
+                                
+                                <td class="text-center font-black text-slate-600">${a.AgeInfo}</td>
                                 <td class="text-center">
                                     <span class="text-[9px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">ตรวจสอบแล้ว</span>
                                 </td>
@@ -598,16 +599,7 @@
         preview.innerHTML = html;
     }
 
-    function calculateAge(dateStr) {
-        if (!dateStr) return '-';
-        try {
-            const birth = new Date(dateStr);
-            if (isNaN(birth.getTime())) return '-';
-            const now = new Date();
-            let age = now.getFullYear() - birth.getFullYear();
-            return age < 0 ? 0 : age;
-        } catch(e) { return '-'; }
-    }
+   
 
     // --- Dashboard UI Logic (Grid/Table) ---
 
@@ -694,7 +686,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center justify-between pt-4 border-t-2 border-slate-50">
-                                <span class="text-[10px] font-black ${theme.text} uppercase tracking-tighter">ตรวจสอบแล้ว</span>
+                                 <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">${a.AgeInfo || 'N/A'}</span>
                                 <span class="px-3 py-1 rounded-lg ${theme.bg} ${theme.text} font-black text-xs border ${theme.cardBorder}">${dLogs.length} รายการ</span>
                             </div>
                         </div>`;
@@ -823,6 +815,7 @@
                                 <h5 class="text-sm font-bold text-slate-700 leading-normal line-clamp-2 mb-2">${a.FullDescription || '-'}</h5>
                                 <div class="flex flex-wrap gap-2 pt-2 border-t-2 border-slate-50">
                                     <span class="text-[9px] font-black px-3 py-1 rounded-lg border-2 ${pri.color} uppercase">
+                                     <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">${a.AgeInfo || 'N/A'}</span>
                                         <i class="fas ${pri.icon} mr-1"></i> ${pri.name}
                                     </span>
                                 </div>
