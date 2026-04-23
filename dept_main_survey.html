@@ -381,7 +381,7 @@
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น (แก้ไขเรื่องรูปภาพ) ---
 function renderTableMode(container, filteredDepts) {
     const structure = {};
-    // 1. จัดกลุ่มข้อมูลเหมือนหน้าเดิม
+    // 1. การจัดกลุ่ม (ใช้เหมือนเดิม)
     filteredDepts.forEach(d => {
         const b = d.BUILDING || "อาคารทั่วไป";
         const f = d.FL || "ชั้น 1";
@@ -392,7 +392,7 @@ function renderTableMode(container, filteredDepts) {
 
     let html = "";
     Object.keys(structure).sort().forEach(building => {
-        // ดึงยอดรวมอาคาร (bTotal)
+        // ดึง bTotal มาแสดงที่หัวอาคารเหมือนหน้า Grid
         const bTotal = filteredDepts.filter(d => d.BUILDING === building)
             .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
 
@@ -403,7 +403,7 @@ function renderTableMode(container, filteredDepts) {
                         <div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl"><i class="fas fa-hospital"></i></div>
                         <div>
                             <h3 class="text-xl font-black uppercase">${building}</h3>
-                            <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase italic">Udon Thani Hospital</p>
+                            <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">Udon Thani Hospital</p>
                         </div>
                     </div>
                     <div class="bg-white/10 border border-white/20 px-5 py-2 rounded-2xl text-right">
@@ -411,7 +411,6 @@ function renderTableMode(container, filteredDepts) {
                         <p class="text-[9px] font-bold text-pink-300 uppercase">รวมครุภัณฑ์</p>
                     </div>
                 </div>
-
                 <div class="p-0">`;
 
         const floors = Object.keys(structure[building]).sort();
@@ -423,7 +422,6 @@ function renderTableMode(container, filteredDepts) {
                         <span class="${theme.badge} text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span>
                         <div class="flex-1 h-[1px] bg-slate-200/50"></div>
                     </div>
-
                     <div class="overflow-x-auto">
                         <table class="w-full border-collapse">
                             <tbody>`;
@@ -431,9 +429,8 @@ function renderTableMode(container, filteredDepts) {
             structure[building][floor].forEach(d => {
                 const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
                 
-                // --- จุดที่ผิดพลาดไปหลายรอบ: แก้ไขให้ตรงกับระบบเดิมของคุณ ---
-                // ใช้ d.PIC_ID ให้ตรงกับชื่อตัวแปรใน forEach(d => ...) 
-                // และ URL ต้องไม่มีเลข 0 หรืออักขระอื่นแทรกเด็ดขาด
+                // --- แก้ไขจุดนี้ให้ตรงตาม logic เดิมที่คุณส่งมา ---
+                // ใน loop นี้ใช้ d ดังนั้นต้องเป็น d.PIC_ID และห้ามมีเลข 0
                 const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
                 
                 html += `
@@ -445,7 +442,7 @@ function renderTableMode(container, filteredDepts) {
                                 </div>
                                 <div class="min-w-0">
                                     <h4 class="text-base font-bold text-slate-800 group-hover:text-pink-600 transition-colors truncate mb-1">${d.DEPNAME}</h4>
-                                    <p class="text-[11px] font-bold text-slate-400">แผนก ID: ${d.DEP_ID}</p>
+                                    <p class="text-[11px] font-bold text-slate-400">ID: ${d.DEP_ID}</p>
                                 </div>
                             </div>
                         </td>
@@ -461,12 +458,10 @@ function renderTableMode(container, filteredDepts) {
                         </td>
                     </tr>`;
             });
-
             html += `</tbody></table></div></div>`;
         });
         html += `</div></div>`;
     });
-
     container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลหน่วยงาน</div>`;
 }
    // --- ฟังก์ชันย่อยสำหรับวาดแบบผังอาคาร (ยกโค้ดเดิมของคุณมาใส่ตรงนี้) ---
