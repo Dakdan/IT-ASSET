@@ -465,73 +465,91 @@ function renderTableMode(container, filteredDepts) {
     container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลหน่วยงาน</div>`;
 }
    // --- ฟังก์ชันย่อยสำหรับวาดแบบผังอาคาร (ยกโค้ดเดิมของคุณมาใส่ตรงนี้) ---
-    function renderGridMode(area, filteredDepts) {
-        const structure = {};
-        filteredDepts.forEach(d => {
-            const b = d.BUILDING || "อาคารทั่วไป";
-            const f = d.FL || "ชั้น 1";
-            if (!structure[b]) structure[b] = {};
-            if (!structure[b][f]) structure[b][f] = [];
-            structure[b][f].push(d);
-        });
+   function renderTableMode(container, filteredDepts) {
+    const structure = {};
+    // 1. จัดกลุ่ม Building/Floor เหมือนเดิม 100%
+    filteredDepts.forEach(d => {
+        const b = d.BUILDING || "อาคารทั่วไป";
+        const f = d.FL || "ชั้น 1";
+        if (!structure[b]) structure[b] = {};
+        if (!structure[b][f]) structure[b][f] = [];
+        structure[b][f].push(d);
+    });
 
-        let html = "";
-        Object.keys(structure).sort().forEach(building => {
-            const floors = Object.keys(structure[building]).sort();
-            const bTotal = filteredDepts.filter(d => d.BUILDING === building)
-                .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
+    let html = "";
+    Object.keys(structure).sort().forEach(building => {
+        // ดึง bTotal มาจาก logic เดิมของคุณเป๊ะๆ
+        const bTotal = filteredDepts.filter(d => d.BUILDING === building)
+            .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
 
-            html += `
-                <div class="building-container">
-                    <div class="building-header">
-                        <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-2xl"><i class="fas fa-hospital"></i></div>
-                            <div>
-                                <h3 class="text-2xl font-black text-slate-800 uppercase">${building}</h3>
-                                <p class="text-[10px] font-bold text-pink-500 tracking-[0.2em]">อาคาร / ที่ตั้ง</p>
-                            </div>
+        html += `
+            <div class="building-container overflow-hidden shadow-sm border border-slate-200 mb-10 bg-white rounded-3xl">
+                <div class="building-header !py-4 !px-6 bg-slate-800 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl">
+                            <i class="fas fa-hospital"></i>
                         </div>
-                        <div class="bg-white border-2 border-pink-100 px-5 py-2 rounded-2xl text-right">
-                            <p class="text-2xl font-black text-slate-800">${bTotal}</p>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">รวมครุภัณฑ์</p>
+                        <div>
+                            <h3 class="text-xl font-black uppercase">${building}</h3>
+                            <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">Udon Thani Hospital</p>
                         </div>
                     </div>
-                    <div class="p-8 space-y-12">
-                        ${floors.map((floor, idx) => {
-                            const depts = structure[building][floor];
-                            const theme = floorColorThemes[idx % floorColorThemes.length];
-                            return `
-                                <div class="floor-wrapper ${theme.bg} ${theme.border}">
-                                    <div class="flex items-center gap-4 mb-8">
-                                        <span class="${theme.badge} text-white px-4 py-1.5 rounded-xl font-black text-xl shadow-md">${floor}</span>
-                                        <div class="flex-1 h-[1px] bg-slate-200/50"></div>
-                                    </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                        ${depts.map(dept => {
-                                            const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                                            const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
-                                            return `
-                                                <div onclick="showDetail('${dept.DEP_ID}')" class="dept-card p-5 flex items-center gap-5 ${theme.cardBorder}">
-                                                    <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 flex-shrink-0 shadow-inner">
-                                                        <img src="${dImg}" class="w-full h-full object-cover">
-                                                    </div>
-                                                    <div class="min-w-0 flex-1">
-                                                        <h4 class="text-sm font-bold text-slate-800 truncate mb-2">${dept.DEPNAME}</h4>
-                                                        <span class="text-[11px] font-black ${theme.text} bg-white px-3 py-1 rounded-lg border ${theme.border}">${dLogs.length} รายการ</span>
-                                                    </div>
-                                                </div>
-                                            `;
-                                        }).join('')}
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
+                    <div class="bg-white/10 border border-white/20 px-5 py-2 rounded-2xl text-right">
+                        <p class="text-2xl font-black text-white leading-none">${bTotal}</p>
+                        <p class="text-[9px] font-bold text-pink-300 uppercase">รวมครุภัณฑ์</p>
                     </div>
                 </div>
-            `;
+
+                <div class="p-0">`;
+
+        const floors = Object.keys(structure[building]).sort();
+        floors.forEach((floor, idx) => {
+            const theme = floorColorThemes[idx % floorColorThemes.length];
+            html += `
+                <div class="border-b border-slate-100 last:border-0">
+                    <div class="bg-slate-50 px-8 py-3 border-y border-slate-100 flex items-center gap-4">
+                        <span class="${theme.badge} text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span>
+                        <div class="flex-1 h-[1px] bg-slate-200/50"></div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <tbody>`;
+
+            structure[building][floor].forEach(d => {
+                const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
+                
+                // --- จุดที่เคยพลาด: ใช้ d.PIC_ID และ URL ตามหน้า Grid เดิมของคุณ ---
+                const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                
+                html += `
+                    <tr class="hover:bg-pink-50/30 transition-all cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
+                        <td class="py-4 px-8 w-[65%]">
+                            <div class="flex items-center gap-5">
+                                <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 flex-shrink-0 shadow-inner bg-white">
+                                    <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="text-base font-bold text-slate-800 group-hover:text-pink-600 transition-colors truncate mb-1">${d.DEPNAME}</h4>
+                                    <p class="text-[11px] font-bold text-slate-400">ID: ${d.DEP_ID}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="inline-flex items-center px-4 py-2 rounded-xl font-black text-xs ${theme.text} bg-white border ${theme.border} group-hover:bg-pink-500 group-hover:text-white group-hover:border-transparent transition-all">
+                                ${dLogs.length} รายการ
+                            </span>
+                        </td>
+                        <td class="py-4 px-8 text-right">
+                            <i class="fas fa-chevron-right text-slate-200 group-hover:text-pink-500 transition-all"></i>
+                        </td>
+                    </tr>`;
+            });
+            html += `</tbody></table></div></div>`;
         });
-        area.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูล</div>`;
-    }
+        html += `</div></div>`;
+    });
+    container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูลหน่วยงาน</div>`;
+}
     function showDetail(deptId) {
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
