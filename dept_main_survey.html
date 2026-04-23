@@ -381,7 +381,7 @@
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น (แก้ไขเรื่องรูปภาพ) ---
 function renderTableMode(container, filteredDepts) {
     const structure = {};
-    // 1. จัดกลุ่มข้อมูล (ใช้ Logic เดียวกับ Grid Mode)
+    // 1. จัดกลุ่มข้อมูลเหมือนหน้าเดิม
     filteredDepts.forEach(d => {
         const b = d.BUILDING || "อาคารทั่วไป";
         const f = d.FL || "ชั้น 1";
@@ -392,7 +392,7 @@ function renderTableMode(container, filteredDepts) {
 
     let html = "";
     Object.keys(structure).sort().forEach(building => {
-        // ดึงยอดรวมอาคาร (bTotal) กลับมา
+        // ดึงยอดรวมอาคาร (bTotal)
         const bTotal = filteredDepts.filter(d => d.BUILDING === building)
             .reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
 
@@ -403,7 +403,7 @@ function renderTableMode(container, filteredDepts) {
                         <div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl"><i class="fas fa-hospital"></i></div>
                         <div>
                             <h3 class="text-xl font-black uppercase">${building}</h3>
-                            <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">COMPUTER ASSET SYSTEM</p>
+                            <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase italic">Udon Thani Hospital</p>
                         </div>
                     </div>
                     <div class="bg-white/10 border border-white/20 px-5 py-2 rounded-2xl text-right">
@@ -431,7 +431,9 @@ function renderTableMode(container, filteredDepts) {
             structure[building][floor].forEach(d => {
                 const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
                 
-                // --- จุดสำคัญ: ดึงจาก d.PIC_ID และไม่มีเลข 0 นำหน้า เพื่อให้รูปแสดงผลเหมือนหน้าเดิม ---
+                // --- จุดที่ผิดพลาดไปหลายรอบ: แก้ไขให้ตรงกับระบบเดิมของคุณ ---
+                // ใช้ d.PIC_ID ให้ตรงกับชื่อตัวแปรใน forEach(d => ...) 
+                // และ URL ต้องไม่มีเลข 0 หรืออักขระอื่นแทรกเด็ดขาด
                 const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
                 
                 html += `
@@ -443,7 +445,7 @@ function renderTableMode(container, filteredDepts) {
                                 </div>
                                 <div class="min-w-0">
                                     <h4 class="text-base font-bold text-slate-800 group-hover:text-pink-600 transition-colors truncate mb-1">${d.DEPNAME}</h4>
-                                    <p class="text-[11px] font-bold text-slate-400">ID: ${d.DEP_ID}</p>
+                                    <p class="text-[11px] font-bold text-slate-400">แผนก ID: ${d.DEP_ID}</p>
                                 </div>
                             </div>
                         </td>
