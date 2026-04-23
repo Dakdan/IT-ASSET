@@ -382,7 +382,6 @@
 // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น ---
 function renderTableMode(container, filteredDepts) {
     const structure = {};
-    // 1. จัดกลุ่มข้อมูล (Group By Building & Floor)
     filteredDepts.forEach(d => {
         const b = d.BUILDING || "อาคารทั่วไป";
         const f = d.FL || "ชั้น 1";
@@ -392,22 +391,19 @@ function renderTableMode(container, filteredDepts) {
     });
 
     let html = "";
-    
-    // 2. Loop ตามอาคาร
     Object.keys(structure).sort().forEach(building => {
         html += `
-            <div class="building-container bg-white mb-10 overflow-hidden">
+            <div class="building-container bg-white mb-10 overflow-hidden shadow-sm border border-slate-200 rounded-[2.5rem]">
                 <div class="bg-slate-800 p-6 flex justify-between items-center text-white">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center text-xl">
+                        <div class="w-10 h-10 pink-gradient rounded-lg flex items-center justify-center text-xl">
                             <i class="fas fa-hospital"></i>
                         </div>
                         <h3 class="text-xl font-black uppercase tracking-tight">${building}</h3>
                     </div>
                 </div>
-                <div class="p-0">`; // ลบ Padding ออกเพื่อให้ตารางชิดขอบ
+                <div class="p-0">`;
 
-        // 3. Loop ตามชั้น
         const floors = Object.keys(structure[building]).sort();
         floors.forEach(floor => {
             html += `
@@ -420,23 +416,26 @@ function renderTableMode(container, filteredDepts) {
                         <table class="main-table w-full">
                             <thead>
                                 <tr>
-                                    <th class="w-[45%]">หน่วยงาน</th>
-                                    <th class="text-center">จำนวนครุภัณฑ์</th>
-                                    <th class="text-center">Action</th>
+                                    <th class="w-[45%] px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">หน่วยงาน</th>
+                                    <th class="text-center px-6 py-4 text-xs font-bold text-slate-400 uppercase">จำนวนครุภัณฑ์</th>
+                                    <th class="text-center px-6 py-4 text-xs font-bold text-slate-400 uppercase">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody>`;
 
-            // 4. Loop รายชื่อหน่วยงานในชั้นนั้นๆ
             structure[building][floor].forEach(d => {
                 const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-                const dImg = d.PIC_ID ? `https://lh3.googleusercontent.com/d/$${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                
+                // แก้ไขจุดนี้: ลบเลข 0 และ { ที่เกินมาออก
+                const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
                 
                 html += `
                     <tr class="hover:bg-pink-50/50 transition-colors cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
                         <td class="py-4 px-6">
                             <div class="flex items-center gap-4">
-                                <img src="${dImg}" class="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-sm flex-shrink-0">
+                                <div class="w-12 h-12 rounded-xl overflow-hidden border border-slate-100 shadow-sm flex-shrink-0 bg-white">
+                                    <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
+                                </div>
                                 <span class="font-bold text-slate-700 group-hover:text-pink-600 truncate">${d.DEPNAME}</span>
                             </div>
                         </td>
@@ -446,91 +445,88 @@ function renderTableMode(container, filteredDepts) {
                             </span>
                         </td>
                         <td class="text-center py-4 px-6">
-                            <i class="fas fa-chevron-right text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all"></i>
+                            <div class="w-8 h-8 rounded-full bg-slate-50 inline-flex items-center justify-center group-hover:bg-pink-100">
+                                <i class="fas fa-chevron-right text-slate-300 group-hover:text-pink-500 transition-all text-xs"></i>
+                            </div>
                         </td>
                     </tr>`;
             });
 
-            html += `
-                            </tbody>
-                        </table>
-                    </div>
-                </div>`;
+            html += `</tbody></table></div></div>`;
         });
-
-        html += `
-                </div>
-            </div>`;
+        html += `</div></div>`;
     });
-
-    container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold text-xl">ไม่พบข้อมูลหน่วยงาน</div>`;
+    container.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold text-xl">ไม่พบข้อมูล</div>`;
 }
-    function showDetail(deptId) {
-        const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
-        const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
-        if(!dept) return;
-        
-        document.getElementById('mDeptName').innerText = dept.DEPNAME;
-        document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
-        document.getElementById('mDeptPic').querySelector('img').src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
-        
-        // แก้ไขปุ่ม: ใส่ค่า href โดยตรงเพื่อให้เปิดหน้าใหม่ได้ (รักษา Logic การเปิดหน้าเดิม)
-         document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
+   function showDetail(deptId) {
+    const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
+    const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
+    if(!dept) return;
+    
+    document.getElementById('mDeptName').innerText = dept.DEPNAME;
+    document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
+    
+    // แก้ไขจุดนี้: แก้ไขรูปแบบ Template String ให้ถูกต้อง
+    const mImg = dept.PIC_ID ? `http://googleusercontent.com/profile/picture/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
+    document.getElementById('mDeptPic').querySelector('img').src = mImg;
+    
+    document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
 
-        const byType = {};
-        logs.forEach(l => { 
-            const typeName = state.assetTypes.find(x => String(x.id) === String(l.Asset_Type_ID))?.name || 'อื่นๆ';
-            if(!byType[typeName]) byType[typeName] = []; 
-            byType[typeName].push(l); 
-        });
-        
-        const container = document.getElementById('mAssetGroupContainer');
-        container.innerHTML = Object.keys(byType).sort().map(type => `
-            <div class="mb-10">
-                <div class="flex items-center gap-3 mb-5 border-l-4 border-pink-500 pl-4">
-                    <h4 class="text-sm font-black text-slate-800 uppercase">${type} (${byType[type].length})</h4>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    ${byType[type].map(a => {
-                        const pri = getPriority(a.Priority_ID || a.PIORITY_ID);
-                        const aImg = a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/'+a.ASSET_IMG_DB : 'https://placehold.co/200?text=NO+IMAGE';
-                        const ageStr = a.AgeInfo || calculateAge(a.DateOfPurchase || a.DATE_PURCHASE);
-                        return `
-                        <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6">
-                            <div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border flex-shrink-0 overflow-hidden bg-slate-50 shadow-inner">
-                                <img src="${aImg}" class="w-full h-full object-cover">
-                            </div>
-                            <div class="flex-1 min-w-0 flex flex-col justify-between">
-                                <div>
-                                    <div class="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2">
-                                        <div class="bg-pink-600 text-white px-4 py-2 rounded-xl shadow-lg w-full sm:w-auto">
-                                            <p class="text-[9px] text-pink-200 font-bold uppercase mb-1">รหัสครุภัณฑ์</p>
-                                            <p class="text-sm font-black">🆔 ${a.AssetID || 'N/A'}</p>
-                                        </div>
-                                        <div class="text-right w-full sm:w-auto">
-                                            <span class="text-[10px] font-bold text-slate-400 uppercase block">อายุการใช้งาน</span>
-                                            <span class="text-[11px] font-black text-pink-500">${ageStr}</span>
-                                        </div>
-                                    </div>
-                                    <h5 class="text-sm font-bold text-slate-700 leading-normal line-clamp-2 mb-2">${a.FullDescription || '-'}</h5>
-                                </div>
-                                <div class="mt-2 flex flex-wrap gap-2 pt-2 border-t border-slate-50">
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase w-full">S/N: ${a.Serial || '-'}</p>
-                                    <span class="text-[9px] font-black px-3 py-2 rounded-xl border ${pri.color} uppercase flex items-center gap-2">
-                                        <i class="fas ${pri.icon}"></i> ${pri.name}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('')}
-                </div>
+    const byType = {};
+    logs.forEach(l => { 
+        const typeName = state.assetTypes.find(x => String(x.id) === String(l.Asset_Type_ID))?.name || 'อื่นๆ';
+        if(!byType[typeName]) byType[typeName] = []; 
+        byType[typeName].push(l); 
+    });
+    
+    const container = document.getElementById('mAssetGroupContainer');
+    container.innerHTML = Object.keys(byType).sort().map(type => `
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-5 border-l-4 border-pink-500 pl-4">
+                <h4 class="text-sm font-black text-slate-800 uppercase">${type} (${byType[type].length})</h4>
             </div>
-        `).join('');
-        
-        document.getElementById('modalDept').classList.remove('hidden');
-        document.getElementById('modalDept').classList.add('flex');
-        document.body.style.overflow = 'hidden';
-    }
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                ${byType[type].map(a => {
+                    const pri = getPriority(a.Priority_ID || a.PIORITY_ID);
+                    // แก้ไขจุดนี้: ปิด String ให้ครบ
+                    const aImg = a.ASSET_IMG_DB ? `http://googleusercontent.com/profile/picture/${a.ASSET_IMG_DB}` : 'https://placehold.co/200?text=NO+IMAGE';
+                    const ageStr = a.AgeInfo || calculateAge(a.DateOfPurchase || a.DATE_PURCHASE);
+                    return `
+                    <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 border border-slate-100 rounded-2xl">
+                        <div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border flex-shrink-0 overflow-hidden bg-slate-50 shadow-inner">
+                            <img src="${aImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=NO+IMAGE'">
+                        </div>
+                        <div class="flex-1 min-w-0 flex flex-col justify-between">
+                            <div>
+                                <div class="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2">
+                                    <div class="bg-pink-600 text-white px-4 py-2 rounded-xl shadow-lg w-full sm:w-auto">
+                                        <p class="text-[9px] text-pink-200 font-bold uppercase mb-1">รหัสครุภัณฑ์</p>
+                                        <p class="text-sm font-black">🆔 ${a.AssetID || 'N/A'}</p>
+                                    </div>
+                                    <div class="text-right w-full sm:w-auto">
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase block">อายุการใช้งาน</span>
+                                        <span class="text-[11px] font-black text-pink-500">${ageStr}</span>
+                                    </div>
+                                </div>
+                                <h5 class="text-sm font-bold text-slate-700 leading-normal line-clamp-2 mb-2">${a.FullDescription || '-'}</h5>
+                            </div>
+                            <div class="mt-2 flex flex-wrap gap-2 pt-2 border-t border-slate-50">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase w-full">S/N: ${a.Serial || '-'}</p>
+                                <span class="text-[9px] font-black px-3 py-2 rounded-xl border ${pri.color} uppercase flex items-center gap-2">
+                                    <i class="fas ${pri.icon}"></i> ${pri.name}
+                                </span>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('modalDept').classList.remove('hidden');
+    document.getElementById('modalDept').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
 
     function closeModal() { 
         document.getElementById('modalDept').classList.add('hidden'); 
