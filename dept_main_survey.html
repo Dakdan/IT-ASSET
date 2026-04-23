@@ -166,16 +166,12 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        /* Modal & Print Styles */
         @media print {
             body * { visibility: hidden; }
             #reportPrintArea, #reportPrintArea * { visibility: visible; }
             #reportPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
             .no-print { display: none !important; }
         }
-
-        #modalDept.flex, #modalReport.flex { animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .report-table {
             width: 100%;
@@ -189,7 +185,6 @@
         }
         .report-table th { background: #f8fafc; font-weight: bold; }
         .row-group-header { background-color: #f1f5f9; font-weight: 800; color: #1e293b; }
-        .row-sub-total { background-color: #f8fafc; font-weight: 700; color: #ec4899; }
     </style>
 </head>
 
@@ -203,7 +198,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black text-slate-800 leading-none">IT ASSET <span class="text-pink-500">Audit</span></h1>
-                <p class="text-[10px] text-slate-400 font-bold tracking-widest mt-1 uppercase">Udonthani Hospital</p>
+                <p class="text-[10px] text-slate-400 font-bold tracking-widest mt-1 uppercase">โรงพยาบาลอุดรธานี</p>
             </div>
         </div>
 
@@ -242,11 +237,11 @@
         </div>
         <div class="bg-white p-6 rounded-3xl border-2 border-slate-100 flex items-center gap-5 shadow-sm">
             <div class="w-12 h-12 bg-pink-50 text-pink-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
-                <i class="fas fa-building"></i>
+                <i class="fas fa-hospital"></i>
             </div>
             <div>
-                <p id="statDepts" class="text-2xl font-black text-slate-800">-</p>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">หน่วยงานที่พบ</p>
+                <p id="statDepts" class="text-2xl font-black text-slate-800">0</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">หน่วยงานที่สำรวจ</p>
             </div>
         </div>
         <div class="bg-white p-6 rounded-3xl border-2 border-slate-100 flex items-center gap-5 shadow-sm">
@@ -254,8 +249,8 @@
                 <i class="fas fa-box"></i>
             </div>
             <div>
-                <p id="statAssets" class="text-2xl font-black text-slate-800">-</p>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">รายการครุภัณฑ์รวม</p>
+                <p id="statAssets" class="text-2xl font-black text-slate-800">0</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">รายการสำรวจรวม</p>
             </div>
         </div>
     </div>
@@ -265,19 +260,17 @@
 <!-- Modal: Report Generation -->
 <div id="modalReport" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[300] p-4" onclick="closeReportModal()">
     <div class="bg-white w-full max-w-6xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border-4 border-white" onclick="event.stopPropagation()">
-        <!-- Filter Header -->
         <div class="p-6 border-b-2 border-slate-50 bg-slate-50/50">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h3 class="text-xl font-black text-slate-800"><i class="fas fa-print text-pink-500 mr-2"></i> ระบบออกรายงานตรวจสอบ</h3>
-                    <p class="text-xs font-bold text-slate-400 mt-1 uppercase">Filter & Export Information</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="exportToExcel()" class="px-5 py-2.5 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-all shadow-lg flex items-center gap-2">
-                        <i class="fas fa-file-excel"></i> Export Excel
+                        <i class="fas fa-file-excel"></i> Excel
                     </button>
-                    <button onclick="printReport()" class="px-5 py-2.5 bg-pink-500 text-white rounded-xl font-bold text-sm hover:bg-pink-600 transition-all shadow-lg flex items-center gap-2">
-                        <i class="fas fa-print"></i> พิมพ์ / PDF
+                    <button onclick="window.print()" class="px-5 py-2.5 bg-pink-500 text-white rounded-xl font-bold text-sm hover:bg-pink-600 transition-all shadow-lg flex items-center gap-2">
+                        <i class="fas fa-print"></i> พิมพ์
                     </button>
                     <button onclick="closeReportModal()" class="w-10 h-10 rounded-full bg-white border-2 border-slate-100 text-slate-400 hover:text-pink-500 flex items-center justify-center transition-all">
                         <i class="fas fa-times"></i>
@@ -285,30 +278,27 @@
                 </div>
             </div>
             
-            <!-- Filters (สัมพันธ์กัน) -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block ml-2">ตึก / อาคาร</label>
-                    <select id="fBuilding" onchange="handleBuildingFilterChange()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 outline-none focus:border-pink-500 cursor-pointer">
+                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block">ตึก / อาคาร</label>
+                    <select id="fBuilding" onchange="handleBuildingFilterChange()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 outline-none focus:border-pink-500">
                         <option value="">ทั้งหมด</option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block ml-2">ชั้น</label>
-                    <select id="fFloor" onchange="handleFloorFilterChange()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 outline-none focus:border-pink-500 cursor-pointer">
+                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block">ชั้น</label>
+                    <select id="fFloor" onchange="handleFloorFilterChange()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 outline-none focus:border-pink-500">
                         <option value="">ทั้งหมด</option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block ml-2">หน่วยงาน</label>
-                    <select id="fDept" onchange="updateReportPreview()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 outline-none focus:border-pink-500 cursor-pointer">
+                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block">หน่วยงาน</label>
+                    <select id="fDept" onchange="updateReportPreview()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 outline-none focus:border-pink-500">
                         <option value="">ทั้งหมด</option>
                     </select>
                 </div>
             </div>
         </div>
-
-        <!-- Preview Area -->
         <div class="flex-1 overflow-y-auto p-8 bg-white custom-scroll" id="reportPrintArea">
             <div id="reportPreviewContent"></div>
         </div>
@@ -327,7 +317,6 @@
                     <h3 id="mDeptName" class="text-xl font-black text-slate-800 truncate"></h3>
                     <div id="mDeptLoc" class="mt-1 text-xs font-bold text-slate-400 uppercase flex items-center gap-2"></div>
                 </div>
-            </div>
              <div class="flex items-center gap-3 w-full md:w-auto justify-end">
                 <!-- ปุ่มดูรายละเอียดเพิ่มเติม -->
                 <a id="mDeptDetailBtn" href="#" 
@@ -369,46 +358,32 @@
             state.assetTypes = initRes.assetTypes || [];
             state.priorities = initRes.priorities || []; 
             
-            document.getElementById('lastUpdate').innerText = `SYNCED AT: ${new Date().toLocaleTimeString('th-TH')}`;
+            document.getElementById('lastUpdate').innerText = `อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
             populateFilterOptions();
             renderDashboard();
         } catch (err) { 
             console.error(err); 
-            document.getElementById('lastUpdate').innerText = "SYNC FAILED";
+            document.getElementById('lastUpdate').innerText = "เชื่อมต่อข้อมูลล้มเหลว";
         } finally { 
             icon?.classList.remove('animate-spin'); 
         }
     }
 
-    // --- Filter Logic (Relationship) ---
-
     function populateFilterOptions() {
         const bSelect = document.getElementById('fBuilding');
         if (!state.depts || state.depts.length === 0) return;
-
         const buildings = [...new Set(state.depts.map(d => d.BUILDING).filter(Boolean))].sort();
         bSelect.innerHTML = '<option value="">ทั้งหมด</option>' + buildings.map(b => `<option value="${b}">${b}</option>`).join('');
-        
-        // เริ่มต้นด้วยการล้างฟิลเตอร์ชั้นและหน่วยงาน
         handleBuildingFilterChange();
     }
 
     function handleBuildingFilterChange() {
         const bVal = document.getElementById('fBuilding').value;
         const fSelect = document.getElementById('fFloor');
-        
-        // กรองชั้นที่อยู่ในตึกที่เลือก
-        let availableFloors = [];
-        if (!bVal) {
-            availableFloors = [...new Set(state.depts.map(d => d.FL).filter(Boolean))];
-        } else {
-            availableFloors = [...new Set(state.depts.filter(d => d.BUILDING === bVal).map(d => d.FL).filter(Boolean))];
-        }
-        
+        let availableFloors = !bVal ? [...new Set(state.depts.map(d => d.FL).filter(Boolean))] : [...new Set(state.depts.filter(d => d.BUILDING === bVal).map(d => d.FL).filter(Boolean))];
         availableFloors.sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric: true}));
         fSelect.innerHTML = '<option value="">ทั้งหมด</option>' + availableFloors.map(f => `<option value="${f}">${f}</option>`).join('');
-        fSelect.value = ""; // Reset
-        
+        fSelect.value = "";
         handleFloorFilterChange();
     }
 
@@ -416,45 +391,20 @@
         const bVal = document.getElementById('fBuilding').value;
         const fVal = document.getElementById('fFloor').value;
         const dSelect = document.getElementById('fDept');
-
         let filteredDepts = state.depts;
         if (bVal) filteredDepts = filteredDepts.filter(d => d.BUILDING === bVal);
         if (fVal) filteredDepts = filteredDepts.filter(d => d.FL === fVal);
-
         const deptNames = [...new Set(filteredDepts.map(d => d.DEPNAME).filter(Boolean))].sort();
         dSelect.innerHTML = '<option value="">ทั้งหมด</option>' + deptNames.map(d => `<option value="${d}">${d}</option>`).join('');
-        dSelect.value = ""; // Reset
-        
+        dSelect.value = "";
         updateReportPreview();
     }
 
-    // --- Report & Grouping Logic ---
-
-    function openReportModal() {
-        document.getElementById('modalReport').classList.remove('hidden');
-        document.getElementById('modalReport').classList.add('flex');
-        
-        // รีเซ็ตการเลือกทั้งหมดเมื่อเปิดหน้าจอใหม่
-        document.getElementById('fBuilding').value = "";
-        handleBuildingFilterChange();
-    }
-
-    function closeReportModal() {
-        document.getElementById('modalReport').classList.add('hidden');
-    }
-
-    function printReport() {
-        window.print();
-    }
-
-    function exportToExcel() {
-        const html = document.getElementById('reportPrintArea').innerHTML;
-        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `IT_Asset_Report_${new Date().getTime()}.xls`;
-        a.click();
+    function getPriority(pid) {
+        const p = state.priorities.find(x => String(x.id) === String(pid));
+        if(!p) return { name: 'ปกติ', color: 'border-slate-100 bg-slate-50 text-slate-500', icon: 'fa-info-circle' };
+        if(p.name.includes('ด่วน')) return { name: p.name, color: 'border-rose-100 bg-rose-50 text-rose-500', icon: 'fa-fire' };
+        return { name: p.name, color: 'border-blue-100 bg-blue-50 text-blue-500', icon: 'fa-check' };
     }
 
     function updateReportPreview() {
@@ -462,7 +412,6 @@
         const fVal = document.getElementById('fFloor').value;
         const dVal = document.getElementById('fDept').value;
 
-        // 1. กรองหน่วยงาน
         const filteredDepts = state.depts.filter(d => {
             const matchB = !bVal || String(d.BUILDING) === bVal;
             const matchF = !fVal || String(d.FL) === fVal;
@@ -473,139 +422,41 @@
         const deptIds = filteredDepts.map(d => String(d.DEP_ID).trim());
         const filteredLogs = state.logs.filter(l => deptIds.includes(String(l.DEPT_ID).trim()));
 
-        // 2. จัดกลุ่มข้อมูล: หน่วยงาน -> ประเภทครุภัณฑ์
-        const reportGroups = {}; // { 'DEPNAME': { 'TYPE': [logs] } }
-        
+        const reportGroups = {}; 
         filteredLogs.forEach(l => {
             const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
             const dName = dept?.DEPNAME || "ไม่ระบุหน่วยงาน";
             const typeName = state.assetTypes.find(t => String(t.id) === String(l.Asset_Type_ID))?.name || 'อื่นๆ';
-
             if (!reportGroups[dName]) reportGroups[dName] = {};
             if (!reportGroups[dName][typeName]) reportGroups[dName][typeName] = [];
             reportGroups[dName][typeName].push(l);
         });
 
         const preview = document.getElementById('reportPreviewContent');
-        let html = `
-            <div class="text-center mb-8">
-                <h1 class="text-2xl font-black text-slate-800">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์ (แยกตามหน่วยงาน)</h1>
-                <p class="text-sm font-bold text-slate-500 mt-1">โรงพยาบาลอุดรธานี | ประจำปี 2569</p>
-                <div class="mt-4 inline-flex flex-wrap justify-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-b py-2 border-slate-100">
-                    <span>ตึก: ${bVal || 'ทั้งหมด'}</span>
-                    <span>ชั้น: ${fVal || 'ทั้งหมด'}</span>
-                    <span>หน่วยงาน: ${dVal || 'ทั้งหมด'}</span>
-                    <span class="text-pink-500 font-black">รวมทั้งหมด: ${filteredLogs.length} รายการ</span>
-                </div>
-            </div>
-        `;
+        let html = `<div class="text-center mb-8">
+            <h1 class="text-2xl font-black text-slate-800">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+            <p class="text-sm font-bold text-slate-500 mt-1">ประจำปีงบประมาณ 2569 | โรงพยาบาลอุดรธานี</p>
+        </div>`;
 
         if (filteredLogs.length === 0) {
-            html += `<div class="py-20 text-center text-slate-300 font-bold flex flex-col items-center">
-                        <i class="fas fa-folder-open text-5xl mb-4 opacity-20"></i>
-                        ไม่พบข้อมูลตามเงื่อนไขที่เลือก
-                    </div>`;
+            html += `<div class="py-20 text-center text-slate-300 font-bold">ไม่พบข้อมูล</div>`;
         } else {
-            // สร้างตารางแบบ Grouped
-            html += `
-                <table class="report-table rounded-xl overflow-hidden shadow-sm">
-                    <thead>
-                        <tr>
-                            <th class="w-12 text-center">ลำดับ</th>
-                            <th class="w-40">รหัสครุภัณฑ์</th>
-                            <th>รายละเอียด / ยี่ห้อ / รุ่น / S/N</th>
-                            <th class="w-20 text-center">อายุ (ปี)</th>
-                            <th class="w-24 text-center">สถานะ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            // เรียงชื่อหน่วยงาน
+            html += `<table class="report-table"><thead><tr><th class="text-center">ลำดับ</th><th>รหัสครุภัณฑ์</th><th>รายการ / รุ่น / ซีเรียล</th><th class="text-center">อายุ</th><th class="text-center">สถานะ</th></tr></thead><tbody>`;
             Object.keys(reportGroups).sort().forEach((deptName) => {
                 const types = reportGroups[deptName];
-                let deptTotal = 0;
-                Object.values(types).forEach(arr => deptTotal += arr.length);
-
-                // แถวหัวข้อหน่วยงาน (Header Group)
-                html += `
-                    <tr class="row-group-header">
-                        <td colspan="3" class="p-3">
-                            <i class="fas fa-hospital text-pink-500 mr-2"></i> ${deptName}
-                        </td>
-                        <td colspan="2" class="text-right p-3 text-pink-600">
-                            รวมหน่วยงาน: ${deptTotal} รายการ
-                        </td>
-                    </tr>
-                `;
-
-                // วนลูปแยกตามประเภทครุภัณฑ์
+                html += `<tr class="row-group-header"><td colspan="5" class="p-3 bg-slate-100">${deptName}</td></tr>`;
                 Object.keys(types).sort().forEach(typeName => {
                     const logs = types[typeName];
-                    
-                    // แถวย่อยประเภทครุภัณฑ์
-                    html += `
-                        <tr class="bg-pink-50/30">
-                            <td colspan="5" class="px-6 py-2 font-bold text-slate-600 text-[11px]">
-                                <i class="fas fa-caret-right mr-2"></i>ประเภท: ${typeName} (${logs.length})
-                            </td>
-                        </tr>
-                    `;
-
+                    html += `<tr class="bg-pink-50/20"><td colspan="5" class="px-6 py-2 font-bold text-slate-600 text-[11px]">${typeName} (${logs.length})</td></tr>`;
                     logs.forEach((item, index) => {
-                        const age = calculateAge(item.Purchase_Date || item.Acquisition_Date);
-                        html += `
-                            <tr>
-                                <td class="text-center text-slate-400 font-medium">${index + 1}</td>
-                                <td class="font-black text-slate-700">${item.AssetID || '-'}</td>
-                                <td>
-                                    <div class="font-bold text-slate-800">${item.FullDescription || '-'}</div>
-                                    <div class="text-[10px] text-slate-500 mt-0.5 uppercase">SN: ${item.Serial_Number || 'ไม่ระบุ'}</div>
-                                </td>
-                                
-                                <td class="text-center font-black text-slate-600">${a.AgeInfo}</td>
-                                <td class="text-center">
-                                    <span class="text-[9px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">ตรวจสอบแล้ว</span>
-                                </td>
-                            </tr>
-                        `;
+                        html += `<tr><td class="text-center text-slate-400">${index + 1}</td><td class="font-bold text-slate-700">${item.AssetID || '-'}</td><td><div class="font-bold">${item.FullDescription || '-'}</div><div class="text-[10px] text-slate-500">SN: ${item.Serial_Number || '-'}</div></td><td class="text-center font-bold text-slate-600">${item.AgeInfo || '-'}</td><td class="text-center"><span class="text-[9px] font-bold text-emerald-500">ตรวจสอบแล้ว</span></td></tr>`;
                     });
                 });
             });
-
-            html += `</tbody>
-                <tfoot>
-                    <tr class="bg-slate-800 text-white font-black">
-                        <td colspan="2" class="p-4 text-center text-sm uppercase tracking-widest">สรุปยอดรวมทั้งสิ้น</td>
-                        <td colspan="3" class="p-4 text-right text-lg">${filteredLogs.length} รายการ</td>
-                    </tr>
-                </tfoot>
-            </table>`;
+            html += `</tbody></table>`;
         }
-
-        // ส่วนท้ายเอกสาร
-        html += `
-            <div class="mt-20 flex justify-between px-10 no-print-visible mb-10">
-                <div class="text-center">
-                    <div class="w-48 border-b-2 border-slate-300 mb-2 mx-auto"></div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">เจ้าหน้าที่ตรวจสอบ</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-48 border-b-2 border-slate-300 mb-2 mx-auto"></div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">หัวหน้าหน่วยงาน / พยาน</p>
-                </div>
-            </div>
-            <div class="text-right text-[8px] text-slate-300 font-bold border-t pt-4">
-                พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')} | ระบบ IT Asset Audit UDH
-            </div>
-        `;
-
         preview.innerHTML = html;
     }
-
-   
-
-    // --- Dashboard UI Logic (Grid/Table) ---
 
     function switchMainView(mode) {
         mainDisplayMode = mode;
@@ -617,18 +468,12 @@
     function renderDashboard() {
         const area = document.getElementById('contentArea');
         const search = (document.getElementById('searchInput')?.value || "").toLowerCase().trim();
-        
         const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
-        const filteredDepts = state.depts.filter(d => 
-            activeDeptIds.includes(String(d.DEP_ID).trim()) && 
-            (d.DEPNAME.toLowerCase().includes(search) || 
-             (d.BUILDING && d.BUILDING.toLowerCase().includes(search)) ||
-             (d.FL && d.FL.toLowerCase().includes(search)))
-        );
-
+        const filteredDepts = state.depts.filter(d => activeDeptIds.includes(String(d.DEP_ID).trim()) && (d.DEPNAME.toLowerCase().includes(search) || (d.BUILDING && d.BUILDING.toLowerCase().includes(search))));
+        
         document.getElementById('statDepts').innerText = filteredDepts.length;
         document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
-
+        
         if (mainDisplayMode === 'grid') renderGridMode(area, filteredDepts);
         else renderTableMode(area, filteredDepts);
     }
@@ -645,136 +490,28 @@
 
         let html = "";
         Object.keys(structure).sort().forEach(building => {
-            const bDepts = filteredDepts.filter(d => d.BUILDING === building);
-            const bTotal = bDepts.reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
-
-            html += `
-                <div class="building-container">
-                    <div class="building-header">
-                        <div class="flex items-center gap-5">
-                            <div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl"><i class="fas fa-hospital"></i></div>
-                            <div>
-                                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
-                                <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Udon Thani Hospital</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-3xl font-black text-pink-500 leading-none">${bTotal}</p>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">รายการรวม</p>
-                        </div>
-                    </div>
-                    <div class="p-8">`;
-
+            html += `<div class="building-container"><div class="building-header"><div class="flex items-center gap-5"><div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl"><i class="fas fa-hospital"></i></div><div><h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight">${building}</h3></div></div></div><div class="p-8">`;
             Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach((floor, idx) => {
                 const theme = floorColorThemes[idx % floorColorThemes.length];
-                html += `
-                    <div class="floor-wrapper ${theme.bg} ${theme.border} mb-8 last:mb-0">
-                        <div class="flex items-center gap-4 mb-6">
-                            <span class="${theme.badge} text-white px-5 py-1.5 rounded-xl font-black text-sm shadow-md border-2 border-white/20">${floor}</span>
-                            <div class="flex-1 h-[2px] bg-white/50"></div>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">`;
-
+                html += `<div class="floor-wrapper ${theme.bg} ${theme.border} mb-8 last:mb-0"><div class="flex items-center gap-4 mb-6"><span class="${theme.badge} text-white px-5 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">`;
                 structure[building][floor].forEach(dept => {
                     const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                    const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
-                    html += `
-                        <div class="dept-card bg-white p-5 border-2 ${theme.cardBorder}" onclick="showDetail('${dept.DEP_ID}')">
-                            <div class="flex items-center gap-4 mb-4">
-                                <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-100 flex-shrink-0 shadow-inner bg-slate-50">
-                                    <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}'">
-                                </div>
-                                <div class="min-w-0">
-                                    <h4 class="text-sm font-black text-slate-800 leading-tight line-clamp-2">${dept.DEPNAME}</h4>
-                                    <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">ID: ${dept.DEP_ID}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between pt-4 border-t-2 border-slate-50">
-                                 <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">${a.AgeInfo || 'N/A'}</span>
-                                <span class="px-3 py-1 rounded-lg ${theme.bg} ${theme.text} font-black text-xs border ${theme.cardBorder}">${dLogs.length} รายการ</span>
-                            </div>
-                        </div>`;
+                    html += `<div class="dept-card bg-white p-5 border-2 ${theme.cardBorder}" onclick="showDetail('${dept.DEP_ID}')"><h4 class="text-sm font-black text-slate-800 leading-tight mb-2">${dept.DEPNAME}</h4><div class="flex items-center justify-between pt-2 border-t border-slate-50"><span class="text-xs font-bold text-pink-500">${dLogs.length} รายการ</span></div></div>`;
                 });
                 html += `</div></div>`;
             });
             html += `</div></div>`;
         });
-        container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold text-xl"><i class="fas fa-search mb-4 text-5xl opacity-20 block"></i> ไม่พบข้อมูลที่ค้นหา</div>`;
+        container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold">ไม่พบข้อมูลที่ค้นหา</div>`;
     }
 
     function renderTableMode(container, filteredDepts) {
-        const structure = {};
+        let html = `<div class="building-container bg-white shadow-sm border-2 border-slate-200 rounded-[2.5rem] overflow-hidden"><div class="p-6 overflow-x-auto"><table class="main-table"><thead><tr><th>หน่วยงาน</th><th>ตึก / ชั้น</th><th class="text-center">จำนวนที่สำรวจ</th><th class="text-center">สถานะ</th><th class="w-[60px]"></th></tr></thead><tbody>`;
         filteredDepts.forEach(d => {
-            const b = d.BUILDING || "อื่นๆ";
-            const f = d.FL || "ไม่ระบุชั้น";
-            if (!structure[b]) structure[b] = {};
-            if (!structure[b][f]) structure[b][f] = [];
-            structure[b][f].push(d);
+            const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
+            html += `<tr class="dept-row cursor-pointer" onclick="showDetail('${d.DEP_ID}')"><td><span class="font-bold text-slate-800">${d.DEPNAME}</span></td><td><span class="text-xs font-bold text-slate-400">${d.BUILDING || '-'} / ${d.FL || '-'}</span></td><td class="text-center"><span class="font-black text-slate-700">${dLogs.length}</span></td><td class="text-center"><span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-bold">สำรวจเสร็จสิ้น</span></td><td class="text-center"><i class="fas fa-chevron-right text-slate-300"></i></td></tr>`;
         });
-
-        let html = "";
-        Object.keys(structure).sort().forEach(building => {
-            html += `
-                <div class="building-container bg-white mb-10 overflow-hidden shadow-sm border-2 border-slate-200 rounded-[2.5rem]">
-                    <div class="header-gradient p-6 flex justify-between items-center text-white border-b-2 border-pink-600/20">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center text-xl border border-white/30"><i class="fas fa-hospital text-white"></i></div>
-                            <h3 class="text-xl font-black uppercase tracking-tight">${building}</h3>
-                        </div>
-                    </div>
-                    <div class="p-4 sm:p-6">`;
-
-            Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach(floor => {
-                html += `
-                    <div class="mb-6 last:mb-0">
-                        <div class="bg-slate-50/80 px-6 py-3 border-2 border-slate-100 rounded-2xl flex items-center gap-3 mb-4">
-                            <span class="bg-pink-500 text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase shadow-sm border border-white/20">${floor}</span>
-                            <div class="h-[2px] flex-1 bg-slate-200"></div>
-                        </div>
-                        <div class="overflow-x-auto px-1">
-                            <table class="main-table w-full border-separate">
-                                <thead>
-                                    <tr>
-                                        <th class="w-[80px] px-6 py-4 text-center">รูป</th>
-                                        <th class="px-6 py-4">หน่วยงาน</th>
-                                        <th class="text-center px-6 py-4">จำนวนสำรวจ</th>
-                                        <th class="text-center px-6 py-4">สถานะ</th>
-                                        <th class="w-[60px] text-center px-6 py-4"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
-
-                structure[building][floor].forEach(d => {
-                    const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-                    const dImg = d.PIC_ID ? `https://lh3.googleusercontent.com/d/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)} `;
-                    html += `
-                        <tr class="dept-row group cursor-pointer" onclick="showDetail('${d.DEP_ID}')">
-                            <td class="text-center">
-                                <div class="w-12 h-12 mx-auto rounded-xl overflow-hidden border-2 border-slate-100 shadow-inner bg-slate-50 transition-transform group-hover:scale-110 flex items-center justify-center">
-                                    <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
-                                </div>
-                            </td>
-                            <td>
-                                <div>
-                                    <span class="font-bold text-slate-800 group-hover:text-pink-600 block text-sm transition-colors">${d.DEPNAME}</span>
-                                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter block mt-0.5">DEP_ID: ${d.DEP_ID}</span>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <span class="text-base font-black text-slate-700">${dLogs.length}</span>
-                            </td>
-                            <td class="text-center">
-                                <span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">สำรวจเรียบร้อย</span>
-                            </td>
-                            <td class="text-center">
-                                <i class="fas fa-chevron-right text-xs text-slate-300 group-hover:text-pink-500 transition-all"></i>
-                            </td>
-                        </tr>`;
-                });
-                html += `</tbody></table></div></div>`;
-            });
-            html += `</div></div>`;
-        });
+        html += `</tbody></table></div></div>`;
         container.innerHTML = html;
     }
 
@@ -782,65 +519,35 @@
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
         if(!dept) return;
-        
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
         document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
         const mImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
         document.getElementById('mDeptPic').querySelector('img').src = mImg;
-
         const byType = {};
         logs.forEach(l => { 
             const typeName = state.assetTypes.find(x => String(x.id) === String(l.Asset_Type_ID))?.name || 'อื่นๆ';
             if(!byType[typeName]) byType[typeName] = []; 
             byType[typeName].push(l); 
         });
-        
         const container = document.getElementById('mAssetGroupContainer');
         container.innerHTML = Object.keys(byType).sort().map(type => `
-            <div class="mb-10">
-                <div class="flex items-center gap-3 mb-5 border-l-4 border-pink-500 pl-4">
-                    <h4 class="text-sm font-black text-slate-800 uppercase">${type} (${byType[type].length})</h4>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    ${byType[type].map(a => {
-                        const pri = getPriority(a.Priority_ID || a.PIORITY_ID);
-                        const aImg = a.ASSET_IMG_DB ? `https://lh3.googleusercontent.com/d/${a.ASSET_IMG_DB}` : 'https://placehold.co/200?text=NO+IMAGE';
-                        return `
-                        <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 border-2 border-slate-100 rounded-2xl">
-                            <div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border-2 border-slate-50 flex-shrink-0 overflow-hidden bg-slate-50 shadow-inner flex items-center justify-center">
-                                <img src="${aImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=NO+IMAGE'">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="bg-pink-600 text-white px-4 py-2 rounded-xl mb-3 shadow-sm border border-white/20">
-                                    <p class="text-[9px] text-pink-200 font-bold uppercase">รหัสครุภัณฑ์</p>
-                                    <p class="text-sm font-black truncate">🆔 ${a.AssetID || 'N/A'}</p>
-                                </div>
-                                <h5 class="text-sm font-bold text-slate-700 leading-normal line-clamp-2 mb-2">${a.FullDescription || '-'}</h5>
-                                <div class="flex flex-wrap gap-2 pt-2 border-t-2 border-slate-50">
-                                    <span class="text-[9px] font-black px-3 py-1 rounded-lg border-2 ${pri.color} uppercase">
-                                     <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">${a.AgeInfo || 'N/A'}</span>
-                                        <i class="fas ${pri.icon} mr-1"></i> ${pri.name}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('')}
-                </div>
-            </div>
-        `).join('');
-        
+            <div class="mb-10"><h4 class="text-sm font-black text-slate-800 uppercase mb-5 border-l-4 border-pink-500 pl-4">${type} (${byType[type].length})</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                ${byType[type].map(a => {
+                    const pri = getPriority(a.Priority_ID || a.PIORITY_ID);
+                    const aImg = a.ASSET_IMG_DB ? `https://lh3.googleusercontent.com/d/${a.ASSET_IMG_DB}` : 'https://placehold.co/200?text=NO+IMAGE';
+                    return `<div class="soft-card bg-white p-5 flex gap-6 border-2 border-slate-100 rounded-2xl"><div class="w-24 h-24 rounded-2xl border-2 border-slate-50 flex-shrink-0 overflow-hidden bg-slate-50"><img src="${aImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=NO+IMAGE'"></div><div class="flex-1 min-w-0"><div><p class="text-[9px] text-pink-500 font-bold uppercase">ID: ${a.AssetID || 'N/A'}</p><h5 class="text-sm font-bold text-slate-700 leading-tight mb-2">${a.FullDescription || '-'}</h5></div><div class="flex flex-wrap gap-2 pt-2 border-t border-slate-50"><span class="text-[9px] font-black px-2 py-1 rounded-md border ${pri.color}">${pri.name}</span><span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-black">${a.AgeInfo || '-'}</span></div></div></div>`;
+                }).join('')}
+            </div></div>`).join('');
         document.getElementById('modalDept').classList.remove('hidden');
         document.getElementById('modalDept').classList.add('flex');
         document.body.style.overflow = 'hidden';
     }
 
-   
-
-    function closeModal() { 
-        document.getElementById('modalDept').classList.add('hidden'); 
-        document.body.style.overflow = 'auto'; 
-    }
+    function closeModal() { document.getElementById('modalDept').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+    function openReportModal() { document.getElementById('modalReport').classList.remove('hidden'); document.getElementById('modalReport').classList.add('flex'); updateReportPreview(); }
+    function closeReportModal() { document.getElementById('modalReport').classList.add('hidden'); }
+    function exportToExcel() { const html = document.getElementById('reportPrintArea').innerHTML; const blob = new Blob([html], { type: 'application/vnd.ms-excel' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Report_${new Date().getTime()}.xls`; a.click(); }
 
     window.onload = init;
 </script>
