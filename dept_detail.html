@@ -242,42 +242,77 @@
         }
 
         // แก้ไข renderLogTable เพื่อให้คลิกแถวได้
-function renderLogTable(data) {
-    const tbody = document.getElementById('logTbody');
-    document.getElementById('recordCount').innerText = `${data.length} รายการ`;
-    tbody.innerHTML = '';
+    function renderLogTable(data) {
+        const tbody = document.getElementById('logTbody');
+        document.getElementById('recordCount').innerText = `${data.length} รายการ`;
+        tbody.innerHTML = '';
+        
+        if(data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-slate-400">ไม่พบประวัติการตรวจสอบ</td></tr>`;
+            return;
+        }
     
-    if(data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-slate-400">ไม่พบประวัติการตรวจสอบ</td></tr>`;
-        return;
+        // 1. จัดกลุ่มข้อมูลตาม Asset_Type
+        const groupedData = data.reduce((acc, item) => {
+            const type = item.Asset_Type || 'ไม่ระบุประเภท';
+            if (!acc[type]) acc[type] = [];
+            acc[type].push(item);
+            return acc;
+        }, {});
+    
+        // 2. วนลูปตามกลุ่มเพื่อแสดงผล
+        Object.keys(groupedData).forEach((type) => {
+            const items = groupedData[type];
+            const count = items.length;
+    
+            // แทรกแถวหัวข้อประเภท (Header Row)
+            const headerRow = `
+                <tr class="bg-slate-100/50 border-y border-slate-200">
+                    <td colspan="7" class="px-6 py-3">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-700 underline decoration-pink-500 decoration-2 underline-offset-4">
+                                <i class="fas fa-layer-group mr-2 text-pink-600"></i>${type}
+                            </span>
+                            <span class="bg-white border border-slate-200 text-slate-600 text-[11px] px-3 py-1 rounded-full font-bold">
+                                รวม ${count} รายการ
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', headerRow);
+    
+            // แทรกรายการในประเภทนั้นๆ
+            items.forEach((item, idx) => {
+                const row = `
+                    <tr onclick="openDetailFromGroup('${item.Asset_ID || item.NOID}')" class="hover:bg-pink-50/50 cursor-pointer transition-colors group border-b border-slate-50">
+                        <td class="px-6 py-4 text-center text-slate-400 font-mono text-[11px]" data-label="ลำดับ">${idx + 1}</td>
+                        <td class="px-6 py-4 font-bold text-pink-700 group-hover:text-pink-600" data-label="รหัส">${item.Asset_ID || item.NOID}</td>
+                        <td class="px-6 py-4" data-label="การใช้งาน">
+                            <div class="font-medium text-slate-600 text-xs">${item.Priority || '-'}</div>
+                        </td>
+                        <td class="px-6 py-4 text-slate-500 leading-snug max-w-xs truncate text-xs" data-label="รายละเอียด">${item.DB_Detail || '-'}</td>
+                        <td class="px-6 py-4 text-center font-bold text-pink-600" data-label="อายุ">${item.DB_Age || '0'} ปี</td>
+                        <td class="px-6 py-4 text-center" data-label="สถานะ">
+                            <span class="px-2 py-1 rounded-md text-[10px] font-bold ${item.CoStatus === 'ปกติ' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
+                                ${item.CoStatus || 'ปกติ'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4" data-label="ประเภทรายการ">
+                            <span class="text-[10px] text-slate-400">${item.RegStatus || '-'}</span>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        });
     }
-
-    data.forEach((item, idx) => {
-        // เพิ่ม onclick ใน tag tr
-        const row = `
-            <tr onclick="openDetail(${idx})" class="hover:bg-pink-50/50 cursor-pointer transition-colors group">
-                <td class="px-6 py-4 text-center text-slate-400 font-mono text-[11px]" data-label="ลำดับ">${idx + 1}</td>
-                <td class="px-6 py-4 font-bold text-pink-700 group-hover:text-pink-600" data-label="รหัส">${item.Asset_ID || item.NOID}</td>
-                <td class="px-6 py-4" data-label="ประเภท">
-                    <div class="font-medium">${item.Asset_Type || '-'}</div>
-                    <div class="text-[10px] text-slate-400">${item.Priority || '-'}</div>
-                </td>
-                <td class="px-6 py-4 text-slate-500 leading-snug max-w-xs truncate" data-label="รายละเอียด">${item.DB_Detail || '-'}</td>
-                <td class="px-6 py-4 text-center font-bold text-pink-600" data-label="อายุ">${item.DB_Age || '0'} ปี</td>
-                <td class="px-6 py-4 text-center" data-label="สถานะ">
-                    <span class="px-2 py-1 rounded-md text-[10px] font-bold ${item.CoStatus === 'ปกติ' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
-                        ${item.CoStatus || 'ปกติ'}
-                    </span>
-                </td>
-                <td class="px-6 py-4" data-label="ประเภทรายการ">
-                    <span class="text-[10px] text-slate-400">${item.RegStatus || '-'}</span>
-                </td>
-            </tr>
-        `;
-        tbody.insertAdjacentHTML('beforeend', row);
-    });
-}
-
+    
+    // เพิ่มฟังก์ชันสำหรับหา Index จาก ID เพื่อเปิด Modal
+    function openDetailFromGroup(assetId) {
+        const index = allLogs.findIndex(i => (i.Asset_ID || i.NOID) === assetId);
+        if(index !== -1) openDetail(index);
+    }
         // ฟังก์ชันเปิด Modal พร้อมใส่ข้อมูล
         function openDetail(index) {
             const item = allLogs[index];
