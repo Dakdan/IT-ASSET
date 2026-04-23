@@ -378,72 +378,75 @@
 
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง ---
     // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น ---
-    function renderTableMode(container, filteredDepts) {
-        const structure = {};
-        // 1. จัดกลุ่มข้อมูล (Group By Building & Floor)
-        filteredDepts.forEach(d => {
-            const b = d.BUILDING || "อาคารทั่วไป";
-            const f = d.FL || "ชั้น 1";
-            if (!structure[b]) structure[b] = {};
-            if (!structure[b][f]) structure[b][f] = [];
-            structure[b][f].push(d);
-        });
+    // --- ฟังก์ชันย่อยสำหรับวาดแบบตาราง โดยกรุ๊ปตามอาคารและชั้น (แก้ไขเรื่องรูปภาพ) ---
+function renderTableMode(container, filteredDepts) {
+    const structure = {};
+    // 1. จัดกลุ่มข้อมูล (Group By Building & Floor)
+    filteredDepts.forEach(d => {
+        const b = d.BUILDING || "อาคารทั่วไป";
+        const f = d.FL || "ชั้น 1";
+        if (!structure[b]) structure[b] = {};
+        if (!structure[b][f]) structure[b][f] = [];
+        structure[b][f].push(d);
+    });
+
+    let html = "";
     
-        let html = "";
-        
-        // 2. Loop ตามอาคาร
-        Object.keys(structure).sort().forEach(building => {
-            html += `
-                <div class="building-container bg-white mb-10 overflow-hidden">
-                    <div class="bg-slate-800 p-6 flex justify-between items-center text-white">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center text-xl">
-                                <i class="fas fa-hospital"></i>
-                            </div>
-                            <h3 class="text-xl font-black uppercase tracking-tight">${building}</h3>
+    // 2. Loop ตามอาคาร
+    Object.keys(structure).sort().forEach(building => {
+        html += `
+            <div class="building-container bg-white mb-10 overflow-hidden shadow-sm border border-slate-100">
+                <div class="bg-slate-800 p-6 flex justify-between items-center text-white">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center text-xl">
+                            <i class="fas fa-hospital"></i>
                         </div>
+                        <h3 class="text-xl font-black uppercase tracking-tight">${building}</h3>
                     </div>
-                    <div class="p-0">`; // ลบ Padding ออกเพื่อให้ตารางชิดขอบ
-    
-            // 3. Loop ตามชั้น
-            const floors = Object.keys(structure[building]).sort();
-            floors.forEach(floor => {
-                html += `
-                    <div class="border-b border-slate-100 last:border-0">
-                        <div class="bg-slate-50 px-6 py-3 border-y border-slate-100 flex items-center gap-3">
-                            <span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-md font-bold text-xs">${floor}</span>
-                            <div class="h-[1px] flex-1 bg-slate-200"></div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="main-table w-full">
-                                <thead>
-                                    <tr>
-                                        <th class="w-[45%]">หน่วยงาน</th>
-                                        <th class="text-center">จำนวนครุภัณฑ์</th>
-                                        <th class="text-center">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
+                </div>
+                <div class="p-0">`; // ลบ Padding ออกเพื่อให้ตารางชิดขอบ
+
+        // 3. Loop ตามชั้น
+        const floors = Object.keys(structure[building]).sort();
+        floors.forEach(floor => {
+            html += `
+                <div class="border-b border-slate-100 last:border-0">
+                    <div class="bg-slate-50 px-6 py-3 border-y border-slate-100 flex items-center gap-3">
+                        <span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-md font-bold text-xs">${floor}</span>
+                        <div class="h-[1px] flex-1 bg-slate-200"></div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="main-table w-full">
+                            <thead>
+                                <tr>
+                                    <th class="w-[50%] px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">หน่วยงาน</th>
+                                    <th class="text-center px-6 py-4 text-xs font-bold text-slate-500 uppercase">จำนวนครุภัณฑ์</th>
+                                    <th class="text-center px-6 py-4 text-xs font-bold text-slate-500 uppercase">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
             // 4. Loop รายชื่อหน่วยงานในชั้นนั้นๆ
             structure[building][floor].forEach(d => {
                 const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-                const dImg = d.PIC_ID ? `https://lh3.googleusercontent.com/d/$${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                
+                // --- จุดที่แก้ไข: ปรับรูปแบบ URL รูปภาพให้ถูกต้อง ---
+                const dImg = d.PIC_ID ? `http://googleusercontent.com/profile/picture/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
                 
                 html += `
                     <tr class="hover:bg-pink-50/50 transition-colors cursor-pointer group" onclick="showDetail('${d.DEP_ID}')">
-                        <td class="py-4 px-6">
+                        <td class="py-4 px-6 border-b border-slate-100">
                             <div class="flex items-center gap-4">
-                                <img src="${dImg}" class="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-sm flex-shrink-0">
+                                <img src="${dImg}" class="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-sm flex-shrink-0" onerror="this.src='https://placehold.co/100?text=Error'">
                                 <span class="font-bold text-slate-700 group-hover:text-pink-600 truncate">${d.DEPNAME}</span>
                             </div>
                         </td>
-                        <td class="text-center py-4 px-6">
+                        <td class="text-center py-4 px-6 border-b border-slate-100">
                             <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-black text-[11px] group-hover:bg-pink-500 group-hover:text-white transition-all">
                                 ${dLogs.length} รายการ
                             </span>
                         </td>
-                        <td class="text-center py-4 px-6">
+                        <td class="text-center py-4 px-6 border-b border-slate-100">
                             <i class="fas fa-chevron-right text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all"></i>
                         </td>
                     </tr>`;
