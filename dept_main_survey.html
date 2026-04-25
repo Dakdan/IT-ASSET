@@ -340,7 +340,7 @@
 </div>
 
 <script>
-    const APP_URL = "https://script.google.com/macros/s/AKfycbznFwIHQsiqqydWSyR7eweKVsfchRyWtbQPZ_ogHma4ZL2X9QnHFb6sqVXvEeXJqwTx/exec";
+    const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
     let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
     let mainDisplayMode = 'grid';
 
@@ -510,8 +510,7 @@
                 html += `<div class="floor-wrapper ${theme.bg} ${theme.border} mb-8 last:mb-0"><div class="flex items-center gap-4 mb-6"><span class="${theme.badge} text-white px-5 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span><div class="flex-1 h-[2px] bg-white/50"></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">`;
                 structure[building][floor].forEach(dept => {
                     const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                    // บรรทัดที่มีการกำหนดรูปภาพ dImg
-                    const dImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w600` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
+                    const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
                     html += `<div class="dept-card bg-white p-5 border-2 ${theme.cardBorder}" onclick="showDetail('${dept.DEP_ID}')"><div class="flex items-center gap-4 mb-4"><div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-100 flex-shrink-0 bg-slate-50"><img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}'"></div><div class="min-w-0"><h4 class="text-sm font-black text-slate-800 leading-tight line-clamp-2">${dept.DEPNAME}</h4><p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">ID: ${dept.DEP_ID}</p></div></div><div class="flex items-center justify-between pt-4 border-t-2 border-slate-50"><span class="px-3 py-1 rounded-lg ${theme.bg} ${theme.text} font-black text-xs border ${theme.cardBorder}">${dLogs.length} รายการ</span></div></div>`;
                 });
                 html += `</div></div>`;
@@ -521,7 +520,7 @@
         container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold"><i class="fas fa-search mb-4 text-5xl opacity-20 block"></i> ไม่พบข้อมูล</div>`;
     }
 
-   function renderTableMode(container, filteredDepts) {
+    function renderTableMode(container, filteredDepts) {
         const structure = {};
         filteredDepts.forEach(d => {
             const b = d.BUILDING || "อื่นๆ";
@@ -530,47 +529,22 @@
             if (!structure[b][f]) structure[b][f] = [];
             structure[b][f].push(d);
         });
-    
+
         let html = "";
         Object.keys(structure).sort().forEach(building => {
             html += `<div class="building-container bg-white mb-10 overflow-hidden shadow-sm border-2 border-slate-200 rounded-[2.5rem]"><div class="header-gradient p-6 flex justify-between items-center text-white"><div class="flex items-center gap-4"><div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center text-xl border border-white/30"><i class="fas fa-hospital text-white"></i></div><h3 class="text-xl font-black uppercase tracking-tight">${building}</h3></div></div><div class="p-4 sm:p-6">`;
-            
             Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach(floor => {
                 html += `<div class="mb-6 last:mb-0"><div class="bg-slate-50/80 px-6 py-3 border-2 border-slate-100 rounded-2xl flex items-center gap-3 mb-4"><span class="bg-pink-500 text-white px-3 py-1 rounded-md font-bold text-[10px] shadow-sm">${floor}</span><div class="h-[2px] flex-1 bg-slate-200"></div></div><div class="overflow-x-auto px-1"><table class="main-table w-full border-separate"><thead><tr><th class="w-[80px] px-6 py-4 text-center">รูป</th><th class="px-6 py-4">หน่วยงาน</th><th class="text-center px-6 py-4">จำนวนสำรวจ</th><th class="text-center px-6 py-4">สถานะ</th><th class="w-[60px] text-center px-6 py-4"></th></tr></thead><tbody>`;
-                
                 structure[building][floor].forEach(d => {
                     const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-                    // ✅ แก้ไข dImg และตรวจสอบการดึงรูปจาก Google Drive
-                    const dImg = d.PIC_ID ? `https://drive.google.com/thumbnail?id=${d.PIC_ID}&sz=w600` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
-                    
-                    html += `<tr class="dept-row group cursor-pointer" onclick="showDetail('${d.DEP_ID}')">
-                        <td class="text-center">
-                            <div class="w-12 h-12 mx-auto rounded-xl overflow-hidden border-2 border-slate-100 bg-slate-50 flex items-center justify-center">
-                                <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="font-bold text-slate-800 group-hover:text-pink-600 block text-sm">${d.DEPNAME}</span>
-                                <span class="text-[9px] font-bold text-slate-400 uppercase block mt-0.5">ID: ${d.DEP_ID}</span>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <span class="text-base font-black text-slate-700">${dLogs.length}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">สำรวจเรียบร้อย</span>
-                        </td>
-                        <td class="text-center">
-                            <i class="fas fa-chevron-right text-xs text-slate-300 transition-all group-hover:text-pink-500"></i>
-                        </td>
-                    </tr>`;
+                    const dImg = d.PIC_ID ? `https://lh3.googleusercontent.com/d/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                    html += `<tr class="dept-row group cursor-pointer" onclick="showDetail('${d.DEP_ID}')"><td class="text-center"><div class="w-12 h-12 mx-auto rounded-xl overflow-hidden border-2 border-slate-100 bg-slate-50 flex items-center justify-center"><img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'"></div></td><td><div><span class="font-bold text-slate-800 group-hover:text-pink-600 block text-sm">${d.DEPNAME}</span><span class="text-[9px] font-bold text-slate-400 uppercase block mt-0.5">ID: ${d.DEP_ID}</span></div></td><td class="text-center"><span class="text-base font-black text-slate-700">${dLogs.length}</span></td><td class="text-center"><span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">สำรวจเรียบร้อย</span></td><td class="text-center"><i class="fas fa-chevron-right text-xs text-slate-300 transition-all"></i></td></tr>`;
                 });
                 html += `</tbody></table></div></div>`;
             });
             html += `</div></div>`;
         });
-        container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold">ไม่พบข้อมูล</div>`;
+        container.innerHTML = html;
     }
 
     function showDetail(deptId) {
@@ -579,7 +553,7 @@
         if(!dept) return;
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
-        const mImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w600` : `https://placehold.co/100?text=DEPT`;
+        const mImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
         document.getElementById('mDeptPic').querySelector('img').src = mImg;
         document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`
         const byType = {};
@@ -593,7 +567,7 @@
             <div class="mb-10"><div class="flex items-center gap-3 mb-5 border-l-4 border-pink-500 pl-4"><h4 class="text-sm font-black text-slate-800 uppercase">${type} (${byType[type].length})</h4></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 ${byType[type].map(a => {
                     const pri = getPriority(a.Priority_ID || a.PIORITY_ID);
-                    const aImg = a.Asset_Photo || (a.ASSET_IMG_DB ? `https://drive.google.com/thumbnail?id=${a.ASSET_IMG_DB}&sz=w600` : 'https://placehold.co/200?text=NO+IMAGE');
+                    const aImg = a.ASSET_IMG_DB ? `https://lh3.googleusercontent.com/d/${a.ASSET_IMG_DB}` : 'https://placehold.co/200?text=NO+IMAGE';
                     return `<div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 border-2 border-slate-100 rounded-2xl"><div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border-2 border-slate-50 flex-shrink-0 overflow-hidden bg-slate-50 flex items-center justify-center"><img src="${aImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=NO+IMAGE'"></div><div class="flex-1 min-w-0"><div class="bg-pink-600 text-white px-4 py-2 rounded-xl mb-3"><p class="text-[9px] text-pink-200 font-bold uppercase">รหัสครุภัณฑ์</p><p class="text-sm font-black truncate">${a.AssetID || 'N/A'}</p></div><h5 class="text-sm font-bold text-slate-700 leading-normal line-clamp-2 mb-2">${a.FullDescription || '-'}</h5><div class="flex flex-wrap gap-2 pt-2 border-t-2 border-slate-50"><span class="text-[9px] font-black px-3 py-1 rounded-lg border-2 ${pri.color} uppercase"><i class="fas ${pri.icon} mr-1"></i> ${pri.name}</span><span class="text-[9px] bg-slate-100 text-slate-500 px-3 py-1 rounded-lg font-black uppercase">${a.AgeInfo || a.Age || '-'}</span></div></div></div>`;
                 }).join('')}
             </div></div>`).join('');
