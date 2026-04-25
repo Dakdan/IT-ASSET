@@ -243,59 +243,59 @@
 
         // แก้ไข renderLogTable เพื่อให้คลิกแถวได้
     function renderLogTable(data) {
-    const tbody = document.getElementById('logTbody');
-    document.getElementById('recordCount').innerText = `${data.length} รายการ`;
-    tbody.innerHTML = '';
-    
-    if(data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="py-20 text-center text-slate-400">ไม่พบประวัติการตรวจสอบ</td></tr>`;
-        return;
-    }
-
-    const groupedData = data.reduce((acc, item) => {
-        const type = item.Asset_Type || 'ไม่ระบุประเภท';
-        if (!acc[type]) acc[type] = [];
-        acc[type].push(item);
-        return acc;
-    }, {});
-
-    Object.keys(groupedData).forEach((type) => {
-        const items = groupedData[type];
+        const tbody = document.getElementById('logTbody');
+        document.getElementById('recordCount').innerText = `${data.length} รายการ`;
+        tbody.innerHTML = '';
         
-        // Header กลุ่มประเภท
-        const headerRow = `<tr class="bg-slate-100/50 border-y border-slate-200"><td colspan="8" class="px-6 py-3">...</td></tr>`;
-        tbody.insertAdjacentHTML('beforeend', headerRow);
-
-        items.forEach((item, idx) => {
-            // ✅ กำหนด URL รูปภาพ (ใช้รูปตรวจจริงก่อน ถ้าไม่มีใช้ Placeholder)
-            const photoUrl = item.Asset_Photo || 'https://placehold.co/100?text=No+Photo';
+        if(data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="py-20 text-center text-slate-400">ไม่พบประวัติการตรวจสอบ</td></tr>`;
+            return;
+        }
+    
+        const groupedData = data.reduce((acc, item) => {
+            const type = item.Asset_Type || 'ไม่ระบุประเภท';
+            if (!acc[type]) acc[type] = [];
+            acc[type].push(item);
+            return acc;
+        }, {});
+    
+        Object.keys(groupedData).forEach((type) => {
+            const items = groupedData[type];
             
-            const row = `
-                <tr onclick="openDetailFromGroup('${item.Asset_ID || item.NOID}')" class="hover:bg-pink-50/50 cursor-pointer transition-colors group border-b border-slate-50">
-                    <td class="px-6 py-4 text-center text-slate-400 font-mono text-[11px]">${idx + 1}</td>
-                    
-                    <td class="px-4 py-2 text-center">
-                        <div class="w-12 h-12 mx-auto rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
-                            <img src="${photoUrl}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=Error'">
-                        </div>
-                    </td>
-
-                    <td class="px-6 py-4 font-bold text-pink-700 group-hover:text-pink-600">${item.Asset_ID || item.NOID}</td>
-                    <td class="px-6 py-4 text-xs text-slate-600">${item.Priority || '-'}</td>
-                    <td class="px-6 py-4 text-slate-500 truncate max-w-[200px] text-xs">${item.DB_Detail || '-'}</td>
-                    <td class="px-6 py-4 text-center font-bold text-pink-600">${item.DB_Age || '0'} ปี</td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="px-2 py-1 rounded-md text-[10px] font-bold ${item.CoStatus === '✅ใช้งานอยู่' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
-                            ${item.CoStatus || 'ปกติ'}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-[10px] text-slate-400">${item.RegStatus || '-'}</td>
-                </tr>
-            `;
-            tbody.insertAdjacentHTML('beforeend', row);
+            // Header กลุ่มประเภท
+            const headerRow = `<tr class="bg-slate-100/50 border-y border-slate-200"><td colspan="8" class="px-6 py-3">...</td></tr>`;
+            tbody.insertAdjacentHTML('beforeend', headerRow);
+    
+            items.forEach((item, idx) => {
+                // ✅ กำหนด URL รูปภาพ (ใช้รูปตรวจจริงก่อน ถ้าไม่มีใช้ Placeholder)
+                const photoUrl = item.Asset_Photo || 'https://placehold.co/100?text=No+Photo';
+                
+                const row = `
+                    <tr onclick="openDetailFromGroup('${item.Asset_ID || item.NOID}')" class="hover:bg-pink-50/50 cursor-pointer transition-colors group border-b border-slate-50">
+                        <td class="px-6 py-4 text-center text-slate-400 font-mono text-[11px]">${idx + 1}</td>
+                        
+                        <td class="px-4 py-2 text-center">
+                            <div class="w-12 h-12 mx-auto rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
+                                <img src="${photoUrl}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=Error'">
+                            </div>
+                        </td>
+    
+                        <td class="px-6 py-4 font-bold text-pink-700 group-hover:text-pink-600">${item.Asset_ID || item.NOID}</td>
+                        <td class="px-6 py-4 text-xs text-slate-600">${item.Priority || '-'}</td>
+                        <td class="px-6 py-4 text-slate-500 truncate max-w-[200px] text-xs">${item.DB_Detail || '-'}</td>
+                        <td class="px-6 py-4 text-center font-bold text-pink-600">${item.DB_Age || '0'} ปี</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-2 py-1 rounded-md text-[10px] font-bold ${item.CoStatus === '✅ใช้งานอยู่' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
+                                ${item.CoStatus || 'ปกติ'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-[10px] text-slate-400">${item.RegStatus || '-'}</td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
         });
-    });
-}
+    }
 
 function openDetail(index) {
     const item = allLogs[index];
