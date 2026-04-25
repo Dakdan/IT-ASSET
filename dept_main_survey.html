@@ -510,7 +510,8 @@
                 html += `<div class="floor-wrapper ${theme.bg} ${theme.border} mb-8 last:mb-0"><div class="flex items-center gap-4 mb-6"><span class="${theme.badge} text-white px-5 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span><div class="flex-1 h-[2px] bg-white/50"></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">`;
                 structure[building][floor].forEach(dept => {
                     const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                    const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
+                    // บรรทัดที่มีการกำหนดรูปภาพ dImg
+                    const dImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w600` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
                     html += `<div class="dept-card bg-white p-5 border-2 ${theme.cardBorder}" onclick="showDetail('${dept.DEP_ID}')"><div class="flex items-center gap-4 mb-4"><div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-100 flex-shrink-0 bg-slate-50"><img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}'"></div><div class="min-w-0"><h4 class="text-sm font-black text-slate-800 leading-tight line-clamp-2">${dept.DEPNAME}</h4><p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">ID: ${dept.DEP_ID}</p></div></div><div class="flex items-center justify-between pt-4 border-t-2 border-slate-50"><span class="px-3 py-1 rounded-lg ${theme.bg} ${theme.text} font-black text-xs border ${theme.cardBorder}">${dLogs.length} รายการ</span></div></div>`;
                 });
                 html += `</div></div>`;
@@ -537,7 +538,7 @@
                 html += `<div class="mb-6 last:mb-0"><div class="bg-slate-50/80 px-6 py-3 border-2 border-slate-100 rounded-2xl flex items-center gap-3 mb-4"><span class="bg-pink-500 text-white px-3 py-1 rounded-md font-bold text-[10px] shadow-sm">${floor}</span><div class="h-[2px] flex-1 bg-slate-200"></div></div><div class="overflow-x-auto px-1"><table class="main-table w-full border-separate"><thead><tr><th class="w-[80px] px-6 py-4 text-center">รูป</th><th class="px-6 py-4">หน่วยงาน</th><th class="text-center px-6 py-4">จำนวนสำรวจ</th><th class="text-center px-6 py-4">สถานะ</th><th class="w-[60px] text-center px-6 py-4"></th></tr></thead><tbody>`;
                 structure[building][floor].forEach(d => {
                     const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-                    const dImg = d.PIC_ID ? `https://lh3.googleusercontent.com/d/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                    const mImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w600` : `https://placehold.co/100?text=DEPT`;
                     html += `<tr class="dept-row group cursor-pointer" onclick="showDetail('${d.DEP_ID}')"><td class="text-center"><div class="w-12 h-12 mx-auto rounded-xl overflow-hidden border-2 border-slate-100 bg-slate-50 flex items-center justify-center"><img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'"></div></td><td><div><span class="font-bold text-slate-800 group-hover:text-pink-600 block text-sm">${d.DEPNAME}</span><span class="text-[9px] font-bold text-slate-400 uppercase block mt-0.5">ID: ${d.DEP_ID}</span></div></td><td class="text-center"><span class="text-base font-black text-slate-700">${dLogs.length}</span></td><td class="text-center"><span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">สำรวจเรียบร้อย</span></td><td class="text-center"><i class="fas fa-chevron-right text-xs text-slate-300 transition-all"></i></td></tr>`;
                 });
                 html += `</tbody></table></div></div>`;
@@ -553,7 +554,7 @@
         if(!dept) return;
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
-        const mImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
+        const mImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w600` : `https://placehold.co/100?text=DEPT`;
         document.getElementById('mDeptPic').querySelector('img').src = mImg;
         document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`
         const byType = {};
