@@ -340,7 +340,50 @@
 </div>
 
 <script>
-    const APP_URL = "https://script.google.com/macros/s/AKfycbznFwIHQsiqqydWSyR7eweKVsfchRyWtbQPZ_ogHma4ZL2X9QnHFb6sqVXvEeXJqwTx/exec";
+    const APP_URL = " // ✅ 2. เพิ่มการดึงรูปภาพจาก Sheet: Asset_Image_Logs
+  const imgSheet = ssLog.getSheetByName("Asset_Image_Logs"); // อยู่ในไฟล์ ssLog ตามตัวแปรที่คุณตั้งไว้
+  const imgValues = imgSheet.getDataRange().getValues();
+  const imgMap = {};
+  
+  imgValues.slice(1).forEach(row => {
+    const noid = String(row[1]).trim(); // คอลัมน์ B (Index 1)
+    const fileId = String(row[6]).trim(); // คอลัมน์ G (Index 6)
+    if (fileId) {
+      // สร้าง URL สำหรับแสดงผลรูปภาพ
+      imgMap[noid] = `https://drive.google.com/thumbnail?id=${fileId}&sz=w600`;
+    }
+  });
+
+  return logData
+    .filter(row => String(row.DEPT_ID) === String(depId))
+    .map(row => {
+      const key = String(row.NOID).trim();
+      const dbInfo = dbMap[key] || { fullDetail: "ไม่พบข้อมูลในทะเบียน", age: "-" };
+      
+      // ✅ 3. ดึงรูปภาพจาก imgMap
+      const assetPhoto = imgMap[key] || ""; 
+
+      return {
+        NOID: row.NOID,
+        Asset_ID: row.Asset_ID,
+        Asset_Type: LOOKUP.assetTypes[row.Asset_Type_ID] || row.Asset_Type_ID,
+        Detail_ID: row.Detail_ID,
+        Priority: LOOKUP.priorities[row.PIORITY_ID] || row.PIORITY_ID,
+        CoStatus: row.CoStatus === "COS-001" ? "✅ใช้งานอยู่" : "❗ยังไม่บันทึกสถานะ",
+        RegStatus: String(row.ASS_ON_OUT) === "1" ? "มีทะเบียน" : "นอกทะเบียน",
+        ASS_ON_OUT: row.ASS_ON_OUT,
+        
+        // ข้อมูลที่ Join มา
+        DB_Detail: dbInfo.fullDetail, 
+        DB_Age: dbInfo.age,
+        
+        // ✅ ส่ง URL รูปภาพไปที่หน้าบ้าน
+        Asset_Photo: assetPhoto, 
+        
+        Timestamp: row.Time_Stamp
+      };
+    }).reverse();
+}/exec";
     let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
     let mainDisplayMode = 'grid';
 
