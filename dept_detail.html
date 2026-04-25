@@ -299,19 +299,38 @@
 
 function openDetail(index) {
     const item = allLogs[index];
-    if(!item) return;
+    if (!item) return;
 
-    // ✅ แสดงรูปภาพใน Modal
     const modalImg = document.getElementById('modalAssetPhoto');
-    modalImg.src = item.Asset_Photo || 'https://placehold.co/400x300?text=No+Asset+Image';
+    
+    // 1. ตรวจสอบรูปภาพ: ถ้ามี URL ให้ใช้ ถ้าไม่มีให้ใช้ Placeholder
+    if (item.Asset_Photo && item.Asset_Photo.includes('http')) {
+        modalImg.src = item.Asset_Photo;
+    } else {
+        modalImg.src = 'https://placehold.co/400x300?text=No+Photo';
+    }
 
-    document.getElementById('modalAssetId').innerText = `ID: ${item.Asset_ID || item.NOID}`;
+    // 2. จัดการเรื่อง Error ถ้าโหลดรูปจาก Google Drive ไม่สำเร็จ
+    modalImg.onerror = function() {
+        this.src = 'https://placehold.co/400x300?text=Image+Access+Denied';
+    };
+
+    // 3. Mapping ข้อมูลลง Element ต่างๆ
+    document.getElementById('modalAssetId').innerText = item.Asset_ID || item.NOID || '-';
     document.getElementById('modalType').innerText = item.Asset_Type || '-';
-    document.getElementById('modalDetail').innerText = item.DB_Detail || '-';
+    document.getElementById('modalDetail').innerText = item.DB_Detail || 'ไม่มีรายละเอียด';
     document.getElementById('modalAge').innerText = `${item.DB_Age || '0'} ปี`;
     document.getElementById('modalPriority').innerText = item.Priority || '-';
     
-    // ตั้งค่า RegStatus และ CoStatus ตามเดิม...
+    // แสดงสถานะทะเบียน
+    const regStatus = document.getElementById('modalRegStatus');
+    if (regStatus) regStatus.innerText = item.RegStatus || '-';
+
+    // แสดงสถานะการตรวจ
+    const status = document.getElementById('modalStatus');
+    if (status) status.innerText = item.CoStatus || '-';
+
+    // 4. เปิด Modal และล็อคการ Scroll ของหน้าจอหลัก
     document.getElementById('detailModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
