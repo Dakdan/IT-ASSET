@@ -521,31 +521,56 @@
     }
 
     function renderTableMode(container, filteredDepts) {
-        const structure = {};
-        filteredDepts.forEach(d => {
-            const b = d.BUILDING || "อื่นๆ";
-            const f = d.FL || "ไม่ระบุชั้น";
-            if (!structure[b]) structure[b] = {};
-            if (!structure[b][f]) structure[b][f] = [];
-            structure[b][f].push(d);
-        });
+    const structure = {};
+    filteredDepts.forEach(d => {
+        const b = d.BUILDING || "อื่นๆ";
+        const f = d.FL || "ไม่ระบุชั้น";
+        if (!structure[b]) structure[b] = {};
+        if (!structure[b][f]) structure[b][f] = [];
+        structure[b][f].push(d);
+    });
 
-        let html = "";
-        Object.keys(structure).sort().forEach(building => {
-            html += `<div class="building-container bg-white mb-10 overflow-hidden shadow-sm border-2 border-slate-200 rounded-[2.5rem]"><div class="header-gradient p-6 flex justify-between items-center text-white"><div class="flex items-center gap-4"><div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center text-xl border border-white/30"><i class="fas fa-hospital text-white"></i></div><h3 class="text-xl font-black uppercase tracking-tight">${building}</h3></div></div><div class="p-4 sm:p-6">`;
-            Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach(floor => {
-                html += `<div class="mb-6 last:mb-0"><div class="bg-slate-50/80 px-6 py-3 border-2 border-slate-100 rounded-2xl flex items-center gap-3 mb-4"><span class="bg-pink-500 text-white px-3 py-1 rounded-md font-bold text-[10px] shadow-sm">${floor}</span><div class="h-[2px] flex-1 bg-slate-200"></div></div><div class="overflow-x-auto px-1"><table class="main-table w-full border-separate"><thead><tr><th class="w-[80px] px-6 py-4 text-center">รูป</th><th class="px-6 py-4">หน่วยงาน</th><th class="text-center px-6 py-4">จำนวนสำรวจ</th><th class="text-center px-6 py-4">สถานะ</th><th class="w-[60px] text-center px-6 py-4"></th></tr></thead><tbody>`;
-                structure[building][floor].forEach(d => {
-                    const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
-                    const dImg = d.PIC_ID ? `https://lh3.googleusercontent.com/d/${d.PIC_ID}` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
-                    html += `<tr class="dept-row group cursor-pointer" onclick="showDetail('${d.DEP_ID}')"><td class="text-center"><div class="w-12 h-12 mx-auto rounded-xl overflow-hidden border-2 border-slate-100 bg-slate-50 flex items-center justify-center"><img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'"></div></td><td><div><span class="font-bold text-slate-800 group-hover:text-pink-600 block text-sm">${d.DEPNAME}</span><span class="text-[9px] font-bold text-slate-400 uppercase block mt-0.5">ID: ${d.DEP_ID}</span></div></td><td class="text-center"><span class="text-base font-black text-slate-700">${dLogs.length}</span></td><td class="text-center"><span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">สำรวจเรียบร้อย</span></td><td class="text-center"><i class="fas fa-chevron-right text-xs text-slate-300 transition-all"></i></td></tr>`;
-                });
-                html += `</tbody></table></div></div>`;
+    let html = "";
+    Object.keys(structure).sort().forEach(building => {
+        html += `<div class="building-container bg-white mb-10 overflow-hidden shadow-sm border-2 border-slate-200 rounded-[2.5rem]"><div class="header-gradient p-6 flex justify-between items-center text-white"><div class="flex items-center gap-4"><div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center text-xl border border-white/30"><i class="fas fa-hospital text-white"></i></div><h3 class="text-xl font-black uppercase tracking-tight">${building}</h3></div></div><div class="p-4 sm:p-6">`;
+        
+        Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach(floor => {
+            html += `<div class="mb-6 last:mb-0"><div class="bg-slate-50/80 px-6 py-3 border-2 border-slate-100 rounded-2xl flex items-center gap-3 mb-4"><span class="bg-pink-500 text-white px-3 py-1 rounded-md font-bold text-[10px] shadow-sm">${floor}</span><div class="h-[2px] flex-1 bg-slate-200"></div></div><div class="overflow-x-auto px-1"><table class="main-table w-full border-separate"><thead><tr><th class="w-[80px] px-6 py-4 text-center">รูป</th><th class="px-6 py-4">หน่วยงาน</th><th class="text-center px-6 py-4">จำนวนสำรวจ</th><th class="text-center px-6 py-4">สถานะ</th><th class="w-[60px] text-center px-6 py-4"></th></tr></thead><tbody>`;
+            
+            structure[building][floor].forEach(d => {
+                const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
+                // ✅ แก้ไข dImg และตรวจสอบการดึงรูปจาก Google Drive
+                const dImg = d.PIC_ID ? `https://drive.google.com/thumbnail?id=${d.PIC_ID}&sz=w600` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                
+                html += `<tr class="dept-row group cursor-pointer" onclick="showDetail('${d.DEP_ID}')">
+                    <td class="text-center">
+                        <div class="w-12 h-12 mx-auto rounded-xl overflow-hidden border-2 border-slate-100 bg-slate-50 flex items-center justify-center">
+                            <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <span class="font-bold text-slate-800 group-hover:text-pink-600 block text-sm">${d.DEPNAME}</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase block mt-0.5">ID: ${d.DEP_ID}</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="text-base font-black text-slate-700">${dLogs.length}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">สำรวจเรียบร้อย</span>
+                    </td>
+                    <td class="text-center">
+                        <i class="fas fa-chevron-right text-xs text-slate-300 transition-all group-hover:text-pink-500"></i>
+                    </td>
+                </tr>`;
             });
-            html += `</div></div>`;
+            html += `</tbody></table></div></div>`;
         });
-        container.innerHTML = html;
-    }
+        html += `</div></div>`;
+    });
+    container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold">ไม่พบข้อมูล</div>`;
+}
 
     function showDetail(deptId) {
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
