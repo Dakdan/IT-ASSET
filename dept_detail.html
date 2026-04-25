@@ -326,8 +326,8 @@
             document.getElementById('modalRegStatus').innerText = item.RegStatus || '-';
             
             const statusEl = document.getElementById('modalStatus');
-            statusEl.innerText = item.CoStatus || 'ปกติ';
-            statusEl.className = `font-bold ${item.CoStatus === 'ปกติ' ? 'text-emerald-600' : 'text-amber-600'}`;
+            statusEl.innerText = item.CoStatus || '-';
+            statusEl.className = `font-bold ${item.CoStatus === '✅ใช้งานอยู่' ? 'text-emerald-600' : 'text-amber-600'}`;
         
             document.getElementById('detailModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden'; // กัน scroll พื้นหลัง
