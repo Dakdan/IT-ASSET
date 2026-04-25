@@ -596,7 +596,7 @@
         if(!dept) return;
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
-        const mImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
+        const mImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w600` : `https://placehold.co/100?text=DEPT`;
         document.getElementById('mDeptPic').querySelector('img').src = mImg;
         document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`
         const byType = {};
