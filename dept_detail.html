@@ -224,6 +224,7 @@
                 document.getElementById('locFloor').querySelector('span').innerText = `ชั้น ${d.FL || '-'}`;
                 document.getElementById('locPhone').querySelector('span').innerText = d.Tell || '-';
                 
+                
                 if(d.photoUrl) {
                     const img = document.getElementById('deptAvatar');
                     img.src = d.photoUrl;
@@ -336,7 +337,7 @@
         document.getElementById('modalDetail').innerText = item.DB_Detail || 'ไม่มีรายละเอียด';
         document.getElementById('modalAge').innerText = `${item.DB_Age || '0'} ปี`;
         document.getElementById('modalPriority').innerText = item.Priority || '-';
-        
+        document.getElementById('modalShift_Work').innerText = item.Shift_Work || '-';
         // แสดงสถานะทะเบียน
         const regStatus = document.getElementById('modalRegStatus');
         if (regStatus) regStatus.innerText = item.RegStatus || '-';
