@@ -166,6 +166,10 @@
                                 <label class="text-[10px] text-pink-400 block uppercase font-bold">อายุการใช้งาน</label>
                                 <p id="modalAge" class="font-black text-pink-700 text-lg">-- ปี</p>
                             </div>
+                            <div class="text-center">
+                                <label class="text-[10px] text-pink-400 block uppercase font-bold">ช่วงเวลาใช้งาน</label>
+                                <p id="modalShift_Work" class="font-black text-pink-700 text-xs">-</p>
+                            </div>
                             <div class="text-right">
                                 <label class="text-[10px] text-pink-400 block uppercase font-bold">การใช้งาน</label>
                                 <p id="modalPriority" class="font-black text-pink-700 text-xs">-</p>
@@ -318,36 +322,31 @@
         if (!item) return;
     
         const modalImg = document.getElementById('modalAssetPhoto');
-        
-        // 1. ตรวจสอบรูปภาพ: ถ้ามี URL ให้ใช้ ถ้าไม่มีให้ใช้ Placeholder
-        if (item.Asset_Photo && item.Asset_Photo.includes('http')) {
-            modalImg.src = item.Asset_Photo;
-        } else {
-            modalImg.src = 'https://placehold.co/400x300?text=No+Photo';
-        }
+        modalImg.src = (item.Asset_Photo && item.Asset_Photo.includes('http')) 
+                       ? item.Asset_Photo 
+                       : 'https://placehold.co/400x300?text=No+Photo';
     
-        // 2. จัดการเรื่อง Error ถ้าโหลดรูปจาก Google Drive ไม่สำเร็จ
-        modalImg.onerror = function() {
-            this.src = 'https://placehold.co/400x300?text=Image+Access+Denied';
+        modalImg.onerror = function() { this.src = 'https://placehold.co/400x300?text=Image+Access+Denied'; };
+    
+        // ใช้ฟังก์ชันช่วยดัก Error
+        const setSafeText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = value || '-';
         };
     
-        // 3. Mapping ข้อมูลลง Element ต่างๆ
-        document.getElementById('modalAssetId').innerText = item.Asset_ID || item.NOID || '-';
-        document.getElementById('modalType').innerText = item.Asset_Type || '-';
-        document.getElementById('modalDetail').innerText = item.DB_Detail || 'ไม่มีรายละเอียด';
-        document.getElementById('modalAge').innerText = `${item.DB_Age || '0'} ปี`;
-        document.getElementById('modalPriority').innerText = item.Priority || '-';
-        document.getElementById('modalShift_Work').innerText = item.Shift_Work || '-';
-        // แสดงสถานะทะเบียน
-        const regStatus = document.getElementById('modalRegStatus');
-        if (regStatus) regStatus.innerText = item.RegStatus || '-';
+        setSafeText('modalAssetId', item.Asset_ID || item.NOID);
+        setSafeText('modalType', item.Asset_Type);
+        setSafeText('modalDetail', item.DB_Detail || 'ไม่มีรายละเอียด');
+        setSafeText('modalAge', `${item.DB_Age || '0'} ปี`);
+        setSafeText('modalPriority', item.Priority);
+        setSafeText('modalShift_Work', item.Shift_Work); // ตอนนี้จะใช้งานได้แล้ว
+        setSafeText('modalRegStatus', item.RegStatus);
+        setSafeText('modalStatus', item.CoStatus);
     
-        // แสดงสถานะการตรวจ
-        const status = document.getElementById('modalStatus');
-        if (status) status.innerText = item.CoStatus || '-';
-    
-        // 4. เปิด Modal และล็อคการ Scroll ของหน้าจอหลัก
-        document.getElementById('detailModal').classList.remove('hidden');
+        // 4. เปิด Modal - แนะนำให้ใช้ flex แทนการเอาแค่ hidden ออกเพื่อให้กึ่งกลาง
+        const modal = document.getElementById('detailModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex'); // เพื่อให้ class items-center justify-center ทำงาน
         document.body.style.overflow = 'hidden';
     }
     function openDetailFromGroup(assetId) {
