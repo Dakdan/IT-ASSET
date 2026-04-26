@@ -301,7 +301,7 @@
                         <td class="px-6 py-4 text-center font-bold text-pink-600">${item.DB_Age || '0'} ปี</td>
                         <td class="px-6 py-4 text-center">
                             <span class="px-2 py-1 rounded-md text-[10px] font-bold ${item.CoStatus === '✅ใช้งานอยู่' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
-                                ${item.CoStatus || 'ปกติ'}
+                                ${item.CoStatus || 'ไม่มีการบันทึก'}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-[10px] text-slate-400">${item.RegStatus || '-'}</td>
@@ -360,7 +360,7 @@
             document.getElementById('detailModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
-                function handlePrint() {
+        function handlePrint() {
             document.getElementById('printDeptName').innerText = document.getElementById('deptName').innerText;
             document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
             
@@ -385,6 +385,7 @@
                     <td style="border:1px solid #cbd5e1; padding:8px;">${item.DB_Detail || '-'}</td>
                     <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${item.DB_Age || '0'}</td>
                     <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${item.CoStatus || '-'}</td>
+                    <td style="border:1px solid #cbd5e1; padding:8px;">${item.Priority || '-'}</td>
                 </tr>`;
             });
             
@@ -404,6 +405,7 @@
                 "รายละเอียด": item.DB_Detail,
                 "อายุ (ปี)": item.DB_Age,
                 "สถานะ": item.CoStatus,
+                "การใช้งาน":item.Priority ,
                 "วันที่ตรวจ": item.Timestamp ? new Date(item.Timestamp).toLocaleDateString('th-TH') : '-'
             }));
 
