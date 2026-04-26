@@ -48,10 +48,11 @@ const App = () => {
     ASS_ON_OUT: '1' // 1 = ในระบบ, 0 = นอกระบบ
   });
 
-  // Camera Refs
+  // Camera Refs & Search Timeout Ref
   const videoRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [scanTarget, setScanTarget] = useState(null);
+  const searchTimeoutRef = useRef(null);
 
   // 1. Initial Load
   useEffect(() => {
@@ -99,12 +100,35 @@ const App = () => {
     }
   }, [selectedFloor, selectedBuilding, rawDeptList]);
 
-  // Search Action
-  const handleSearch = async () => {
-    if (!searchQuery) return;
+  // --- Search Logic (Auto Search / Debounce) ---
+  const highlightText = (text, highlight) => {
+    if (!highlight || !text) return text;
+    const parts = String(text).split(new RegExp(`(${highlight})`, 'gi'));
+    return parts.map((part, index) => 
+      part.toLowerCase() === highlight.toLowerCase() ? 
+        <span key={index} className="bg-yellow-200 text-indigo-800 rounded px-0.5">{part}</span> : part
+    );
+  };
+
+  const executeSearch = async (queryValue) => {
+    let q = queryValue.trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+
+    // Extract ID from URL if scanned a link
+    if (q.includes("http")) {
+      const match = q.match(/IcmAssetDetail\/([^\/]+)/);
+      if (match && match[1]) {
+        q = match[1];
+        setSearchQuery(q);
+      }
+    }
+
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
       const data = await res.json();
       setSearchResults(data);
       if (data.length === 0) showStatus('ไม่พบข้อมูลครุภัณฑ์นี้', 'error');
@@ -114,6 +138,21 @@ const App = () => {
       setLoading(false);
     }
   };
+
+  const handleInputChange = (val) => {
+    setSearchQuery(val);
+    clearTimeout(searchTimeoutRef.current);
+    
+    // Auto-search after 500ms of typing
+    if (val.trim()) {
+      searchTimeoutRef.current = setTimeout(() => {
+        executeSearch(val);
+      }, 500);
+    } else {
+      setSearchResults([]);
+    }
+  };
+  // ---------------------------------------------
 
   // Submit Logic
   const handleFinalSubmit = async () => {
@@ -198,6 +237,10 @@ const App = () => {
   const resetForm = () => {
     setSearchQuery('');
     setSearchResults([]);
+    clearAuditForm();
+  };
+
+  const clearAuditForm = () => {
     setAuditForm({
       Asset_ID: '', Serial: '', BrandDetail: '', MAStatus: 'ตรวจสอบแล้ว',
       ImageData: '', gps: '', Note1: '', Asset_Type_ID: '',
@@ -231,6 +274,12 @@ const App = () => {
       const mockResult = "SCN-" + Math.random().toString(36).substr(2, 6).toUpperCase();
       if (scanTarget === 'serial') setAuditForm({...auditForm, Serial: mockResult});
       if (scanTarget === 'asset_id') setAuditForm({...auditForm, Asset_ID: mockResult});
+      
+      // If searching via scan
+      if (scanTarget === 'search') {
+        handleInputChange(mockResult); // Trigger search
+      }
+      
       showStatus('สแกนสำเร็จ', 'success');
     }
 
@@ -317,37 +366,41 @@ const App = () => {
                </button>
             </div>
 
+            {/* --- แก้ไขส่วนค้นหาตรงนี้ --- */}
             <div className="relative group">
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="สแกน หรือ ค้นหารหัสครุภัณฑ์..."
-                className="w-full p-5 pl-6 bg-white rounded-3xl border border-slate-100 font-bold text-sm outline-none shadow-sm group-focus-within:ring-4 group-focus-within:ring-indigo-500/5 transition-all"
-              />
-              <button 
-                onClick={handleSearch}
-                className="absolute right-2 top-2 bottom-2 px-6 bg-indigo-600 text-white rounded-2xl font-bold text-xs shadow-lg active:scale-95"
-              >
-                ค้นหา
-              </button>
+              <div className="relative w-full">
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  placeholder="สแกน หรือ พิมพ์รหัสครุภัณฑ์..."
+                  className="w-full p-5 pl-6 pr-16 bg-white rounded-3xl border border-slate-100 font-bold text-sm outline-none shadow-sm group-focus-within:ring-4 group-focus-within:ring-indigo-500/5 transition-all"
+                />
+                <button 
+                  onClick={() => startCamera('search')}
+                  className="absolute right-2 top-2 bottom-2 px-4 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center hover:bg-indigo-100 transition-colors"
+                >
+                  <Scan size={20} />
+                </button>
+              </div>
             </div>
+            {/* --------------------------- */}
 
             <div className="space-y-4">
               <button 
-                onClick={() => { setSelectedAsset(null); setAuditForm({...auditForm, Asset_ID: searchQuery, ASS_ON_OUT: '0'}); setView('audit'); }} 
+                onClick={() => { setSelectedAsset(null); clearAuditForm(); setAuditForm(prev => ({...prev, Asset_ID: searchQuery, ASS_ON_OUT: '0'})); setView('audit'); }} 
                 className="w-full py-5 bg-white border-2 border-dashed border-slate-200 text-slate-400 rounded-3xl text-xs font-bold flex items-center justify-center gap-2 hover:border-orange-300 hover:text-orange-500 transition-all"
               >
                 <PlusCircle size={16} /> เพิ่มรายการนอกทะเบียน (Non-Number)
               </button>
 
               {searchResults.map(item => (
-                <div key={item.AssetID} onClick={() => { setSelectedAsset(item); setAuditForm({...auditForm, ASS_ON_OUT: '1'}); setView('audit'); }} className="bg-white p-5 rounded-3xl border-l-4 border-l-indigo-600 shadow-sm hover:shadow-md transition-all cursor-pointer">
+                <div key={item.AssetID} onClick={() => { setSelectedAsset(item); clearAuditForm(); setAuditForm(prev => ({...prev, ASS_ON_OUT: '1'})); setView('audit'); }} className="bg-white p-5 rounded-3xl border-l-4 border-l-indigo-600 shadow-sm hover:shadow-md transition-all cursor-pointer">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="font-black text-indigo-600 text-sm">{item.AssetID}</span>
+                    <span className="font-black text-indigo-600 text-sm">{highlightText(item.AssetID, searchQuery)}</span>
                     <span className="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg uppercase">{item.AgeInfo}</span>
                   </div>
-                  <p className="text-xs font-bold text-slate-600 leading-relaxed">{item.FullDescription}</p>
+                  <p className="text-xs font-bold text-slate-600 leading-relaxed">{highlightText(item.FullDescription, searchQuery)}</p>
                   <p className="text-[10px] text-slate-400 mt-2 font-medium">S/N: {item.Serial || 'N/A'}</p>
                 </div>
               ))}
@@ -357,11 +410,16 @@ const App = () => {
 
         {view === 'audit' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-300 pb-10">
-            <div className="flex items-center gap-4">
-               <button onClick={() => setView('search')} className="p-3 bg-white rounded-2xl text-slate-400 shadow-sm active:scale-90">
-                  <ChevronRight className="rotate-180" size={20} />
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                 <button onClick={() => setView('search')} className="p-3 bg-white rounded-2xl text-slate-400 shadow-sm active:scale-90 transition-transform">
+                    <ChevronRight className="rotate-180" size={20} />
+                 </button>
+                 <h2 className="font-bold text-slate-700">Audit Check</h2>
+               </div>
+               <button onClick={clearAuditForm} className="text-[10px] font-bold text-rose-500 bg-rose-50 px-3 py-2 rounded-xl active:scale-90 transition-transform">
+                 ล้างข้อมูลฟอร์ม
                </button>
-               <h2 className="font-bold text-slate-700">Audit Check</h2>
             </div>
 
             {/* Non-Number Details Input Section */}
