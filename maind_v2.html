@@ -217,11 +217,10 @@
                                 const tName = l.Asset_Type || "อื่นๆ";
                                 typeCounts[tName] = (typeCounts[tName] || 0) + 1;
                             });
-                            // ✅ แก้ไขให้ดึงจาก photoUrl ที่ Backend ประมวลผลมาให้แล้ว
-                            // เปลี่ยนจากเช็ค photoUrl เป็นเช็ค PIC_ID (ที่มาจากหัวตารางตรงๆ)
-                            const dImg = d.PIC_ID ? `https://drive.google.com/thumbnail?id=${d.PIC_ID}&sz=w600` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
-
-
+                           // ✅ แก้ไขจาก d. เป็น dept. ให้ตรงกับชื่อตัวแปรใน map
+                            const dImg = dept.PIC_ID 
+                                ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w600` 
+                                : `https://placehold.co/100?text=${encodeURIComponent((dept.DEPNAME || 'D').charAt(0))}`;
                             return `
                             <div onclick="showDetail('${dept.DEP_ID}')" 
                                  class="bg-white rounded-[2.5rem] p-7 border ${isNew ? 'border-dashed border-slate-200 opacity-80' : 'border-slate-100'} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group relative">
