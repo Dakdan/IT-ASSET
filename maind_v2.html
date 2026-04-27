@@ -135,13 +135,14 @@
     const APP_URL = "https://script.google.com/macros/s/AKfycbzwrBGrPJlrjybVaSifTkLvIT4HurtVZZSbZTo3OrUyaEwXOgfDId1TmuMyg5-yX_DbBQ/exec";
     let state = { logs: [], depts: [] };
 
-    // 1. เริ่มต้นดึงข้อมูล Master
+    // 1. เริ่มต้นดึงข้อมูล Master (ดึงข้อมูลแยกส่วนตาม API ใหม่)
     async function init() {
         try {
             const ts = new Date().getTime();
-            // เรียก action ตามที่ระบุใน Code.gs (getGlobalDashboard สำหรับ Log ทั้งหมด และ getDeptList สำหรับรายชื่อแผนก)
             const [logRes, deptRes] = await Promise.all([
+                // ดึงเฉพาะข้อมูลสรุปเพื่อทำ Dashboard (ประหยัด Data)
                 fetch(`${APP_URL}?action=getGlobalDashboard&_=${ts}`).then(r => r.json()),
+                // ดึงรายชื่อแผนกทั้งหมด
                 fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json())
             ]);
             
@@ -161,16 +162,18 @@
         const contentArea = document.getElementById('contentArea');
         const search = document.getElementById('searchInput').value.toLowerCase();
         
-        // --- ✅ จุดที่แก้ไข: ไม่ใช้ activeDeptIds แล้ว เพื่อให้แสดงทุกหน่วยงาน ---
+        // กรองหน่วยงานทั้งหมดตามคำค้นหา (ไม่สนว่าตรวจแล้วหรือยัง)
         let filteredDepts = state.depts.filter(d => 
             (d.DEPNAME && d.DEPNAME.toLowerCase().includes(search)) || 
             (d.BUILDING && d.BUILDING.toLowerCase().includes(search))
         );
 
-        document.getElementById('statDepts').innerText = filteredDepts.length;
+        // แสดงสถิติ
+        const auditedDepts = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
+        document.getElementById('statDepts').innerText = auditedDepts.length; // จำนวนหน่วยงานที่ตรวจแล้วจริง
         document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
 
-        // จัดกลุ่มตามอาคาร -> ชั้น
+        // จัดกลุ่มข้อมูลตาม อาคาร -> ชั้น
         const groupedData = {};
         filteredDepts.forEach(d => {
             const b = d.BUILDING || "ไม่ระบุอาคาร";
@@ -191,7 +194,7 @@
         buildings.forEach(building => {
             html += `
             <section class="mb-12">
-                <div class="sticky top-[72px] bg-slate-50/80 backdrop-blur-sm z-40 py-4 mb-6 border-b border-slate-200">
+                <div class="sticky top-[72px] bg-[#f0f4f8]/90 backdrop-blur-sm z-40 py-4 mb-6 border-b border-slate-200">
                     <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
                 </div>`;
             
@@ -204,26 +207,24 @@
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         ${groupedData[building][floor].map(dept => {
-                            // เชื่อมโยง Log กับหน่วยงานปัจจุบัน
+                            // หา Log ที่ตรงกับหน่วยงานนี้
                             const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                            
-                            // นับจำนวนแยกประเภทอุปกรณ์
+                            const isNew = deptLogs.length === 0;
+
+                            // นับจำนวนแยกประเภท
                             const typeCounts = {};
                             deptLogs.forEach(l => {
                                 const tName = l.Asset_Type || "อื่นๆ";
                                 typeCounts[tName] = (typeCounts[tName] || 0) + 1;
                             });
 
-                            const deptImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w200` : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${dept.DEPNAME.substring(0,1)}`;
-
-                            // ✅ เพิ่ม Badge กรณีที่ยังไม่มีข้อมูลการตรวจ (0 เครื่อง)
-                            const isNew = deptLogs.length === 0;
+                            const deptImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w200` : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${(dept.DEPNAME || 'D').substring(0,1)}`;
 
                             return `
                             <div onclick="showDetail('${dept.DEP_ID}')" 
-                                 class="bg-white rounded-[2.5rem] p-7 border ${isNew ? 'border-dashed border-slate-200' : 'border-slate-100'} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group relative">
+                                 class="bg-white rounded-[2.5rem] p-7 border ${isNew ? 'border-dashed border-slate-200 opacity-80' : 'border-slate-100'} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group relative">
                                 
-                                ${isNew ? '<span class="absolute top-4 right-8 text-[9px] font-black bg-slate-100 text-slate-400 px-3 py-1 rounded-full uppercase">ยังไม่ได้ตรวจ</span>' : ''}
+                                ${isNew ? '<span class="absolute top-4 right-8 text-[9px] font-black bg-slate-100 text-slate-400 px-3 py-1 rounded-full uppercase">ยังไม่ได้เข้าตรวจ</span>' : ''}
 
                                 <div class="flex items-start gap-5 mb-6">
                                     <div class="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
@@ -243,13 +244,13 @@
                                                     <span class="text-[11px] font-bold text-slate-800">${count}</span>
                                                 </div>
                                             `).join('')
-                                            : '<span class="text-[10px] text-slate-400 italic">ยังไม่มีข้อมูลครุภัณฑ์</span>'
+                                            : '<span class="text-[10px] text-slate-400 italic py-1">ยังไม่มีข้อมูลการสำรวจในระบบ</span>'
                                         }
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-between ${isNew ? 'bg-slate-200' : 'bg-slate-800'} rounded-3xl px-6 py-4">
                                     <div class="flex flex-col">
-                                        <span class="text-[9px] ${isNew ? 'text-slate-500' : 'text-slate-400'} font-bold uppercase tracking-wider mb-0.5">ตรวจพบแล้ว</span>
+                                        <span class="text-[9px] ${isNew ? 'text-slate-500' : 'text-slate-400'} font-bold uppercase tracking-wider mb-0.5">จำนวนที่พบ</span>
                                         <span class="text-xl font-black ${isNew ? 'text-slate-600' : 'text-white'} leading-none">${deptLogs.length} <small class="text-[11px] font-bold ${isNew ? 'text-slate-500' : 'text-slate-400'} ml-1">เครื่อง</small></span>
                                     </div>
                                     <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:bg-pink-500 transition-all">
@@ -266,11 +267,11 @@
         contentArea.innerHTML = html;
     }
 
-    // 3. แสดงรายละเอียด (เหมือนเดิม แต่รองรับ auditLogs ว่าง)
+    // 3. แสดงรายละเอียดเชิงลึก (getFullData)
     async function showDetail(deptId) {
         try {
             const container = document.getElementById('mAssetGroupContainer');
-            container.innerHTML = `<div class="text-center py-20 text-slate-400 animate-pulse font-medium">กำลังโหลดข้อมูลเชิงลึก...</div>`;
+            container.innerHTML = `<div class="text-center py-20 text-slate-400 animate-pulse font-medium text-lg">กำลังดึงข้อมูลเชิงลึกจาก Asset_DB...</div>`;
             document.getElementById('modalDept').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
 
@@ -279,7 +280,8 @@
             
             const { department, auditLogs } = res;
 
-            document.getElementById('mDeptName').innerText = department.DEPNAME || "ไม่ระบุชื่อแผนก";
+            // Mapping ข้อมูล Header Modal
+            document.getElementById('mDeptName').innerText = department.DEPNAME || "หน่วยงานใหม่";
             document.getElementById('mDeptLoc').innerHTML = `
                 <svg class="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"></path></svg>
                 ${department.BUILDING || '-'} ชั้น ${department.FL || '-'}
@@ -288,13 +290,18 @@
             pic.src = department.photoUrl || `https://placehold.co/100x100?text=${(department.DEPNAME || 'D').substring(0,1)}`;
 
             if (!auditLogs || auditLogs.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 text-slate-400 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-                    <p class="text-lg font-bold">ยังไม่มีข้อมูลการสำรวจ</p>
-                    <p class="text-sm">กรุณาบันทึกข้อมูลครุภัณฑ์ผ่านระบบ Survey</p>
+                container.innerHTML = `
+                <div class="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-800 mb-2">ยังไม่พบประวัติการสำรวจ</h4>
+                    <p class="text-slate-400">หน่วยงานนี้ยังไม่มีการบันทึกข้อมูลในระบบ ASSET_LOGS</p>
                 </div>`;
                 return;
             }
 
+            // จัดกลุ่มอุปกรณ์
             const groupedAssets = {};
             auditLogs.forEach(a => {
                 const typeName = a.Asset_Type || "อุปกรณ์อื่นๆ";
@@ -302,6 +309,7 @@
                 groupedAssets[typeName].push(a);
             });
 
+            // Render รายการอุปกรณ์
             container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
                 <div>
                     <div class="flex items-center gap-4 mb-6">
@@ -312,7 +320,7 @@
                         ${groupedAssets[cat].map(a => `
                             <div class="flex flex-col sm:flex-row gap-6 p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden">
                                 <div class="w-full sm:w-32 h-32 bg-slate-50 rounded-3xl border border-slate-100 flex-shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
-                                    <img src="${a.Asset_Photo || 'https://placehold.co/300x300/f8fafc/cbd5e1?text=NO+IMAGE'}" class="w-full h-full object-cover">
+                                    <img src="${a.Asset_Photo || 'https://placehold.co/300x300/f8fafc/cbd5e1?text=NO+IMAGE'}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x300/f8fafc/cbd5e1?text=IMG+ERROR'">
                                 </div>
                                 <div class="flex-1 min-w-0 flex flex-col">
                                     <div class="flex items-center justify-between gap-2 mb-4">
@@ -345,11 +353,9 @@
 
         } catch (err) {
             console.error(err);
-            container.innerHTML = `<div class="text-center py-20 text-red-500 font-bold">เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน</div>`;
+            document.getElementById('mAssetGroupContainer').innerHTML = `<div class="text-center py-20 text-red-500 font-bold">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>`;
         }
     }
-    // ... ฟังก์ชัน closeModal/onclick เหมือนเดิม ...
-
 
     function closeModal() { 
         document.getElementById('modalDept').classList.add('hidden'); 
