@@ -232,23 +232,24 @@
                 </div>
                 <button onclick="closeModal('nonRegisterModal')" class="p-2 bg-gray-50 rounded-full text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-
+    
             <div class="space-y-4">
                 <div>
                     <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">📸รูปภาพ</label>
-                <div id="nr_imgPreviewContainer" 
-                     class="image-preview-container cursor-pointer" 
-                     onclick="document.getElementById('nr_imgInput').click()"> <div id="nr_imgPlaceholder">
-                        <p>📸 ถ่ายรูปภาพครุภัณฑ์</p>
-                    </div>
-                    <img id="nr_imgPreview" class="hidden w-full h-full object-cover">
-                </div>                
-                    <input type="file" id="imgInput" accept="image/*" capture="environment" onchange="handleImageSelection(this, 'imgPreview', 'imgPlaceholder')">
+                    <div id="nr_imgPreviewContainer" 
+                         class="image-preview-container cursor-pointer" 
+                         onclick="document.getElementById('nr_imgInput').click()"> 
+                        <div id="nr_imgPlaceholder">
+                            <p>📸 ถ่ายรูปภาพครุภัณฑ์</p>
+                        </div>
+                        <img id="nr_imgPreview" class="hidden w-full h-full object-cover">
+                    </div>                
+                    <input type="file" id="nr_imgInput" accept="image/*" capture="environment" onchange="handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')" class="hidden">
                 </div>
-
+    
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[15px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รหัสครุภัณฑ์</label>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รหัสครุภัณฑ์ (ถ้ามี)</label>
                         <input type="text" id="nr_asset_id" placeholder="ป้อนรหัสครุภัณฑ์..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold outline-none focus:ring-1 focus:ring-orange-500/30">
                     </div>
                     <div>
@@ -259,12 +260,12 @@
                         </div>
                     </div>
                 </div>
-
+    
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ยี่ห้อ + รายละเอียด</label>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ยี่ห้อ + รายละเอียด (จำเป็น)</label>
                     <input type="text" id="nr_brand_detail" placeholder="ยี่ห้อ, รุ่น, สเปค..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold outline-none focus:ring-1 focus:ring-orange-500/30">
                 </div>
-
+    
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
@@ -281,9 +282,9 @@
                         <select id="nr_priorityId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600"></select>
                     </div>
                 </div>
-
+    
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Shift_Work</label>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift)</label>
                     <div class="grid grid-cols-3 gap-2">
                         <input type="checkbox" name="nr_shift_work" value="เช้า" id="nr_shift_m" class="hidden shift-checkbox">
                         <label for="nr_shift_m" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">เช้า</label>
@@ -292,12 +293,12 @@
                         <input type="checkbox" name="nr_shift_work" value="ดึก" id="nr_shift_n" class="hidden shift-checkbox">
                         <label for="nr_shift_n" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ดึก</label>
                     </div>
-                </div>               
-
+                </div>                
+    
                 <div class="grid grid-cols-2 gap-3 pt-4">
-                <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
-                <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg">💾บันทึก</button>
-            </div>
+                    <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
+                    <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg">💾บันทึก</button>
+                </div>
             </div>
         </div>
     </div>
