@@ -340,7 +340,7 @@
 </div>
 
 <script>
-    const APP_URL = "https://script.google.com/macros/s/AKfycbznFwIHQsiqqydWSyR7eweKVsfchRyWtbQPZ_ogHma4ZL2X9QnHFb6sqVXvEeXJqwTx/exec";
+    const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
     let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
     let mainDisplayMode = 'grid';
 
@@ -356,19 +356,18 @@
         icon?.classList.add('animate-spin');
         try {
             const ts = new Date().getTime();
-            // ดึงข้อมูลจาก API ตามที่ Backend กำหนด
             const [logRes, deptRes, initRes] = await Promise.all([
-                fetch(`${APP_URL}?action=getAuditLogs&DEP_ID=ALL&_=${ts}`).then(r => r.json()), // ปรับให้ดึง Logs ทั้งหมด
+                fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
                 fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
                 fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
             ]);
-            
             state.logs = Array.isArray(logRes) ? logRes : [];
             state.depts = Array.isArray(deptRes) ? deptRes : [];
             state.assetTypes = initRes.assetTypes || [];
             state.priorities = initRes.priorities || []; 
             
             document.getElementById('lastUpdate').innerText = `SYNCED AT: ${new Date().toLocaleTimeString('th-TH')}`;
+            populateFilterOptions();
             renderDashboard();
         } catch (err) { 
             console.error(err); 
@@ -378,21 +377,117 @@
         }
     }
 
+    function populateFilterOptions() {
+        const bSelect = document.getElementById('fBuilding');
+        if (!state.depts || state.depts.length === 0) return;
+        const buildings = [...new Set(state.depts.map(d => d.BUILDING).filter(Boolean))].sort();
+        bSelect.innerHTML = '<option value="">ทั้งหมด</option>' + buildings.map(b => `<option value="${b}">${b}</option>`).join('');
+        handleBuildingFilterChange();
+    }
+
+    function handleBuildingFilterChange() {
+        const bVal = document.getElementById('fBuilding').value;
+        const fSelect = document.getElementById('fFloor');
+        let availableFloors = !bVal ? [...new Set(state.depts.map(d => d.FL).filter(Boolean))] : [...new Set(state.depts.filter(d => d.BUILDING === bVal).map(d => d.FL).filter(Boolean))];
+        availableFloors.sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric: true}));
+        fSelect.innerHTML = '<option value="">ทั้งหมด</option>' + availableFloors.map(f => `<option value="${f}">${f}</option>`).join('');
+        fSelect.value = "";
+        handleFloorFilterChange();
+    }
+
+    function handleFloorFilterChange() {
+        const bVal = document.getElementById('fBuilding').value;
+        const fVal = document.getElementById('fFloor').value;
+        const dSelect = document.getElementById('fDept');
+        let filteredDepts = state.depts;
+        if (bVal) filteredDepts = filteredDepts.filter(d => d.BUILDING === bVal);
+        if (fVal) filteredDepts = filteredDepts.filter(d => d.FL === fVal);
+        const deptNames = [...new Set(filteredDepts.map(d => d.DEPNAME).filter(Boolean))].sort();
+        dSelect.innerHTML = '<option value="">ทั้งหมด</option>' + deptNames.map(d => `<option value="${d}">${d}</option>`).join('');
+        dSelect.value = "";
+        updateReportPreview();
+    }
+
+    function getPriority(pid) {
+        const p = state.priorities.find(x => String(x.id) === String(pid));
+        if(!p) return { name: 'ปกติ', color: 'border-slate-100 bg-slate-50 text-slate-500', icon: 'fa-info-circle' };
+        if(p.name.includes('ด่วน')) return { name: p.name, color: 'border-rose-100 bg-rose-50 text-rose-500', icon: 'fa-fire' };
+        return { name: p.name, color: 'border-blue-100 bg-blue-50 text-blue-500', icon: 'fa-check' };
+    }
+
+    function updateReportPreview() {
+        const bVal = document.getElementById('fBuilding').value;
+        const fVal = document.getElementById('fFloor').value;
+        const dVal = document.getElementById('fDept').value;
+
+        const filteredDepts = state.depts.filter(d => {
+            const matchB = !bVal || String(d.BUILDING) === bVal;
+            const matchF = !fVal || String(d.FL) === fVal;
+            const matchD = !dVal || String(d.DEPNAME) === dVal;
+            return matchB && matchF && matchD;
+        });
+
+        const deptIds = filteredDepts.map(d => String(d.DEP_ID).trim());
+        const filteredLogs = state.logs.filter(l => deptIds.includes(String(l.DEPT_ID).trim()));
+
+        const reportGroups = {}; 
+        filteredLogs.forEach(l => {
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
+            const dName = dept?.DEPNAME || "ไม่ระบุหน่วยงาน";
+            const typeName = state.assetTypes.find(t => String(t.id) === String(l.Asset_Type_ID))?.name || 'อื่นๆ';
+            if (!reportGroups[dName]) reportGroups[dName] = {};
+            if (!reportGroups[dName][typeName]) reportGroups[dName][typeName] = [];
+            reportGroups[dName][typeName].push(l);
+        });
+
+        const preview = document.getElementById('reportPreviewContent');
+        let html = `<div class="text-center mb-8">
+            <h1 class="text-2xl font-black text-slate-800">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์ (แยกตามหน่วยงาน)</h1>
+            <p class="text-sm font-bold text-slate-500 mt-1">ประจำปี 2569</p>
+            <div class="mt-4 inline-flex flex-wrap justify-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-b py-2 border-slate-100">
+                <span>ตึก: ${bVal || 'ทั้งหมด'}</span> <span>ชั้น: ${fVal || 'ทั้งหมด'}</span> <span>หน่วยงาน: ${dVal || 'ทั้งหมด'}</span>
+                <span class="text-pink-500 font-black">รวม: ${filteredLogs.length} รายการ</span>
+            </div>
+        </div>`;
+
+        if (filteredLogs.length === 0) {
+            html += `<div class="py-20 text-center text-slate-300 font-bold flex flex-col items-center"><i class="fas fa-folder-open text-5xl mb-4 opacity-20"></i>ไม่พบข้อมูล</div>`;
+        } else {
+            html += `<table class="report-table"><thead><tr><th class="w-12 text-center">ลำดับ</th><th class="w-40">รหัสครุภัณฑ์</th><th>รายละเอียด / ยี่ห้อ / รุ่น / S/N</th><th class="w-20 text-center">อายุ</th><th class="w-24 text-center">สถานะ</th></tr></thead><tbody>`;
+            Object.keys(reportGroups).sort().forEach((deptName) => {
+                const types = reportGroups[deptName];
+                let deptTotal = 0;
+                Object.values(types).forEach(arr => deptTotal += arr.length);
+                html += `<tr class="row-group-header"><td colspan="3" class="p-3"><i class="fas fa-hospital text-pink-500 mr-2"></i> ${deptName}</td><td colspan="2" class="text-right p-3 text-pink-600">รวม: ${deptTotal} รายการ</td></tr>`;
+                Object.keys(types).sort().forEach(typeName => {
+                    const logs = types[typeName];
+                    html += `<tr class="bg-pink-50/30"><td colspan="5" class="px-6 py-2 font-bold text-slate-600 text-[11px]">ประเภท: ${typeName} (${logs.length})</td></tr>`;
+                    logs.forEach((item, index) => {
+                        html += `<tr><td class="text-center text-slate-400">${index + 1}</td><td class="font-black text-slate-700">${item.AssetID || '-'}</td><td><div class="font-bold text-slate-800">${item.FullDescription || '-'}</div><div class="text-[10px] text-slate-500">SN: ${item.Serial_Number || 'ไม่ระบุ'}</div></td><td class="text-center font-black text-slate-600">${item.AgeInfo || item.Age || '-'}</td><td class="text-center"><span class="text-[9px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">ตรวจสอบแล้ว</span></td></tr>`;
+                    });
+                });
+            });
+            html += `</tbody></table>`;
+        }
+        preview.innerHTML = html;
+    }
+
+    function switchMainView(mode) {
+        mainDisplayMode = mode;
+        document.getElementById('vGrid').classList.toggle('active', mode === 'grid');
+        document.getElementById('vTable').classList.toggle('active', mode === 'table');
+        renderDashboard();
+    }
+
     function renderDashboard() {
         const area = document.getElementById('contentArea');
         const search = (document.getElementById('searchInput')?.value || "").toLowerCase().trim();
-        
-        // กรองแผนกตามคำค้นหา (โชว์เฉพาะแผนกที่มีการ Scan แล้วตาม Logic เดิมของคุณ)
         const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
-        const filteredDepts = state.depts.filter(d => 
-            activeDeptIds.includes(String(d.DEP_ID).trim()) && 
-            (d.DEPNAME.toLowerCase().includes(search) || (d.BUILDING && d.BUILDING.toLowerCase().includes(search)))
-        );
-
+        const filteredDepts = state.depts.filter(d => activeDeptIds.includes(String(d.DEP_ID).trim()) && (d.DEPNAME.toLowerCase().includes(search) || (d.BUILDING && d.BUILDING.toLowerCase().includes(search))));
         document.getElementById('statDepts').innerText = filteredDepts.length;
         document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
-
-        renderGridMode(area, filteredDepts);
+        if (mainDisplayMode === 'grid') renderGridMode(area, filteredDepts);
+        else renderTableMode(area, filteredDepts);
     }
 
     function renderGridMode(container, filteredDepts) {
@@ -409,174 +504,109 @@
         Object.keys(structure).sort().forEach(building => {
             const bDepts = filteredDepts.filter(d => d.BUILDING === building);
             const bTotal = bDepts.reduce((acc, curr) => acc + state.logs.filter(l => String(l.DEPT_ID).trim() === String(curr.DEP_ID).trim()).length, 0);
-            
-            html += `<div class="building-container mb-12 bg-white rounded-[2.5rem] shadow-sm border border-pink-50 overflow-hidden">
-                <div class="pink-gradient p-8 flex justify-between items-center text-white">
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-xl"><i class="fas fa-hospital"></i></div>
-                        <div><h3 class="text-2xl font-black uppercase tracking-tight">${building}</h3><p class="text-xs font-bold text-pink-100 opacity-80">UDON THANI HOSPITAL</p></div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-3xl font-black leading-none">${bTotal}</p><p class="text-[10px] font-bold text-pink-100 uppercase mt-1">TOTAL ASSETS</p>
-                    </div>
-                </div>
-                <div class="p-8">`;
-
+            html += `<div class="building-container"><div class="building-header"><div class="flex items-center gap-5"><div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl"><i class="fas fa-hospital"></i></div><div><h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight">${building}</h3><p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Udon Thani Hospital</p></div></div><div class="text-right"><p class="text-3xl font-black text-pink-500 leading-none">${bTotal}</p><p class="text-[10px] font-bold text-slate-400 uppercase mt-1">รายการรวม</p></div></div><div class="p-8">`;
             Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach((floor, idx) => {
                 const theme = floorColorThemes[idx % floorColorThemes.length];
-                html += `<div class="mb-10 last:mb-0">
-                    <div class="flex items-center gap-4 mb-6"><span class="${theme.badge} text-white px-5 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span><div class="flex-1 h-[1px] bg-slate-100"></div></div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">`;
-                
+                html += `<div class="floor-wrapper ${theme.bg} ${theme.border} mb-8 last:mb-0"><div class="flex items-center gap-4 mb-6"><span class="${theme.badge} text-white px-5 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span><div class="flex-1 h-[2px] bg-white/50"></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">`;
                 structure[building][floor].forEach(dept => {
                     const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                    // แก้ไขการดึงรูปแผนกจาก PIC_ID
-                    const dImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w300` : `https://placehold.co/200x200/fff1f2/ec4899?text=${encodeURIComponent(dept.DEPNAME.charAt(0))}`;
-                    
-                    html += `<div class="soft-card p-5 cursor-pointer bg-white" onclick="showDetail('${dept.DEP_ID}')">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="w-14 h-14 rounded-2xl overflow-hidden border border-pink-50 flex-shrink-0 bg-pink-50">
-                                <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=DEPT'">
-                            </div>
-                            <div class="min-w-0">
-                                <h4 class="text-sm font-black text-slate-800 leading-tight line-clamp-2">${dept.DEPNAME}</h4>
-                                <p class="text-[10px] font-bold text-pink-400 mt-1">ID: ${dept.DEP_ID}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between pt-4 border-t border-pink-50">
-                            <span class="px-3 py-1 rounded-lg bg-pink-50 text-pink-500 font-black text-xs border border-pink-100">${dLogs.length} รายการ</span>
-                            <i class="fas fa-chevron-right text-pink-200 text-xs"></i>
-                        </div>
-                    </div>`;
+                    const dImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
+                    html += `<div class="dept-card bg-white p-5 border-2 ${theme.cardBorder}" onclick="showDetail('${dept.DEP_ID}')"><div class="flex items-center gap-4 mb-4"><div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-100 flex-shrink-0 bg-slate-50"><img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}'"></div><div class="min-w-0"><h4 class="text-sm font-black text-slate-800 leading-tight line-clamp-2">${dept.DEPNAME}</h4><p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">ID: ${dept.DEP_ID}</p></div></div><div class="flex items-center justify-between pt-4 border-t-2 border-slate-50"><span class="px-3 py-1 rounded-lg ${theme.bg} ${theme.text} font-black text-xs border ${theme.cardBorder}">${dLogs.length} รายการ</span></div></div>`;
                 });
                 html += `</div></div>`;
             });
             html += `</div></div>`;
         });
-        container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold">ไม่พบข้อมูล</div>`;
+        container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold"><i class="fas fa-search mb-4 text-5xl opacity-20 block"></i> ไม่พบข้อมูล</div>`;
     }
+
+    function renderTableMode(container, filteredDepts) {
+    const structure = {};
+    filteredDepts.forEach(d => {
+        const b = d.BUILDING || "อื่นๆ";
+        const f = d.FL || "ไม่ระบุชั้น";
+        if (!structure[b]) structure[b] = {};
+        if (!structure[b][f]) structure[b][f] = [];
+        structure[b][f].push(d);
+    });
+
+    let html = "";
+    Object.keys(structure).sort().forEach(building => {
+        html += `<div class="building-container bg-white mb-10 overflow-hidden shadow-sm border-2 border-slate-200 rounded-[2.5rem]"><div class="header-gradient p-6 flex justify-between items-center text-white"><div class="flex items-center gap-4"><div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center text-xl border border-white/30"><i class="fas fa-hospital text-white"></i></div><h3 class="text-xl font-black uppercase tracking-tight">${building}</h3></div></div><div class="p-4 sm:p-6">`;
+        
+        Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach(floor => {
+            html += `<div class="mb-6 last:mb-0"><div class="bg-slate-50/80 px-6 py-3 border-2 border-slate-100 rounded-2xl flex items-center gap-3 mb-4"><span class="bg-pink-500 text-white px-3 py-1 rounded-md font-bold text-[10px] shadow-sm">${floor}</span><div class="h-[2px] flex-1 bg-slate-200"></div></div><div class="overflow-x-auto px-1"><table class="main-table w-full border-separate"><thead><tr><th class="w-[80px] px-6 py-4 text-center">รูป</th><th class="px-6 py-4">หน่วยงาน</th><th class="text-center px-6 py-4">จำนวนสำรวจ</th><th class="text-center px-6 py-4">สถานะ</th><th class="w-[60px] text-center px-6 py-4"></th></tr></thead><tbody>`;
+            
+            structure[building][floor].forEach(d => {
+                const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim());
+                // ✅ แก้ไข dImg และตรวจสอบการดึงรูปจาก Google Drive
+                const dImg = d.PIC_ID ? `https://drive.google.com/thumbnail?id=${d.PIC_ID}&sz=w600` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                
+                html += `<tr class="dept-row group cursor-pointer" onclick="showDetail('${d.DEP_ID}')">
+                    <td class="text-center">
+                        <div class="w-12 h-12 mx-auto rounded-xl overflow-hidden border-2 border-slate-100 bg-slate-50 flex items-center justify-center">
+                            <img src="${dImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=${d.DEPNAME.charAt(0)}'">
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <span class="font-bold text-slate-800 group-hover:text-pink-600 block text-sm">${d.DEPNAME}</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase block mt-0.5">ID: ${d.DEP_ID}</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="text-base font-black text-slate-700">${dLogs.length}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">สำรวจเรียบร้อย</span>
+                    </td>
+                    <td class="text-center">
+                        <i class="fas fa-chevron-right text-xs text-slate-300 transition-all group-hover:text-pink-500"></i>
+                    </td>
+                </tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+        });
+        html += `</div></div>`;
+    });
+    container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold">ไม่พบข้อมูล</div>`;
+}
 
     function showDetail(deptId) {
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
         if(!dept) return;
-
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
-        document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500 mr-1"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
-        
-        const mImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w400` : `https://placehold.co/200?text=DEPT`;
+        document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-building text-pink-500"></i> ${dept.BUILDING} | ชั้น ${dept.FL}`;
+        const mImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100?text=DEPT`;
         document.getElementById('mDeptPic').querySelector('img').src = mImg;
-        document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
-
+        document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`
         const byType = {};
         logs.forEach(l => { 
-            const typeName = l.Asset_Type || 'อื่นๆ';
+            const typeName = state.assetTypes.find(x => String(x.id) === String(l.Asset_Type_ID))?.name || 'อื่นๆ';
             if(!byType[typeName]) byType[typeName] = []; 
             byType[typeName].push(l); 
         });
-
         const container = document.getElementById('mAssetGroupContainer');
         container.innerHTML = Object.keys(byType).sort().map(type => `
-            <div class="mb-10">
-                <div class="flex items-center gap-3 mb-5 border-l-4 border-pink-500 pl-4">
-                    <h4 class="text-sm font-black text-slate-800 uppercase">${type} (${byType[type].length})</h4>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    ${byType[type].map(a => {
-                        // แก้ไข mapping รูปและตัวแปรให้ตรงกับ Backend
-                        const aImg = a.Asset_Photo ? a.Asset_Photo : 'https://placehold.co/400x400/f8fafc/cbd5e1?text=NO+IMAGE';
-                        return `
-                        <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 border border-pink-50">
-                            <div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border border-pink-50 flex-shrink-0 overflow-hidden bg-slate-50 flex items-center justify-center shadow-inner">
-                                <img src="${aImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=NO+IMAGE'">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="bg-pink-600 text-white px-4 py-2 rounded-xl mb-3 shadow-lg shadow-pink-100">
-                                    <p class="text-[9px] text-pink-200 font-bold uppercase tracking-widest">รหัสครุภัณฑ์</p>
-                                    <p class="text-sm font-black truncate">${a.NOID || 'N/A'}</p>
-                                </div>
-                                <h5 class="text-sm font-bold text-slate-700 leading-normal line-clamp-2 mb-2">${a.DB_Detail || '-'}</h5>
-                                <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
-                                    <span class="text-[9px] font-black px-3 py-1 rounded-lg border border-pink-100 text-pink-500 bg-pink-50 uppercase">${a.Priority || 'ปกติ'}</span>
-                                    <span class="text-[9px] bg-slate-100 text-slate-500 px-3 py-1 rounded-lg font-black uppercase">${a.DB_Age || '-'} ปี</span>
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('')}
-                </div>
-            </div>`).join('');
-
+            <div class="mb-10"><div class="flex items-center gap-3 mb-5 border-l-4 border-pink-500 pl-4"><h4 class="text-sm font-black text-slate-800 uppercase">${type} (${byType[type].length})</h4></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                ${byType[type].map(a => {
+                    const pri = getPriority(a.Priority_ID || a.PIORITY_ID);
+                    const aImg = a.ASSET_IMG_DB ? `https://lh3.googleusercontent.com/d/${a.ASSET_IMG_DB}` : 'https://placehold.co/200?text=NO+IMAGE';
+                    return `<div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 border-2 border-slate-100 rounded-2xl"><div class="w-full sm:w-24 h-48 sm:h-24 rounded-2xl border-2 border-slate-50 flex-shrink-0 overflow-hidden bg-slate-50 flex items-center justify-center"><img src="${aImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=NO+IMAGE'"></div><div class="flex-1 min-w-0"><div class="bg-pink-600 text-white px-4 py-2 rounded-xl mb-3"><p class="text-[9px] text-pink-200 font-bold uppercase">รหัสครุภัณฑ์</p><p class="text-sm font-black truncate">${a.AssetID || 'N/A'}</p></div><h5 class="text-sm font-bold text-slate-700 leading-normal line-clamp-2 mb-2">${a.FullDescription || '-'}</h5><div class="flex flex-wrap gap-2 pt-2 border-t-2 border-slate-50"><span class="text-[9px] font-black px-3 py-1 rounded-lg border-2 ${pri.color} uppercase"><i class="fas ${pri.icon} mr-1"></i> ${pri.name}</span><span class="text-[9px] bg-slate-100 text-slate-500 px-3 py-1 rounded-lg font-black uppercase">${a.AgeInfo || a.Age || '-'}</span></div></div></div>`;
+                }).join('')}
+            </div></div>`).join('');
         document.getElementById('modalDept').classList.remove('hidden');
         document.getElementById('modalDept').classList.add('flex');
         document.body.style.overflow = 'hidden';
     }
-    function populateFilterOptions() {
-        const bSelect = document.getElementById('fBuilding');
-        if (!state.depts || state.depts.length === 0) return;
-        
-        // ดึงรายชื่อตึกที่ไม่ซ้ำกัน
-        const buildings = [...new Set(state.depts.map(d => d.BUILDING).filter(Boolean))].sort();
-        bSelect.innerHTML = '<option value="">ทั้งหมด</option>' + 
-            buildings.map(b => `<option value="${b}">${b}</option>`).join('');
-    }
 
-    // ฟังก์ชันสร้างรายงาน (Report Preview) - ปรับตัวแปรให้ตรงกับ Backend
-    function updateReportPreview() {
-        const bVal = document.getElementById('fBuilding').value;
-        const fVal = document.getElementById('fFloor').value;
-        const dVal = document.getElementById('fDept').value;
-
-        // กรองข้อมูลตามเงื่อนไขที่เลือก
-        const filteredLogs = state.logs.filter(l => {
-            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
-            if (!dept) return false;
-            const matchB = !bVal || String(dept.BUILDING) === bVal;
-            const matchF = !fVal || String(dept.FL) === fVal;
-            const matchD = !dVal || String(dept.DEPNAME) === dVal;
-            return matchB && matchF && matchD;
-        });
-
-        const preview = document.getElementById('reportPreviewContent');
-        if (filteredLogs.length === 0) {
-            preview.innerHTML = `<div class="py-20 text-center text-slate-300 font-bold">ไม่พบข้อมูลรายงาน</div>`;
-            return;
-        }
-
-        // สร้างตารางรายงาน
-        let html = `<table class="w-full border-collapse">
-            <thead>
-                <tr class="bg-slate-800 text-white text-[11px] uppercase">
-                    <th class="p-3 text-center border">ลำดับ</th>
-                    <th class="p-3 text-left border">รหัสครุภัณฑ์</th>
-                    <th class="p-3 text-left border">รายละเอียด</th>
-                    <th class="p-3 text-center border">อายุ</th>
-                    <th class="p-3 text-center border">ลำดับความสำคัญ</th>
-                </tr>
-            </thead>
-            <tbody>`;
-        
-        filteredLogs.forEach((item, index) => {
-            html += `<tr class="text-sm border-b hover:bg-slate-50">
-                <td class="p-3 text-center border">${index + 1}</td>
-                <td class="p-3 font-bold border">${item.NOID || '-'}</td>
-                <td class="p-3 border">${item.DB_Detail || '-'}</td>
-                <td class="p-3 text-center border">${item.DB_Age || '-'} ปี</td>
-                <td class="p-3 text-center border">${item.Priority || '-'}</td>
-            </tr>`;
-        });
-
-        html += `</tbody></table>`;
-        preview.innerHTML = html;
-    }
-
-    // ฟังก์ชันเปิด Modal รายงาน
-    function openReportModal() {
-        document.getElementById('modalReport').classList.remove('hidden');
-        document.getElementById('modalReport').classList.add('flex');
-        populateFilterOptions(); // โหลดรายชื่อตึกเมื่อเปิด Modal
-        updateReportPreview();   // แสดงพรีวิวเบื้องต้น
-    }
     function closeModal() { document.getElementById('modalDept').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+    function openReportModal() { document.getElementById('modalReport').classList.remove('hidden'); document.getElementById('modalReport').classList.add('flex'); updateReportPreview(); }
+    function closeReportModal() { document.getElementById('modalReport').classList.add('hidden'); }
+    function printReport() { window.print(); }
+    function exportToExcel() { const html = document.getElementById('reportPrintArea').innerHTML; const blob = new Blob([html], { type: 'application/vnd.ms-excel' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `IT_Asset_Report_${new Date().getTime()}.xls`; a.click(); }
+
     window.onload = init;
 </script>
 </body>
