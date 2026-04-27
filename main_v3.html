@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Data Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
+        body { font-family: 'Kanit', sans-serif; }
+        .chart-container { position: relative; height: 100%; width: 100%; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- แถบเมนูด้านบน -->
+    <nav class="bg-indigo-700 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-chart-pie"></i> ระบบ Dashboard ข้อมูลจริง
+            </h1>
+            <div id="status-indicator" class="text-xs bg-indigo-600 px-3 py-1 rounded-full border border-indigo-400 shadow-inner">
+                กำลังเชื่อมต่อข้อมูล...
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-8">
+        <!-- แบนเนอร์แจ้งเตือนข้อผิดพลาด (ซ่อนไว้เริ่มต้น) -->
+        <div id="error-banner" class="hidden mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 shadow-sm rounded-r-lg">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle mr-3 text-xl"></i>
+                <div>
+                    <p class="font-bold">เกิดข้อผิดพลาดในการดึงข้อมูล</p>
+                    <p id="error-message" class="text-sm"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- การ์ดสรุปตัวเลขสำคัญ -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-transform hover:scale-[1.02]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">ยอดขายรวมทั้งหมด</p>
+                        <h3 class="text-3xl font-bold text-indigo-600 mt-1" id="total-sales">฿0</h3>
+                    </div>
+                    <div class="bg-indigo-50 p-3 rounded-lg text-indigo-600">
+                        <i class="fas fa-coins fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-transform hover:scale-[1.02]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">จำนวนรายการสะสม</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1" id="total-transactions">0</h3>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg text-slate-600">
+                        <i class="fas fa-file-invoice-dollar fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-transform hover:scale-[1.02]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">ความหลากหลายของหมวดหมู่</p>
+                        <h3 class="text-3xl font-bold text-emerald-600 mt-1" id="category-count">0</h3>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-lg text-emerald-600">
+                        <i class="fas fa-tags fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- กราฟวิเคราะห์ข้อมูล -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h4 class="text-lg font-semibold mb-6 text-gray-800 border-b pb-2">สัดส่วนยอดขายตามหมวดหมู่</h4>
+                <div class="h-64 flex justify-center items-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h4 class="text-lg font-semibold mb-6 text-gray-800 border-b pb-2">แนวโน้มยอดขายตามช่วงเวลา</h4>
+                <div class="h-64">
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ตารางแสดงรายการธุรกรรมล่าสุด -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-12">
+            <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                <div>
+                    <h4 class="font-bold text-gray-800 text-lg">รายการธุรกรรมล่าสุด</h4>
+                    <p class="text-xs text-gray-500">แสดงผล 15 รายการล่าสุดจาก Google Sheets</p>
+                </div>
+                <button onclick="fetchData()" class="bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50 px-4 py-2 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> อัปเดตข้อมูล
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-white text-gray-400 text-xs uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold border-b">วันที่</th>
+                            <th class="px-6 py-4 font-semibold border-b">รายละเอียดรายการ</th>
+                            <th class="px-6 py-4 font-semibold border-b">หมวดหมู่</th>
+                            <th class="px-6 py-4 text-right font-semibold border-b">ยอดเงินสุทธิ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="text-gray-600 text-sm divide-y divide-gray-50">
+                        <tr>
+                            <td colspan="4" class="px-6 py-20 text-center">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-circle-notch animate-spin text-indigo-500 text-3xl mb-4"></i>
+                                    <p class="text-gray-400 italic">กำลังดึงข้อมูลสดจากระบบ...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // URL ของ Web App จาก Google Apps Script ที่ได้รับ
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0HUXd2a4Bl_8QowPlg-S6nxBWZPV-C_5Ib3TQNb-MeQ6X2r41sf0hGxHB6Bu1e0vP/exec";
+
+        let categoryChart, timeChart;
+
+        async function fetchData() {
+            const status = document.getElementById('status-indicator');
+            const errorBanner = document.getElementById('error-banner');
+            
+            status.innerText = "🔄 กำลังซิงค์ข้อมูล...";
+            status.className = "text-xs bg-amber-500 px-3 py-1 rounded-full border border-amber-400 shadow-inner";
+            errorBanner.classList.add('hidden');
+
+            try {
+                const response = await fetch(SCRIPT_URL);
+                if (!response.ok) throw new Error("การเชื่อมต่อเซิร์ฟเวอร์ล้มเหลว");
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                renderDashboard(data);
+                
+                status.innerText = "✅ อัปเดตเมื่อ: " + new Date().toLocaleTimeString();
+                status.className = "text-xs bg-emerald-500 px-3 py-1 rounded-full border border-emerald-400 shadow-inner";
+            } catch (error) {
+                console.error("Fetch error:", error);
+                showError(error.message || "ไม่สามารถดึงข้อมูลจาก Google Sheets ได้");
+                status.innerText = "❌ ล้มเหลว";
+                status.className = "text-xs bg-red-500 px-3 py-1 rounded-full border border-red-400 shadow-inner";
+            }
+        }
+
+        function showError(msg) {
+            const banner = document.getElementById('error-banner');
+            const text = document.getElementById('error-message');
+            banner.classList.remove('hidden');
+            text.innerText = msg;
+        }
+
+        function renderDashboard(data) {
+            // อัปเดตส่วนสรุปตัวเลข
+            document.getElementById('total-sales').innerText = `฿${data.summary.totalSales.toLocaleString()}`;
+            document.getElementById('total-transactions').innerText = data.summary.count.toLocaleString();
+            document.getElementById('category-count').innerText = data.charts.categories.labels.length;
+
+            // อัปเดตตารางข้อมูล
+            const tableBody = document.getElementById('table-body');
+            if (data.transactions && data.transactions.length > 0) {
+                tableBody.innerHTML = data.transactions.map(t => `
+                    <tr class="hover:bg-indigo-50/30 transition-colors">
+                        <td class="px-6 py-4 text-gray-500">${t.date}</td>
+                        <td class="px-6 py-4 font-medium text-slate-800">${t.customer}</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-medium border border-slate-200">
+                                ${t.category}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-bold text-indigo-600">฿${t.amount.toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">ไม่มีข้อมูลรายการ</td></tr>';
+            }
+
+            updateCharts(data.charts);
+        }
+
+        function updateCharts(chartData) {
+            const catCtx = document.getElementById('categoryChart').getContext('2d');
+            const timeCtx = document.getElementById('timeChart').getContext('2d');
+
+            // ลบกราฟเก่าออกก่อนสร้างใหม่ (ป้องกันกราฟซ้อนกันเวลา Refresh)
+            if (categoryChart) categoryChart.destroy();
+            if (timeChart) timeChart.destroy();
+
+            // กราฟวงกลมแยกหมวดหมู่
+            categoryChart = new Chart(catCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.categories.labels,
+                    datasets: [{
+                        data: chartData.categories.values,
+                        backgroundColor: [
+                            '#6366f1', '#10b981', '#f59e0b', '#ef4444', 
+                            '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { position: 'right', labels: { usePointStyle: true, font: { family: 'Kanit' } } }
+                    }
+                }
+            });
+
+            // กราฟเส้นแสดงแนวโน้มเวลา
+            timeChart = new Chart(timeCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.timeline.labels,
+                    datasets: [{
+                        label: 'ยอดรวมรายวัน',
+                        data: chartData.timeline.values,
+                        borderColor: '#6366f1',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#6366f1',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.3,
+                        fill: true,
+                        backgroundColor: 'rgba(99, 102, 241, 0.05)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { family: 'Kanit' } }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Kanit' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // เริ่มต้นดึงข้อมูลเมื่อโหลดหน้าเว็บ
+        window.onload = fetchData;
+    </script>
+</body>
+</html>
