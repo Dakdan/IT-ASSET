@@ -160,7 +160,19 @@
                 <button onclick="loadRecordedData()" class="p-2 bg-pink-50 text-pink-500 rounded-full active:rotate-180 transition-transform duration-500">
                     <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 </button>
-            </div>
+            </div
+                <div class="flex justify-center gap-2 mb-6">
+                    <button onclick="filterRecords('today')" id="btnFilterToday" 
+                            class="px-4 py-2 rounded-2xl text-[10px] font-bold transition-all bg-pink-500 text-white shadow-lg shadow-pink-200">
+                        เฉพาะวันนี้
+                    </button>
+                    <button onclick="filterRecords('all')" id="btnFilterAll" 
+                            class="px-4 py-2 rounded-2xl text-[10px] font-bold transition-all bg-white text-gray-400 border border-gray-100">
+                        ทั้งหมด
+                    </button>
+                </div>
+                
+                <div id="recordedContainer" class="space-y-4"></div>
         
             <div id="recordedContainer" class="space-y-4">
                 <div class="text-center py-10 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
@@ -822,147 +834,76 @@
             reader.onerror = (err) => reject(err);
         });
     }
-    async function loadReportData() {
-            const container = document.getElementById('reportContainer');
-            container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div><p class="text-xs mt-2 text-gray-500">กำลังจัดกลุ่มข้อมูล...</p></div>';
+    async function loadRecordedData() {
+            const container = document.getElementById('recordedContainer');
+            // แสดงสถานะกำลังโหลด
+            container.innerHTML = `
+                <div class="text-center py-20">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pink-500 border-t-transparent"></div>
+                    <p class="text-[10px] font-bold text-gray-400 mt-4 uppercase tracking-widest">กำลังดึงข้อมูลวันนี้...</p>
+                </div>
+            `;
         
             try {
-                // 1. ดึงข้อมูล (สมมติว่าใช้ action ชื่อ 'getSurveyReport')
-                const res = await fetch(`${API_URL}?action=getSurveyReport`);
-                const data = await res.json();
+                // เรียก API ดึงข้อมูล (ตรวจสอบว่าใน Code.gs มี action นี้)
+                const response = await fetch(`${API_URL}?action=getTodayRecords`);
+                const data = await response.json();
         
                 if (!data || data.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-400 py-10">ยังไม่มีข้อมูลการบันทึก</p>';
+                    container.innerHTML = `
+                        <div class="text-center py-10 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ยังไม่มีรายการบันทึกในวันนี้</p>
+                        </div>`;
                     return;
                 }
         
-                // 2. จัดกลุ่มข้อมูล (Group by Dept -> Group by Asset Type)
-                const groupedData = data.reduce((acc, item) => {
-                    const dept = item.DEPT_NAME || "ไม่ระบุหน่วยงาน";
-                    const type = item.ASSET_TYPE_NAME || "อื่นๆ";
-                    
-                    if (!acc[dept]) acc[dept] = {};
-                    if (!acc[dept][type]) acc[dept][type] = [];
-                    
-                    acc[dept][type].push(item);
+                // จัดกลุ่มข้อมูลตามหน่วยงาน (Department)
+                const grouped = data.reduce((acc, item) => {
+                    const dept = item.department || "ไม่ระบุหน่วยงาน";
+                    if (!acc[dept]) acc[dept] = [];
+                    acc[dept].push(item);
                     return acc;
                 }, {});
         
-                // 3. Render UI
-                container.innerHTML = '';
-                
-                for (const [deptName, types] of Object.entries(groupedData)) {
+                container.innerHTML = ''; // ล้างค่าเดิม
+        
+                for (const [dept, items] of Object.entries(grouped)) {
                     const deptCard = document.createElement('div');
-                    deptCard.className = "bg-white rounded-[2rem] border border-pink-100 shadow-sm overflow-hidden mb-4";
+                    deptCard.className = "bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-4";
                     
-                    let typeHtml = '';
-                    for (const [typeName, items] of Object.entries(types)) {
-                        typeHtml += `
-                            <div class="px-5 py-3 border-t border-gray-50">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-[11px] font-bold text-pink-400 uppercase tracking-wide">${typeName}</span>
-                                    <span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded-full">${items.length} รายการ</span>
-                                </div>
-                                <div class="space-y-2">
-                                    ${items.map(i => `
-                                        <div class="flex justify-between items-start text-xs border-l-2 border-pink-200 pl-3 py-1">
-                                            <div>
-                                                <p class="font-bold text-gray-700">${i.AssetName}</p>
-                                                <p class="text-[10px] text-gray-400">${i.Asset_ID}</p>
-                                            </div>
-                                            <span class="text-[10px] text-gray-300 whitespace-nowrap">${i.Timestamp.split(' ')[0]}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-        
                     deptCard.innerHTML = `
-                        <div class="p-5 bg-gradient-to-r from-pink-500 to-pink-400">
-                            <div class="flex items-center gap-2 text-white">
-                                <i data-lucide="building-2" class="w-4 h-4"></i>
-                                <h3 class="font-bold text-sm">${deptName}</h3>
+                        <div class="p-5 bg-gradient-to-r from-pink-500 to-rose-400 flex justify-between items-center text-white">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="building" class="w-4 h-4"></i>
+                                <h3 class="font-bold text-sm">${dept}</h3>
                             </div>
+                            <button onclick='printDeptSummary("${dept}", ${JSON.stringify(items).replace(/'/g, "&apos;")})' 
+                                    class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95">
+                                <i data-lucide="printer" class="w-3 h-3"></i> พิมพ์รวม (${items.length})
+                            </button>
                         </div>
-                        <div>${typeHtml}</div>
-                    `;
-                    
-                    container.appendChild(deptCard);
-                }
-        
-                lucide.createIcons();
-        
-            } catch (e) {
-                console.error(e);
-                container.innerHTML = '<p class="text-center text-red-400 py-10">เกิดข้อผิดพลาดในการโหลดรายงาน</p>';
-            }
-        }
-       // ฟังก์ชันดึงข้อมูลมาจัดกลุ่มแสดงผล
-async function loadRecordedData() {
-    const container = document.getElementById('recordedContainer');
-    container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div></div>';
-
-    try {
-        // ดึงข้อมูลจากฐานข้อมูล (GAS)
-        const response = await fetch(`${API_URL}?action=getTodayRecords`); 
-        const data = await response.json();
-
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs font-bold">ไม่พบรายการบันทึกของวันนี้</div>';
-            return;
-        }
-
-        // --- 1. จัดกลุ่มข้อมูล (Group by Dept -> Group by Type) ---
-        const grouped = data.reduce((acc, item) => {
-            const dept = item.department || "ไม่ระบุหน่วยงาน";
-            const type = item.asset_type || "ทั่วไป";
-            if (!acc[dept]) acc[dept] = {};
-            if (!acc[dept][type]) acc[dept][type] = [];
-            acc[dept][type].push(item);
-            return acc;
-        }, {});
-
-        // --- 2. สร้าง UI ---
-        container.innerHTML = '';
-        for (const [dept, types] of Object.entries(grouped)) {
-            let deptHtml = `
-                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6">
-                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
-                        <div class="flex items-center gap-3 text-white">
-                            <i data-lucide="building" class="w-5 h-5"></i>
-                            <h3 class="font-bold text-sm">${dept}</h3>
-                        </div>
-                    </div>
-                    <div class="p-2 space-y-2">`;
-
-            for (const [type, items] of Object.entries(types)) {
-                deptHtml += `
-                    <div class="p-3">
-                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${type}</p>
-                        <div class="space-y-2">
-                            ${items.map(item => `
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                                    <div class="overflow-hidden">
-                                        <p class="text-xs font-bold text-gray-800 truncate">${item.asset_name}</p>
-                                        <p class="text-[10px] text-gray-400 font-mono">${item.asset_id}</p>
+                        <div class="p-4 space-y-2">
+                            ${items.map(i => `
+                                <div class="flex justify-between items-center text-xs p-3 bg-gray-50 rounded-xl border border-gray-100/50">
+                                    <div class="flex flex-col">
+                                        <span class="text-gray-700 font-bold">${i.asset_name}</span>
+                                        <span class="text-[9px] text-gray-400 font-mono">${i.asset_id}</span>
                                     </div>
-                                    <button onclick='showReceipt(${JSON.stringify(item)})' class="flex-shrink-0 ml-2 p-3 bg-white text-gray-400 rounded-xl hover:text-pink-500 shadow-sm">
-                                        <i data-lucide="printer" class="w-4 h-4"></i>
-                                    </button>
+                                    <div class="text-right">
+                                        <span class="text-[9px] px-2 py-1 bg-white rounded-lg text-pink-500 font-bold border border-pink-100">สำเร็จ</span>
+                                    </div>
                                 </div>
                             `).join('')}
                         </div>
-                    </div>`;
+                    `;
+                    container.appendChild(deptCard);
+                }
+                lucide.createIcons(); // อัปเดตไอคอน
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<p class="text-center py-10 text-red-400 text-xs">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             }
-            deptHtml += `</div></div>`;
-            container.insertAdjacentHTML('beforeend', deptHtml);
         }
-        lucide.createIcons();
-    } catch (error) {
-        container.innerHTML = '<div class="text-center py-10 text-red-400 text-xs">ไม่สามารถโหลดข้อมูลได้</div>';
-    }
-}
 
 // ฟังก์ชันแสดงสลิปเพื่อเตรียมพิมพ์
         function showReceipt(item) {
@@ -1000,6 +941,47 @@ async function loadRecordedData() {
                 btnSurvey.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all text-gray-400";
                 loadRecordedData(); // โหลดข้อมูลเมื่อสลับมาหน้าสรุป
             }
+        }
+       function printDeptSummary(deptName, items) {
+            const detail = document.getElementById('receiptDetail');
+            
+            let itemsHtml = items.map((i, index) => `
+                <tr class="border-b border-dotted border-gray-100">
+                    <td class="py-2 text-gray-400">${index + 1}.</td>
+                    <td class="py-2 font-bold">${i.asset_name}</td>
+                    <td class="py-2 text-right font-mono">${i.asset_id.split('-').pop()}</td>
+                </tr>
+            `).join('');
+        
+            detail.innerHTML = `
+                <div class="text-center mb-4 pb-2 border-b-2 border-gray-800">
+                    <p class="font-bold text-sm uppercase">Summary Report</p>
+                    <p class="text-xs font-bold text-pink-600">${deptName}</p>
+                </div>
+                <table class="w-full mb-4">
+                    <thead>
+                        <tr class="text-[9px] text-gray-400 uppercase border-b border-gray-200">
+                            <th class="text-left py-1">No.</th>
+                            <th class="text-left py-1">Asset Name</th>
+                            <th class="text-right py-1">ID (Last)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
+                </table>
+                <div class="pt-2 border-t border-dashed border-gray-300 text-[9px] space-y-1">
+                    <div class="flex justify-between"><span>Total Items:</span><span class="font-bold">${items.length}</span></div>
+                    <div class="flex justify-between"><span>Date:</span><span>${new Date().toLocaleDateString('th-TH')}</span></div>
+                    <div class="flex justify-between"><span>Time:</span><span>${new Date().toLocaleTimeString('th-TH')}</span></div>
+                </div>
+                <div class="mt-6 text-center">
+                    <div class="w-24 h-1 bg-gray-100 mx-auto mb-1"></div>
+                    <p class="text-[8px] text-gray-300 italic">IT Udon Hospital</p>
+                </div>
+            `;
+            
+            document.getElementById('receiptModal').classList.remove('hidden');
         }
 
     async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); closeModal('scannerModal'); }
