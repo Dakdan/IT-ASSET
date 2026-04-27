@@ -145,6 +145,39 @@
 
             <div id="resultsArea" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pb-10"></div>
         </section>
+        <section id="recordedListSection" class="mt-12 space-y-6 max-w-4xl mx-auto pb-24">
+            <div class="flex items-center justify-between px-2">
+                <h2 class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <i data-lucide="clipboard-check" class="w-4 h-4 text-pink-500"></i> รายการที่บันทึกแล้ววันนี้
+                </h2>
+                <button onclick="loadRecordedData()" class="p-2 bg-pink-50 text-pink-500 rounded-full active:rotate-180 transition-transform duration-500">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
+            </div>
+        
+            <div id="recordedContainer" class="space-y-4">
+                <div class="text-center py-10 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">กดรีเฟรชเพื่อดูรายการ</p>
+                </div>
+            </div>
+        </section>
+        
+        <div id="receiptModal" class="fixed inset-0 z-[120] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+            <div class="bg-white rounded-[2.5rem] p-8 w-full max-w-sm text-center shadow-2xl relative overflow-hidden">
+                <div id="receiptContent">
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-12 h-12 mx-auto mb-4 object-contain">
+                    <h4 class="text-lg font-bold text-gray-800 mb-1">Audit Slip</h4>
+                    <div id="receiptDetail" class="text-left text-xs space-y-2 py-4 border-t border-b border-dashed border-gray-100 my-4">
+                        </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 no-print">
+                    <button onclick="closeModal('receiptModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold text-xs">ปิด</button>
+                    <button onclick="window.print()" class="py-4 bg-gray-900 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2">
+                        <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์
+                    </button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <div id="auditFormModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end modal-wrapper">
@@ -947,6 +980,166 @@
             reader.onerror = (err) => reject(err);
         });
     }
+    async function loadReportData() {
+            const container = document.getElementById('reportContainer');
+            container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div><p class="text-xs mt-2 text-gray-500">กำลังจัดกลุ่มข้อมูล...</p></div>';
+        
+            try {
+                // 1. ดึงข้อมูล (สมมติว่าใช้ action ชื่อ 'getSurveyReport')
+                const res = await fetch(`${API_URL}?action=getSurveyReport`);
+                const data = await res.json();
+        
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-400 py-10">ยังไม่มีข้อมูลการบันทึก</p>';
+                    return;
+                }
+        
+                // 2. จัดกลุ่มข้อมูล (Group by Dept -> Group by Asset Type)
+                const groupedData = data.reduce((acc, item) => {
+                    const dept = item.DEPT_NAME || "ไม่ระบุหน่วยงาน";
+                    const type = item.ASSET_TYPE_NAME || "อื่นๆ";
+                    
+                    if (!acc[dept]) acc[dept] = {};
+                    if (!acc[dept][type]) acc[dept][type] = [];
+                    
+                    acc[dept][type].push(item);
+                    return acc;
+                }, {});
+        
+                // 3. Render UI
+                container.innerHTML = '';
+                
+                for (const [deptName, types] of Object.entries(groupedData)) {
+                    const deptCard = document.createElement('div');
+                    deptCard.className = "bg-white rounded-[2rem] border border-pink-100 shadow-sm overflow-hidden mb-4";
+                    
+                    let typeHtml = '';
+                    for (const [typeName, items] of Object.entries(types)) {
+                        typeHtml += `
+                            <div class="px-5 py-3 border-t border-gray-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-[11px] font-bold text-pink-400 uppercase tracking-wide">${typeName}</span>
+                                    <span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded-full">${items.length} รายการ</span>
+                                </div>
+                                <div class="space-y-2">
+                                    ${items.map(i => `
+                                        <div class="flex justify-between items-start text-xs border-l-2 border-pink-200 pl-3 py-1">
+                                            <div>
+                                                <p class="font-bold text-gray-700">${i.AssetName}</p>
+                                                <p class="text-[10px] text-gray-400">${i.Asset_ID}</p>
+                                            </div>
+                                            <span class="text-[10px] text-gray-300 whitespace-nowrap">${i.Timestamp.split(' ')[0]}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+        
+                    deptCard.innerHTML = `
+                        <div class="p-5 bg-gradient-to-r from-pink-500 to-pink-400">
+                            <div class="flex items-center gap-2 text-white">
+                                <i data-lucide="building-2" class="w-4 h-4"></i>
+                                <h3 class="font-bold text-sm">${deptName}</h3>
+                            </div>
+                        </div>
+                        <div>${typeHtml}</div>
+                    `;
+                    
+                    container.appendChild(deptCard);
+                }
+        
+                lucide.createIcons();
+        
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<p class="text-center text-red-400 py-10">เกิดข้อผิดพลาดในการโหลดรายงาน</p>';
+            }
+        }
+       // ฟังก์ชันดึงข้อมูลมาจัดกลุ่มแสดงผล
+async function loadRecordedData() {
+    const container = document.getElementById('recordedContainer');
+    container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div></div>';
+
+    try {
+        // ดึงข้อมูลจากฐานข้อมูล (GAS)
+        const response = await fetch(`${API_URL}?action=getTodayRecords`); 
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs font-bold">ไม่พบรายการบันทึกของวันนี้</div>';
+            return;
+        }
+
+        // --- 1. จัดกลุ่มข้อมูล (Group by Dept -> Group by Type) ---
+        const grouped = data.reduce((acc, item) => {
+            const dept = item.department || "ไม่ระบุหน่วยงาน";
+            const type = item.asset_type || "ทั่วไป";
+            if (!acc[dept]) acc[dept] = {};
+            if (!acc[dept][type]) acc[dept][type] = [];
+            acc[dept][type].push(item);
+            return acc;
+        }, {});
+
+        // --- 2. สร้าง UI ---
+        container.innerHTML = '';
+        for (const [dept, types] of Object.entries(grouped)) {
+            let deptHtml = `
+                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6">
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
+                        <div class="flex items-center gap-3 text-white">
+                            <i data-lucide="building" class="w-5 h-5"></i>
+                            <h3 class="font-bold text-sm">${dept}</h3>
+                        </div>
+                    </div>
+                    <div class="p-2 space-y-2">`;
+
+            for (const [type, items] of Object.entries(types)) {
+                deptHtml += `
+                    <div class="p-3">
+                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${type}</p>
+                        <div class="space-y-2">
+                            ${items.map(item => `
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                                    <div class="overflow-hidden">
+                                        <p class="text-xs font-bold text-gray-800 truncate">${item.asset_name}</p>
+                                        <p class="text-[10px] text-gray-400 font-mono">${item.asset_id}</p>
+                                    </div>
+                                    <button onclick='showReceipt(${JSON.stringify(item)})' class="flex-shrink-0 ml-2 p-3 bg-white text-gray-400 rounded-xl hover:text-pink-500 shadow-sm">
+                                        <i data-lucide="printer" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`;
+            }
+            deptHtml += `</div></div>`;
+            container.insertAdjacentHTML('beforeend', deptHtml);
+        }
+        lucide.createIcons();
+    } catch (error) {
+        container.innerHTML = '<div class="text-center py-10 text-red-400 text-xs">ไม่สามารถโหลดข้อมูลได้</div>';
+    }
+}
+
+// ฟังก์ชันแสดงสลิปเพื่อเตรียมพิมพ์
+function showReceipt(item) {
+    const detail = document.getElementById('receiptDetail');
+    detail.innerHTML = `
+        <div class="space-y-1">
+            <p><b>รหัส:</b> ${item.asset_id}</p>
+            <p><b>รายการ:</b> ${item.asset_name}</p>
+            <p><b>หน่วยงาน:</b> ${item.department}</p>
+            <p><b>ผู้ตรวจสอบ:</b> ${item.auditor_name || '-'}</p>
+            <p><b>วันที่:</b> ${new Date().toLocaleString('th-TH')}</p>
+        </div>
+        <div class="mt-4 pt-4 border-t border-dashed border-gray-200 text-center text-[9px] text-gray-400">
+            รพ.อุดรธานี - IT Asset Survey
+        </div>
+    `;
+    document.getElementById('receiptModal').classList.remove('hidden');
+    lucide.createIcons();
+}
 
     async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); closeModal('scannerModal'); }
     function showProcess(m) { document.getElementById('processMessage').innerText = m; document.getElementById('processOverlay').classList.remove('hidden'); }
