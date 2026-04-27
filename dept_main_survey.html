@@ -382,7 +382,6 @@
     function renderDashboard() {
         const area = document.getElementById('contentArea');
         const search = (document.getElementById('searchInput')?.value || "").toLowerCase().trim();
-        
         const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
         const filteredDepts = state.depts.filter(d => 
             activeDeptIds.includes(String(d.DEP_ID).trim()) && 
@@ -506,22 +505,27 @@
             </div>`).join('');
 
         const modal = document.getElementById('modalDept');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
+        if(modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
     }
 
-    // --- 4. REPORT SYSTEM (FILTER & PREVIEW) ---
+    // --- 4. REPORT SYSTEM ---
     function openReportModal() {
-        document.getElementById('modalReport').classList.remove('hidden');
-        document.getElementById('modalReport').classList.add('flex');
-        populateFilterOptions();
-        updateReportPreview();
+        const m = document.getElementById('modalReport');
+        if(m) {
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            populateFilterOptions();
+            updateReportPreview();
+        }
     }
 
     function populateFilterOptions() {
         const bSelect = document.getElementById('fBuilding');
-        if (!state.depts || state.depts.length === 0) return;
+        if (!bSelect || !state.depts || state.depts.length === 0) return;
         const buildings = [...new Set(state.depts.map(d => d.BUILDING).filter(Boolean))].sort();
         bSelect.innerHTML = '<option value="">ทั้งหมด</option>' + buildings.map(b => `<option value="${b}">${b}</option>`).join('');
     }
@@ -530,9 +534,9 @@
         const bVal = document.getElementById('fBuilding').value;
         const fSelect = document.getElementById('fFloor');
         const dSelect = document.getElementById('fDept');
-        fSelect.innerHTML = '<option value="">ทั้งหมด</option>';
-        dSelect.innerHTML = '<option value="">ทั้งหมด</option>';
-        if (bVal) {
+        if(fSelect) fSelect.innerHTML = '<option value="">ทั้งหมด</option>';
+        if(dSelect) dSelect.innerHTML = '<option value="">ทั้งหมด</option>';
+        if (bVal && fSelect) {
             const floors = [...new Set(state.depts.filter(d => d.BUILDING === bVal).map(d => d.FL).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
             floors.forEach(f => fSelect.innerHTML += `<option value="${f}">${f}</option>`);
         }
@@ -543,8 +547,8 @@
         const bVal = document.getElementById('fBuilding').value;
         const fVal = document.getElementById('fFloor').value;
         const dSelect = document.getElementById('fDept');
-        dSelect.innerHTML = '<option value="">ทั้งหมด</option>';
-        if (bVal && fVal) {
+        if(dSelect) dSelect.innerHTML = '<option value="">ทั้งหมด</option>';
+        if (bVal && fVal && dSelect) {
             const depts = state.depts.filter(d => d.BUILDING === bVal && String(d.FL) === fVal).sort((a,b) => a.DEPNAME.localeCompare(b.DEPNAME));
             depts.forEach(d => dSelect.innerHTML += `<option value="${d.DEPNAME}">${d.DEPNAME}</option>`);
         }
@@ -552,9 +556,9 @@
     }
 
     function updateReportPreview() {
-        const bVal = document.getElementById('fBuilding').value;
-        const fVal = document.getElementById('fFloor').value;
-        const dVal = document.getElementById('fDept').value;
+        const bVal = document.getElementById('fBuilding')?.value;
+        const fVal = document.getElementById('fFloor')?.value;
+        const dVal = document.getElementById('fDept')?.value;
 
         const filteredLogs = state.logs.filter(l => {
             const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
@@ -563,6 +567,7 @@
         });
 
         const preview = document.getElementById('reportPreviewContent');
+        if(!preview) return;
         if (filteredLogs.length === 0) {
             preview.innerHTML = `<div class="py-20 text-center text-slate-300 font-bold">ไม่พบข้อมูลรายงาน</div>`;
             return;
@@ -584,53 +589,58 @@
     }
 
     // --- 5. EXPORT & UTILS ---
-  function printReport() {
+// --- 5. EXPORT & UTILS ---
+    function printReport() {
         const previewContent = document.getElementById('reportPreviewContent');
-        if (!previewContent) return alert("ไม่พบองค์ประกอบ reportPreviewContent");
+        if (!previewContent) return alert("ไม่พบข้อมูลที่จะพิมพ์");
         
-        const printContent = previewContent.innerHTML;
         const printWindow = window.open('', '_blank');
-        
-        // ตรวจสอบว่าเปิด Window สำเร็จหรือไม่ (ป้องกัน Popup Blocker)
-        if (!printWindow) return alert("กรุณาอนุญาตให้เปิด Popup เพื่อพิมพ์รายงาน");
+        if (!printWindow) return alert("กรุณาอนุญาต Pop-up ใน Browser");
 
-        printWindow.document.write(`
+        // ใช้ Template Literal แบบระมัดระวัง
+        const content = previewContent.innerHTML;
+        const html = `
             <html>
                 <head>
                     <title>Print Report</title>
                     <script src="https://cdn.tailwindcss.com"></script>
-                    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+                    <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
                     <style>
                         body { font-family: 'Sarabun', sans-serif; padding: 40px; }
-                        table { width: 100%; border-collapse: collapse; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
                         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f8fafc; }
                     </style>
                 </head>
                 <body>
                     <h1 class="text-xl font-bold mb-4">รายงานตรวจสอบครุภัณฑ์ - รพ.อุดรธานี</h1>
-                    ${printContent}
+                    ${content}
                 </body>
-            </html>
-        `);
+            </html>`;
+
+        printWindow.document.write(html);
         printWindow.document.close();
+        
+        // รอให้ Tailwind โหลด 1 วินาทีแล้วค่อยสั่งพิมพ์
         setTimeout(() => {
+            printWindow.focus();
             printWindow.print();
             printWindow.close();
-        }, 800);
+        }, 1000);
     }
 
     function exportToExcel() {
         const table = document.querySelector("#reportPreviewContent table");
-        if (!table) return alert("ไม่มีข้อมูลสำหรับการ Export");
-
-        let csv = ["\uFEFF"]; 
+        if (!table) return alert("ไม่พบตารางข้อมูล");
+        
+        let csv = ["\uFEFF"]; // BOM สำหรับภาษาไทย
         const rows = table.querySelectorAll("tr");
         
         rows.forEach(tr => {
             let row = [];
             tr.querySelectorAll("th, td").forEach(td => {
-                let data = td.innerText.replace(/"/g, '""').trim();
-                row.push(`"${data}"`);
+                let text = td.innerText.replace(/"/g, '""').trim();
+                row.push(`"${text}"`);
             });
             csv.push(row.join(","));
         });
@@ -639,18 +649,20 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `Report_${new Date().getTime()}.csv`;
+        link.download = `Report_IT_${new Date().getTime()}.csv`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }
 
-    // --- 6. MODAL CONTROL (แบบ Safe Check) ---
-    function closeReportModal() { 
+    // --- 6. MODAL CONTROL ---
+    function closeReportModal() {
         const m = document.getElementById('modalReport');
-        if (m) m.classList.add('hidden'); 
+        if (m) m.classList.add('hidden');
     }
 
-    function closeModal() { 
+    function closeModal() {
         const m = document.getElementById('modalDept');
         if (m) {
             m.classList.add('hidden');
@@ -658,18 +670,22 @@
         }
     }
 
-    // --- 7. EVENT LISTENERS ---
-    window.onload = (e) => {
-        if (typeof init === "function") init();
-    };
+    // --- 7. EVENT LISTENERS (แก้ไขใหม่ให้ปลอดภัย) ---
+    // ใช้ addEventListener แทน window.onload เพื่อไม่ให้ทับกับโค้ดส่วนอื่น
+    window.addEventListener('load', function() {
+        if (typeof init === "function") {
+            init();
+        } else {
+            console.warn("Function init() not found. Make sure it's defined above.");
+        }
+    });
 
-    // ปรับปรุง window.onclick ให้ไม่ Error แม้ไม่มี Modal ในหน้านั้น
-    window.onclick = function(event) {
+    window.addEventListener('click', function(event) {
         const mReport = document.getElementById('modalReport');
         const mDept = document.getElementById('modalDept');
-        if (mReport && event.target === mReport) closeReportModal();
-        if (mDept && event.target === mDept) closeModal();
-};
+        if (event.target === mReport) closeReportModal();
+        if (event.target === mDept) closeModal();
+    });
 </script>
 </body>
 </html>
