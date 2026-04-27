@@ -28,23 +28,7 @@
 </head>
 <body class="bg-slate-50">
     <div id="root"></div>
-    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 p-4">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-10 h-10 object-contain">
-                <div>
-                    <h1 class="text-lg font-bold text-gray-800 leading-tight">ระบบตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
-                    <p id="statusIndicator" class="text-[10px] font-bold text-pink-500 tracking-widest uppercase">Connecting...</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <span id="auditCount" class="bg-pink-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">0</span>
-                <button onclick="updateQueueUI(); document.getElementById('queueModal').classList.remove('hidden')" class="p-2 bg-gray-50 rounded-xl text-gray-400">
-                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </div>
-    </header>
+   
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
         
