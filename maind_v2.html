@@ -131,211 +131,220 @@
             <p>&copy; ทีม ช่างไอที กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์ โรงพยาบาลอุดรธานี</p>
             <p>ระบบตรวจสอบครุภัฑณฑ์ IT </p>
         </footer>
-    <script>
-        const APP_URL = "https://script.goohttps://script.google.com/macros/s/AKfycbzwrBGrPJlrjybVaSifTkLvIT4HurtVZZSbZTo3OrUyaEwXOgfDId1TmuMyg5-yX_DbBQ/exec";
-        let state = { logs: [], depts: [], assetTypes: [] };
+<script>
+    const APP_URL = "https://script.google.com/macros/s/AKfycbzwrBGrPJlrjybVaSifTkLvIT4HurtVZZSbZTo3OrUyaEwXOgfDId1TmuMyg5-yX_DbBQ/exec";
+    let state = { logs: [], depts: [] };
 
-        async function init() {
-            try {
-                const ts = new Date().getTime();
-                const [logRes, deptRes, initRes] = await Promise.all([
-                    fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
-                    fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
-                    fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
-                ]);
-                state.logs = logRes || [];
-                state.depts = deptRes || [];
-                state.assetTypes = initRes.assetTypes || [];
-                document.getElementById('lastUpdate').innerText = `อัปเดตข้อมูลเมื่อ: ${new Date().toLocaleString('th-TH')}`;
-                renderDashboard();
-            } catch (err) {
-                console.error(err);
-                document.getElementById('contentArea').innerHTML = `<p class="text-center py-20 text-red-500 font-bold">ไม่สามารถเชื่อมต่อ Google Sheets ได้</p>`;
-            }
-        }
-
-        function getTypeName(typeId) {
-            const t = state.assetTypes.find(x => String(x.id).trim() === String(typeId).trim());
-            return t ? t.name : 'อุปกรณ์อื่นๆ';
-        }
-
-        function renderDashboard() {
-            const contentArea = document.getElementById('contentArea');
-            const search = document.getElementById('searchInput').value.toLowerCase();
+    // 1. เริ่มต้นดึงข้อมูล Master (Log ทั้งหมด และ รายชื่อแผนก)
+    async function init() {
+        try {
+            const ts = new Date().getTime();
+            // ดึง Log ทั้งหมดเพื่อมาทำ Dashboard และดึงรายชื่อแผนกเพื่อ Mapping สถานที่
+            const [logRes, deptRes] = await Promise.all([
+                fetch(`${APP_URL}?action=getAuditLogs&DEP_ID=ALL&_=${ts}`).then(r => r.json()), // ปรับ API ให้รองรับ ALL หรือดึงก้อนใหญ่
+                fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json())
+            ]);
             
-            const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
-            let filteredDepts = state.depts.filter(d => 
-                activeDeptIds.includes(String(d.DEP_ID).trim()) &&
-                (d.DEPNAME.toLowerCase().includes(search) || d.BUILDING.toLowerCase().includes(search))
-            );
+            state.logs = logRes || [];
+            state.depts = deptRes || [];
+            
+            renderDashboard();
+            document.getElementById('lastUpdate').innerText = `อัปเดตล่าสุด: ${new Date().toLocaleString('th-TH')}`;
+        } catch (err) {
+            console.error(err);
+            document.getElementById('contentArea').innerHTML = `<div class="text-center py-20 text-red-500 font-bold">ไม่สามารถเชื่อมต่อข้อมูลได้: ${err.message}</div>`;
+        }
+    }
 
-            document.getElementById('statDepts').innerText = filteredDepts.length;
-            document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
+    // 2. แสดงผลหน้า Dashboard แยกตามอาคารและหน่วยงาน
+    function renderDashboard() {
+        const contentArea = document.getElementById('contentArea');
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        
+        // กรองเฉพาะหน่วยงานที่มีใน Logs (ตรวจแล้ว) และตรงกับคำค้นหา
+        const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
+        let filteredDepts = state.depts.filter(d => 
+            activeDeptIds.includes(String(d.DEP_ID).trim()) &&
+            (d.DEPNAME.toLowerCase().includes(search) || d.BUILDING.toLowerCase().includes(search))
+        );
 
-            const groupedData = {};
-            filteredDepts.forEach(d => {
-                const b = d.BUILDING || "ไม่ระบุอาคาร";
-                const f = `ชั้น ${d.FL || '?'}`;
-                if (!groupedData[b]) groupedData[b] = {};
-                if (!groupedData[b][f]) groupedData[b][f] = [];
-                groupedData[b][f].push(d);
-            });
+        document.getElementById('statDepts').innerText = filteredDepts.length;
+        document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
 
-            const buildings = Object.keys(groupedData).sort();
-            if (buildings.length === 0) {
-                contentArea.innerHTML = `<div class="text-center py-20 text-slate-400 italic">ไม่พบข้อมูลหน่วยงานที่ตรวจสอบ</div>`;
-                return;
-            }
+        // จัดกลุ่มตามอาคาร -> ชั้น
+        const groupedData = {};
+        filteredDepts.forEach(d => {
+            const b = d.BUILDING || "ไม่ระบุอาคาร";
+            const f = `ชั้น ${d.FL || '?'}`;
+            if (!groupedData[b]) groupedData[b] = {};
+            if (!groupedData[b][f]) groupedData[b][f] = [];
+            groupedData[b][f].push(d);
+        });
 
-            let html = "";
-            buildings.forEach(building => {
+        let html = "";
+        const buildings = Object.keys(groupedData).sort();
+        
+        if (buildings.length === 0) {
+            contentArea.innerHTML = `<div class="text-center py-20 text-slate-400 italic">ไม่พบข้อมูลที่ตรงกับการค้นหา</div>`;
+            return;
+        }
+
+        buildings.forEach(building => {
+            html += `
+            <section class="mb-12">
+                <div class="sticky top-[72px] bg-slate-50/80 backdrop-blur-sm z-40 py-4 mb-6 border-b border-slate-200">
+                    <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
+                </div>`;
+            
+            const floors = Object.keys(groupedData[building]).sort();
+            floors.forEach(floor => {
                 html += `
-                <section>
-                    <div class="sticky-header py-4 mb-8 border-b border-slate-200">
-                        <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
-                    </div>`;
-                
-                const floors = Object.keys(groupedData[building]).sort();
-                floors.forEach(floor => {
-                    html += `
-                        <div class="mb-12">
-                            <h4 class="text-xs font-black text-pink-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 ml-2">
-                                ${floor} <span class="flex-1 h-px bg-pink-100"></span>
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                ${groupedData[building][floor].map(dept => {
-                                    const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                                    const typeCounts = {};
-                                    deptLogs.forEach(l => {
-                                        const tName = getTypeName(l.Asset_Type_ID);
-                                        typeCounts[tName] = (typeCounts[tName] || 0) + 1;
-                                    });
-                                    const deptImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${dept.DEPNAME.substring(0,1)}`;
-                                    return `
-                                    <div onclick="showDetail('${dept.DEP_ID}')" 
-                                         class="bg-white rounded-[2.5rem] p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
-                                        <div class="flex items-start gap-5 mb-6">
-                                            <div class="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                                                <img src="${deptImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,1)}'">
-                                            </div>
-                                            <div class="min-w-0 flex-1 pt-1">
-                                                <h5 class="text-base font-bold text-slate-800 leading-tight mb-1 group-hover:text-pink-600 transition-colors line-clamp-2">${dept.DEPNAME}</h5>
-                                                <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">${building} &bull; ${floor}</p>
-                                            </div>
-                                        </div>
-                                        <div class="bg-slate-50/50 rounded-2xl p-4 mb-6 border border-slate-100/50">
-                                            <div class="flex flex-wrap gap-y-2">
-                                                ${Object.entries(typeCounts).map(([name, count]) => `
-                                                    <div class="w-1/2 flex items-center justify-between pr-4 border-r border-slate-100 last:border-r-0">
-                                                        <span class="text-[10px] text-slate-500 truncate mr-1">${name}</span>
-                                                        <span class="text-[11px] font-bold text-slate-800">${count}</span>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between bg-slate-800 rounded-3xl px-6 py-4">
-                                            <div class="flex flex-col">
-                                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">รวมทั้งหมด</span>
-                                                <span class="text-xl font-black text-white leading-none">${deptLogs.length} <small class="text-[11px] font-bold text-slate-400 ml-1">เครื่อง</small></span>
-                                            </div>
-                                            <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:bg-pink-500 transition-all">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                            </div>
-                                        </div>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-                        </div>`;
-                });
-                html += `</section>`;
-            });
-            contentArea.innerHTML = html;
-        }
+                <div class="mb-8">
+                    <h4 class="text-xs font-black text-pink-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 ml-2">
+                        ${floor} <span class="flex-1 h-px bg-pink-100"></span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${groupedData[building][floor].map(dept => {
+                            const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
+                            
+                            // นับจำนวนแยกประเภทอุปกรณ์
+                            const typeCounts = {};
+                            deptLogs.forEach(l => {
+                                const tName = l.Asset_Type || "อื่นๆ";
+                                typeCounts[tName] = (typeCounts[tName] || 0) + 1;
+                            });
 
-        function showDetail(deptId) {
-            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
-            const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
+                            const deptImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w200` : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${dept.DEPNAME.substring(0,1)}`;
+
+                            return `
+                            <div onclick="showDetail('${dept.DEP_ID}')" 
+                                 class="bg-white rounded-[2.5rem] p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
+                                <div class="flex items-start gap-5 mb-6">
+                                    <div class="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                                        <img src="${deptImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100?text=IMG'">
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1">
+                                        <h5 class="text-base font-bold text-slate-800 leading-tight mb-1 group-hover:text-pink-600 transition-colors line-clamp-2">${dept.DEPNAME}</h5>
+                                        <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">${building} • ${floor}</p>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50/50 rounded-2xl p-4 mb-6 border border-slate-100/50">
+                                    <div class="flex flex-wrap gap-y-2">
+                                        ${Object.entries(typeCounts).slice(0, 4).map(([name, count]) => `
+                                            <div class="w-1/2 flex items-center justify-between pr-4 border-r border-slate-100 last:border-r-0">
+                                                <span class="text-[10px] text-slate-500 truncate mr-1">${name}</span>
+                                                <span class="text-[11px] font-bold text-slate-800">${count}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between bg-slate-800 rounded-3xl px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">ตรวจพบแล้ว</span>
+                                        <span class="text-xl font-black text-white leading-none">${deptLogs.length} <small class="text-[11px] font-bold text-slate-400 ml-1">เครื่อง</small></span>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:bg-pink-500 transition-all">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+            });
+            html += `</section>`;
+        });
+        contentArea.innerHTML = html;
+    }
+
+    // 3. แสดงรายละเอียดรายหน่วยงาน (ดึงข้อมูล Full Data จาก API)
+    async function showDetail(deptId) {
+        try {
+            const container = document.getElementById('mAssetGroupContainer');
+            container.innerHTML = `<div class="text-center py-20 text-slate-400 animate-pulse font-medium">กำลังโหลดข้อมูลเชิงลึก...</div>`;
+            document.getElementById('modalDept').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            const ts = new Date().getTime();
+            // เรียก action getFullData เพื่อเอา DB_Detail และ Asset_Photo
+            const res = await fetch(`${APP_URL}?action=getFullData&DEP_ID=${deptId}&_=${ts}`).then(r => r.json());
             
-            document.getElementById('mDeptName').innerText = dept.DEPNAME;
+            const { department, auditLogs } = res;
+
+            // Header Modal
+            document.getElementById('mDeptName').innerText = department.DEPNAME;
             document.getElementById('mDeptLoc').innerHTML = `
                 <svg class="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-                ${dept.BUILDING} ชั้น ${dept.FL}
+                ${department.BUILDING} ชั้น ${department.FL}
             `;
-            
             const pic = document.getElementById('mDeptPic').querySelector('img');
-            pic.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,2)}`;
+            pic.src = department.photoUrl || `https://placehold.co/100x100?text=${department.DEPNAME.substring(0,1)}`;
 
+            // จัดกลุ่มอุปกรณ์ตามประเภท
             const groupedAssets = {};
-            deptLogs.forEach(a => {
-                const typeName = getTypeName(a.Asset_Type_ID);
+            auditLogs.forEach(a => {
+                const typeName = a.Asset_Type || "อุปกรณ์อื่นๆ";
                 if (!groupedAssets[typeName]) groupedAssets[typeName] = [];
                 groupedAssets[typeName].push(a);
             });
 
-            const container = document.getElementById('mAssetGroupContainer');
-            
+            // รายการอุปกรณ์
             container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
-            <div class="mb-10">
-                <div class="flex items-center gap-4 mb-6">
-                    <span class="w-2 h-6 bg-gradient-to-b from-pink-500 to-pink-300 rounded-full"></span>
-                    <h4 class="text-lg font-black text-slate-800 tracking-tight">${cat} <span class="text-pink-500 ml-1">(${groupedAssets[cat].length})</span></h4>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    ${groupedAssets[cat].map(a => `
-                        <div class="flex flex-col sm:flex-row gap-6 p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
-                            <div class="w-full sm:w-32 h-32 bg-slate-50 rounded-3xl border border-slate-100 flex-shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
-                                <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/' + a.ASSET_IMG_DB : 'https://placehold.co/300x300/f1f5f9/94a3b8?text=NO+IMAGE'}" 
-                                     class="w-full h-full object-cover" 
-                                     onerror="this.src='https://placehold.co/300x300/f1f5f9/94a3b8?text=ERROR'">
-                            </div>
-        
-                            <div class="flex-1 min-w-0 flex flex-col">
+                <div>
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="w-2 h-6 pink-gradient rounded-full"></span>
+                        <h4 class="text-lg font-black text-slate-800 tracking-tight">${cat} <span class="text-pink-500 ml-1">(${groupedAssets[cat].length})</span></h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${groupedAssets[cat].map(a => `
+                            <div class="flex flex-col sm:flex-row gap-6 p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden">
+                                <div class="w-full sm:w-32 h-32 bg-slate-50 rounded-3xl border border-slate-100 flex-shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
+                                    <img src="${a.Asset_Photo || 'https://placehold.co/300x300/f8fafc/cbd5e1?text=NO+IMAGE'}" 
+                                         class="w-full h-full object-cover" 
+                                         onerror="this.src='https://placehold.co/300x300/f8fafc/cbd5e1?text=IMG+ERROR'">
+                                </div>
+                                <div class="flex-1 min-w-0 flex flex-col">
                                     <div class="flex items-center justify-between gap-2 mb-4">
                                         <div class="flex-1 bg-slate-800 text-white rounded-xl px-4 py-2 shadow-lg">
-                                            <span class="block text-[8px] uppercase text-slate-400 font-black">รหัสครุภัณฑ์</span>
-                                            <span class="text-sm font-black">${a.AssetID || '-'}</span>
+                                            <span class="block text-[8px] uppercase text-slate-400 font-black">รหัส NOID</span>
+                                            <span class="text-sm font-black truncate block">${a.NOID}</span>
                                         </div>
                                         <div class="bg-pink-500 text-white rounded-xl px-4 py-2 shadow-lg text-center min-w-[85px]">
                                             <span class="block text-[8px] uppercase text-pink-200 font-black">อายุการใช้งาน</span>
-                                            <span class="text-[11px] font-black leading-none">${a.AgeInfo}</span>
+                                            <span class="text-[11px] font-black leading-none">${a.DB_Age}</span>
                                         </div>
                                     </div>
-                                    
-                                    <h5 class="text-base font-black text-slate-800 mb-1 leading-tight line-clamp-2">
-                                        ${a.specdetail}
-                                    </h5>       
-                                     
-                                <div class="flex items-center gap-3 mb-4 text-[11px] font-bold">
-                                    <span class="text-slate-400">S/N:</span>
-                                    <span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg">${a.Serial || 'N/A'}</span>
-                                    <span class="text-slate-200">|</span>
-                                    <span class="text-slate-400">NOID:</span>
-                                    <span class="text-slate-500">${a.NOID || '-'}</span>
-                                </div>
-        
-                                <div class="bg-slate-50/80 p-4 rounded-2xl border border-dashed border-slate-200 flex-1">
-                                     <p class="spec-text text-slate-500 font-medium leading-relaxed text-[11px]">
-                                        ${a.FullDescription}
-                                     </p>
+                                    <h5 class="text-base font-black text-slate-800 mb-1 leading-tight line-clamp-2">${a.DB_Detail}</h5>        
+                                    <div class="flex items-center gap-3 mb-4 text-[11px] font-bold">
+                                        <span class="text-pink-600 bg-pink-50 px-2 py-0.5 rounded-lg">${a.Priority}</span>
+                                        <span class="text-slate-400">กะ: ${a.Shift_Work}</span>
+                                    </div>
+                                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-dashed border-slate-200 flex-1">
+                                         <p class="spec-text text-slate-500 font-medium leading-relaxed text-[10px]">
+                                            <b class="text-slate-700">สถานะ:</b> ${a.CoStatus}<br>
+                                            <b class="text-slate-700">ประเภท:</b> ${a.RegStatus} (${a.Note2 || '-'})
+                                         </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        `).join('')}
+                    </div>
                 </div>
-            </div>
-        `).join('');
-            
-            document.getElementById('modalDept').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+            `).join('');
 
-        function closeModal() { 
-            document.getElementById('modalDept').classList.add('hidden'); 
-            document.body.style.overflow = 'auto';
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = `<div class="text-center py-20 text-red-500 font-bold">เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน</div>`;
         }
+    }
 
-        window.onclick = function(e) { if (e.target == document.getElementById('modalDept')) closeModal(); }
-        window.onload = init;
-    </script>
+    function closeModal() { 
+        document.getElementById('modalDept').classList.add('hidden'); 
+        document.body.style.overflow = 'auto';
+    }
+
+    window.onclick = function(e) { if (e.target == document.getElementById('modalDept')) closeModal(); }
+    window.onload = init;
+</script>
 </body>
 </html>
