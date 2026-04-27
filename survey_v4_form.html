@@ -665,91 +665,82 @@
     }
 
           // --- แก้ไขฟังก์ชัน submitAudit ให้เหลือเพียงอันเดียว และครอบคลุมทุกเงื่อนไข ---
-    async function submitAudit(type, event) {
-        if (event) event.preventDefault();
-    
-        try {
-            const isExisting = type === 'EXISTING';
-            const suffix = isExisting ? '' : 'nr_';
-    
-            // 1. ดึงค่าพื้นฐานจาก UI
-            const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
-            const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
-            const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
-    
-            // 2. ดึงค่า Shift_Work (แปลง เช้า, บ่าย, ดึก เป็น 1, 2, 3)
-            const selectedShifts = document.querySelectorAll('input[name="nr_shift_work"]:checked');
-            const shiftValues = Array.from(selectedShifts).map(input => {
-                if (input.value === "เช้า") return "1";
-                if (input.value === "บ่าย") return "2";
-                if (input.value === "ดึก") return "3";
-                return "";
-            }).filter(Boolean).join(",");
-    
-            // ตรวจสอบความครบถ้วน
-            if (!typeId || !priorityId) {
-                return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
-            }
-            if (!currentBase64Image) {
-                return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
-            }
-    
-            // 3. เตรียม Data Object (แก้ไขการประกาศตัวแปรที่ซ้ำซ้อน)
-            let data = {
-                Asset_Type_ID: typeId,
-                PIORITY_ID: priorityId,
-                ImageData: currentBase64Image,
-                gps: currentGps || "",
-                Note1: note1Value,
-                Note2: [
-                    document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
-                    document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
-                ].filter(Boolean).join(", "),
-                Shift_Work: shiftValues || "-", // ส่งเป็น "1,2" หรือ "-" หากไม่ได้เลือก
-                CoStatus: "COS-001",
-                MAStatus: "-",
-                Detail_ID: "-"
-            };
-                
-            if (isExisting) {
-                if (!currentAsset || !currentAsset.AssetID) {
-                    return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
-                }
-                // ดึงค่าจาก currentAsset ที่ได้จากการ Search มาใส่ให้ครบ
-                data.NoID = currentAsset.NoID || "-"; 
-                data.Asset_ID = currentAsset.AssetID;
-                data.AssetName = currentAsset.FullDescription;
-                data.Serial = currentAsset.Serial || "-";
-                
-                closeModal('auditFormModal');
-            } else {
-                const brandDetail = document.getElementById('nr_brand_detail')?.value.trim();
-                if (!brandDetail) return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
-                
-                data.NoID = "NON-" + Date.now();
-                data.Asset_ID = "NR-" + Date.now();
-                data.AssetName = "[นอกทะเบียน] " + brandDetail;
-                data.Serial = "-";
-                
-                closeModal('nonRegisterModal');
-            }
-    
-            // 3. บันทึกเข้า Queue (ใช้ชื่อเดิม auditQueue)
-            auditQueue.unshift({ 
-                DisplayName: data.AssetName, 
-                data: data 
-            });
-            
-            updateQueueUI();
-            
-            // ล้างค่าเตรียมรายการถัดไป
-            currentBase64Image = ""; 
-    
-        } catch (err) {
-            console.error("Critical Error:", err);
-            alert("เกิดข้อผิดพลาด: " + err.message);
+   async function submitAudit(type, event) {
+    if (event) event.preventDefault();
+
+    try {
+        const isExisting = type === 'EXISTING';
+        const suffix = isExisting ? '' : 'nr_';
+
+        // 1. ดึงค่าพื้นฐานจาก UI
+        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
+        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
+        const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
+
+        // 2. ดึงค่า Shift_Work
+        const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
+        const shiftValues = Array.from(selectedShifts).map(input => {
+            if (input.value === "เช้า") return "1";
+            if (input.value === "บ่าย") return "2";
+            if (input.value === "ดึก") return "3";
+            return "";
+        }).filter(Boolean).join(",");
+
+        // ตรวจสอบความครบถ้วน
+        if (!typeId || !priorityId) {
+            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
         }
+        if (!currentBase64Image) {
+            return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
+        }
+
+        // 3. เตรียม Data Object สำหรับรายการเดียว
+        let itemData = {
+            Asset_Type_ID: typeId,
+            PIORITY_ID: priorityId,
+            ImageData: currentBase64Image,
+            gps: currentGps || "",
+            Note1: note1Value,
+            Note2: [
+                document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
+                document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
+            ].filter(Boolean).join(", "),
+            Shift_Work: shiftValues || "-",
+            CoStatus: "COS-001",
+            MAStatus: "-",
+            Detail_ID: "-"
+        };
+
+        if (isExisting) {
+            if (!currentAsset || !currentAsset.AssetID) {
+                return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
+            }
+            itemData.NoID = currentAsset.NoID || "-";
+            itemData.Asset_ID = currentAsset.AssetID;
+            itemData.AssetName = currentAsset.FullDescription;
+            itemData.Serial = currentAsset.Serial || "-";
+            closeModal('auditFormModal');
+        } else {
+            const brandDetail = document.getElementById('nr_brand_detail')?.value.trim();
+            if (!brandDetail) return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
+
+            itemData.NoID = "NON-" + Date.now();
+            itemData.Asset_ID = "NR-" + Date.now();
+            itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
+            itemData.Serial = "-";
+            closeModal('nonRegisterModal');
+        }
+
+        // 4. บันทึกทันที (ไม่ผ่าน Queue)
+        // ในระบบบันทึกทันที เราจะถือว่า signature เป็นค่าว่างหรือดึงจากที่เคยเซ็นไว้ (ถ้ามี)
+        // หากต้องการให้เซ็นชื่อก่อนบันทึกทุกครั้ง ให้เปลี่ยนไปเปิด ConfirmModal แทน
+        await executeSave(itemData);
+
+    } catch (err) {
+        console.error("Critical Error:", err);
+        alert("เกิดข้อผิดพลาด: " + err.message);
     }
+}
     function updateQueueUI() {
         document.getElementById('auditCount').innerText = auditQueue.length;
         const list = document.getElementById('auditListItems');
@@ -789,35 +780,42 @@
         executeSave(signaturePad.toDataURL());
     }
 
-    async function executeSave(signatureData) {
-        const savedItems = [...auditQueue]; 
+    async function executeSave(singleItemData) {
         showProcess("กำลังส่งข้อมูล...");
         try {
             const res = await fetch(API_URL, {
                 method: 'POST',
                 body: JSON.stringify({
-                    action: 'saveBulkSurvey',
+                    action: 'saveBulkSurvey', // ใช้ action เดิมได้แต่ส่ง items แค่ 1 ตัว
                     data: {
-                        items: auditQueue.map(i => i.data),
+                        items: [singleItemData], // ใส่ Array ครอบไว้เพื่อให้ฝั่ง Server ไม่ต้องแก้โค้ด
                         deptId: document.getElementById('selectedDeptId').value,
-                        signature: signatureData,
-                        
-                    
-                        // ✅ เพิ่ม 3 ตัวนี้
+                        signature: "", // หรือ signaturePad.toDataURL() หากมีการเซ็นชื่อไว้ก่อนหน้า
                         gps: currentGps,
                         activityId: "Ac-2569",
                         IT_User_Mail: "user@mail.com"
                     }
                 })
             });
+            
             const result = await res.json();
             if (result.status === 'success') {
-                closeModal('confirmModal');
-                closeModal('queueModal');
-                renderSuccessSlip(result.actionId, savedItems);
+                // ส่งข้อมูลสำเร็จแล้วแสดง Slip สำหรับรายการนั้น
+                renderSuccessSlip(result.actionId, [{ 
+                    DisplayName: singleItemData.AssetName, 
+                    data: singleItemData 
+                }]);
+                
+                // ล้างค่ารูปภาพ
+                currentBase64Image = ""; 
+            } else {
+                alert("บันทึกไม่สำเร็จ: " + result.message);
             }
-        } catch (e) { alert("Error: " + e.message); }
-        finally { hideProcess(); }
+        } catch (e) { 
+            alert("Error: " + e.message); 
+        } finally { 
+            hideProcess(); 
+        }
     }
     // ฟังก์ชันแสดง Alert แบบ Overlay
     function showAlert(title, message) {
