@@ -219,9 +219,8 @@
                             });
                             // ✅ แก้ไขให้ดึงจาก photoUrl ที่ Backend ประมวลผลมาให้แล้ว
                             // เปลี่ยนจากเช็ค photoUrl เป็นเช็ค PIC_ID (ที่มาจากหัวตารางตรงๆ)
-                            const deptImg = dept.PIC_ID 
-                                ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w300` 
-                                : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${encodeURIComponent((dept.DEPNAME || 'D').substring(0,1))}`;
+                            const dImg = d.PIC_ID ? `https://drive.google.com/thumbnail?id=${d.PIC_ID}&sz=w600` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+
 
                             return `
                             <div onclick="showDetail('${dept.DEP_ID}')" 
