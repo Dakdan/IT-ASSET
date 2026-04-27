@@ -834,72 +834,66 @@
             reader.onerror = (err) => reject(err);
         });
     }
-    async function loadRecordedData() {
+    asyasync function loadRecordedData() {
             const container = document.getElementById('recordedContainer');
-            // แสดงสถานะกำลังโหลด
             container.innerHTML = `
                 <div class="text-center py-20">
-                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pink-500 border-t-transparent"></div>
-                    <p class="text-[10px] font-bold text-gray-400 mt-4 uppercase tracking-widest">กำลังดึงข้อมูลวันนี้...</p>
-                </div>
-            `;
+                    <div class="spinner mx-auto mb-4"></div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">กำลังดึงข้อมูลหน่วยงาน...</p>
+                </div>`;
         
             try {
-                // เรียก API ดึงข้อมูล (ตรวจสอบว่าใน Code.gs มี action นี้)
                 const response = await fetch(`${API_URL}?action=getTodayRecords`);
                 const data = await response.json();
         
                 if (!data || data.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center py-10 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ยังไม่มีรายการบันทึกในวันนี้</p>
-                        </div>`;
+                    container.innerHTML = '<div class="text-center py-10 bg-white rounded-[2.5rem] border border-dashed border-gray-200"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ยังไม่มีรายการบันทึกในวันนี้</p></div>';
                     return;
                 }
         
-                // จัดกลุ่มข้อมูลตามหน่วยงาน (Department)
+                // จัดกลุ่มข้อมูลตาม DEPT_NAME
                 const grouped = data.reduce((acc, item) => {
-                        const dept = item.DEPT_ID || "ไม่ระบุหน่วยงาน"; // แก้จาก item.department เป็น item.DEPT_ID
-                        if (!acc[dept]) acc[dept] = [];
-                        acc[dept].push(item);
-                        return acc;
-                    }, {});
+                    const dept = item.DEPT_NAME || "หน่วยงานทั่วไป";
+                    if (!acc[dept]) acc[dept] = [];
+                    acc[dept].push(item);
+                    return acc;
+                }, {});
         
-                container.innerHTML = ''; // ล้างค่าเดิม
-        
-                for (const [dept, items] of Object.entries(grouped)) {
+                container.innerHTML = '';
+                for (const [deptName, items] of Object.entries(grouped)) {
+                    // ดึง DEPT_ID จากรายการแรกในกลุ่ม
+                    const deptId = items[0].DEPT_ID || ""; 
+                    
                     const deptCard = document.createElement('div');
-                    deptCard.className = "bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-4";
+                    deptCard.className = "bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6";
                     
                     deptCard.innerHTML = `
                         <div class="p-5 bg-gradient-to-r from-pink-500 to-rose-400 flex justify-between items-center text-white">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="building" class="w-4 h-4"></i>
-                                <h3 class="font-bold text-sm">${dept}</h3>
+                                <h3 class="font-bold text-sm">${deptName}</h3>
                             </div>
-                            <button onclick='printDeptSummary("${dept}", ${JSON.stringify(items).replace(/'/g, "&apos;")})' 
+                            <button onclick='renderSuccessSlip("REP-${new Date().getTime()}", ${JSON.stringify(items).replace(/'/g, "&apos;")}, "${deptName}", "${deptId}")' 
                                     class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95">
-                                <i data-lucide="printer" class="w-3 h-3"></i> พิมพ์รวม (${items.length})
+                                <i data-lucide="printer" class="w-3 h-3"></i> พิมพ์เฉพาะหน่วยงาน (${items.length})
                             </button>
                         </div>
-                   // เปลี่ยนส่วน items.map ในฟังก์ชัน loadRecordedData
-                ${items.map(i => `
-                    <div class="flex justify-between items-center text-xs p-3 bg-gray-50 rounded-xl border border-gray-100/50 mb-2">
-                        <div class="flex flex-col">
-                            <span class="text-gray-700 font-bold">${i.FullDescription || i.AssetName || 'ไม่มีชื่อ'}</span>
-                            <span class="text-[9px] text-gray-400 font-mono">${i.AssetID || i.Asset_ID || '-'}</span>
+                        <div class="p-4 space-y-2">
+                            ${items.map(i => `
+                                <div class="flex justify-between items-center text-[10px] p-3 bg-gray-50 rounded-xl">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-gray-700">${i.AssetName || i.FullDescription}</span>
+                                        <span class="text-[9px] text-gray-400 font-mono">${i.Asset_ID || i.AssetID}</span>
+                                    </div>
+                                    <span class="text-pink-500 font-bold">OK</span>
+                                </div>
+                            `).join('')}
                         </div>
-                        <div class="text-right">
-                            <span class="text-[9px] px-2 py-1 bg-white rounded-lg text-pink-500 font-bold border border-pink-100">สำเร็จ</span>
-                        </div>
-                    </div>
-                `).join('')}
                     `;
                     container.appendChild(deptCard);
                 }
-                lucide.createIcons(); // อัปเดตไอคอน
+                lucide.createIcons();
             } catch (e) {
-                console.error(e);
                 container.innerHTML = '<p class="text-center py-10 text-red-400 text-xs">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             }
         }
@@ -987,6 +981,69 @@
             `;
             
             document.getElementById('receiptModal').classList.remove('hidden');
+        }
+       function renderSuccessSlip(actionId, items, manualDeptName = null, manualDeptId = null) {
+    // กำหนดค่าหน่วยงาน (ถ้ามาจากการพิมพ์รวมใน Today Records จะใช้ค่า manual)
+            const deptId = manualDeptId || document.getElementById('selectedDeptId').value;
+            const deptName = manualDeptName || document.getElementById('displayDeptName').innerText;
+            
+            // ชี้ไปที่ Element ที่ใช้แสดงผล (ปรับให้ตรงกับ Modal ของคุณ)
+            const detailBox = document.getElementById('successDetailList') || document.getElementById('receiptDetail');
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('th-TH', { 
+                year: 'numeric', month: 'short', day: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+            });
+        
+            // สร้าง URL และ QR Code สำหรับหน่วยงานนั้นๆ
+            const targetUrl = DEPT_VIEW_URL + encodeURIComponent(deptId);
+            const qrImageUrl = `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8&chld=M|0`;
+        
+            // รายการครุภัณฑ์แบบ Flex List
+            const itemsListHtml = items.map(i => {
+                const name = i.AssetName || i.FullDescription || i.DisplayName || "ไม่ระบุชื่อ";
+                const id = i.Asset_ID || i.AssetID || (i.data ? i.data.Asset_ID : "-");
+                return `
+                    <div class="flex justify-between items-start py-1.5 border-b border-gray-50 last:border-0">
+                        <span class="text-[9px] text-gray-600 flex-grow pr-2 leading-tight">${name}</span>
+                        <span class="text-[9px] font-bold text-gray-400 font-mono whitespace-nowrap">${id}</span>
+                    </div>
+                `;
+            }).join('');
+        
+            detailBox.innerHTML = `
+                <div class="flex flex-col items-center mb-6 pt-2">
+                    <div class="p-3 bg-white border border-gray-100 rounded-[2rem] shadow-sm mb-3">
+                        <img src="${qrImageUrl}" class="w-32 h-32" crossorigin="anonymous">
+                    </div>
+                    <p class="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em] mb-1">SCAN TO VIEW ASSETS</p>
+                    <p class="text-[7px] text-blue-400 truncate max-w-[180px] opacity-60">${targetUrl}</p>
+                </div>
+                
+                <div class="space-y-2 border-t border-dashed border-gray-200 pt-4 mb-4">
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">วันที่:</span> <span class="text-[10px] font-bold text-gray-700">${dateStr} น.</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">หน่วยงาน:</span> <span class="text-[10px] font-bold text-pink-500">${deptName}</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">ACTION ID:</span> <span class="text-[10px] font-bold text-gray-700">${actionId}</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">จำนวน:</span> <span class="text-[10px] font-bold text-gray-700">${items.length} รายการ</span></div>
+                </div>
+        
+                <div class="bg-gray-50/50 p-4 rounded-3xl border border-gray-50">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 border-b border-gray-200 pb-1">รายการตรวจสอบ</p>
+                    <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                        ${itemsListHtml}
+                    </div>
+                </div>
+        
+                <div class="mt-6 pt-4 border-t border-dashed border-gray-100 text-center">
+                    <p class="text-[9px] text-gray-300">ฝ่ายสารสนเทศ รพ.อุดรธานี</p>
+                    <p class="text-[8px] text-gray-200 uppercase mt-1">Audit Success Report</p>
+                </div>
+            `;
+        
+            // เปิด Modal (ใช้ ID ตามที่คุณตั้งไว้ใน HTML)
+            const modalId = document.getElementById('successModal') ? 'successModal' : 'receiptModal';
+            document.getElementById(modalId).classList.remove('hidden');
+            lucide.createIcons();
         }
 
     async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); closeModal('scannerModal'); }
