@@ -351,14 +351,14 @@
         { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-600', badge: 'bg-rose-500', cardBorder: 'border-rose-100' }
     ];
 
+    // --- 1. INITIALIZATION ---
     async function init() {
         const icon = document.getElementById('refreshIcon');
-        icon?.classList.add('animate-spin');
+        if(icon) icon.classList.add('animate-spin');
         try {
             const ts = new Date().getTime();
-            // ดึงข้อมูลจาก API ตามที่ Backend กำหนด
             const [logRes, deptRes, initRes] = await Promise.all([
-                fetch(`${APP_URL}?action=getAuditLogs&DEP_ID=ALL&_=${ts}`).then(r => r.json()), // ปรับให้ดึง Logs ทั้งหมด
+                fetch(`${APP_URL}?action=getAuditLogs&DEP_ID=ALL&_=${ts}`).then(r => r.json()),
                 fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
                 fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
             ]);
@@ -371,26 +371,26 @@
             document.getElementById('lastUpdate').innerText = `SYNCED AT: ${new Date().toLocaleTimeString('th-TH')}`;
             renderDashboard();
         } catch (err) { 
-            console.error(err); 
+            console.error("Init Error:", err); 
             document.getElementById('lastUpdate').innerText = "SYNC FAILED";
         } finally { 
-            icon?.classList.remove('animate-spin'); 
+            if(icon) icon.classList.remove('animate-spin'); 
         }
     }
 
+    // --- 2. DASHBOARD RENDERING ---
     function renderDashboard() {
         const area = document.getElementById('contentArea');
         const search = (document.getElementById('searchInput')?.value || "").toLowerCase().trim();
         
-        // กรองแผนกตามคำค้นหา (โชว์เฉพาะแผนกที่มีการ Scan แล้วตาม Logic เดิมของคุณ)
         const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
         const filteredDepts = state.depts.filter(d => 
             activeDeptIds.includes(String(d.DEP_ID).trim()) && 
             (d.DEPNAME.toLowerCase().includes(search) || (d.BUILDING && d.BUILDING.toLowerCase().includes(search)))
         );
 
-        document.getElementById('statDepts').innerText = filteredDepts.length;
-        document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
+        if(document.getElementById('statDepts')) document.getElementById('statDepts').innerText = filteredDepts.length;
+        if(document.getElementById('statAssets')) document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
 
         renderGridMode(area, filteredDepts);
     }
@@ -430,8 +430,7 @@
                 
                 structure[building][floor].forEach(dept => {
                     const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                    // แก้ไขการดึงรูปแผนกจาก PIC_ID
-                    const dImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w300` : `https://placehold.co/200x200/fff1f2/ec4899?text=${encodeURIComponent(dept.DEPNAME.charAt(0))}`;
+                    const dImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w300` : `https://placehold.co/200?text=DEPT`;
                     
                     html += `<div class="soft-card p-5 cursor-pointer bg-white" onclick="showDetail('${dept.DEP_ID}')">
                         <div class="flex items-center gap-4 mb-4">
@@ -456,6 +455,7 @@
         container.innerHTML = html || `<div class="p-20 text-center text-slate-300 font-bold">ไม่พบข้อมูล</div>`;
     }
 
+    // --- 3. DETAIL MODAL ---
     function showDetail(deptId) {
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
@@ -483,7 +483,6 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     ${byType[type].map(a => {
-                        // แก้ไข mapping รูปและตัวแปรให้ตรงกับ Backend
                         const aImg = a.Asset_Photo ? a.Asset_Photo : 'https://placehold.co/400x400/f8fafc/cbd5e1?text=NO+IMAGE';
                         return `
                         <div class="soft-card bg-white p-5 flex flex-col sm:flex-row gap-6 border border-pink-50">
@@ -506,34 +505,61 @@
                 </div>
             </div>`).join('');
 
-        document.getElementById('modalDept').classList.remove('hidden');
-        document.getElementById('modalDept').classList.add('flex');
+        const modal = document.getElementById('modalDept');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
     }
+
+    // --- 4. REPORT SYSTEM (FILTER & PREVIEW) ---
+    function openReportModal() {
+        document.getElementById('modalReport').classList.remove('hidden');
+        document.getElementById('modalReport').classList.add('flex');
+        populateFilterOptions();
+        updateReportPreview();
+    }
+
     function populateFilterOptions() {
         const bSelect = document.getElementById('fBuilding');
         if (!state.depts || state.depts.length === 0) return;
-        
-        // ดึงรายชื่อตึกที่ไม่ซ้ำกัน
         const buildings = [...new Set(state.depts.map(d => d.BUILDING).filter(Boolean))].sort();
-        bSelect.innerHTML = '<option value="">ทั้งหมด</option>' + 
-            buildings.map(b => `<option value="${b}">${b}</option>`).join('');
+        bSelect.innerHTML = '<option value="">ทั้งหมด</option>' + buildings.map(b => `<option value="${b}">${b}</option>`).join('');
     }
 
-    // ฟังก์ชันสร้างรายงาน (Report Preview) - ปรับตัวแปรให้ตรงกับ Backend
+    function handleBuildingFilterChange() {
+        const bVal = document.getElementById('fBuilding').value;
+        const fSelect = document.getElementById('fFloor');
+        const dSelect = document.getElementById('fDept');
+        fSelect.innerHTML = '<option value="">ทั้งหมด</option>';
+        dSelect.innerHTML = '<option value="">ทั้งหมด</option>';
+        if (bVal) {
+            const floors = [...new Set(state.depts.filter(d => d.BUILDING === bVal).map(d => d.FL).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
+            floors.forEach(f => fSelect.innerHTML += `<option value="${f}">${f}</option>`);
+        }
+        updateReportPreview();
+    }
+
+    function handleFloorFilterChange() {
+        const bVal = document.getElementById('fBuilding').value;
+        const fVal = document.getElementById('fFloor').value;
+        const dSelect = document.getElementById('fDept');
+        dSelect.innerHTML = '<option value="">ทั้งหมด</option>';
+        if (bVal && fVal) {
+            const depts = state.depts.filter(d => d.BUILDING === bVal && String(d.FL) === fVal).sort((a,b) => a.DEPNAME.localeCompare(b.DEPNAME));
+            depts.forEach(d => dSelect.innerHTML += `<option value="${d.DEPNAME}">${d.DEPNAME}</option>`);
+        }
+        updateReportPreview();
+    }
+
     function updateReportPreview() {
         const bVal = document.getElementById('fBuilding').value;
         const fVal = document.getElementById('fFloor').value;
         const dVal = document.getElementById('fDept').value;
 
-        // กรองข้อมูลตามเงื่อนไขที่เลือก
         const filteredLogs = state.logs.filter(l => {
             const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
             if (!dept) return false;
-            const matchB = !bVal || String(dept.BUILDING) === bVal;
-            const matchF = !fVal || String(dept.FL) === fVal;
-            const matchD = !dVal || String(dept.DEPNAME) === dVal;
-            return matchB && matchF && matchD;
+            return (!bVal || dept.BUILDING === bVal) && (!fVal || String(dept.FL) === fVal) && (!dVal || dept.DEPNAME === dVal);
         });
 
         const preview = document.getElementById('reportPreviewContent');
@@ -542,41 +568,49 @@
             return;
         }
 
-        // สร้างตารางรายงาน
         let html = `<table class="w-full border-collapse">
-            <thead>
-                <tr class="bg-slate-800 text-white text-[11px] uppercase">
-                    <th class="p-3 text-center border">ลำดับ</th>
-                    <th class="p-3 text-left border">รหัสครุภัณฑ์</th>
-                    <th class="p-3 text-left border">รายละเอียด</th>
-                    <th class="p-3 text-center border">อายุ</th>
-                    <th class="p-3 text-center border">ลำดับความสำคัญ</th>
-                </tr>
-            </thead>
-            <tbody>`;
-        
+            <thead><tr class="bg-slate-800 text-white text-[11px] uppercase">
+            <th class="p-3 border">ลำดับ</th><th class="p-3 border">รหัสครุภัณฑ์</th><th class="p-3 border">รายละเอียด</th><th class="p-3 border">อายุ</th><th class="p-3 border">ความสำคัญ</th></tr></thead><tbody>`;
         filteredLogs.forEach((item, index) => {
             html += `<tr class="text-sm border-b hover:bg-slate-50">
-                <td class="p-3 text-center border">${index + 1}</td>
-                <td class="p-3 font-bold border">${item.NOID || '-'}</td>
-                <td class="p-3 border">${item.DB_Detail || '-'}</td>
-                <td class="p-3 text-center border">${item.DB_Age || '-'} ปี</td>
-                <td class="p-3 text-center border">${item.Priority || '-'}</td>
-            </tr>`;
+            <td class="p-3 text-center border">${index+1}</td>
+            <td class="p-3 font-bold border">${item.NOID || '-'}</td>
+            <td class="p-3 border">${item.DB_Detail || '-'}</td>
+            <td class="p-3 text-center border">${item.DB_Age || '-'} ปี</td>
+            <td class="p-3 text-center border">${item.Priority || '-'}</td></tr>`;
         });
-
         html += `</tbody></table>`;
         preview.innerHTML = html;
     }
 
-    // ฟังก์ชันเปิด Modal รายงาน
-    function openReportModal() {
-        document.getElementById('modalReport').classList.remove('hidden');
-        document.getElementById('modalReport').classList.add('flex');
-        populateFilterOptions(); // โหลดรายชื่อตึกเมื่อเปิด Modal
-        updateReportPreview();   // แสดงพรีวิวเบื้องต้น
+    // --- 5. EXPORT & UTILS ---
+    function printReport() {
+        const printContent = document.getElementById('reportPreviewContent').innerHTML;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`<html><head><title>Print Report</title><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:'Sarabun',sans-serif;padding:40px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;}</style></head><body><h1 class="text-xl font-bold mb-4">รายงานตรวจสอบครุภัณฑ์ - รพ.อุดรธานี</h1>${printContent}</body></html>`);
+        printWindow.document.close();
+        setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
     }
+
+    function exportToExcel() {
+        const table = document.querySelector("#reportPreviewContent table");
+        if (!table) return;
+        let csv = ["\uFEFF"];
+        table.querySelectorAll("tr").forEach(tr => {
+            let row = [];
+            tr.querySelectorAll("th, td").forEach(td => row.push(`"${td.innerText.replace(/"/g, '""')}"`));
+            csv.push(row.join(","));
+        });
+        const blob = new Blob([csv.join("\n")], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Report_IT_${new Date().getTime()}.csv`;
+        link.click();
+    }
+
+    function closeReportModal() { document.getElementById('modalReport').classList.add('hidden'); }
     function closeModal() { document.getElementById('modalDept').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+
     window.onload = init;
 </script>
 </body>
