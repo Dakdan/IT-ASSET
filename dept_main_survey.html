@@ -64,10 +64,6 @@
             background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
         }
 
-        .header-gradient {
-            background: linear-gradient(135deg, #f472b6 0%, #db2777 100%);
-        }
-
         .floor-wrapper {
             border-radius: 2rem;
             padding: 2rem;
@@ -90,12 +86,6 @@
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             border-color: var(--pink-main) !important;
-        }
-
-        .soft-card {
-            border: 2px solid #f1f5f9;
-            border-radius: 2rem;
-            transition: all 0.3s ease;
         }
 
         .view-controls {
@@ -158,15 +148,9 @@
             border-bottom-right-radius: 1rem;
         }
 
-        .main-table tr.dept-row:hover td {
-            border-color: #f9a8d4;
-            background: #fffdf9;
-        }
-
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        /* Modal & Print Styles */
         @media print {
             body * { visibility: hidden; }
             #reportPrintArea, #reportPrintArea * { visibility: visible; }
@@ -180,16 +164,34 @@
         .report-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 11px;
         }
         .report-table th, .report-table td {
             border: 1px solid #e2e8f0;
             padding: 8px;
             text-align: left;
         }
-        .report-table th { background: #f8fafc; font-weight: bold; }
+        .report-table th { background: #f8fafc; font-weight: bold; color: #64748b; }
         .row-group-header { background-color: #f1f5f9; font-weight: 800; color: #1e293b; }
-        .row-sub-total { background-color: #f8fafc; font-weight: 700; color: #ec4899; }
+
+        .filter-chip {
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        .filter-chip.active {
+            background: var(--pink-main);
+            color: white;
+            border-color: var(--pink-main);
+            box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.3);
+        }
     </style>
 </head>
 
@@ -219,12 +221,8 @@
                 <i class="fas fa-file-alt"></i> สร้างรายงาน
             </button>
             <div class="view-controls">
-                <button onclick="switchMainView('grid')" id="vGrid" class="view-btn-main active">
-                    <i class="fas fa-th-large"></i>
-                </button>
-                <button onclick="switchMainView('table')" id="vTable" class="view-btn-main">
-                    <i class="fas fa-list"></i>
-                </button>
+                <button onclick="switchMainView('grid')" id="vGrid" class="view-btn-main active"><i class="fas fa-th-large"></i></button>
+                <button onclick="switchMainView('table')" id="vTable" class="view-btn-main"><i class="fas fa-list"></i></button>
             </div>
             <button onclick="init()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-50 rounded-xl transition-all">
                 <i id="refreshIcon" class="fas fa-sync-alt"></i>
@@ -241,294 +239,268 @@
             <p id="lastUpdate" class="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest">กำลังโหลดข้อมูล...</p>
         </div>
         <div class="bg-white p-6 rounded-3xl border-2 border-slate-100 flex items-center gap-5 shadow-sm">
-            <div class="w-12 h-12 bg-pink-50 text-pink-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
-                <i class="fas fa-building"></i>
-            </div>
-            <div>
-                <p id="statDepts" class="text-2xl font-black text-slate-800">-</p>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">หน่วยงานที่พบ</p>
-            </div>
+            <div class="w-12 h-12 bg-pink-50 text-pink-500 rounded-2xl flex items-center justify-center text-xl shadow-sm"><i class="fas fa-hospital"></i></div>
+            <div><p id="statDepts" class="text-2xl font-black text-slate-800">-</p><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">หน่วยงานที่สำรวจ</p></div>
         </div>
         <div class="bg-white p-6 rounded-3xl border-2 border-slate-100 flex items-center gap-5 shadow-sm">
-            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
-                <i class="fas fa-box"></i>
-            </div>
-            <div>
-                <p id="statAssets" class="text-2xl font-black text-slate-800">-</p>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">รายการครุภัณฑ์รวม</p>
-            </div>
+            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-xl shadow-sm"><i class="fas fa-laptop"></i></div>
+            <div><p id="statAssets" class="text-2xl font-black text-slate-800">-</p><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">รายการครุภัณฑ์รวม</p></div>
         </div>
     </div>
     <div id="contentArea" class="space-y-6"></div>
 </main>
 
-<main class="max-w-[1600px] mx-auto p-4 md:p-8">
-        <!-- Stats Summary -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 no-print">
-            <div class="bg-white p-6 rounded-[2rem] border-2 border-slate-100 flex items-center justify-between shadow-sm">
+<!-- Modal: Report -->
+<div id="modalReport" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[300] p-4" onclick="closeReportModal()">
+    <div class="bg-white w-full max-w-6xl max-h-[95vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border-4 border-white" onclick="event.stopPropagation()">
+        <div class="p-6 border-b-2 border-slate-50 bg-slate-50/50">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">หน่วยงานทั้งหมด</p>
-                    <h2 id="statDepts" class="text-4xl font-black text-slate-800">0</h2>
+                    <h3 class="text-xl font-black text-slate-800"><i class="fas fa-print text-pink-500 mr-2"></i> ระบบออกรายงานตรวจสอบ</h3>
                 </div>
-                <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-2xl"><i class="fas fa-hospital"></i></div>
-            </div>
-            <div class="bg-white p-6 rounded-[2rem] border-2 border-slate-100 flex items-center justify-between shadow-sm">
-                <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">รายการรวม</p>
-                    <h2 id="statAssets" class="text-4xl font-black text-slate-800">0</h2>
-                </div>
-                <div class="w-14 h-14 bg-pink-50 text-pink-500 rounded-2xl flex items-center justify-center text-2xl"><i class="fas fa-boxes"></i></div>
-            </div>
-            <div class="bg-white p-6 rounded-[2rem] border-2 border-slate-100 shadow-sm flex flex-col justify-center">
-                <p id="lastUpdate" class="text-[10px] font-black text-slate-400 uppercase mb-2">LOADING...</p>
                 <div class="flex gap-2">
-                    <button id="vGrid" onclick="switchMainView('grid')" class="view-btn active flex-1 py-2 rounded-xl border-2 border-slate-100 text-[10px] font-bold uppercase">Grid</button>
-                    <button id="vTable" onclick="switchMainView('table')" class="view-btn flex-1 py-2 rounded-xl border-2 border-slate-100 text-[10px] font-bold uppercase">Table</button>
+                    <button onclick="exportToExcel()" class="px-5 py-2.5 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-all shadow-lg flex items-center gap-2">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </button>
+                    <button onclick="printReport()" class="px-5 py-2.5 bg-pink-500 text-white rounded-xl font-bold text-sm hover:bg-pink-600 transition-all shadow-lg flex items-center gap-2">
+                        <i class="fas fa-print"></i> พิมพ์ / PDF
+                    </button>
+                    <button onclick="closeReportModal()" class="w-10 h-10 rounded-full bg-white border-2 border-slate-100 text-slate-400 hover:text-pink-500 flex items-center justify-center transition-all">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <select id="fBuilding" onchange="handleBuildingFilterChange()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-600 outline-none focus:border-pink-500 cursor-pointer"><option value="">ทุกตึก</option></select>
+                <select id="fFloor" onchange="handleFloorFilterChange()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-600 outline-none focus:border-pink-500 cursor-pointer"><option value="">ทุกชั้น</option></select>
+                <select id="fDept" onchange="updateReportPreview()" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-600 outline-none focus:border-pink-500 cursor-pointer"><option value="">ทุกหน่วยงาน</option></select>
+            </div>
+
+            <div class="mt-4 space-y-3 p-4 bg-white rounded-2xl border border-slate-200 shadow-inner">
+                <div class="flex flex-wrap items-center gap-3"><span class="text-[10px] font-black text-slate-400 uppercase">Priority:</span><div id="rPriorityFilters" class="flex flex-wrap gap-1.5"></div></div>
+                <div class="flex flex-wrap items-center gap-3"><span class="text-[10px] font-black text-slate-400 uppercase">ประเภท:</span><div id="rTypeFilters" class="flex flex-wrap gap-1.5"></div></div>
+                <div class="flex flex-wrap items-center gap-3"><span class="text-[10px] font-black text-slate-400 uppercase">อายุ:</span><div id="rAgeFilters" class="flex flex-wrap gap-1.5">
+                    <button onclick="toggleReportAdvancedFilter(this, 'age', 'low')" class="filter-chip">&lt; 4 ปี</button>
+                    <button onclick="toggleReportAdvancedFilter(this, 'age', 'mid')" class="filter-chip">4-6 ปี</button>
+                    <button onclick="toggleReportAdvancedFilter(this, 'age', 'high')" class="filter-chip">6-9 ปี</button>
+                    <button onclick="toggleReportAdvancedFilter(this, 'age', 'old')" class="filter-chip">&gt; 10 ปี</button>
+                </div></div>
             </div>
         </div>
 
-        <div id="contentArea" class="space-y-12"></div>
-    </main>
-
-    <!-- Report & Filter Modal (Everything stays here) -->
-    <div id="modalReport" class="fixed inset-0 z-50 hidden bg-slate-900/90 backdrop-blur-md items-center justify-center p-0 md:p-8">
-        <div class="bg-white w-full max-w-6xl h-full md:h-[95vh] md:rounded-[3rem] shadow-2xl flex flex-col overflow-hidden">
-            <!-- Modal Header with All Filters -->
-            <div class="p-6 border-b flex flex-col gap-5 bg-slate-50 no-print">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 pink-gradient rounded-xl flex items-center justify-center text-white"><i class="fas fa-file-invoice"></i></div>
-                        <h3 class="font-black text-slate-800 uppercase tracking-tight">รายงานและตัวกรองข้อมูล</h3>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="exportToExcel()" class="px-5 py-2.5 bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-200">Excel</button>
-                        <button onclick="printReport()" class="px-5 py-2.5 bg-pink-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-pink-200">Print</button>
-                        <button onclick="closeReportModal()" class="px-5 py-2.5 bg-slate-200 text-slate-600 rounded-xl text-xs font-bold">Close</button>
-                    </div>
-                </div>
-
-                <!-- ALL FILTERS AREA (Moved back to Modal) -->
-                <div class="space-y-3">
-                    <div class="flex flex-wrap items-center gap-3 p-4 bg-white rounded-2xl border border-slate-200">
-                        <span class="text-[10px] font-black text-slate-400 uppercase pr-2 border-r">สถานที่:</span>
-                        <select id="fBuilding" onchange="handleBuildingChange()" class="bg-slate-50 rounded-lg px-3 py-1.5 text-xs font-bold outline-none border-none"></select>
-                        <select id="fFloor" onchange="handleFloorChange()" class="bg-slate-50 rounded-lg px-3 py-1.5 text-xs font-bold outline-none border-none"></select>
-                        <select id="fDept" onchange="updateReportPreview()" class="bg-slate-50 rounded-lg px-3 py-1.5 text-xs font-bold outline-none border-none"></select>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3 p-4 bg-white rounded-2xl border border-slate-200">
-                        <span class="text-[10px] font-black text-slate-400 uppercase pr-2 border-r">คุณสมบัติ:</span>
-                        <div id="rPriorityFilters" class="flex flex-wrap gap-1.5"></div>
-                        <div class="w-[1px] h-4 bg-slate-100"></div>
-                        <div id="rAssetTypeFilters" class="flex flex-wrap gap-1.5"></div>
-                        <div class="w-[1px] h-4 bg-slate-100"></div>
-                        <div id="rAgeFilters" class="flex flex-wrap gap-1.5">
-                            <button onclick="toggleFilter(this, 'age', 'low')" class="multi-select-chip px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500 uppercase">&lt; 4 ปี</button>
-                            <button onclick="toggleFilter(this, 'age', 'mid')" class="multi-select-chip px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500 uppercase">4-6 ปี</button>
-                            <button onclick="toggleFilter(this, 'age', 'high')" class="multi-select-chip px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500 uppercase">6-9 ปี</button>
-                            <button onclick="toggleFilter(this, 'age', 'old')" class="multi-select-chip px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500 uppercase">&gt; 10 ปี</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="reportPrintArea" class="flex-1 overflow-y-auto p-12 bg-white">
-                <div id="reportPreviewContent"></div>
-            </div>
+        <div class="flex-1 overflow-y-auto p-8 bg-white custom-scroll" id="reportPrintArea">
+            <div id="reportPreviewContent"></div>
         </div>
     </div>
+</div>
 
 <!-- Modal: Dept Detail -->
 <div id="modalDept" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[200] p-4 no-print" onclick="closeModal()">
     <div class="bg-white w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border-4 border-white" onclick="event.stopPropagation()">
         <div class="p-6 md:p-8 border-b-2 border-slate-50 flex flex-col md:flex-row justify-between items-center bg-white sticky top-0 z-10 gap-4">
             <div class="flex items-center gap-6 w-full md:w-auto">
-                <div id="mDeptPic" class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-100 flex-shrink-0 shadow-inner">
-                    <img src="" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=DEPT'">
+                <div id="mDeptPicWrapper" class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-100 flex-shrink-0 shadow-inner">
+                    <img id="mDeptPic" src="" class="w-full h-full object-cover">
                 </div>
                 <div class="min-w-0 flex-1">
                     <h3 id="mDeptName" class="text-xl font-black text-slate-800 truncate"></h3>
                     <div id="mDeptLoc" class="mt-1 text-xs font-bold text-slate-400 uppercase flex items-center gap-2"></div>
                 </div>
             </div>
-            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                <a id="mDeptDetailBtn" href="#" 
-                   class="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-pink-100 text-pink-500 font-bold text-sm hover:bg-pink-50 transition-all">
-                    <i class="fas fa-external-link-alt text-xs"></i> ดูรายละเอียดเพิ่มเติม
-                </a>
-                <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+            <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-times"></i></button>
         </div>
         <div id="mAssetGroupContainer" class="p-8 overflow-y-auto flex-1 bg-slate-50/30 custom-scroll"></div>
     </div>
 </div>
 
- <script>
-        const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
-        let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
-        let mainDisplayMode = 'grid';
-        let filters = { building: '', floor: '', deptName: '', priority: [], assetType: [], age: [] };
+<script>
+    const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
+    let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
+    let mainDisplayMode = 'grid';
+    let advFilters = { priority: [], type: [], age: [] };
 
-        async function init() {
-            const icon = document.getElementById('refreshIcon');
-            icon?.classList.add('animate-spin');
-            try {
-                const ts = new Date().getTime();
-                const [logRes, deptRes, initRes] = await Promise.all([
-                    fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
-                    fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
-                    fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
-                ]);
-                state.logs = Array.isArray(logRes) ? logRes : [];
-                state.depts = Array.isArray(deptRes) ? deptRes : [];
-                state.assetTypes = initRes.assetTypes || [];
-                state.priorities = initRes.priorities || [];
-                document.getElementById('lastUpdate').innerText = `SYNCED: ${new Date().toLocaleTimeString('th-TH')}`;
-                
-                setupModalFilters();
-                renderDashboard();
-            } catch (err) { console.error(err); } finally { icon?.classList.remove('animate-spin'); }
+    const floorColorThemes = [
+        { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600', badge: 'bg-emerald-500', cardBorder: 'border-emerald-100' },
+        { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600', badge: 'bg-blue-500', cardBorder: 'border-blue-100' },
+        { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600', badge: 'bg-amber-500', cardBorder: 'border-amber-100' },
+        { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-600', badge: 'bg-rose-500', cardBorder: 'border-rose-100' }
+    ];
+
+    async function init() {
+        const icon = document.getElementById('refreshIcon');
+        icon?.classList.add('animate-spin');
+        try {
+            const ts = new Date().getTime();
+            const [logRes, deptRes, initRes] = await Promise.all([
+                fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
+                fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
+                fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
+            ]);
+            state.logs = Array.isArray(logRes) ? logRes : [];
+            state.depts = Array.isArray(deptRes) ? deptRes : [];
+            state.assetTypes = initRes.assetTypes || [];
+            state.priorities = initRes.priorities || [];
+            document.getElementById('lastUpdate').innerText = `SYNCED AT: ${new Date().toLocaleTimeString('th-TH')}`;
+            populateFilterOptions();
+            renderDashboard();
+        } catch (err) { console.error(err); } finally { icon?.classList.remove('animate-spin'); }
+    }
+
+    function populateFilterOptions() {
+        const bSelect = document.getElementById('fBuilding');
+        const buildings = [...new Set(state.depts.map(d => d.BUILDING).filter(Boolean))].sort();
+        bSelect.innerHTML = '<option value="">ทุกตึก</option>' + buildings.map(b => `<option value="${b}">${b}</option>`).join('');
+        document.getElementById('rPriorityFilters').innerHTML = state.priorities.map(p => `<button onclick="toggleReportAdvancedFilter(this, 'priority', '${p.id}')" class="filter-chip">${p.name}</button>`).join('');
+        document.getElementById('rTypeFilters').innerHTML = state.assetTypes.map(t => `<button onclick="toggleReportAdvancedFilter(this, 'type', '${t.id}')" class="filter-chip">${t.name}</button>`).join('');
+        handleBuildingFilterChange();
+    }
+
+    function toggleReportAdvancedFilter(btn, category, value) {
+        btn.classList.toggle('active');
+        const idx = advFilters[category].indexOf(value);
+        if (idx > -1) advFilters[category].splice(idx, 1);
+        else advFilters[category].push(value);
+        updateReportPreview();
+    }
+
+    function handleBuildingFilterChange() {
+        const bVal = document.getElementById('fBuilding').value;
+        const fSelect = document.getElementById('fFloor');
+        let avF = !bVal ? [...new Set(state.depts.map(d => d.FL).filter(Boolean))] : [...new Set(state.depts.filter(d => d.BUILDING === bVal).map(d => d.FL).filter(Boolean))];
+        avF.sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric: true}));
+        fSelect.innerHTML = '<option value="">ทุกชั้น</option>' + avF.map(f => `<option value="${f}">${f}</option>`).join('');
+        handleFloorFilterChange();
+    }
+
+    function handleFloorFilterChange() {
+        const bVal = document.getElementById('fBuilding').value;
+        const fVal = document.getElementById('fFloor').value;
+        const dSelect = document.getElementById('fDept');
+        let filtered = state.depts;
+        if (bVal) filtered = filtered.filter(d => d.BUILDING === bVal);
+        if (fVal) filtered = filtered.filter(d => d.FL === fVal);
+        const names = [...new Set(filtered.map(d => d.DEPNAME).filter(Boolean))].sort();
+        dSelect.innerHTML = '<option value="">ทุกหน่วยงาน</option>' + names.map(d => `<option value="${d}">${d}</option>`).join('');
+        updateReportPreview();
+    }
+
+    function checkAgeMatch(ageStr) {
+        if (!ageStr) return false;
+        const years = parseInt(ageStr.match(/(\d+)/)?.[1] || 0);
+        const sel = advFilters.age;
+        if (sel.length === 0) return true;
+        if (sel.includes('low') && years < 4) return true;
+        if (sel.includes('mid') && (years >= 4 && years <= 6)) return true;
+        if (sel.includes('high') && (years >= 7 && years <= 9)) return true;
+        if (sel.includes('old') && years >= 10) return true;
+        return false;
+    }
+
+    function updateReportPreview() {
+        const bVal = document.getElementById('fBuilding').value;
+        const fVal = document.getElementById('fFloor').value;
+        const dVal = document.getElementById('fDept').value;
+        const filteredDepts = state.depts.filter(d => (!bVal || d.BUILDING === bVal) && (!fVal || d.FL === fVal) && (!dVal || d.DEPNAME === dVal));
+        const dIds = filteredDepts.map(d => String(d.DEP_ID).trim());
+        const filteredLogs = state.logs.filter(l => {
+            const isDeptMatch = dIds.includes(String(l.DEPT_ID).trim());
+            const isPriorityMatch = advFilters.priority.length === 0 || advFilters.priority.includes(String(l.Priority_ID || l.PIORITY_ID));
+            const isTypeMatch = advFilters.type.length === 0 || advFilters.type.includes(String(l.Asset_Type_ID));
+            const isAgeMatch = advFilters.age.length === 0 || checkAgeMatch(l.AgeInfo || l.Age);
+            return isDeptMatch && isPriorityMatch && isTypeMatch && isAgeMatch;
+        });
+
+        const groups = {}; 
+        filteredLogs.forEach(l => {
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
+            const dName = dept?.DEPNAME || "ไม่ระบุหน่วยงาน";
+            if (!groups[dName]) groups[dName] = [];
+            groups[dName].push(l);
+        });
+
+        let html = `<div class="text-center mb-8"><h1 class="text-xl font-black text-slate-800 uppercase">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1><p class="text-xs font-bold text-slate-500">ประจำปี 2569</p></div>`;
+        if (!filteredLogs.length) {
+            html += `<div class="py-20 text-center text-slate-300 font-bold">ไม่พบข้อมูล</div>`;
+        } else {
+            html += `<table class="report-table"><thead><tr><th class="w-10 text-center">#</th><th class="w-32">รหัสครุภัณฑ์</th><th>รายละเอียด</th><th class="w-20 text-center">อายุ</th><th class="w-24 text-center">Priority</th></tr></thead><tbody>`;
+            Object.keys(groups).sort().forEach(deptName => {
+                html += `<tr class="row-group-header"><td colspan="3" class="p-2">${deptName}</td><td colspan="2" class="text-right p-2">รวม: ${groups[deptName].length}</td></tr>`;
+                groups[deptName].forEach((item, idx) => {
+                    const pName = state.priorities.find(p => String(p.id) === String(item.Priority_ID || item.PIORITY_ID))?.name || '-';
+                    html += `<tr><td class="text-center">${idx + 1}</td><td class="font-bold">${item.AssetID || '-'}</td><td><div class="font-bold">${item.FullDescription || '-'}</div><div class="text-[9px] text-slate-400">S/N: ${item.Serial_Number || 'ไม่ระบุ'}</div></td><td class="text-center">${item.AgeInfo || '-'}</td><td class="text-center font-bold text-pink-600">${pName}</td></tr>`;
+                });
+            });
+            html += `</tbody></table>`;
         }
+        document.getElementById('reportPreviewContent').innerHTML = html;
+    }
 
-        function setupModalFilters() {
-            const bSelect = document.getElementById('fBuilding');
-            const buildings = [...new Set(state.depts.map(d => d.BUILDING).filter(Boolean))].sort();
-            bSelect.innerHTML = '<option value="">ทุกตึก</option>' + buildings.map(b => `<option value="${b}">${b}</option>`).join('');
-            
-            document.getElementById('rPriorityFilters').innerHTML = state.priorities.map(p => `
-                <button onclick="toggleFilter(this, 'priority', '${p.id}')" class="multi-select-chip px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500 uppercase">${p.name}</button>
-            `).join('');
+    function renderDashboard() {
+        const area = document.getElementById('contentArea');
+        const search = (document.getElementById('searchInput')?.value || "").toLowerCase().trim();
+        const activeIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
+        const filteredDepts = state.depts.filter(d => (d.DEPNAME.toLowerCase().includes(search) || (d.BUILDING && d.BUILDING.toLowerCase().includes(search))) && activeIds.includes(String(d.DEP_ID).trim()));
+        document.getElementById('statDepts').innerText = filteredDepts.length;
+        document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
 
-            document.getElementById('rAssetTypeFilters').innerHTML = state.assetTypes.map(t => `
-                <button onclick="toggleFilter(this, 'assetType', '${t.id}')" class="multi-select-chip px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500 uppercase">${t.name}</button>
-            `).join('');
-
-            handleBuildingChange();
-        }
-
-        function handleBuildingChange() {
-            filters.building = document.getElementById('fBuilding').value;
-            const fSelect = document.getElementById('fFloor');
-            let floors = !filters.building ? [...new Set(state.depts.map(d => d.FL).filter(Boolean))] : [...new Set(state.depts.filter(d => d.BUILDING === filters.building).map(d => d.FL).filter(Boolean))];
-            floors.sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric: true}));
-            fSelect.innerHTML = '<option value="">ทุกชั้น</option>' + floors.map(f => `<option value="${f}">${f}</option>`).join('');
-            handleFloorChange();
-        }
-
-        function handleFloorChange() {
-            filters.floor = document.getElementById('fFloor').value;
-            const dSelect = document.getElementById('fDept');
-            let filtered = state.depts;
-            if (filters.building) filtered = filtered.filter(d => d.BUILDING === filters.building);
-            if (filters.floor) filtered = filtered.filter(d => d.FL === filters.floor);
-            const names = [...new Set(filtered.map(d => d.DEPNAME).filter(Boolean))].sort();
-            dSelect.innerHTML = '<option value="">ทุกหน่วยงาน</option>' + names.map(d => `<option value="${d}">${d}</option>`).join('');
-            updateReportPreview();
-        }
-
-        function toggleFilter(btn, category, value) {
-            btn.classList.toggle('active');
-            const idx = filters[category].indexOf(value);
-            if (idx > -1) filters[category].splice(idx, 1);
-            else filters[category].push(value);
-            updateReportPreview();
-        }
-
-        function checkAge(ageStr) {
-            if (!ageStr) return false;
-            const years = parseInt(ageStr.match(/(\d+)/)?.[1] || 0);
-            if (filters.age.includes('low') && years < 4) return true;
-            if (filters.age.includes('mid') && years >= 4 && years <= 6) return true;
-            if (filters.age.includes('high') && years > 6 && years <= 9) return true;
-            if (filters.age.includes('old') && years >= 10) return true;
-            return false;
-        }
-
-        function renderDashboard() {
-            const area = document.getElementById('contentArea');
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            let filteredDepts = state.depts.filter(d => d.DEPNAME.toLowerCase().includes(search));
-
-            document.getElementById('statDepts').innerText = state.depts.length;
-            document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
-
+        if (mainDisplayMode === 'grid') {
             const structure = {};
             filteredDepts.forEach(d => {
                 const b = d.BUILDING || "อื่นๆ";
-                const f = d.FL || "ไม่ระบุ";
+                const f = d.FL || "ไม่ระบุชั้น";
                 if (!structure[b]) structure[b] = {};
                 if (!structure[b][f]) structure[b][f] = [];
                 structure[b][f].push(d);
             });
-
             let html = "";
             Object.keys(structure).sort().forEach(building => {
-                html += `<div class="bg-white shadow-sm border-2 border-slate-100 rounded-[2.5rem] overflow-hidden mb-12"><div class="header-gradient p-6 text-white font-black uppercase">${building}</div><div class="p-8">`;
-                Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach(floor => {
-                    html += `<div class="mb-6"><div class="flex items-center gap-3 mb-4"><span class="bg-pink-500 text-white px-3 py-1 rounded-lg font-black text-[10px] uppercase">${floor}</span></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">`;
+                const total = filteredDepts.filter(d => d.BUILDING === building).reduce((a, c) => a + state.logs.filter(l => String(l.DEPT_ID).trim() === String(c.DEP_ID).trim()).length, 0);
+                html += `<div class="building-container"><div class="building-header"><div class="flex items-center gap-5"><div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg text-xl"><i class="fas fa-hospital"></i></div><div><h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight">${building}</h3><p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Udon Thani Hospital</p></div></div><div class="text-right"><p class="text-3xl font-black text-pink-500 leading-none">${total}</p><p class="text-[10px] font-bold text-slate-400 uppercase mt-1">รายการสำรวจ</p></div></div><div class="p-8">`;
+                Object.keys(structure[building]).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true})).forEach((floor, idx) => {
+                    const theme = floorColorThemes[idx % floorColorThemes.length];
+                    html += `<div class="floor-wrapper ${theme.bg} ${theme.border} mb-8"><div class="flex items-center gap-4 mb-6"><span class="${theme.badge} text-white px-5 py-1.5 rounded-xl font-black text-sm shadow-md">${floor}</span><div class="flex-1 h-[2px] bg-white/50"></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">`;
                     structure[building][floor].forEach(dept => {
                         const count = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim()).length;
-                        html += `<div class="dept-card bg-white p-4 flex flex-col justify-between" onclick="showDetail('${dept.DEP_ID}')"><h4 class="text-xs font-bold text-slate-800">${dept.DEPNAME}</h4><p class="text-[10px] text-slate-400 mt-2">${count} items</p></div>`;
+                        const dImg = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w200` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
+                        html += `<div class="dept-card bg-white p-5 border-2 ${theme.cardBorder}" onclick="showDetail('${dept.DEP_ID}')"><div class="flex items-center gap-4 mb-4"><div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-100 flex-shrink-0 bg-slate-50"><img src="${dImg}" class="w-full h-full object-cover"></div><div class="min-w-0"><h4 class="text-sm font-black text-slate-800 leading-tight line-clamp-2">${dept.DEPNAME}</h4><p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">ID: ${dept.DEP_ID}</p></div></div><div class="flex items-center justify-between pt-4 border-t-2 border-slate-50"><span class="px-3 py-1 rounded-lg ${theme.bg} ${theme.text} font-black text-xs border ${theme.cardBorder}">${count} รายการ</span></div></div>`;
                     });
                     html += `</div></div>`;
                 });
                 html += `</div></div>`;
             });
+            area.innerHTML = html || `<div class="text-center py-20 text-slate-300">ไม่พบข้อมูล</div>`;
+        } else {
+            let html = `<div class="bg-white rounded-[2.5rem] border-2 border-slate-200 overflow-hidden shadow-sm"><table class="main-table"><thead><tr><th class="text-center w-24">รูป</th><th>หน่วยงาน / สถานที่</th><th class="text-center">จำนวน</th><th class="text-center">สถานะ</th><th class="w-20"></th></tr></thead><tbody>`;
+            filteredDepts.forEach(d => {
+                const count = state.logs.filter(l => String(l.DEPT_ID).trim() === String(d.DEP_ID).trim()).length;
+                const dImg = d.PIC_ID ? `https://drive.google.com/thumbnail?id=${d.PIC_ID}&sz=w100` : `https://placehold.co/100?text=${d.DEPNAME.charAt(0)}`;
+                html += `<tr class="dept-row group cursor-pointer" onclick="showDetail('${d.DEP_ID}')"><td class="text-center"><div class="w-12 h-12 mx-auto rounded-xl overflow-hidden border-2 border-slate-100"><img src="${dImg}" class="w-full h-full object-cover"></div></td><td><div class="font-bold text-slate-800 group-hover:text-pink-500 transition-colors">${d.DEPNAME}</div><div class="text-[10px] font-bold text-slate-400 uppercase mt-1">${d.BUILDING} - ${d.FL}</div></td><td class="text-center font-black text-slate-700">${count}</td><td class="text-center"><span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-500 font-bold text-[10px] border border-emerald-100">สำรวจแล้ว</span></td><td class="text-center"><i class="fas fa-chevron-right text-slate-200 group-hover:text-pink-400"></i></td></tr>`;
+            });
+            html += `</tbody></table></div>`;
             area.innerHTML = html;
         }
+    }
 
-        function showDetail(deptId) {
-            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
-            const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
-            if(!dept) return;
-            document.getElementById('mDeptName').innerText = dept.DEPNAME;
-            document.getElementById('mDeptLoc').innerText = `${dept.BUILDING} ชั้น ${dept.FL}`;
-            document.getElementById('mDeptPic').querySelector('img').src = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w400` : `https://placehold.co/100?text=DEPT`;
-            
-            document.getElementById('mAssetGroupContainer').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + logs.map(a => `<div class="bg-white p-4 rounded-2xl border border-slate-100"><p class="text-[10px] font-black text-pink-500">${a.AssetID}</p><p class="text-xs font-bold text-slate-700">${a.FullDescription}</p></div>`).join('') + `</div>`;
-            document.getElementById('modalDept').classList.remove('hidden');
-            document.getElementById('modalDept').classList.add('flex');
-        }
+    function showDetail(deptId) {
+        const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
+        if (!dept) return;
+        document.getElementById('mDeptName').innerText = dept.DEPNAME;
+        document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${dept.BUILDING} ชั้น ${dept.FL}`;
+        document.getElementById('mDeptPic').src = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w400` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
+        const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
+        let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + logs.map(l => `<div class="bg-white p-5 rounded-2xl border-2 border-slate-100 shadow-sm hover:border-pink-200 transition-all"><div class="flex justify-between items-start mb-3"><span class="text-[10px] font-black text-pink-500 bg-pink-50 px-2 py-0.5 rounded border border-pink-100 uppercase">${l.AssetID || 'ไม่มีรหัส'}</span><span class="text-[10px] font-bold text-slate-400">อายุ: ${l.AgeInfo || '-'}</span></div><p class="text-sm font-bold text-slate-700 leading-tight mb-2">${l.FullDescription || '-'}</p><div class="text-[10px] font-medium text-slate-400">S/N: ${l.Serial_Number || 'ไม่ระบุ'}</div></div>`).join('') + `</div>`;
+        document.getElementById('mAssetGroupContainer').innerHTML = html;
+        document.getElementById('modalDept').classList.remove('hidden'); document.getElementById('modalDept').classList.add('flex');
+    }
 
-        function updateReportPreview() {
-            filters.deptName = document.getElementById('fDept').value;
-            const preview = document.getElementById('reportPreviewContent');
-            
-            const filteredLogs = state.logs.filter(l => {
-                const matchP = filters.priority.length === 0 || filters.priority.includes(String(l.Priority_ID || l.PIORITY_ID));
-                const matchT = filters.assetType.length === 0 || filters.assetType.includes(String(l.Asset_Type_ID));
-                const matchA = filters.age.length === 0 || checkAge(l.AgeInfo || l.Age);
-                return matchP && matchT && matchA;
-            });
-
-            const activeDeptIds = [...new Set(filteredLogs.map(l => String(l.DEPT_ID).trim()))];
-            const filteredDepts = state.depts.filter(d => {
-                const matchB = !filters.building || d.BUILDING === filters.building;
-                const matchF = !filters.floor || d.FL === filters.floor;
-                const matchD = !filters.deptName || d.DEPNAME === filters.deptName;
-                return matchB && matchF && matchD && activeDeptIds.includes(String(d.DEP_ID).trim());
-            });
-
-            let html = `<div class="text-center mb-10"><h1 class="text-2xl font-black">รายงานครุภัณฑ์คอมพิวเตอร์</h1><p class="text-slate-500">โรงพยาบาลอุดรธานี</p></div><table class="report-table"><thead><tr><th>#</th><th>รหัส</th><th>รายละเอียด</th><th class="text-center">อายุ</th></tr></thead><tbody>`;
-            filteredDepts.forEach(dept => {
-                const dLogs = filteredLogs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                html += `<tr class="row-group-header"><td colspan="3">${dept.DEPNAME} (${dept.BUILDING})</td><td class="text-center">${dLogs.length}</td></tr>`;
-                dLogs.forEach((l, i) => html += `<tr><td class="text-center">${i+1}</td><td class="font-bold">${l.AssetID}</td><td>${l.FullDescription}</td><td class="text-center">${l.AgeInfo || l.Age || '-'}</td></tr>`);
-            });
-            html += `</tbody></table>`;
-            preview.innerHTML = html;
-        }
-
-        function openReportModal() { document.getElementById('modalReport').classList.remove('hidden'); document.getElementById('modalReport').classList.add('flex'); updateReportPreview(); }
-        function closeReportModal() { document.getElementById('modalReport').classList.add('hidden'); }
-        function closeModal() { document.getElementById('modalDept').classList.add('hidden'); }
-        function switchMainView(m) { mainDisplayMode = m; renderDashboard(); }
-        function printReport() { window.print(); }
-        function exportToExcel() { /* Export logic */ }
-
-        window.onload = init;
-    </script>
+    function openReportModal() { updateReportPreview(); document.getElementById('modalReport').classList.remove('hidden'); document.getElementById('modalReport').classList.add('flex'); }
+    function closeReportModal() { document.getElementById('modalReport').classList.add('hidden'); }
+    function closeModal() { document.getElementById('modalDept').classList.add('hidden'); }
+    function switchMainView(m) { mainDisplayMode = m; document.getElementById('vGrid').classList.toggle('active', m === 'grid'); document.getElementById('vTable').classList.toggle('active', m === 'table'); renderDashboard(); }
+    function printReport() { window.print(); }
+    function exportToExcel() { alert('กำลังเตรียมไฟล์ Excel...'); }
+    window.onload = init;
+</script>
 </body>
 </html>
