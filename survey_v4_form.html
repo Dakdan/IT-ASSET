@@ -578,7 +578,7 @@
         });
         priors.forEach(s => {
             if(!s) return;
-            s.innerHTML = '<option value="" disabled selected>-- ความสำคัญ --</option>';
+            s.innerHTML = '<option value="" disabled selected>-- การใช้งาน --</option>';
             configData.priorities.forEach(p => s.add(new Option(p.name, p.id)));
         });
     }
@@ -700,83 +700,67 @@
         document.getElementById(iId).value = "";
     }
 
-          // --- แก้ไขฟังก์ชัน submitAudit ให้เหลือเพียงอันเดียว และครอบคลุมทุกเงื่อนไข ---
-   async function submitAudit(type, event) {
-    if (event) event.preventDefault();
-
-    try {
-        const isExisting = type === 'EXISTING';
-        const suffix = isExisting ? '' : 'nr_';
-
-        // 1. ดึงค่าพื้นฐานจาก UI
-        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
-        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
-        const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
-
-        // 2. ดึงค่า Shift_Work
-        const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
-        const shiftValues = Array.from(selectedShifts).map(input => {
-            if (input.value === "เช้า") return "1";
-            if (input.value === "บ่าย") return "2";
-            if (input.value === "ดึก") return "3";
-            return "";
-        }).filter(Boolean).join(",");
-
-        // ตรวจสอบความครบถ้วน
-        if (!typeId || !priorityId) {
-            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
-        }
-        if (!currentBase64Image) {
-            return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
-        }
-
-        // 3. เตรียม Data Object สำหรับรายการเดียว
-        let itemData = {
-            Asset_Type_ID: typeId,
-            PIORITY_ID: priorityId,
-            ImageData: currentBase64Image,
-            gps: currentGps || "",
-            Note1: note1Value,
-            Note2: [
-                document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
-                document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
-            ].filter(Boolean).join(", "),
-            Shift_Work: shiftValues || "-",
-            CoStatus: "COS-001",
-            MAStatus: "-",
-            Detail_ID: "-"
-        };
-
-        if (isExisting) {
-            if (!currentAsset || !currentAsset.AssetID) {
-                return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
+                  // --- แก้ไขฟังก์ชัน submitAudit ให้เหลือเพียงอันเดียว และครอบคลุมทุกเงื่อนไข ---
+           async function submitAudit(type, event) {
+                    if (event) event.preventDefault();
+                
+                    try {
+                        const isExisting = type === 'EXISTING';
+                        const suffix = isExisting ? '' : 'nr_';
+                
+                        // 1. ดึงค่าพื้นฐานจาก UI
+                        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
+                        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
+                        const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
+                
+                        // 2. ดึงค่า Shift_Work
+                        const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
+                        const shiftValues = Array.from(selectedShifts).map(input => {
+                            if (input.value === "เช้า") return "1";
+                            if (input.value === "บ่าย") return "2";
+                            if (input.value === "ดึก") return "3";
+                            return "";
+                        }).filter(Boolean).join(",");
+                
+                        // ตรวจสอบความครบถ้วน
+                        if (!typeId || !priorityId) {
+                            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
+                        }
+                        if (!currentBase64Image) {
+                            return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
+                        }
+                
+                        // 3. เตรียม Data Object สำหรับรายการเดียว
+                       } else {
+                    // ดึงค่าจากกล่องข้อความ
+                    const brandDetail = document.getElementById('nr_brand_detail')?.value.trim();
+                    const inputAssetID = document.getElementById('nr_asset_id_input')?.value.trim();
+                
+                    // NoID: ใช้ตามค่าที่กรอก ถ้าไม่มีให้เป็น "-"
+                    itemData.NoID = "NON-" + Date.now(); // ส่วนนี้มักเป็น Internal ID ถ้าต้องการให้เป็น "-" ด้วยสามารถเปลี่ยนได้ครับ
+                
+                    // Asset_ID: ถ้ามีค่าก็บันทึกตามค่า ถ้าไม่มีให้เป็น "-"
+                    itemData.Asset_ID = inputAssetID ? inputAssetID : "-";
+                
+                    // AssetName: ถ้ามีค่าก็บันทึกตามค่า ถ้าไม่มีให้เป็น "-"
+                    // (ใส่ [นอกทะเบียน] นำหน้าเฉพาะตอนที่มีค่า หรือจะให้เป็น "-" เพียวๆ ตามสั่งได้ครับ)
+                    itemData.AssetName = brandDetail ? ("[นอกทะเบียน] " + brandDetail) : "-";
+                
+                    // Serial: เป็น "-" ตามการออกแบบ
+                    itemData.Serial = "-";
+                
+                    closeModal('nonRegisterModal');
+                }
+                // 4. บันทึกทันที (ไม่ผ่าน Queue)
+                // ในระบบบันทึกทันที เราจะถือว่า signature เป็นค่าว่างหรือดึงจากที่เคยเซ็นไว้ (ถ้ามี)
+                // หากต้องการให้เซ็นชื่อก่อนบันทึกทุกครั้ง ให้เปลี่ยนไปเปิด ConfirmModal แทน
+                await executeSave(itemData);
+        
+            } catch (err) {
+                console.error("Critical Error:", err);
+                alert("เกิดข้อผิดพลาด: " + err.message);
             }
-            itemData.NoID = currentAsset.NoID || "-";
-            itemData.Asset_ID = currentAsset.AssetID;
-            itemData.AssetName = currentAsset.FullDescription;
-            itemData.Serial = currentAsset.Serial || "-";
-            closeModal('auditFormModal');
-        } else {
-            const brandDetail = document.getElementById('nr_brand_detail')?.value.trim();
-            if (!brandDetail) return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
-
-            itemData.NoID = "NON-" + Date.now();
-            itemData.Asset_ID = "NR-" + Date.now();
-            itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
-            itemData.Serial = "-";
-            closeModal('nonRegisterModal');
         }
-
-        // 4. บันทึกทันที (ไม่ผ่าน Queue)
-        // ในระบบบันทึกทันที เราจะถือว่า signature เป็นค่าว่างหรือดึงจากที่เคยเซ็นไว้ (ถ้ามี)
-        // หากต้องการให้เซ็นชื่อก่อนบันทึกทุกครั้ง ให้เปลี่ยนไปเปิด ConfirmModal แทน
-        await executeSave(itemData);
-
-    } catch (err) {
-        console.error("Critical Error:", err);
-        alert("เกิดข้อผิดพลาด: " + err.message);
-    }
-}
     function updateQueueUI() {
         document.getElementById('auditCount').innerText = auditQueue.length;
         const list = document.getElementById('auditListItems');
