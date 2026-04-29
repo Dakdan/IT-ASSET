@@ -194,6 +194,36 @@
             border-color: var(--pink-main);
             box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.3);
         }
+
+        /* Detail Modal Specific */
+        .asset-detail-card {
+            background: white;
+            border-radius: 1.5rem;
+            border: 2px solid #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        .asset-detail-card:hover {
+            border-color: var(--pink-main);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .report-group-container {
+            margin-bottom: 2rem;
+            border-radius: 1.5rem;
+            border: 2px solid #f1f5f9;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .report-group-header {
+            padding: 1rem 1.5rem;
+            background: #f8fafc;
+            border-bottom: 2px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
 </head>
 
@@ -299,20 +329,34 @@
 
 <!-- Modal: Dept Detail -->
 <div id="modalDept" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[200] p-4 no-print" onclick="closeModal()">
-    <div class="bg-white w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border-4 border-white" onclick="event.stopPropagation()">
-        <div class="p-6 md:p-8 border-b-2 border-slate-50 flex flex-col md:flex-row justify-between items-center bg-white sticky top-0 z-10 gap-4">
+    <div class="bg-white w-full max-w-6xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border-4 border-white" onclick="event.stopPropagation()">
+        <!-- Header Modal -->
+        <div class="p-6 md:p-8 border-b-2 border-slate-50 flex flex-col md:flex-row justify-between items-center bg-white sticky top-0 z-10 gap-4 shadow-sm">
             <div class="flex items-center gap-6 w-full md:w-auto">
-                <div id="mDeptPicWrapper" class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-100 flex-shrink-0 shadow-inner">
+                <div id="mDeptPicWrapper" class="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-100 flex-shrink-0 shadow-inner">
                     <img id="mDeptPic" src="" class="w-full h-full object-cover">
                 </div>
                 <div class="min-w-0 flex-1">
-                    <h3 id="mDeptName" class="text-xl font-black text-slate-800 truncate"></h3>
-                    <div id="mDeptLoc" class="mt-1 text-xs font-bold text-slate-400 uppercase flex items-center gap-2"></div>
+                    <h3 id="mDeptName" class="text-xl md:text-2xl font-black text-slate-800 truncate"></h3>
+                    <div id="mDeptLoc" class="mt-1 text-xs md:text-sm font-bold text-slate-400 uppercase flex items-center gap-2"></div>
                 </div>
             </div>
-            <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-times"></i></button>
+            
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                <a id="mDeptDetailBtn" href="#" target="_blank" 
+                   class="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-pink-100 text-pink-500 font-bold text-sm hover:bg-pink-50 transition-all">
+                    <i class="fas fa-external-link-alt text-xs"></i> ดูหน้าแยก
+                </a>
+                <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         </div>
-        <div id="mAssetGroupContainer" class="p-8 overflow-y-auto flex-1 bg-slate-50/30 custom-scroll"></div>
+
+        <!-- Body Modal Content -->
+        <div id="mAssetGroupContainer" class="p-4 md:p-8 overflow-y-auto flex-1 bg-slate-50/30 custom-scroll">
+            <!-- Asset Cards will be injected here -->
+        </div>
     </div>
 </div>
 
@@ -321,7 +365,7 @@
     let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
     let mainDisplayMode = 'grid';
     let advFilters = { priority: [], type: [], age: [] };
-    let currentReportData = []; // Store current filtered data for export
+    let currentReportData = [];
 
     const floorColorThemes = [
         { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600', badge: 'bg-emerald-500', cardBorder: 'border-emerald-100' },
@@ -419,23 +463,74 @@
         currentReportData.forEach(l => {
             const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
             const dName = dept?.DEPNAME || "ไม่ระบุหน่วยงาน";
-            if (!groups[dName]) groups[dName] = [];
-            groups[dName].push(l);
+            if (!groups[dName]) groups[dName] = { info: dept, items: [] };
+            groups[dName].items.push(l);
         });
 
-        let html = `<div class="text-center mb-8"><h1 class="text-xl font-black text-slate-800 uppercase">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1><p class="text-xs font-bold text-slate-500">ประจำปี 2569</p></div>`;
+        let html = `
+            <div class="text-center mb-10">
+                <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1>
+                <p class="text-sm font-bold text-slate-400 mt-1">ประจำปีงบประมาณ 2569 | โรงพยาบาลอุดรธานี</p>
+                <div class="mt-4 flex justify-center gap-4">
+                    <span class="text-[10px] font-black px-3 py-1 bg-slate-100 rounded-full text-slate-500 border border-slate-200 uppercase">รวม ${currentReportData.length} รายการ</span>
+                    <span class="text-[10px] font-black px-3 py-1 bg-pink-50 rounded-full text-pink-500 border border-pink-100 uppercase">แยกตามหน่วยงาน</span>
+                </div>
+            </div>`;
+
         if (!currentReportData.length) {
             html += `<div class="py-20 text-center text-slate-300 font-bold">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div>`;
         } else {
-            html += `<table id="tableToExport" class="report-table"><thead><tr><th class="w-10 text-center">#</th><th class="w-32">รหัสครุภัณฑ์</th><th>รายละเอียด</th><th class="w-20 text-center">อายุ</th><th class="w-24 text-center">Priority</th></tr></thead><tbody>`;
             Object.keys(groups).sort().forEach(deptName => {
-                html += `<tr class="row-group-header"><td colspan="3" class="p-2 font-black text-blue-800">${deptName}</td><td colspan="2" class="text-right p-2">รวม: ${groups[deptName].length} รายการ</td></tr>`;
-                groups[deptName].forEach((item, idx) => {
+                const group = groups[deptName];
+                const deptInfo = group.info;
+                html += `
+                <div class="report-group-container">
+                    <div class="report-group-header">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden">
+                                <img src="${deptInfo?.PIC_ID ? 'https://drive.google.com/thumbnail?id=' + deptInfo.PIC_ID + '&sz=w100' : 'https://placehold.co/100?text=' + deptName.charAt(0)}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-black text-slate-800 leading-none">${deptName}</h2>
+                                <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">${deptInfo?.BUILDING || '-'} ชั้น ${deptInfo?.FL || '-'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-black text-pink-500">${group.items.length} รายการ</p>
+                        </div>
+                    </div>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th class="w-10 text-center">#</th>
+                                <th class="w-36">รหัสครุภัณฑ์</th>
+                                <th>รายละเอียดครุภัณฑ์</th>
+                                <th class="w-20 text-center">อายุ</th>
+                                <th class="w-24 text-center">ความสำคัญ</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                
+                group.items.forEach((item, idx) => {
                     const pName = state.priorities.find(p => String(p.id) === String(item.Priority_ID || item.PIORITY_ID))?.name || '-';
-                    html += `<tr><td class="text-center">${idx + 1}</td><td class="font-bold">${item.AssetID || '-'}</td><td><div class="font-bold text-slate-800">${item.FullDescription || '-'}</div><div class="text-[9px] text-slate-400">S/N: ${item.Serial_Number || 'ไม่ระบุ'}</div></td><td class="text-center font-bold">${item.AgeInfo || '-'}</td><td class="text-center font-bold text-pink-600">${pName}</td></tr>`;
+                    const ageDisplay = item.AgeInfo || item.Age || '-';
+                    html += `
+                        <tr>
+                            <td class="text-center font-bold text-slate-400">${idx + 1}</td>
+                            <td><span class="font-black text-slate-800">${item.AssetID || '-'}</span></td>
+                            <td>
+                                <div class="font-bold text-slate-700">${item.FullDescription || '-'}</div>
+                                <div class="text-[9px] text-slate-400 mt-0.5">S/N: ${item.Serial_Number || 'ไม่ระบุ'}</div>
+                            </td>
+                            <td class="text-center font-black text-slate-600">${ageDisplay}</td>
+                            <td class="text-center">
+                                <span class="text-[9px] font-black px-2 py-0.5 bg-pink-50 text-pink-500 rounded border border-pink-100 uppercase">${pName}</span>
+                            </td>
+                        </tr>`;
                 });
+                
+                html += `</tbody></table></div>`;
             });
-            html += `</tbody></table>`;
         }
         document.getElementById('reportPreviewContent').innerHTML = html;
     }
@@ -489,13 +584,48 @@
     function showDetail(deptId) {
         const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
         if (!dept) return;
+        
+        // Update Modal Header Information
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${dept.BUILDING} ชั้น ${dept.FL}`;
         document.getElementById('mDeptPic').src = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w400` : `https://placehold.co/100?text=${dept.DEPNAME.charAt(0)}`;
+        document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
+
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
-        let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + logs.map(l => `<div class="bg-white p-5 rounded-2xl border-2 border-slate-100 shadow-sm hover:border-pink-200 transition-all"><div class="flex justify-between items-start mb-3"><span class="text-[10px] font-black text-pink-500 bg-pink-50 px-2 py-0.5 rounded border border-pink-100 uppercase">${l.AssetID || 'ไม่มีรหัส'}</span><span class="text-[10px] font-bold text-slate-400">อายุ: ${l.AgeInfo || '-'}</span></div><p class="text-sm font-bold text-slate-700 leading-tight mb-2">${l.FullDescription || '-'}</p><div class="text-[10px] font-medium text-slate-400">S/N: ${l.Serial_Number || 'ไม่ระบุ'}</div></div>`).join('') + `</div>`;
-        document.getElementById('mAssetGroupContainer').innerHTML = html;
-        document.getElementById('modalDept').classList.remove('hidden'); document.getElementById('modalDept').classList.add('flex');
+        
+        // Build Asset Grid Content
+        let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">` + logs.map(l => {
+            const assetImg = l.PIC_ID ? `https://drive.google.com/thumbnail?id=${l.PIC_ID}&sz=w400` : `https://placehold.co/200?text=NO+IMAGE`;
+            const pName = state.priorities.find(p => String(p.id) === String(l.Priority_ID || l.PIORITY_ID))?.name || 'ทั่วไป';
+            const ageVal = l.AgeInfo || l.Age || '-';
+            
+            return `
+            <div class="asset-detail-card p-5 flex flex-col sm:flex-row gap-5 items-start">
+                <div class="w-full sm:w-28 h-28 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 shadow-inner border border-slate-50">
+                    <img src="${assetImg}" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <span class="text-[9px] font-black text-pink-500 bg-pink-50 px-2 py-0.5 rounded border border-pink-100 uppercase tracking-tighter">${l.AssetID || 'ไม่มีรหัส'}</span>
+                        <span class="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">อายุ: ${ageVal}</span>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-800 leading-tight mb-2 line-clamp-2">${l.FullDescription || '-'}</h4>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1.5 mb-2">
+                        <i class="fas fa-barcode"></i> SN: ${l.Serial_Number || 'ไม่ระบุ'}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-50 text-blue-500 border border-blue-100 uppercase">${pName}</span>
+                    </div>
+                </div>
+            </div>`;
+        }).join('') + `</div>`;
+        
+        document.getElementById('mAssetGroupContainer').innerHTML = html || `<div class="text-center py-20 text-slate-300 font-bold">ไม่พบรายการครุภัณฑ์</div>`;
+        
+        // Open Modal
+        const modal = document.getElementById('modalDept');
+        modal.classList.remove('hidden'); 
+        modal.classList.add('flex');
     }
 
     function openReportModal() { updateReportPreview(); document.getElementById('modalReport').classList.remove('hidden'); document.getElementById('modalReport').classList.add('flex'); }
@@ -507,11 +637,10 @@
     
     function exportToExcel() {
         if (!currentReportData.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
-        
-        // Prepare flattened data for Excel with same columns as UI
         const excelData = currentReportData.map((l, index) => {
             const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
             const pName = state.priorities.find(p => String(p.id) === String(l.Priority_ID || l.PIORITY_ID))?.name || '-';
+            const ageVal = l.AgeInfo || l.Age || '-';
             return {
                 "#": index + 1,
                 "หน่วยงาน": dept?.DEPNAME || "ไม่ระบุ",
@@ -520,16 +649,13 @@
                 "รหัสครุภัณฑ์": l.AssetID || "-",
                 "รายละเอียด": l.FullDescription || "-",
                 "Serial Number": l.Serial_Number || "-",
-                "อายุ (ปี)": l.AgeInfo || "-",
+                "อายุ": ageVal,
                 "Priority": pName
             };
         });
-
         const worksheet = XLSX.utils.json_to_sheet(excelData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Audit Report");
-        
-        // Save file
         XLSX.writeFile(workbook, `IT_Asset_Report_${new Date().toLocaleDateString('th-TH')}.xlsx`);
     }
 
