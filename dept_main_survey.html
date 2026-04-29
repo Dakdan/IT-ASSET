@@ -225,13 +225,7 @@
             </div>
         </div>
 
-        <div class="hidden md:flex flex-1 max-w-md mx-10">
-            <div class="search-input-box w-full px-4 py-2">
-                <i class="fas fa-search text-slate-300 mr-3"></i>
-                <input id="searchInput" oninput="renderDashboard()" placeholder="ค้นหาชื่อหน่วยงาน, ตึก หรือชั้น..." class="w-full outline-none text-sm font-semibold text-slate-600 bg-transparent">
-            </div>
-        </div>
-
+        
         <div class="flex items-center gap-4">
             <button onclick="openReportModal()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg">
                 <i class="fas fa-file-alt"></i> รายงาน
@@ -243,6 +237,21 @@
             <button onclick="init()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-50 rounded-xl transition-all">
                 <i id="refreshIcon" class="fas fa-sync-alt"></i>
             </button>
+        </div>
+    </div>
+        <!-- Mobile Search Area -->
+    <div class="max-w-[1440px] mx-auto px-4 pb-4 md:hidden">
+        <div class="search-input-box w-full px-4 py-3">
+            <i class="fas fa-search text-slate-300 mr-3"></i>
+            <input id="searchInputMobile" oninput="syncAndRender('mobile')" placeholder="ค้นหาหน่วยงาน, ตึก, ชั้น..." class="w-full outline-none text-sm font-semibold text-slate-600 bg-transparent">
+        </div>
+    </div>
+
+    <!-- Desktop Search -->
+    <div class="hidden md:block max-w-[1440px] mx-auto px-6 pb-4">
+        <div class="search-input-box w-full max-w-xl px-4 py-2">
+            <i class="fas fa-search text-slate-300 mr-3"></i>
+            <input id="searchInput" oninput="syncAndRender('desktop')" placeholder="ค้นหาหน่วยงาน, ตึก หรือชั้น..." class="w-full outline-none text-sm font-semibold text-slate-600 bg-transparent">
         </div>
     </div>
 </nav>
