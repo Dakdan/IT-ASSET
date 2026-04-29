@@ -549,7 +549,7 @@
         document.getElementById('mDeptPic').src = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w400` : `https://placehold.co/100?text=D`;
 
         // อัปเดตลิงก์ปุ่ม ดูรายละเอียดเชิงลึก
-        document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
+        ddocument.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
 
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
         const assetGroups = {};
