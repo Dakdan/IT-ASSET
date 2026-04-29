@@ -219,7 +219,7 @@
                 <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-12">
             </div>
             <div>
-                <h1 class="text-xl font-black text-slate-800 leading-none">IT ASSET <span class="text-pink-500">Audit</span></h1>
+                <h1 class="text-xl font-black text-slate-800 leading-none">IT ASSET <span class="text-pink-500">Inventory Check</span></h1>
                 <p class="text-[10px] text-slate-400 font-bold tracking-widest mt-1 uppercase">Udonthani Hospital</p>
             </div>
         </div>
@@ -297,7 +297,12 @@
                     <button onclick="clearReportFilters()" class="text-[10px] font-black text-pink-500 hover:text-pink-700 underline uppercase tracking-widest"><i class="fas fa-trash-alt mr-1"></i> Clear Filters</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="window.print()" class="px-5 py-2 bg-pink-500 text-white rounded-xl text-xs font-bold">พิมพ์ PDF</button>
+                    <button onclick="exportToExcel()" class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-md">
+                        <i class="fas fa-file-excel mr-2"></i> Export Excel
+                    </button>
+                    <button onclick="window.print()" class="px-5 py-2 bg-pink-500 text-white rounded-xl text-xs font-bold hover:bg-pink-600 shadow-md">
+                        <i class="fas fa-print mr-2"></i> พิมพ์ PDF
+                    </button>
                     <button onclick="closeReportModal()" class="px-5 py-2 bg-slate-200 text-slate-600 rounded-xl text-xs font-bold">ปิด</button>
                 </div>
             </div>
@@ -444,7 +449,6 @@
         return false;
     }
 
-    // --- HELPER TO GET NAMES INSTEAD OF IDS ---
     function getPriorityName(pId) {
         if (!pId) return '-';
         const found = state.priorities.find(p => String(p.id) === String(pId));
@@ -527,8 +531,6 @@
         document.getElementById('mDeptPic').src = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w400` : `https://placehold.co/100?text=D`;
 
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
-        
-        // Group by Category Name
         const assetGroups = {};
         logs.forEach(l => {
             const cat = getAssetTypeName(l.Asset_Type_ID);
@@ -574,29 +576,13 @@
             html += `</div>`;
         });
 
-        document.getElementById('mAssetGroupContainer').innerHTML = html || `
-            <div class="py-32 text-center">
-                <i class="fas fa-folder-open text-slate-200 text-6xl mb-4"></i>
-                <p class="font-bold text-slate-300">ไม่พบรายการครุภัณฑ์ในหน่วยงานนี้</p>
-            </div>`;
-            
+        document.getElementById('mAssetGroupContainer').innerHTML = html || `<div class="py-32 text-center"><i class="fas fa-folder-open text-slate-200 text-6xl mb-4"></i><p class="font-bold text-slate-300">ไม่พบรายการครุภัณฑ์ในหน่วยงานนี้</p></div>`;
         document.getElementById('modalDept').classList.replace('hidden', 'flex');
     }
 
     function updateReportPreview() {
         const preview = document.getElementById('reportPreviewContent');
-        const filteredLogs = state.logs.filter(l => {
-            const matchP = reportFilters.priority.length === 0 || 
-                          reportFilters.priority.includes(String(l.Priority_ID || l.PIORITY_ID));
-            const matchT = reportFilters.assetType.length === 0 || 
-                          reportFilters.assetType.includes(String(l.Asset_Type_ID));
-            const matchA = reportFilters.age.length === 0 || 
-                          checkAgeMatch(l.AgeInfo);
-            const matchD = !reportFilters.deptId || 
-                          String(l.DEPT_ID).trim() === String(reportFilters.deptId).trim();
-            return matchP && matchT && matchA && matchD;
-        });
-
+        const filteredLogs = getFilteredLogs();
         const activeDeptIds = [...new Set(filteredLogs.map(l => String(l.DEPT_ID).trim()))];
         const filteredDepts = state.depts.filter(d => {
             const matchB = !reportFilters.building || d.BUILDING === reportFilters.building;
@@ -610,7 +596,6 @@
             <h1 class="text-2xl font-black">รายงานสรุปผลการตรวจสอบครุภัณฑ์ IT</h1>
             <p class="text-slate-500 text-sm font-bold uppercase tracking-widest">Udonthani Hospital • ข้อมูล ณ วันที่ ${new Date().toLocaleDateString('th-TH')}</p>
         </div>
-        
         <table class="report-table">
             <thead>
                 <tr>
@@ -627,26 +612,59 @@
             const dLogs = filteredLogs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
             html += `<tr class="row-group-header"><td colspan="4">${dept.DEPNAME} (${dept.BUILDING} - ชั้น ${dept.FL})</td><td class="text-center">${dLogs.length} รายการ</td></tr>`;
             dLogs.forEach((l, i) => {
-                html += `<tr>
-                    <td class="text-center text-slate-400">${i+1}</td>
-                    <td class="font-bold">${l.AssetID}</td>
-                    <td>${l.FullDescription}</td>
-                    <td class="text-center font-bold">
-                        ${getPriorityName(l.Priority_ID || l.PIORITY_ID)}
-                    </td>
-                    <td class="text-center">${l.AgeInfo || '-'}</td>
-                </tr>`;
+                html += `<tr><td class="text-center text-slate-400">${i+1}</td><td class="font-bold">${l.AssetID}</td><td>${l.FullDescription}</td><td class="text-center font-bold">${getPriorityName(l.Priority_ID || l.PIORITY_ID)}</td><td class="text-center">${l.AgeInfo || '-'}</td></tr>`;
             });
         });
 
-        html += `
-            <tr class="bg-slate-800 text-white font-bold">
-                <td colspan="4" class="text-right p-4 uppercase tracking-wider text-xs">Grand Total</td>
-                <td class="text-center p-4">${filteredLogs.length.toLocaleString()}</td>
-            </tr>
-        </tbody></table>`;
-        
+        html += `<tr class="bg-slate-800 text-white font-bold"><td colspan="4" class="text-right p-4 uppercase tracking-wider text-xs">Grand Total</td><td class="text-center p-4">${filteredLogs.length.toLocaleString()}</td></tr></tbody></table>`;
         preview.innerHTML = html;
+    }
+
+    function getFilteredLogs() {
+        return state.logs.filter(l => {
+            const matchP = reportFilters.priority.length === 0 || reportFilters.priority.includes(String(l.Priority_ID || l.PIORITY_ID));
+            const matchT = reportFilters.assetType.length === 0 || reportFilters.assetType.includes(String(l.Asset_Type_ID));
+            const matchA = reportFilters.age.length === 0 || checkAgeMatch(l.AgeInfo);
+            const matchD = !reportFilters.deptId || String(l.DEPT_ID).trim() === String(reportFilters.deptId).trim();
+            return matchP && matchT && matchA && matchD;
+        });
+    }
+
+    function exportToExcel() {
+        const filteredLogs = getFilteredLogs();
+        if (filteredLogs.length === 0) {
+            alert("ไม่มีข้อมูลที่จะส่งออก");
+            return;
+        }
+
+        const exportData = [];
+        const activeDeptIds = [...new Set(filteredLogs.map(l => String(l.DEPT_ID).trim()))];
+        const filteredDepts = state.depts.filter(d => activeDeptIds.includes(String(d.DEP_ID).trim()));
+
+        filteredDepts.forEach(dept => {
+            const dLogs = filteredLogs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
+            dLogs.forEach((l, i) => {
+                exportData.push({
+                    "หน่วยงาน": dept.DEPNAME,
+                    "ตึก": dept.BUILDING,
+                    "ชั้น": dept.FL,
+                    "ลำดับ": i + 1,
+                    "รหัสครุภัณฑ์": l.AssetID,
+                    "รายละเอียด": l.FullDescription,
+                    "ยี่ห้อ/รุ่น": l.Model_Number || '-',
+                    "Serial Number": l.Serial_Number || '-',
+                    "ความสำคัญ": getPriorityName(l.Priority_ID || l.PIORITY_ID),
+                    "ประเภท": getAssetTypeName(l.Asset_Type_ID),
+                    "อายุการใช้งาน": l.AgeInfo || '-'
+                });
+            });
+        });
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "AssetAuditReport");
+        const fileName = `IT_Asset_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
     }
 
     function switchMainView(m) {
