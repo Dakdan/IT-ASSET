@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         :root {
@@ -319,6 +321,7 @@
     let state = { logs: [], depts: [], assetTypes: [], priorities: [] };
     let mainDisplayMode = 'grid';
     let advFilters = { priority: [], type: [], age: [] };
+    let currentReportData = []; // Store current filtered data for export
 
     const floorColorThemes = [
         { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600', badge: 'bg-emerald-500', cardBorder: 'border-emerald-100' },
@@ -403,7 +406,8 @@
         const dVal = document.getElementById('fDept').value;
         const filteredDepts = state.depts.filter(d => (!bVal || d.BUILDING === bVal) && (!fVal || d.FL === fVal) && (!dVal || d.DEPNAME === dVal));
         const dIds = filteredDepts.map(d => String(d.DEP_ID).trim());
-        const filteredLogs = state.logs.filter(l => {
+        
+        currentReportData = state.logs.filter(l => {
             const isDeptMatch = dIds.includes(String(l.DEPT_ID).trim());
             const isPriorityMatch = advFilters.priority.length === 0 || advFilters.priority.includes(String(l.Priority_ID || l.PIORITY_ID));
             const isTypeMatch = advFilters.type.length === 0 || advFilters.type.includes(String(l.Asset_Type_ID));
@@ -412,7 +416,7 @@
         });
 
         const groups = {}; 
-        filteredLogs.forEach(l => {
+        currentReportData.forEach(l => {
             const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
             const dName = dept?.DEPNAME || "ไม่ระบุหน่วยงาน";
             if (!groups[dName]) groups[dName] = [];
@@ -420,15 +424,15 @@
         });
 
         let html = `<div class="text-center mb-8"><h1 class="text-xl font-black text-slate-800 uppercase">รายงานตรวจสอบครุภัณฑ์คอมพิวเตอร์</h1><p class="text-xs font-bold text-slate-500">ประจำปี 2569</p></div>`;
-        if (!filteredLogs.length) {
-            html += `<div class="py-20 text-center text-slate-300 font-bold">ไม่พบข้อมูล</div>`;
+        if (!currentReportData.length) {
+            html += `<div class="py-20 text-center text-slate-300 font-bold">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div>`;
         } else {
-            html += `<table class="report-table"><thead><tr><th class="w-10 text-center">#</th><th class="w-32">รหัสครุภัณฑ์</th><th>รายละเอียด</th><th class="w-20 text-center">อายุ</th><th class="w-24 text-center">Priority</th></tr></thead><tbody>`;
+            html += `<table id="tableToExport" class="report-table"><thead><tr><th class="w-10 text-center">#</th><th class="w-32">รหัสครุภัณฑ์</th><th>รายละเอียด</th><th class="w-20 text-center">อายุ</th><th class="w-24 text-center">Priority</th></tr></thead><tbody>`;
             Object.keys(groups).sort().forEach(deptName => {
-                html += `<tr class="row-group-header"><td colspan="3" class="p-2">${deptName}</td><td colspan="2" class="text-right p-2">รวม: ${groups[deptName].length}</td></tr>`;
+                html += `<tr class="row-group-header"><td colspan="3" class="p-2 font-black text-blue-800">${deptName}</td><td colspan="2" class="text-right p-2">รวม: ${groups[deptName].length} รายการ</td></tr>`;
                 groups[deptName].forEach((item, idx) => {
                     const pName = state.priorities.find(p => String(p.id) === String(item.Priority_ID || item.PIORITY_ID))?.name || '-';
-                    html += `<tr><td class="text-center">${idx + 1}</td><td class="font-bold">${item.AssetID || '-'}</td><td><div class="font-bold">${item.FullDescription || '-'}</div><div class="text-[9px] text-slate-400">S/N: ${item.Serial_Number || 'ไม่ระบุ'}</div></td><td class="text-center">${item.AgeInfo || '-'}</td><td class="text-center font-bold text-pink-600">${pName}</td></tr>`;
+                    html += `<tr><td class="text-center">${idx + 1}</td><td class="font-bold">${item.AssetID || '-'}</td><td><div class="font-bold text-slate-800">${item.FullDescription || '-'}</div><div class="text-[9px] text-slate-400">S/N: ${item.Serial_Number || 'ไม่ระบุ'}</div></td><td class="text-center font-bold">${item.AgeInfo || '-'}</td><td class="text-center font-bold text-pink-600">${pName}</td></tr>`;
                 });
             });
             html += `</tbody></table>`;
@@ -498,8 +502,37 @@
     function closeReportModal() { document.getElementById('modalReport').classList.add('hidden'); }
     function closeModal() { document.getElementById('modalDept').classList.add('hidden'); }
     function switchMainView(m) { mainDisplayMode = m; document.getElementById('vGrid').classList.toggle('active', m === 'grid'); document.getElementById('vTable').classList.toggle('active', m === 'table'); renderDashboard(); }
+    
     function printReport() { window.print(); }
-    function exportToExcel() { alert('กำลังเตรียมไฟล์ Excel...'); }
+    
+    function exportToExcel() {
+        if (!currentReportData.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
+        
+        // Prepare flattened data for Excel with same columns as UI
+        const excelData = currentReportData.map((l, index) => {
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
+            const pName = state.priorities.find(p => String(p.id) === String(l.Priority_ID || l.PIORITY_ID))?.name || '-';
+            return {
+                "#": index + 1,
+                "หน่วยงาน": dept?.DEPNAME || "ไม่ระบุ",
+                "ตึก": dept?.BUILDING || "-",
+                "ชั้น": dept?.FL || "-",
+                "รหัสครุภัณฑ์": l.AssetID || "-",
+                "รายละเอียด": l.FullDescription || "-",
+                "Serial Number": l.Serial_Number || "-",
+                "อายุ (ปี)": l.AgeInfo || "-",
+                "Priority": pName
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Audit Report");
+        
+        // Save file
+        XLSX.writeFile(workbook, `IT_Asset_Report_${new Date().toLocaleDateString('th-TH')}.xlsx`);
+    }
+
     window.onload = init;
 </script>
 </body>
