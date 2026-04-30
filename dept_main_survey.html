@@ -214,7 +214,10 @@
         @media print {
             .no-print { display: none !important; }
             body { background: white; }
-            #reportPrintArea { position: relative; padding: 0; margin: 0; }
+            #modalReport { position: static; background: white; backdrop-filter: none; display: block !important; padding: 0; }
+            #modalReport > div { box-shadow: none; border: none; width: 100%; height: auto; border-radius: 0; overflow: visible !important; }
+            #reportPrintArea { overflow: visible !important; padding: 0; }
+            .custom-scroll { overflow: visible !important; }
         }
     </style>
 </head>
@@ -647,7 +650,7 @@
                 <td class="text-center font-black">${dLogs.length} รายการ</td>
             </tr>`;
 
-            // จัดกลุ่มภายในหน่วยงานตาม Asset Type (ใช้ Asset_Type_ID ที่มีในระบบ)
+            // จัดกลุ่มภายในหน่วยงานตาม Asset Type
             const typeGroups = {};
             dLogs.forEach(l => {
                 const typeName = getAssetTypeName(l.Asset_Type_ID);
@@ -656,7 +659,6 @@
             });
 
             Object.keys(typeGroups).sort().forEach(typeName => {
-                // Header ประเภทครุภัณฑ์ (สีชมพูอ่อน)
                 html += `<tr class="row-type-header">
                     <td colspan="5" class="px-4 py-2 italic font-bold">● ${typeName} (${typeGroups[typeName].length} รายการ)</td>
                 </tr>`;
@@ -678,48 +680,52 @@
     }
 
     function getFilteredLogs() {
+        // ดึง Logs ทั้งหมดมาตรวจสอบกับ Filter ปัจจุบัน
         return state.logs.filter(l => {
+            // ค้นหาข้อมูลหน่วยงานของ Log นี้เพื่อกรอง Building/Floor
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
+            if (!dept) return false;
+
+            const matchB = !reportFilters.building || dept.BUILDING === reportFilters.building;
+            const matchF = !reportFilters.floor || dept.FL === reportFilters.floor;
+            const matchD = !reportFilters.deptId || String(l.DEPT_ID).trim() === String(reportFilters.deptId).trim();
             const matchP = reportFilters.priority.length === 0 || reportFilters.priority.includes(String(l.Priority_ID || l.PIORITY_ID));
             const matchT = reportFilters.assetType.length === 0 || reportFilters.assetType.includes(String(l.Asset_Type_ID));
             const matchA = reportFilters.age.length === 0 || checkAgeMatch(l.AgeInfo);
-            const matchD = !reportFilters.deptId || String(l.DEPT_ID).trim() === String(reportFilters.deptId).trim();
-            return matchP && matchT && matchA && matchD;
+
+            return matchB && matchF && matchD && matchP && matchT && matchA;
         });
     }
 
     function exportToExcel() {
         const filteredLogs = getFilteredLogs();
         if (filteredLogs.length === 0) {
-            alert("ไม่มีข้อมูลที่จะส่งออก");
+            alert("ไม่มีข้อมูลที่จะส่งออกตามตัวกรองที่เลือก");
             return;
         }
 
         const exportData = [];
-        const activeDeptIds = [...new Set(filteredLogs.map(l => String(l.DEPT_ID).trim()))];
-        const filteredDepts = state.depts.filter(d => activeDeptIds.includes(String(d.DEP_ID).trim()));
-
-        filteredDepts.forEach(dept => {
-            const dLogs = filteredLogs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-            dLogs.forEach((l, i) => {
-                exportData.push({
-                    "หน่วยงาน": dept.DEPNAME,
-                    "ตึก": dept.BUILDING,
-                    "ชั้น": dept.FL,
-                    "ลำดับ": i + 1,
-                    "รหัสครุภัณฑ์": l.AssetID,
-                    "รายละเอียด": l.FullDescription,
-                    "ยี่ห้อ/รุ่น": l.Model_Number || '-',
-                    "Serial Number": l.Serial_Number || '-',
-                    "ความสำคัญ": getPriorityName(l.Priority_ID || l.PIORITY_ID),
-                    "ประเภท": getAssetTypeName(l.Asset_Type_ID),
-                    "อายุการใช้งาน": l.AgeInfo || '-'
-                });
+        // สร้างรายการข้อมูลสำหรับ Excel โดยใช้ข้อมูลที่ผ่านการกรองแล้ว
+        filteredLogs.forEach((l, i) => {
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim()) || {};
+            exportData.push({
+                "ลำดับ": i + 1,
+                "รหัสครุภัณฑ์": l.AssetID,
+                "Serial Number": l.Serial_Number || '-',
+                "ประเภท": getAssetTypeName(l.Asset_Type_ID),
+                "อายุการใช้งาน": l.AgeInfo || '-',
+                "รายละเอียด": l.FullDescription,
+                "ยี่ห้อ/รุ่น": l.Model_Number || '-',                    
+                "หน่วยงาน": dept.DEPNAME || '-',
+                "ตึก": dept.BUILDING || '-',
+                "ชั้น": dept.FL || '-',                  
+                "Priority": getPriorityName(l.Priority_ID || l.PIORITY_ID),                   
             });
         });
 
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "AssetAuditReport");
+        XLSX.utils.book_append_sheet(wb, ws, "Filtered_Asset_Report");
         const fileName = `IT_Asset_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, fileName);
     }
