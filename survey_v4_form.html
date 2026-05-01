@@ -485,7 +485,7 @@
             },
             {
                 enableHighAccuracy: true,
-                timeout: 10000,
+                timeout: 1000,
                 maximumAge: 0
             }
         );
@@ -917,25 +917,37 @@ async function executeSave(signatureData) {
         lucide.createIcons();
     }
 
-    async function openScanner(id) {
-        document.getElementById('scannerModal').classList.remove('hidden');
-        try {
-            await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, async (text) => {
-                let processedText = text.trim();
-                // สกัด ID จาก URL ถ้าสแกนได้ลิงก์
-                if (processedText.includes("http")) {
-                    const match = processedText.match(/IcmAssetDetail\/([^\/]+)/);
-                    if (match && match[1]) processedText = match[1];
-                }
-                document.getElementById(id).value = processedText;
-                await closeScanner(); 
-                if (id === 'assetQuery') searchAsset(); 
-            });
-        } catch (e) { 
-            console.error("Camera error", e); 
-            closeScanner(); 
-        }
+ async function openScanner(id) {
+    document.getElementById('scannerModal').classList.remove('hidden');
+    
+    // ล้างข้อความ Error เก่าทิ้งก่อน (ป้องกันตัวหนังสือ "ไม่พบรหัส" ค้าง)
+    const errorMsg = document.getElementById('searchError'); 
+    if (errorMsg) errorMsg.innerText = ''; 
+
+    try {
+        await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, async (text) => {
+            // แก้ไข: ไม่ใช้ .trim() ตามที่คุณสั่ง
+            let processedText = text; 
+            
+            if (processedText.includes("http")) {
+                const match = processedText.match(/IcmAssetDetail\/([^\/]+)/);
+                if (match && match[1]) processedText = match[1];
+            }
+            
+            // ใส่ค่าลง Input และปิดกล้องทันที
+            document.getElementById(id).value = processedText;
+            await closeScanner(); 
+            
+            // ถ้าเป็นช่องค้นหา ให้เริ่มค้นหาทันที
+            if (id === 'assetQuery') {
+                searchAsset(); 
+            }
+        });
+    } catch (e) { 
+        console.error("Camera error", e); 
+        closeScanner(); 
     }
+}
     function clearAuditForm() {
         // ล้างรูปภาพ
         currentBase64Image = "";
@@ -1156,7 +1168,12 @@ function hideProcess() {
         overlay.classList.add('hidden');
     }
 }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+   function closeModal(id) { 
+    document.getElementById(id).classList.add('hidden'); 
+    if (id === 'receiptModal') {
+        document.getElementById('receiptDetail').innerHTML = ''; // ล้างข้อมูลทิ้งเมื่อปิด
+    }
+}
     function resetDeptSelection() { location.reload(); }
 // 1. ฟังก์ชันบีบอัดรูป (ต้องมีเพื่อให้บันทึกรูปผ่าน)
 async function compressImage(file) {
