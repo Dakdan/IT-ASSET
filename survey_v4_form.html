@@ -811,57 +811,83 @@ async function handleImageSelection(input, previewId, placeholderId) {
     }
 
 async function executeSave(signatureData) {
-    // ดึงค่า Asset_ID จาก Input ที่เราสแกนหรือค้นหามาได้
-    const assetId = document.getElementById('assetQuery').value;
+    // 1. ดึงค่า Asset_ID และเช็คแบบนิ่งๆ
+    const assetQueryElem = document.getElementById('assetQuery');
+    const assetId = assetQueryElem ? assetQueryElem.value : "";
+    
     if (!assetId) {
-        alert("ไม่พบรหัสครุภัณฑ์");
+        showAlert("ไม่พบรหัส", "กรุณาระบุหรือสแกนรหัสครุภัณฑ์");
         return;
     }
 
     showProcess("กำลังบันทึกข้อมูล...");
+
     try {
-        const gps = await getGPS();
-        
-        // สร้าง Payload สำหรับ 1 รายการ
+        // 2. GPS: เรียกแบบ Non-blocking (ถ้าพังหรือช้า ให้ส่งค่าว่าง ไม่ต้องรอ)
+        let gpsString = "0,0";
+        try {
+            const gps = await Promise.race([
+                getGPS(),
+                new Promise(resolve => setTimeout(() => resolve({lat: 0, lng: 0}), 2000))
+            ]);
+            gpsString = `${gps.lat},${gps.lng}`;
+        } catch (e) {
+            // เงียบไว้ บันทึกต่อ
+        }
+
+        // 3. เตรียมข้อมูล (ใส่ค่า Default ป้องกัน Error ถ้าหา Element ไม่เจอ)
+        const displayAssetName = document.getElementById('displayAssetName')?.innerText || "ไม่ทราบชื่อ";
+        const deptId = document.getElementById('selectedDeptId')?.value || "-";
+
         const payload = {
-            action: 'saveBulkSurvey', // ใช้ action เดิมใน GAS ได้ แต่ส่งไอเทมเดียว
+            action: 'saveBulkSurvey',
             data: {
                 items: [{
                     Asset_ID: assetId,
-                    AssetName: document.getElementById('displayAssetName').innerText, // ดึงจากชื่อที่โชว์บนหน้าจอ
-                    ImageData: currentBase64Image || "", 
+                    AssetName: displayAssetName,
+                    ImageData: typeof currentBase64Image !== 'undefined' ? currentBase64Image : "", 
                     Status: "1", 
-                    Note: "" // ถ้ามีช่องหมายเหตุให้ใส่เพิ่มตรงนี้ครับ
+                    Note: "" 
                 }],
-                deptId: document.getElementById('selectedDeptId').value,
+                deptId: deptId,
                 signature: signatureData || "",
-                gps: `${gps.lat},${gps.lng}`,
+                gps: gpsString,
                 activityId: "Ac-2569",
                 IT_User_Mail: "user@udonhospital.com"
             }
         };
 
+        // 4. ยิง Fetch บันทึกข้อมูล
         const res = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify(payload)
         });
         
         const result = await res.json();
+
         if (result.status === 'success') {
-            closeModal('confirmModal'); 
-            closeModal('auditModal'); // ปิดหน้าต่างตรวจสอบด้วย
+            // ปิด Modal แบบเช็คความปลอดภัย
+            ['confirmModal', 'auditModal', 'scannerModal'].forEach(id => {
+                const m = document.getElementById(id);
+                if (m) m.classList.add('hidden');
+            });
             
-            // แสดงสลิปความสำเร็จ (ส่ง payload.data.items เข้าไปแสดง)
-            renderSuccessSlip(result.actionId, payload.data.items);
+            // แสดงสลิป
+            if (typeof renderSuccessSlip === 'function') {
+                renderSuccessSlip(result.actionId, payload.data.items);
+            }
             
-            // ล้างข้อมูลฟอร์มเพื่อรอสแกนตัวถัดไป
+            // ล้างฟอร์ม
             clearAuditForm();
-            document.getElementById('assetQuery').value = ""; // ล้างช่องค้นหา
+            if (assetQueryElem) assetQueryElem.value = ""; 
         } else {
-            alert("บันทึกไม่สำเร็จ: " + result.message);
+            showAlert("บันทึกไม่สำเร็จ", result.message || "เกิดข้อผิดพลาดจาก Server");
         }
+
     } catch (e) { 
-        alert("เกิดข้อผิดพลาด: " + e.message); 
+        // ถ้า Network พัง หรือ Code ส่วนอื่นมีปัญหา ก็ยังให้ปิด Loading และแจ้งเตือนแบบไม่ค้าง
+        console.log("Save Error:", e.message);
+        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
     } finally { 
         hideProcess(); 
     }
