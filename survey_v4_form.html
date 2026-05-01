@@ -811,7 +811,6 @@ async function handleImageSelection(input, previewId, placeholderId) {
     }
 
 async function executeSave(signatureData) {
-    // 1. ดึงค่า Asset_ID และเช็คแบบนิ่งๆ
     const assetQueryElem = document.getElementById('assetQuery');
     const assetId = assetQueryElem ? assetQueryElem.value : "";
     
@@ -823,19 +822,21 @@ async function executeSave(signatureData) {
     showProcess("กำลังบันทึกข้อมูล...");
 
     try {
-        // 2. GPS: เรียกแบบ Non-blocking (ถ้าพังหรือช้า ให้ส่งค่าว่าง ไม่ต้องรอ)
+        // ดึงพิกัดแบบปลอดภัยที่สุด (Inline Logic) ไม่ต้องเรียกฟังก์ชันนอกให้เสี่ยง Error
         let gpsString = "0,0";
-        try {
-            const gps = await Promise.race([
-                getGPS(),
-                new Promise(resolve => setTimeout(() => resolve({lat: 0, lng: 0}), 2000))
-            ]);
-            gpsString = `${gps.lat},${gps.lng}`;
-        } catch (e) {
-            // เงียบไว้ บันทึกต่อ
-        }
+        const getSafeGPS = () => {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) return resolve("0,0");
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve(`${pos.coords.latitude},${pos.coords.longitude}`),
+                    () => resolve("0,0"),
+                    { timeout: 1500 } // รอแค่ 1.5 วิพอ เร็วทันใจ
+                );
+            });
+        };
+        
+        gpsString = await getSafeGPS();
 
-        // 3. เตรียมข้อมูล (ใส่ค่า Default ป้องกัน Error ถ้าหา Element ไม่เจอ)
         const displayAssetName = document.getElementById('displayAssetName')?.innerText || "ไม่ทราบชื่อ";
         const deptId = document.getElementById('selectedDeptId')?.value || "-";
 
@@ -857,7 +858,6 @@ async function executeSave(signatureData) {
             }
         };
 
-        // 4. ยิง Fetch บันทึกข้อมูล
         const res = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify(payload)
@@ -866,28 +866,26 @@ async function executeSave(signatureData) {
         const result = await res.json();
 
         if (result.status === 'success') {
-            // ปิด Modal แบบเช็คความปลอดภัย
+            // ปิดทุก Modal ที่เกี่ยวข้อง
             ['confirmModal', 'auditModal', 'scannerModal'].forEach(id => {
                 const m = document.getElementById(id);
                 if (m) m.classList.add('hidden');
             });
             
-            // แสดงสลิป
             if (typeof renderSuccessSlip === 'function') {
                 renderSuccessSlip(result.actionId, payload.data.items);
             }
             
-            // ล้างฟอร์ม
             clearAuditForm();
             if (assetQueryElem) assetQueryElem.value = ""; 
         } else {
-            showAlert("บันทึกไม่สำเร็จ", result.message || "เกิดข้อผิดพลาดจาก Server");
+            // ใช้ showAlert แทน alert ของ browser
+            showAlert("บันทึกไม่สำเร็จ", result.message || "ข้อผิดพลาดจากระบบ");
         }
 
     } catch (e) { 
-        // ถ้า Network พัง หรือ Code ส่วนอื่นมีปัญหา ก็ยังให้ปิด Loading และแจ้งเตือนแบบไม่ค้าง
-        console.log("Save Error:", e.message);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+        // พังจุดไหนก็ต้องแจ้งผ่าน Modal
+        showAlert("เกิดข้อผิดพลาด", "การเชื่อมต่อล้มเหลว");
     } finally { 
         hideProcess(); 
     }
