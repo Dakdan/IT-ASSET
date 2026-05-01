@@ -1186,11 +1186,11 @@ function getGPS() {
         if (!navigator.geolocation) resolve({lat: "-", lng: "-"});
         navigator.geolocation.getCurrentPosition(
             (p) => resolve({lat: p.coords.latitude, lng: p.coords.longitude}),
-            () => resolve({lat: "-", lng: "-"})
+            () => resolve({lat: "-", lng: "-"}),
+            { timeout: 1000 } // เพิ่ม timeout 5 วินาที ถ้าหาไม่เจอให้ข้ามเล
         );
     });
 }
-
 </script>
     <input type="hidden" id="selectedDeptId">
 </body>
