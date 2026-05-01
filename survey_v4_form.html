@@ -795,43 +795,53 @@ async function handleFileSelect(event) {
         executeSave(signaturePad.toDataURL());
     }
 
-    async function executeSave(singleItemData) {
-        showProcess("กำลังส่งข้อมูล...");
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'saveBulkSurvey', // ใช้ action เดิมได้แต่ส่ง items แค่ 1 ตัว
-                    data: {
-                        items: [singleItemData], // ใส่ Array ครอบไว้เพื่อให้ฝั่ง Server ไม่ต้องแก้โค้ด
-                        deptId: document.getElementById('selectedDeptId').value,
-                        signature: "", // หรือ signaturePad.toDataURL() หากมีการเซ็นชื่อไว้ก่อนหน้า
-                        gps: currentGps,
-                        activityId: "Ac-2569",
-                        IT_User_Mail: "user@mail.com"
-                    }
-                })
-            });
-            
-            const result = await res.json();
-            if (result.status === 'success') {
-                // ส่งข้อมูลสำเร็จแล้วแสดง Slip สำหรับรายการนั้น
-                renderSuccessSlip(result.actionId, [{ 
-                    DisplayName: singleItemData.AssetName, 
-                    data: singleItemData 
-                }]);
-                
-                // ล้างค่ารูปภาพ
-                currentBase64Image = ""; 
-            } else {
-                alert("บันทึกไม่สำเร็จ: " + result.message);
+   async function executeSave(singleItemData) {
+    if (!singleItemData) return;
+    
+    showProcess("กำลังบันทึกข้อมูล...");
+    try {
+        const gps = await getGPS(); // เรียกใช้ฟังก์ชันดึงพิกัดจริง
+        
+        const payload = {
+            action: 'saveBulkSurvey',
+            data: {
+                items: [{
+                    Asset_ID: singleItemData.Asset_ID,
+                    AssetName: singleItemData.AssetName,
+                    ImageData: currentBase64Image || "", // ส่งรูปที่เก็บไว้ในตัวแปร Global
+                    Status: "1", // หรือค่าสถานะที่คุณกำหนด
+                    Note: ""
+                }],
+                deptId: document.getElementById('selectedDeptId').value,
+                signature: "", 
+                gps: `${gps.lat},${gps.lng}`,
+                activityId: "Ac-2569",
+                IT_User_Mail: "user@udonhospital.com"
             }
-        } catch (e) { 
-            alert("Error: " + e.message); 
-        } finally { 
-            hideProcess(); 
+        };
+
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await res.json();
+        if (result.status === 'success') {
+            // ปิด Modal บันทึกเดิม (ถ้ามี)
+            closeModal('auditModal'); 
+            // แสดงใบเสร็จ/สลิป
+            renderSuccessSlip(result.actionId, payload.data.items);
+            // ล้างข้อมูลหลังบันทึก
+            clearAuditForm(); 
+        } else {
+            alert("บันทึกไม่สำเร็จ: " + result.message);
         }
+    } catch (e) { 
+        alert("เกิดข้อผิดพลาด: " + e.message); 
+    } finally { 
+        hideProcess(); 
     }
+}
     // ฟังก์ชันแสดง Alert แบบ Overlay
     function showAlert(title, message) {
         const modal = document.getElementById('alertModal');
