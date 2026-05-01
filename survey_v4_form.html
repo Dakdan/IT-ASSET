@@ -710,6 +710,7 @@ async function handleFileSelect(event) {
             ImageData: currentBase64Image, // ใช้รูปที่บีบอัดแล้ว
             gps: currentGps,               // --- จุดที่ 2: ใช้พิกัดที่ดึงมาใหม่ตรงนี้ ---
             Note1: note1Value,
+            ASS_ON_OUT: isExisting ? "1" : "0",
             Note2: [
                 document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
                 document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
