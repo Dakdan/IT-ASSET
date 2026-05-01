@@ -435,57 +435,69 @@
     
         loadGPS();
     };
-    let currentGps = "";
+   let currentGps = "";
     let gpsReady = false;
     
-    // UI helper
-   function setGpsStatus(status, text) {
-    const dot = document.getElementById('gpsDot');
-    const label = document.getElementById('gpsStatusText');
+    // UI helper - แก้ไขให้ปลอดภัยขึ้น
+    function setGpsStatus(status, text) {
+        const dot = document.getElementById('gpsDot');
+        const label = document.getElementById('gpsStatusText');
 
-    // ถ้าไม่มี Element ให้หยุดทำงานทันที (ป้องกัน error บรรทัดถัดไป)
-    if (!dot || !label) return; 
+        // ตรวจสอบ: ถ้าไม่มี Element ในหน้าจอนั้น ให้หยุดทำงานทันที ไม่ให้ Error
+        if (!dot || !label) return; 
 
-    dot.className = "w-2 h-2 rounded-full";
-    
-    if (status === "loading") dot.classList.add("gps-loading");
-    if (status === "success") dot.classList.add("gps-success");
-    if (status === "error") dot.classList.add("gps-error");
+        // จัดการ Class แบบปลอดภัย
+        dot.className = "w-2 h-2 rounded-full";
+        
+        if (status === "loading") dot.classList.add("gps-loading");
+        else if (status === "success") dot.classList.add("gps-success");
+        else if (status === "error") dot.classList.add("gps-error");
 
-    label.innerText = text; // จะไม่พังแล้วเพราะเช็ค null ด้านบนแล้ว
-}
-   function loadGPS() {
-    try {
-        if (!navigator.geolocation) {
-            setGpsStatus("error", "อุปกรณ์ไม่รองรับ GPS");
-            return;
-        }
-
-        setGpsStatus("loading", "กำลังขอพิกัด...");
-
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const lat = pos.coords.latitude;
-                const lng = pos.coords.longitude;
-                currentGps = `${lat},${lng}`;
-                gpsReady = true;
-
-                // เช็คอีกรอบก่อนเขียนค่าลง UI
-                setGpsStatus("success", "พร้อมใช้งาน");
-            },
-            (err) => {
-                gpsReady = false;
-                let msg = "ไม่สามารถใช้ GPS";
-                if (err.code === 1) msg = "ผู้ใช้ไม่อนุญาต GPS";
-                setGpsStatus("error", msg);
-            },
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-    } catch (e) {
-        console.warn("GPS UI Error: ", e.message); // พิมพ์บอกใน Console แทนการเด้ง Error ขวางหน้าจอ
+        // จัดการ Text แบบปลอดภัย
+        if (label) label.innerText = text;
     }
-}
-  
+
+    function loadGPS() {
+        try {
+            // เช็คว่า Browser รองรับไหม
+            if (!navigator || !navigator.geolocation) {
+                setGpsStatus("error", "อุปกรณ์ไม่รองรับ GPS");
+                return;
+            }
+
+            setGpsStatus("loading", "กำลังขอพิกัด...");
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    currentGps = `${lat},${lng}`;
+                    gpsReady = true;
+
+                    // อัปเดตสถานะบนจอ (ถ้ามี)
+                    setGpsStatus("success", "พร้อมใช้งาน");
+                },
+                (err) => {
+                    gpsReady = false;
+                    let msg = "ไม่สามารถใช้ GPS";
+                    if (err.code === 1) msg = "ผู้ใช้ไม่อนุญาต GPS";
+                    if (err.code === 2) msg = "หาตำแหน่งไม่เจอ";
+                    if (err.code === 3) msg = "GPS หมดเวลา";
+                    
+                    setGpsStatus("error", msg);
+                    console.warn("GPS Warning:", msg);
+                },
+                { 
+                    enableHighAccuracy: true, 
+                    timeout: 5000, // เพิ่มเวลาเป็น 5 วินาทีเพื่อให้เสถียรขึ้น
+                    maximumAge: 0 
+                }
+            );
+        } catch (e) {
+            // ถ้าพังในส่วน UI ให้ Script หลักทำงานต่อไปได้
+            console.error("GPS Logic Error: ", e.message);
+        }
+    }
     function handleResize() {
         if (document.getElementById('confirmModal').classList.contains('hidden')) return;
         const canvas = document.getElementById('signature-pad');
