@@ -810,33 +810,24 @@ async function handleImageSelection(input, previewId, placeholderId) {
         executeSave(signaturePad.toDataURL());
     }
 
+// 1. ฟังก์ชันบันทึกที่ตัด GPS ทิ้ง และใช้ showAlert เท่านั้น
 async function executeSave(signatureData) {
     const assetQueryElem = document.getElementById('assetQuery');
     const assetId = assetQueryElem ? assetQueryElem.value : "";
     
     if (!assetId) {
-        showAlert("ไม่พบรหัส", "กรุณาระบุหรือสแกนรหัสครุภัณฑ์");
+        if (typeof showAlert === 'function') {
+            showAlert("ไม่พบรหัส", "กรุณาระบุหรือสแกนรหัสครุภัณฑ์");
+        }
         return;
     }
 
-    showProcess("กำลังบันทึกข้อมูล...");
+    // เรียกใช้ showProcess แบบเช็คความปลอดภัย
+    if (typeof showProcess === 'function') {
+        showProcess("กำลังบันทึกข้อมูล...");
+    }
 
     try {
-        // ดึงพิกัดแบบปลอดภัยที่สุด (Inline Logic) ไม่ต้องเรียกฟังก์ชันนอกให้เสี่ยง Error
-        let gpsString = "0,0";
-        const getSafeGPS = () => {
-            return new Promise((resolve) => {
-                if (!navigator.geolocation) return resolve("0,0");
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => resolve(`${pos.coords.latitude},${pos.coords.longitude}`),
-                    () => resolve("0,0"),
-                    { timeout: 1500 } // รอแค่ 1.5 วิพอ เร็วทันใจ
-                );
-            });
-        };
-        
-        gpsString = await getSafeGPS();
-
         const displayAssetName = document.getElementById('displayAssetName')?.innerText || "ไม่ทราบชื่อ";
         const deptId = document.getElementById('selectedDeptId')?.value || "-";
 
@@ -852,7 +843,7 @@ async function executeSave(signatureData) {
                 }],
                 deptId: deptId,
                 signature: signatureData || "",
-                gps: gpsString,
+                gps: "0,0", // ส่งค่าคงที่ ตัดปัญหา GPS พัง
                 activityId: "Ac-2569",
                 IT_User_Mail: "user@udonhospital.com"
             }
@@ -866,8 +857,8 @@ async function executeSave(signatureData) {
         const result = await res.json();
 
         if (result.status === 'success') {
-            // ปิดทุก Modal ที่เกี่ยวข้อง
-            ['confirmModal', 'auditModal', 'scannerModal'].forEach(id => {
+            // ปิด Modal แบบปลอดภัย
+            ['confirmModal', 'auditModal', 'scannerModal', 'receiptModal'].forEach(id => {
                 const m = document.getElementById(id);
                 if (m) m.classList.add('hidden');
             });
@@ -876,32 +867,43 @@ async function executeSave(signatureData) {
                 renderSuccessSlip(result.actionId, payload.data.items);
             }
             
-            clearAuditForm();
+            if (typeof clearAuditForm === 'function') clearAuditForm();
             if (assetQueryElem) assetQueryElem.value = ""; 
         } else {
-            // ใช้ showAlert แทน alert ของ browser
-            showAlert("บันทึกไม่สำเร็จ", result.message || "ข้อผิดพลาดจากระบบ");
+            if (typeof showAlert === 'function') showAlert("บันทึกไม่สำเร็จ", result.message);
         }
 
     } catch (e) { 
-        // พังจุดไหนก็ต้องแจ้งผ่าน Modal
-        showAlert("เกิดข้อผิดพลาด", "การเชื่อมต่อล้มเหลว");
+        if (typeof showAlert === 'function') showAlert("เกิดข้อผิดพลาด", "การส่งข้อมูลล้มเหลว");
     } finally { 
-        hideProcess(); 
+        if (typeof hideProcess === 'function') hideProcess(); 
     }
 }
-    // ฟังก์ชันแสดง Alert แบบ Overlay
-    function showAlert(title, message) {
-        const modal = document.getElementById('alertModal');
-        document.getElementById('alertTitle').innerText = title;
-        document.getElementById('alertMessage').innerText = message;
-        modal.classList.remove('hidden');
+
+// 2. ฟังก์ชันควบคุม Process แบบไม่มี Alert Browser
+function showProcess(m) { 
+    const msg = document.getElementById('processMessage'); 
+    const overlay = document.getElementById('processOverlay');
+    if (msg) msg.innerText = m; 
+    if (overlay) overlay.classList.remove('hidden'); 
+}
+
+function hideProcess() {
+    const overlay = document.getElementById('processOverlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+// 3. ฟังก์ชันปิด Modal แบบไม่พัง
+function closeModal(id) { 
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add('hidden'); 
+        if (id === 'receiptModal') {
+            const detail = document.getElementById('receiptDetail');
+            if (detail) detail.innerHTML = '';
+        }
     }
-    
-    // ฟังก์ชันปิด Alert
-    function closeAlert() {
-        document.getElementById('alertModal').classList.add('hidden');
-    }
+}
     function renderSuccessSlip(actionId, items) {
         const deptId = document.getElementById('selectedDeptId').value;
         const deptName = document.getElementById('displayDeptName').innerText;
