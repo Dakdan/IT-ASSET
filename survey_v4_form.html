@@ -1129,8 +1129,33 @@ function showReceipt(item) {
 }
 
     async function closeScanner() { if(html5QrCode.isScanning) await html5QrCode.stop(); closeModal('scannerModal'); }
-    function showProcess(m) { document.getElementById('processMessage').innerText = m; document.getElementById('processOverlay').classList.remove('hidden'); }
-    function hideProcess() { document.getElementById('processOverlay').classList.add('hidden'); }
+   // ฟังก์ชันแสดงสถานะการบันทึก (แบบป้องกัน Error null)
+function showProcess(m) { 
+    // 1. ดึง Element มาเช็คก่อน
+    const msg = document.getElementById('processMessage'); 
+    const overlay = document.getElementById('processOverlay');
+    
+    // 2. ตรวจสอบ: ถ้ามี "กล่องข้อความ" อยู่จริง ค่อยเปลี่ยนตัวหนังสือ
+    if (msg) {
+        msg.innerText = m; 
+    } 
+
+    // 3. ตรวจสอบ: ถ้ามี "หน้ากาก Loading" อยู่จริง ค่อยสั่งให้มันแสดงผล
+    if (overlay) {
+        overlay.classList.remove('hidden'); 
+    } else {
+        // ถ้าหาไม่เจอจริงๆ ให้ฟ้องใน Console แทน ไม่ให้ระบบค้างหน้าจอ
+        console.warn("ไม่พบ Element สำหรับแสดงการประมวลผล (processOverlay)");
+    }
+}
+
+// ฟังก์ชันปิดสถานะการบันทึก
+function hideProcess() {
+    const overlay = document.getElementById('processOverlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+}
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function resetDeptSelection() { location.reload(); }
 // 1. ฟังก์ชันบีบอัดรูป (ต้องมีเพื่อให้บันทึกรูปผ่าน)
