@@ -520,17 +520,25 @@
     // --- ปรับปรุงฟังก์ชันเลือกรูปภาพให้รองรับ Async/Await ---
 // ปรับปรุงฟังก์ชันเลือกรูปภาพให้รับค่า input และจัดการ preview ให้แม่นยำขึ้น
    // ตัวอย่าง: แก้ในฟังก์ชันรับรูป
-async function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (file) {
-        // เรียกใช้ฟังก์ชันใหม่ที่เพิ่มไปเพื่อบีบอัดรูป
-        currentBase64Image = await compressImage(file); 
-        
-        // แสดง Preview ตามปกติ
-        document.getElementById('imgPreview').src = currentBase64Image;
+async function handleImageSelection(input, previewId, placeholderId) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const base64 = await compressImage(file);
+    currentBase64Image = base64;
+
+    const preview = document.getElementById(previewId);
+    const placeholder = document.getElementById(placeholderId);
+
+    if (preview && placeholder) {
+        preview.src = base64;
+        preview.classList.remove('hidden');    // โชว์รูป
+        placeholder.classList.add('hidden');    // ซ่อนไอคอนกล้อง
+        console.log("แสดงรูปที่ ID:", previewId); // เช็กใน Console ว่า ID ตรงไหม
+    } else {
+        console.error("หา ID ไม่เจอ:", previewId, placeholderId);
     }
 }
-
     function populateSelects() {
         const types = [document.getElementById('assetTypeId'), document.getElementById('nr_asset_type_id')];
         const priors = [document.getElementById('priorityId'), document.getElementById('nr_priorityId')];
@@ -795,25 +803,31 @@ async function handleFileSelect(event) {
         executeSave(signaturePad.toDataURL());
     }
 
-   async function executeSave(singleItemData) {
-    if (!singleItemData) return;
-    
+async function executeSave(signatureData) {
+    // ดึงค่า Asset_ID จาก Input ที่เราสแกนหรือค้นหามาได้
+    const assetId = document.getElementById('assetQuery').value;
+    if (!assetId) {
+        alert("ไม่พบรหัสครุภัณฑ์");
+        return;
+    }
+
     showProcess("กำลังบันทึกข้อมูล...");
     try {
-        const gps = await getGPS(); // เรียกใช้ฟังก์ชันดึงพิกัดจริง
+        const gps = await getGPS();
         
+        // สร้าง Payload สำหรับ 1 รายการ
         const payload = {
-            action: 'saveBulkSurvey',
+            action: 'saveBulkSurvey', // ใช้ action เดิมใน GAS ได้ แต่ส่งไอเทมเดียว
             data: {
                 items: [{
-                    Asset_ID: singleItemData.Asset_ID,
-                    AssetName: singleItemData.AssetName,
-                    ImageData: currentBase64Image || "", // ส่งรูปที่เก็บไว้ในตัวแปร Global
-                    Status: "1", // หรือค่าสถานะที่คุณกำหนด
-                    Note: ""
+                    Asset_ID: assetId,
+                    AssetName: document.getElementById('displayAssetName').innerText, // ดึงจากชื่อที่โชว์บนหน้าจอ
+                    ImageData: currentBase64Image || "", 
+                    Status: "1", 
+                    Note: "" // ถ้ามีช่องหมายเหตุให้ใส่เพิ่มตรงนี้ครับ
                 }],
                 deptId: document.getElementById('selectedDeptId').value,
-                signature: "", 
+                signature: signatureData || "",
                 gps: `${gps.lat},${gps.lng}`,
                 activityId: "Ac-2569",
                 IT_User_Mail: "user@udonhospital.com"
@@ -827,12 +841,15 @@ async function handleFileSelect(event) {
         
         const result = await res.json();
         if (result.status === 'success') {
-            // ปิด Modal บันทึกเดิม (ถ้ามี)
-            closeModal('auditModal'); 
-            // แสดงใบเสร็จ/สลิป
+            closeModal('confirmModal'); 
+            closeModal('auditModal'); // ปิดหน้าต่างตรวจสอบด้วย
+            
+            // แสดงสลิปความสำเร็จ (ส่ง payload.data.items เข้าไปแสดง)
             renderSuccessSlip(result.actionId, payload.data.items);
-            // ล้างข้อมูลหลังบันทึก
-            clearAuditForm(); 
+            
+            // ล้างข้อมูลฟอร์มเพื่อรอสแกนตัวถัดไป
+            clearAuditForm();
+            document.getElementById('assetQuery').value = ""; // ล้างช่องค้นหา
         } else {
             alert("บันทึกไม่สำเร็จ: " + result.message);
         }
