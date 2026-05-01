@@ -811,6 +811,16 @@ async function handleImageSelection(input, previewId, placeholderId) {
     }
 
 // 1. ฟังก์ชันบันทึกที่ตัด GPS ทิ้ง และใช้ showAlert เท่านั้น
+// --- ส่วนที่แก้ปัญหา getGPS is not defined แบบถาวร ---
+function getGPS() {
+    // คืนค่าหลอกๆ กลับไปทันที ไม่ต้องรอ ไม่ต้องดึงพิกัดจริง
+    // เพื่อให้ฟังก์ชันอื่นที่เรียกใช้ getGPS() ทำงานต่อได้โดยไม่ Error
+    return new Promise((resolve) => {
+        resolve({ lat: "0", lng: "0" });
+    });
+}
+// ----------------------------------------------
+
 async function executeSave(signatureData) {
     const assetQueryElem = document.getElementById('assetQuery');
     const assetId = assetQueryElem ? assetQueryElem.value : "";
@@ -822,12 +832,12 @@ async function executeSave(signatureData) {
         return;
     }
 
-    // เรียกใช้ showProcess แบบเช็คความปลอดภัย
-    if (typeof showProcess === 'function') {
-        showProcess("กำลังบันทึกข้อมูล...");
-    }
+    if (typeof showProcess === 'function') showProcess("กำลังบันทึกข้อมูล...");
 
     try {
+        // เรียกใช้ getGPS ที่เราประกาศไว้ข้างบน (ปลอดภัยแน่นอน)
+        const gps = await getGPS();
+        
         const displayAssetName = document.getElementById('displayAssetName')?.innerText || "ไม่ทราบชื่อ";
         const deptId = document.getElementById('selectedDeptId')?.value || "-";
 
@@ -843,7 +853,7 @@ async function executeSave(signatureData) {
                 }],
                 deptId: deptId,
                 signature: signatureData || "",
-                gps: "0,0", // ส่งค่าคงที่ ตัดปัญหา GPS พัง
+                gps: `${gps.lat},${gps.lng}`,
                 activityId: "Ac-2569",
                 IT_User_Mail: "user@udonhospital.com"
             }
@@ -857,16 +867,12 @@ async function executeSave(signatureData) {
         const result = await res.json();
 
         if (result.status === 'success') {
-            // ปิด Modal แบบปลอดภัย
-            ['confirmModal', 'auditModal', 'scannerModal', 'receiptModal'].forEach(id => {
+            ['confirmModal', 'auditModal', 'scannerModal'].forEach(id => {
                 const m = document.getElementById(id);
                 if (m) m.classList.add('hidden');
             });
             
-            if (typeof renderSuccessSlip === 'function') {
-                renderSuccessSlip(result.actionId, payload.data.items);
-            }
-            
+            if (typeof renderSuccessSlip === 'function') renderSuccessSlip(result.actionId, payload.data.items);
             if (typeof clearAuditForm === 'function') clearAuditForm();
             if (assetQueryElem) assetQueryElem.value = ""; 
         } else {
@@ -874,7 +880,7 @@ async function executeSave(signatureData) {
         }
 
     } catch (e) { 
-        if (typeof showAlert === 'function') showAlert("เกิดข้อผิดพลาด", "การส่งข้อมูลล้มเหลว");
+        if (typeof showAlert === 'function') showAlert("เกิดข้อผิดพลาด", "เชื่อมต่อ Server ไม่ได้");
     } finally { 
         if (typeof hideProcess === 'function') hideProcess(); 
     }
