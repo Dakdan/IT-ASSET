@@ -306,9 +306,11 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <a id="mDeptDetailBtn" href="#" target="_blank" class="px-6 py-3 bg-pink-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-pink-200 hover:bg-pink-600 transition-all flex items-center gap-2">
-                    <i class="fas fa-external-link-alt"></i> ดูรายละเอียด         
-                </a>
+               
+                <button onclick="window.location.href='dept_detail.html?DEP_ID='${dept.DEP_ID}" 
+                class="pink-gradient px-6 py-2.5 rounded-xl text-white font-bold shadow-lg shadow-pink-100 hover:scale-105 transition-all text-sm">
+                <i class="fas fa-plus mr-2"></i> เพิ่มข้อมูล
+                </button>
                 <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center">
                     <i class="fas fa-times"></i>
                 </button>
@@ -560,11 +562,11 @@
         document.getElementById('mDeptName').innerText = dept.DEPNAME;
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${dept.BUILDING} • ชั้น ${dept.FL}`;
         document.getElementById('mDeptPic').src = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w400` : `https://placehold.co/100?text=D`;
-        //document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
-        document.getElementById('mDeptDetailBtn').innerHTML ='<button onclick="window.location.href='survey_v4_form.html'" 
-                class="pink-gradient px-6 py-2.5 rounded-xl text-white font-bold shadow-lg shadow-pink-100 hover:scale-105 transition-all text-sm">
-            <i class="fas fa-plus mr-2"></i> เพิ่มข้อมูล
-        </button>;
+        document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
+       // document.getElementById('mDeptDetailBtn').innerHTML ='<button onclick="window.location.href='survey_v4_form.html'" 
+         //       class="pink-gradient px-6 py-2.5 rounded-xl text-white font-bold shadow-lg shadow-pink-100 hover:scale-105 transition-all text-sm">
+         //   <i class="fas fa-plus mr-2"></i> เพิ่มข้อมูล
+      //  </button>;
              
 
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
