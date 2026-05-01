@@ -439,57 +439,52 @@
     let gpsReady = false;
     
     // UI helper
-    function setGpsStatus(status, text) {
-        const dot = document.getElementById('gpsDot');
-        const label = document.getElementById('gpsStatusText');
+   function setGpsStatus(status, text) {
+    const dot = document.getElementById('gpsDot');
+    const label = document.getElementById('gpsStatusText');
+
+    // ถ้าไม่มี Element ให้หยุดทำงานทันที (ป้องกัน error บรรทัดถัดไป)
+    if (!dot || !label) return; 
+
+    dot.className = "w-2 h-2 rounded-full";
     
-        dot.className = "w-2 h-2 rounded-full";
-        
-        if (status === "loading") dot.classList.add("gps-loading");
-        if (status === "success") dot.classList.add("gps-success");
-        if (status === "error") dot.classList.add("gps-error");
-    
-        label.innerText = text;
-    }
-    
-    // โหลด GPS
-    function loadGPS() {
+    if (status === "loading") dot.classList.add("gps-loading");
+    if (status === "success") dot.classList.add("gps-success");
+    if (status === "error") dot.classList.add("gps-error");
+
+    label.innerText = text; // จะไม่พังแล้วเพราะเช็ค null ด้านบนแล้ว
+}
+   function loadGPS() {
+    try {
         if (!navigator.geolocation) {
             setGpsStatus("error", "อุปกรณ์ไม่รองรับ GPS");
             return;
         }
-    
+
         setGpsStatus("loading", "กำลังขอพิกัด...");
-    
+
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
-    
                 currentGps = `${lat},${lng}`;
                 gpsReady = true;
-    
+
+                // เช็คอีกรอบก่อนเขียนค่าลง UI
                 setGpsStatus("success", "พร้อมใช้งาน");
-                console.log("GPS:", currentGps);
             },
             (err) => {
                 gpsReady = false;
-    
                 let msg = "ไม่สามารถใช้ GPS";
                 if (err.code === 1) msg = "ผู้ใช้ไม่อนุญาต GPS";
-                if (err.code === 2) msg = "หาตำแหน่งไม่เจอ";
-                if (err.code === 3) msg = "GPS timeout";
-    
                 setGpsStatus("error", msg);
-                console.log("GPS error:", err.message);
             },
-            {
-                enableHighAccuracy: true,
-                timeout: 1000,
-                maximumAge: 0
-            }
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
+    } catch (e) {
+        console.warn("GPS UI Error: ", e.message); // พิมพ์บอกใน Console แทนการเด้ง Error ขวางหน้าจอ
     }
+}
   
     function handleResize() {
         if (document.getElementById('confirmModal').classList.contains('hidden')) return;
@@ -1198,15 +1193,13 @@ async function compressImage(file) {
     });
 }
 
-function getGPS() {
-    return new Promise((resolve) => {
-        if (!navigator.geolocation) resolve({lat: "-", lng: "-"});
-        navigator.geolocation.getCurrentPosition(
-            (p) => resolve({lat: p.coords.latitude, lng: p.coords.longitude}),
-            () => resolve({lat: "-", lng: "-"}),
-            { timeout: 1000 } // เพิ่ม timeout 5 วินาที ถ้าหาไม่เจอให้ข้ามเล
-        );
-    });
+function setGpsStatus(status) {
+    const gpsElem = document.getElementById('gpsIcon'); // เปลี่ยน 'gpsIcon' เป็น ID ที่คุณใช้จริงในบรรทัด 446
+    if (gpsElem) {
+        gpsElem.className = (status === 'success') ? 'text-pink-500' : 'text-gray-400'; 
+    } else {
+        console.warn("ไม่พบ Element สำหรับแสดงสถานะ GPS");
+    }
 }
 </script>
     <input type="hidden" id="selectedDeptId">
