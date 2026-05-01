@@ -561,7 +561,10 @@
         document.getElementById('mDeptLoc').innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${dept.BUILDING} • ชั้น ${dept.FL}`;
         document.getElementById('mDeptPic').src = dept.PIC_ID ? `https://drive.google.com/thumbnail?id=${dept.PIC_ID}&sz=w400` : `https://placehold.co/100?text=D`;
         //document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
-        document.getElementById('mDeptDetailBtn').window.location.href='dept_detail.html?DEP_ID=${dept.DEP_ID}';
+        document.getElementById('mDeptDetailBtn').innerHTML ='<button onclick="window.location.href='survey_v4_form.html'" 
+                class="pink-gradient px-6 py-2.5 rounded-xl text-white font-bold shadow-lg shadow-pink-100 hover:scale-105 transition-all text-sm">
+            <i class="fas fa-plus mr-2"></i> เพิ่มข้อมูล
+        </button>;
              
 
         const logs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
