@@ -709,25 +709,41 @@
             alert("ไม่มีข้อมูลที่จะส่งออกตามตัวกรองที่เลือก");
             return;
         }
-
+    
         const exportData = [];
         // สร้างรายการข้อมูลสำหรับ Excel โดยใช้ข้อมูลที่ผ่านการกรองแล้ว
         filteredLogs.forEach((l, i) => {
             const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim()) || {};
+            
+            // กำหนดข้อความตามค่าของ l.ASS_ON_OUT
+            let registrationStatus = "-";
+            if (l.ASS_ON_OUT == 1) {
+                registrationStatus = "มีทะเบียน";
+            } else if (l.ASS_ON_OUT == 0) {
+                registrationStatus = "นอกทะเบียน";
+            }
+    
             exportData.push({
                 "ลำดับ": i + 1,
                 "รหัสครุภัณฑ์": l.AssetID,
                 "Serial Number": l.Serial_Number || '-',
                 "ประเภท": getAssetTypeName(l.Asset_Type_ID),
                 "อายุการใช้งาน": l.AgeInfo || '-',
-                "รายละเอียด": l.FullDescription,                                   
+                "รายละเอียด": l.FullDescription,                                    
                 "หน่วยงาน": dept.DEPNAME || '-',
                 "ตึก": dept.BUILDING || '-',
                 "ชั้น": dept.FL || '-',                  
                 "Priority": getPriorityName(l.Priority_ID || l.PIORITY_ID),
-                "สถานะทะเบียน":l.ASS_ON_OUT   
+                "สถานะทะเบียน": registrationStatus // ใช้ตัวแปรที่คำนวณเงื่อนไขแล้ว
             });
         });
+    
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Filtered_Asset_Report");
+        const fileName = `IT_Asset_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+    }
 
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
