@@ -713,15 +713,8 @@
         const exportData = [];
         // สร้างรายการข้อมูลสำหรับ Excel โดยใช้ข้อมูลที่ผ่านการกรองแล้ว
         filteredLogs.forEach((l, i) => {
-            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim()) || {};
-            
-            // กำหนดข้อความตามค่าของ l.ASS_ON_OUT
-            let registrationStatus = "-";
-            if (l.ASS_ON_OUT == 1) {
-                registrationStatus = "มีทะเบียน";
-            } else if (l.ASS_ON_OUT == 0) {
-                registrationStatus = "นอกทะเบียน";
-            }
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim()) || {};       
+          
     
             exportData.push({
                 "ลำดับ": i + 1,
@@ -734,7 +727,7 @@
                 "ตึก": dept.BUILDING || '-',
                 "ชั้น": dept.FL || '-',                  
                 "Priority": getPriorityName(l.Priority_ID || l.PIORITY_ID),
-                "สถานะทะเบียน": registrationStatus // ใช้ตัวแปรที่คำนวณเงื่อนไขแล้ว
+                "สถานะทะเบียน": l.ASS_ON_OUT // ใช้ตัวแปรที่คำนวณเงื่อนไขแล้ว
             });
         });
     
