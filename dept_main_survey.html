@@ -724,7 +724,8 @@
                 "หน่วยงาน": dept.DEPNAME || '-',
                 "ตึก": dept.BUILDING || '-',
                 "ชั้น": dept.FL || '-',                  
-                "Priority": getPriorityName(l.Priority_ID || l.PIORITY_ID),                   
+                "Priority": getPriorityName(l.Priority_ID || l.PIORITY_ID),
+                "สถานะทะเบียน":l.ASS_ON_OUT   
             });
         });
 
