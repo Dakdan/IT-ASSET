@@ -66,7 +66,7 @@
             const [loading, setLoading] = useState(false);
             const [statusMsg, setStatusMsg] = useState(null);
 
-            const [initialData, setInitialData] = useState({ priorities: [], assetTypes: [] });
+            const [initialData, setInitialData] = useState({ priorities: [], assetTypes: [], shifts: [] });
             const [rawDeptList, setRawDeptList] = useState([]);
             const [buildings, setBuildings] = useState([]);
             const [floors, setFloors] = useState([]);
@@ -91,12 +91,12 @@
                 ImageData: '', 
                 gps: '', 
                 Asset_Type_ID: '',
-                PIORITY_ID: '', // เปลี่ยนตัวสะกดให้ตรงกับ Backend (PIORITY_ID)
-                Shift_Work: [], 
+                PIORITY_ID: '', 
+                Shift_Work: '', // เก็บเป็น String (ID)
                 IsPac: false, 
                 IsRent: false, 
                 ASS_ON_OUT: '1',
-                IT_User_Mail: 'demo@it.audit', // Mock user
+                IT_User_Mail: 'demo@it.audit',
                 Activity_ID: 'Ac-2569'
             });
 
@@ -216,23 +216,23 @@
             const handleFinalSubmit = async () => {
                 if (!auditForm.ImageData) { showStatus('กรุณาถ่ายรูปเพื่อยืนยัน', 'error'); return; }
                 if (!auditForm.Asset_Type_ID) { showStatus('กรุณาเลือกประเภทอุปกรณ์', 'error'); return; }
+                if (!auditForm.Shift_Work) { showStatus('กรุณาเลือกเวร/กะ', 'error'); return; }
                 
                 setLoading(true);
                 const isNonNumber = !selectedAsset;
-                
-                // Mapping Note2 for PAC/Rent
                 const note2Value = (auditForm.IsPac ? "PAC" : "") + (auditForm.IsRent ? "/RENT" : "");
 
+                // Updated Mapping to match your requested structure
                 const payloadData = {
                     ...auditForm,
                     NoID: isNonNumber ? "" : selectedAsset.NoID,
                     Asset_ID: isNonNumber ? auditForm.Asset_ID : selectedAsset.AssetID,
                     DEPT_ID: selectedDept?.DEP_ID,
-                    Shift_Work: auditForm.Shift_Work.join(','),
-                    Detail_ID : auditForm.BrandDetail || "-",
-                    Note1: "2569", // สำหรับ Non-number สเปคจะไปเก็บที่ Note1
+                    Shift_Work: auditForm.Shift_Work, // ส่งเป็น ID "1", "2", หรือ "3"
+                    Detail_ID: auditForm.BrandDetail || "-",
+                    Note1: "2569", 
                     Note2: note2Value,
-                    IMAGE_NAME: auditForm.ImageData // จะถูกประมวลผลเป็น Blob ใน Apps Script ต่อไป
+                    IMAGE_NAME: auditForm.ImageData 
                 };
 
                 try {
@@ -263,7 +263,7 @@
                 setAuditForm({
                     Asset_ID: '', Serial: '', BrandDetail: '', MAStatus: 'ตรวจสอบแล้ว',
                     ImageData: '', gps: '', Asset_Type_ID: '',
-                    PIORITY_ID: '', Shift_Work: [], IsPac: false, IsRent: false, ASS_ON_OUT: '1',
+                    PIORITY_ID: '', Shift_Work: '', IsPac: false, IsRent: false, ASS_ON_OUT: '1',
                     IT_User_Mail: 'demo@it.audit',
                     Activity_ID: 'Ac-2569'
                 });
@@ -292,6 +292,11 @@
                     .map(([name, data]) => ({ name, data }))
                     .sort((a, b) => a.name.localeCompare(b.name, 'th'));
             }, [auditLogs, logSearchQuery]);
+
+            const getShiftName = (id) => {
+                const shift = initialData.shifts?.find(s => s.id === String(id));
+                return shift ? shift.name : (id || '-');
+            };
 
             return (
                 <div className="min-h-screen max-w-md mx-auto bg-slate-50 shadow-2xl relative pb-28">
@@ -326,17 +331,11 @@
                     <header className="bg-white px-6 py-4 sticky top-0 z-[60] flex items-center justify-between border-b border-slate-100 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100 p-2 overflow-hidden">
-                                <img 
-                                    src="https://img2.pic.in.th/-227e4f6f84f29f020.png" 
-                                    alt="Logo" 
-                                    className="w-full h-full object-contain logo-shadow"
-                                    onerror={(e) => { e.target.style.display='none'; }}
-                                />
-                                <Icon name="shield-check" className="text-white hidden" size={24} />
+                                <img src="https://raw.githubusercontent.com/github/explore/main/topics/html/html.png" alt="Logo" className="w-full h-full object-contain logo-shadow" />
                             </div>
                             <div>
                                 <h1 className="font-bold text-slate-800 leading-tight uppercase tracking-tight text-sm">IT Audit System</h1>
-                                <p className="text-[9px] text-indigo-500 font-black uppercase tracking-widest">v2.0 Inventory Control</p>
+                                <p className="text-[9px] text-indigo-500 font-black uppercase tracking-widest">v2.0 Inventory Mapping</p>
                             </div>
                         </div>
                     </header>
@@ -373,26 +372,17 @@
                                     </div>
                                 </div>
                                 <div className="space-y-3">
-                                    <div className="flex items-center justify-between px-2">
-                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">หน่วยงานที่พบ ({filteredDepts.length})</p>
-                                    </div>
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-2">หน่วยงานที่พบ ({filteredDepts.length})</p>
                                     <div className="grid gap-3">
-                                        {filteredDepts.length === 0 ? (
-                                            <div className="p-10 text-center text-slate-300">
-                                                <Icon name="search" size={40} className="mx-auto mb-2 opacity-20" />
-                                                <p className="text-xs italic">กรุณาเลือกอาคารและชั้น</p>
-                                            </div>
-                                        ) : (
-                                            filteredDepts.map(dept => (
-                                                <button key={dept.DEP_ID} onClick={() => { setSelectedDept(dept); setView('search'); }} className="w-full bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between active:scale-[0.97] transition-all shadow-sm group">
-                                                    <div className="text-left">
-                                                        <p className="text-[10px] font-bold text-indigo-500 mb-0.5 tracking-tight">{dept.DEP_ID}</p>
-                                                        <p className="font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{dept.DEPNAME}</p>
-                                                    </div>
-                                                    <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-all"><Icon name="arrow-right" size={18} /></div>
-                                                </button>
-                                            ))
-                                        )}
+                                        {filteredDepts.map(dept => (
+                                            <button key={dept.DEP_ID} onClick={() => { setSelectedDept(dept); setView('search'); }} className="w-full bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between active:scale-[0.97] transition-all shadow-sm group">
+                                                <div className="text-left">
+                                                    <p className="text-[10px] font-bold text-indigo-500 mb-0.5 tracking-tight">{dept.DEP_ID}</p>
+                                                    <p className="font-bold text-slate-700">{dept.DEPNAME}</p>
+                                                </div>
+                                                <Icon name="arrow-right" size={18} className="text-slate-300 group-hover:text-indigo-500" />
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -404,50 +394,34 @@
                                     <div className="relative z-10 pr-12">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Icon name="building-2" size={14} className="text-indigo-400" />
-                                            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">{selectedDept?.DEPNAME}</p>
+                                            <p className="text-[10px] font-bold text-indigo-400 uppercase">{selectedDept?.DEPNAME}</p>
                                         </div>
-                                        <p className="text-xs opacity-60 flex items-center gap-2 font-medium">
-                                            <Icon name="map" size={12} /> {selectedBuilding} | ชั้น {selectedFloor}
-                                        </p>
+                                        <p className="text-xs opacity-60"> {selectedBuilding} | ชั้น {selectedFloor}</p>
                                     </div>
-                                    <button onClick={() => setView('home')} className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 rounded-2xl active:scale-90 hover:bg-white/20 transition-all shadow-lg"><Icon name="refresh-cw" size={18}/></button>
+                                    <button onClick={() => setView('home')} className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 rounded-2xl"><Icon name="refresh-cw" size={18}/></button>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-slate-400 ml-3 uppercase">ค้นหาครุภัณฑ์</label>
                                     <div className="relative">
-                                        <input 
-                                            type="text" 
-                                            value={searchQuery} 
-                                            onChange={(e) => handleInputChange(e.target.value)} 
-                                            placeholder="พิมพ์รหัสครุภัณฑ์ หรือสแกน..." 
-                                            className="w-full p-5 pr-16 bg-white rounded-3xl border border-slate-100 font-bold text-sm outline-none shadow-sm focus:ring-2 focus:ring-indigo-100 transition-all" 
-                                        />
-                                        <button onClick={() => startCamera('search')} className="absolute right-2 top-2 bottom-2 px-4 bg-indigo-50 text-indigo-600 rounded-2xl active:scale-95"><Icon name="scan" /></button>
+                                        <input type="text" value={searchQuery} onChange={(e) => handleInputChange(e.target.value)} placeholder="พิมพ์รหัสครุภัณฑ์ หรือสแกน..." className="w-full p-5 pr-16 bg-white rounded-3xl border border-slate-100 font-bold text-sm outline-none shadow-sm focus:ring-2 focus:ring-indigo-100" />
+                                        <button onClick={() => startCamera('search')} className="absolute right-2 top-2 bottom-2 px-4 bg-indigo-50 text-indigo-600 rounded-2xl"><Icon name="scan" /></button>
                                     </div>
                                 </div>
                                 <div className="space-y-4 pt-2">
-                                    <button 
-                                        onClick={() => { setSelectedAsset(null); clearAuditForm(); setAuditForm(p => ({...p, Asset_ID: searchQuery})); setView('audit'); }} 
-                                        className="w-full py-5 bg-white border-2 border-dashed border-slate-200 text-slate-400 rounded-3xl text-xs font-bold flex flex-col items-center justify-center gap-2 hover:border-indigo-300 hover:text-indigo-500 transition-all group shadow-sm"
-                                    >
-                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50"><Icon name="plus" size={20}/></div>
+                                    <button onClick={() => { setSelectedAsset(null); clearAuditForm(); setAuditForm(p => ({...p, Asset_ID: searchQuery})); setView('audit'); }} className="w-full py-5 bg-white border-2 border-dashed border-slate-200 text-slate-400 rounded-3xl text-xs font-bold flex flex-col items-center justify-center gap-2 hover:border-indigo-300 hover:text-indigo-500 shadow-sm transition-all">
+                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center"><Icon name="plus" size={20}/></div>
                                         เพิ่มครุภัณฑ์นอกระบบ (Non-Number)
                                     </button>
-                                    {searchResults.length > 0 && (
-                                        <div className="space-y-3">
-                                            <p className="text-[10px] font-bold text-slate-400 ml-2 uppercase tracking-widest">ผลการค้นหา ({searchResults.length})</p>
-                                            {searchResults.map(item => (
-                                                <div key={item.AssetID} onClick={() => { setSelectedAsset(item); setView('audit'); }} className="bg-white p-5 rounded-3xl border-l-4 border-l-indigo-600 shadow-sm active:scale-[0.98] transition-all cursor-pointer hover:bg-slate-50">
-                                                    <p className="font-black text-indigo-600 text-sm mb-1">{item.AssetID}</p>
-                                                    <p className="text-xs font-bold text-slate-600 leading-snug mb-2">{item.FullDescription}</p>
-                                                    <div className="flex items-center gap-3 text-[10px] text-slate-400">
-                                                        <span className="flex items-center gap-1 font-bold"><Icon name="clock" size={10} /> {item.AgeInfo}</span>
-                                                        <span className="flex items-center gap-1 font-bold"><Icon name="tag" size={10} /> SN: {item.Serial || '-'}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                    {searchResults.map(item => (
+                                        <div key={item.AssetID} onClick={() => { setSelectedAsset(item); setView('audit'); }} className="bg-white p-5 rounded-3xl border-l-4 border-l-indigo-600 shadow-sm active:scale-[0.98] cursor-pointer">
+                                            <p className="font-black text-indigo-600 text-sm mb-1">{item.AssetID}</p>
+                                            <p className="text-xs font-bold text-slate-600 leading-snug mb-2">{item.FullDescription}</p>
+                                            <div className="flex items-center gap-3 text-[10px] text-slate-400">
+                                                <span className="flex items-center gap-1 font-bold"><Icon name="clock" size={10} /> {item.AgeInfo}</span>
+                                                <span className="flex items-center gap-1 font-bold"><Icon name="tag" size={10} /> SN: {item.Serial || '-'}</span>
+                                            </div>
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -455,46 +429,34 @@
                         {view === 'audit' && (
                             <div className="space-y-6 animate-in">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <button onClick={() => setView('search')} className="p-3 bg-white rounded-2xl text-slate-400 shadow-sm active:scale-90 hover:text-indigo-500 transition-all"><Icon name="chevron-left" /></button>
-                                        <h2 className="font-black text-slate-700 tracking-tight">Audit Form</h2>
-                                    </div>
-                                    <button onClick={clearAuditForm} className="text-[10px] font-bold text-rose-500 bg-rose-50 px-3 py-2 rounded-xl active:scale-95 transition-all uppercase">Reset</button>
+                                    <button onClick={() => setView('search')} className="p-3 bg-white rounded-2xl text-slate-400 shadow-sm active:scale-90"><Icon name="chevron-left" /></button>
+                                    <h2 className="font-black text-slate-700 tracking-tight">Audit Form</h2>
+                                    <button onClick={clearAuditForm} className="text-[10px] font-bold text-rose-500 bg-rose-50 px-3 py-2 rounded-xl active:scale-95 uppercase">Reset</button>
                                 </div>
 
                                 {!selectedAsset ? (
-                                    <div className="bg-amber-50/50 p-6 rounded-[2.5rem] border border-amber-100 space-y-5">
-                                        <div className="flex items-center gap-2 text-amber-600">
-                                            <Icon name="alert-triangle" size={16}/>
-                                            <span className="text-[11px] font-black uppercase tracking-widest">Non-Number Item</span>
+                                    <div className="bg-amber-50/50 p-6 rounded-[2.5rem] border border-amber-100 space-y-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Asset ID / Code</label>
+                                            <div className="flex gap-2">
+                                                <input type="text" value={auditForm.Asset_ID} onChange={(e) => setAuditForm({...auditForm, Asset_ID: e.target.value})} className="flex-1 p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none" placeholder="ระบุเลขที่พบ..." />
+                                                <button onClick={() => startCamera('asset_id')} className="p-4 bg-white text-amber-600 border border-amber-200 rounded-2xl active:scale-90"><Icon name="scan" size={18}/></button>
+                                            </div>
                                         </div>
-                                        <div className="space-y-4">
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Asset ID / Code</label>
-                                                <div className="flex gap-2">
-                                                    <input type="text" value={auditForm.Asset_ID} onChange={(e) => setAuditForm({...auditForm, Asset_ID: e.target.value})} className="flex-1 p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none focus:ring-1 focus:ring-amber-300" placeholder="ระบุเลขที่พบ..." />
-                                                    <button onClick={() => startCamera('asset_id')} className="p-4 bg-white text-amber-600 border border-amber-200 rounded-2xl active:scale-90 shadow-sm"><Icon name="scan" size={18}/></button>
-                                                </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Serial Number</label>
+                                            <div className="flex gap-2">
+                                                <input type="text" value={auditForm.Serial} onChange={(e) => setAuditForm({...auditForm, Serial: e.target.value})} className="flex-1 p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none" placeholder="SN-XXXXXXX" />
+                                                <button onClick={() => startCamera('serial')} className="p-4 bg-white text-amber-600 border border-amber-200 rounded-2xl active:scale-90"><Icon name="scan" size={18}/></button>
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Serial Number</label>
-                                                <div className="flex gap-2">
-                                                    <input type="text" value={auditForm.Serial} onChange={(e) => setAuditForm({...auditForm, Serial: e.target.value})} className="flex-1 p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none focus:ring-1 focus:ring-amber-300" placeholder="SN-XXXXXXX" />
-                                                    <button onClick={() => startCamera('serial')} className="p-4 bg-white text-amber-600 border border-amber-200 rounded-2xl active:scale-90 shadow-sm"><Icon name="scan" size={18}/></button>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Brand / Specs</label>
-                                                <input type="text" value={auditForm.BrandDetail} onChange={(e) => setAuditForm({...auditForm, BrandDetail: e.target.value})} placeholder="ยี่ห้อ / รุ่น / สเปค" className="w-full p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none focus:ring-1 focus:ring-amber-300 shadow-sm" />
-                                            </div>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Brand / Specs</label>
+                                            <input type="text" value={auditForm.BrandDetail} onChange={(e) => setAuditForm({...auditForm, BrandDetail: e.target.value})} placeholder="ยี่ห้อ / รุ่น / สเปค" className="w-full p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none shadow-sm" />
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="p-6 bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100 shadow-sm">
-                                        <div className="flex items-center gap-2 mb-3 text-indigo-600">
-                                            <Icon name="database" size={16}/>
-                                            <span className="text-[11px] font-black uppercase tracking-widest">Asset Data</span>
-                                        </div>
                                         <p className="text-[13px] font-bold text-slate-800 leading-snug mb-4">{selectedAsset.FullDescription}</p>
                                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-indigo-100/50">
                                             <div>
@@ -511,19 +473,12 @@
 
                                 <div className="space-y-3">
                                     <label className="text-[11px] font-bold text-slate-400 ml-1 uppercase tracking-widest">ยืนยันภาพถ่าย (Required)</label>
-                                    <div onClick={() => startCamera('photo')} className="aspect-video w-full bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden cursor-pointer relative shadow-inner active:scale-[0.98] transition-all group">
+                                    <div onClick={() => startCamera('photo')} className="aspect-video w-full bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden cursor-pointer relative shadow-inner">
                                         {auditForm.ImageData ? (
-                                            <div className="relative w-full h-full">
-                                                <img src={auditForm.ImageData} className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Icon name="camera" className="text-white" size={32} />
-                                                </div>
-                                            </div>
+                                            <img src={auditForm.ImageData} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="text-center">
-                                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-indigo-50 transition-colors shadow-sm">
-                                                    <Icon name="camera" size={32} className="text-slate-300 group-hover:text-indigo-500" />
-                                                </div>
+                                                <Icon name="camera" size={32} className="text-slate-300 mx-auto mb-2" />
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">แตะเพื่อถ่ายรูป</p>
                                             </div>
                                         )}
@@ -533,14 +488,14 @@
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Type</label>
-                                        <select value={auditForm.Asset_Type_ID} onChange={(e) => setAuditForm({...auditForm, Asset_Type_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm focus:ring-2 focus:ring-indigo-100 appearance-none">
+                                        <select value={auditForm.Asset_Type_ID} onChange={(e) => setAuditForm({...auditForm, Asset_Type_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm appearance-none">
                                             <option value="">-- ประเภท --</option>
                                             {initialData.assetTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Priority</label>
-                                        <select value={auditForm.PIORITY_ID} onChange={(e) => setAuditForm({...auditForm, PIORITY_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm focus:ring-2 focus:ring-indigo-100 appearance-none">
+                                        <select value={auditForm.PIORITY_ID} onChange={(e) => setAuditForm({...auditForm, PIORITY_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm appearance-none">
                                             <option value="">-- ความสำคัญ --</option>
                                             {initialData.priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                         </select>
@@ -550,12 +505,9 @@
                                 <div className="space-y-3">
                                     <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-widest">ช่วงเวลาตรวจ (Audit Shift)</label>
                                     <div className="grid grid-cols-3 gap-3">
-                                        {['เช้า', 'บ่าย', 'ดึก'].map((shift) => (
-                                            <button key={shift} onClick={() => {
-                                                const cur = auditForm.Shift_Work;
-                                                setAuditForm({ ...auditForm, Shift_Work: cur.includes(shift) ? cur.filter(s => s !== shift) : [...cur, shift] });
-                                            }} className={`py-4 rounded-2xl text-xs font-bold border transition-all active:scale-95 shadow-sm ${auditForm.Shift_Work.includes(shift) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400'}`}>
-                                                {shift}
+                                        {initialData.shifts?.map((shift) => (
+                                            <button key={shift.id} onClick={() => setAuditForm({ ...auditForm, Shift_Work: shift.id })} className={`py-4 rounded-2xl text-xs font-bold border transition-all active:scale-95 shadow-sm ${auditForm.Shift_Work === shift.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400'}`}>
+                                                {shift.name}
                                             </button>
                                         ))}
                                     </div>
@@ -563,34 +515,20 @@
 
                                 <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-xl ${auditForm.IsPac ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
-                                                <Icon name="package" size={18} />
-                                            </div>
-                                            <span className="text-xs font-bold text-slate-700 uppercase">ติดตั้ง PAC</span>
-                                        </div>
+                                        <span className="text-xs font-bold text-slate-700 uppercase">ติดตั้ง PAC</span>
                                         <button onClick={() => setAuditForm({...auditForm, IsPac: !auditForm.IsPac})} className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${auditForm.IsPac ? 'bg-indigo-600' : 'bg-slate-200'}`}>
                                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${auditForm.IsPac ? 'left-7' : 'left-1'}`}></div>
                                         </button>
                                     </div>
                                     <div className="flex items-center justify-between border-t border-slate-50 pt-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-xl ${auditForm.IsRent ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
-                                                <Icon name="repeat" size={18} />
-                                            </div>
-                                            <span className="text-xs font-bold text-slate-700 uppercase">เครื่องเช่า (Rental)</span>
-                                        </div>
+                                        <span className="text-xs font-bold text-slate-700 uppercase">เครื่องเช่า (Rental)</span>
                                         <button onClick={() => setAuditForm({...auditForm, IsRent: !auditForm.IsRent})} className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${auditForm.IsRent ? 'bg-indigo-600' : 'bg-slate-200'}`}>
                                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${auditForm.IsRent ? 'left-7' : 'left-1'}`}></div>
                                         </button>
                                     </div>
                                 </div>
 
-                                <button 
-                                    disabled={loading} 
-                                    onClick={handleFinalSubmit} 
-                                    className="w-full py-5 bg-indigo-600 text-white rounded-[2.5rem] font-bold text-sm shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 transition-all"
-                                >
+                                <button disabled={loading} onClick={handleFinalSubmit} className="w-full py-5 bg-indigo-600 text-white rounded-[2.5rem] font-bold text-sm shadow-xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50">
                                     {loading ? <Icon name="loader-2" className="animate-spin" /> : <><Icon name="save" size={18} /> บันทึกข้อมูล (SAVE)</>}
                                 </button>
                             </div>
@@ -603,96 +541,69 @@
                                         <h2 className="font-black text-slate-800 text-2xl tracking-tight">Audit Logs</h2>
                                         <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">แยกตามหน่วยงาน</p>
                                     </div>
-                                    <div className="bg-indigo-600 text-white px-4 py-2 rounded-2xl text-[11px] font-black shadow-lg">
-                                        {auditLogs.length} Records
-                                    </div>
+                                    <div className="bg-indigo-600 text-white px-4 py-2 rounded-2xl text-[11px] font-black shadow-lg">{auditLogs.length} Records</div>
                                 </div>
 
-                                <div className="sticky top-[73px] z-[40] bg-slate-50/90 backdrop-blur-md pb-4 pt-1">
-                                    <div className="relative">
-                                        <input 
-                                            type="text" 
-                                            value={logSearchQuery} 
-                                            onChange={(e) => setLogSearchQuery(e.target.value)} 
-                                            placeholder="ค้นหาหน่วยงาน หรือ Asset ID..." 
-                                            className="w-full p-4 pl-12 bg-white rounded-2xl border border-slate-100 font-bold text-sm outline-none shadow-sm focus:ring-2 focus:ring-indigo-100 transition-all"
-                                        />
-                                        <Icon name="search" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                    </div>
+                                <div className="relative sticky top-[73px] z-[40] bg-slate-50/90 backdrop-blur-md pb-4 pt-1">
+                                    <input type="text" value={logSearchQuery} onChange={(e) => setLogSearchQuery(e.target.value)} placeholder="ค้นหาหน่วยงาน หรือ Asset ID..." className="w-full p-4 pl-12 bg-white rounded-2xl border border-slate-100 font-bold text-sm outline-none shadow-sm focus:ring-2 focus:ring-indigo-100" />
+                                    <Icon name="search" size={18} className="absolute left-4 top-[1.2rem] text-slate-400" />
                                 </div>
 
                                 <div className="space-y-10 pb-10">
-                                    {groupedLogs.length === 0 ? (
-                                        <div className="py-20 text-center opacity-20">
-                                            <Icon name="archive" size={64} className="mx-auto mb-4" />
-                                            <p className="font-black text-lg uppercase tracking-widest">ไม่พบประวัติการตรวจ</p>
-                                        </div>
-                                    ) : (
-                                        groupedLogs.map((group, gIdx) => (
-                                            <div key={gIdx} className="animate-in">
-                                                <div className="flex items-center justify-between px-3 mb-4 sticky top-[140px] z-30 py-2 bg-slate-50/80 backdrop-blur-sm rounded-xl">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-1.5 h-6 bg-indigo-600 rounded-full shadow-sm"></div>
-                                                        <h3 className="font-black text-slate-800 text-sm uppercase tracking-tight line-clamp-1">{group.name}</h3>
-                                                    </div>
-                                                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full whitespace-nowrap">{group.data.length} รายการ</span>
-                                                </div>
-
-                                                <div className="grid gap-3">
-                                                    {group.data.map((log, idx) => (
-                                                        <div key={log.AL_ID || idx} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex gap-4 hover:border-indigo-200 active:scale-[0.98] transition-all dept-card">
-                                                            <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-100 shadow-inner">
-                                                                {log.ImageData ? (
-                                                                    <img src={log.ImageData} className="w-full h-full object-cover" loading="lazy" />
-                                                                ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-slate-300"><Icon name="image-off" size={20} /></div>
+                                    {groupedLogs.map((group, gIdx) => (
+                                        <div key={gIdx} className="animate-in">
+                                            <div className="flex items-center justify-between px-3 mb-4 sticky top-[140px] z-30 py-2 bg-slate-50/80 backdrop-blur-sm rounded-xl">
+                                                <h3 className="font-black text-slate-800 text-sm uppercase line-clamp-1">{group.name}</h3>
+                                                <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{group.data.length} รายการ</span>
+                                            </div>
+                                            <div className="grid gap-3">
+                                                {group.data.map((log, idx) => (
+                                                    <div key={log.AL_ID || idx} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex gap-4">
+                                                        <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center border border-slate-100">
+                                                            {log.IMAGE_ID && log.IMAGE_ID !== "-" ? (
+                                                                <Icon name="image" size={24} className="text-slate-300" />
+                                                            ) : (
+                                                                <Icon name="image-off" size={20} className="text-slate-300" />
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                            <div className="flex justify-between items-start mb-1.5">
+                                                                <span className="font-black text-indigo-600 text-[11px]">{log.AssetID || log.Asset_ID || 'NON-NUMBER'}</span>
+                                                                <span className="text-[8px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg">{log.TIMESTAMP ? log.TIMESTAMP.split('T')[0] : '-'}</span>
+                                                            </div>
+                                                            <p className="text-[11px] font-bold text-slate-700 line-clamp-2 leading-snug mb-2">{log.FullDescription || log.SPEC_DETAIL || 'ไม่ระบุรายละเอียด'}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="text-[8px] px-2.5 py-1 bg-slate-50 text-indigo-500 rounded-full font-black border border-slate-100">{log.AgeInfo || 'N/A'}</div>
+                                                                <div className="text-[8px] text-slate-400 font-black opacity-60 flex items-center gap-1">
+                                                                    <Icon name="clock" size={10} /> {getShiftName(log.Shift_Work)}
+                                                                </div>
+                                                                {log.Note2 && log.Note2 !== "-" && (
+                                                                    <div className="text-[8px] px-2.5 py-1 bg-amber-50 text-amber-600 rounded-full font-black border border-amber-100">{log.Note2}</div>
                                                                 )}
                                                             </div>
-                                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                                <div className="flex justify-between items-start mb-1.5">
-                                                                    <span className="font-black text-indigo-600 text-[11px] truncate">{log.AssetID || log.Asset_ID || 'NON-NUMBER'}</span>
-                                                                    <span className="text-[8px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">{log.Timestamp ? log.Timestamp.split('T')[0] : '-'}</span>
-                                                                </div>
-                                                                <p className="text-[11px] font-bold text-slate-700 line-clamp-2 leading-snug mb-2">
-                                                                    {log.FullDescription || log.BrandDetail || log.AssetName || 'ไม่ระบุรายละเอียด'}
-                                                                </p>
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="text-[8px] px-2.5 py-1 bg-slate-50 text-indigo-500 rounded-full font-black uppercase tracking-tighter border border-slate-100">
-                                                                        {log.AgeInfo || 'N/A'}
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1 text-[9px] text-slate-400 font-black opacity-60">
-                                                                        <Icon name="clock" size={10} /> {log.Shift_Work || '-'}
-                                                                    </div>
-                                                                    {log.Note2 && (
-                                                                         <div className="text-[8px] px-2.5 py-1 bg-amber-50 text-amber-600 rounded-full font-black uppercase tracking-tighter border border-amber-100">
-                                                                            {log.Note2}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
                                                         </div>
-                                                    ))}
-                                                </div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))
-                                    )}
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
                     </main>
 
                     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-morphism border-t border-slate-100 px-10 py-5 flex justify-between items-center z-[100] shadow-2xl rounded-t-[3rem]">
-                        <button onClick={() => { setView('home'); clearAuditForm(); }} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'home' ? 'text-indigo-600 scale-110' : 'text-slate-300 hover:text-slate-400'}`}>
-                            <Icon name="layout-grid" size={22} fill={view === 'home' ? "currentColor" : "none"} strokeWidth={view === 'home' ? 2.5 : 2} />
+                        <button onClick={() => { setView('home'); clearAuditForm(); }} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'home' ? 'text-indigo-600 scale-110' : 'text-slate-300'}`}>
+                            <Icon name="layout-grid" size={22} fill={view === 'home' ? "currentColor" : "none"} strokeWidth={2.5} />
                             <span className="text-[8px] font-black uppercase tracking-widest">Main</span>
                         </button>
                         <div className="relative -top-12">
-                            <button onClick={() => { setView('search'); clearAuditForm(); }} className="w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl shadow-indigo-200 border-[6px] border-white flex items-center justify-center active:scale-90 transition-all hover:bg-indigo-700 group">
-                                <Icon name="plus" size={32} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
+                            <button onClick={() => { setView('search'); clearAuditForm(); }} className="w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl border-[6px] border-white flex items-center justify-center active:scale-90 transition-all">
+                                <Icon name="plus" size={32} strokeWidth={3} />
                             </button>
                         </div>
-                        <button onClick={() => setView('logs')} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'logs' ? 'text-indigo-600 scale-110' : 'text-slate-300 hover:text-slate-400'}`}>
-                            <Icon name="folder-kanban" size={22} fill={view === 'logs' ? "currentColor" : "none"} strokeWidth={view === 'logs' ? 2.5 : 2} />
+                        <button onClick={() => setView('logs')} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'logs' ? 'text-indigo-600 scale-110' : 'text-slate-300'}`}>
+                            <Icon name="folder-kanban" size={22} fill={view === 'logs' ? "currentColor" : "none"} strokeWidth={2.5} />
                             <span className="text-[8px] font-black uppercase tracking-widest">Logs</span>
                         </button>
                     </nav>
