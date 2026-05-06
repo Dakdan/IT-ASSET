@@ -1,618 +1,651 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT AUDIT SYSTEM v2.0</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .glass-morphism { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
-        .dept-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .logo-shadow { filter: drop-shadow(0 4px 6px rgba(79, 70, 229, 0.2)); }
-    </style>
-</head>
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+  MonitorSmartphone, 
+  Loader2, 
+  AlertCircle, 
+  CheckCircle2, 
+  MapPin, 
+  ChevronDown, 
+  ArrowRight, 
+  Building2, 
+  RefreshCw, 
+  Scan, 
+  Plus, 
+  Clock, 
+  Tag, 
+  ChevronLeft, 
+  AlertTriangle, 
+  Camera, 
+  RefreshCcw, 
+  CheckCircle, 
+  Circle, 
+  Check, 
+  Save, 
+  ClipboardList, 
+  Home, 
+  Inbox,
+  ClipboardCheck,
+  Search,
+  X
+} from 'lucide-react';
 
-<body class="bg-slate-50 text-slate-900">
-    <div id="root"></div>
-   
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
-        
-        // --- UI Components ---
-        const Icon = ({ name, size = 20, className = "", strokeWidth = 2, ...props }) => {
-            const spanRef = useRef(null);
-            useEffect(() => {
-                if (spanRef.current && window.lucide) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = `<i data-lucide="${name}" stroke-width="${strokeWidth}"></i>`;
-                    window.lucide.createIcons({ root: tempDiv });
-                    const svg = tempDiv.querySelector('svg');
-                    if (svg) {
-                        svg.setAttribute('width', size);
-                        svg.setAttribute('height', size);
-                        if (className) svg.setAttribute('class', className);
-                        spanRef.current.innerHTML = '';
-                        spanRef.current.appendChild(svg);
-                    }
-                }
-            }, [name, size, className, strokeWidth]);
-            return <span ref={spanRef} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} {...props}></span>;
-        };
+const API_URL = "https://script.google.com/macros/s/AKfycbzlwkwuMk9Y7qpEqT7JlnDFjWwlmvYVpW0NOuaEBcS6_3iocDVC6Jpc2ZL9P1qvbHM/exec";
 
-        const LoadingOverlay = () => (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/60 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-3">
-                    <Icon name="loader-2" size={48} className="animate-spin text-indigo-600" />
-                    <p className="text-sm font-bold text-slate-600 animate-pulse">กำลังประมวลผล...</p>
-                </div>
+// ปรับปรุง LoadingOverlay ให้ดูทันสมัยและกันการกดทับได้ดีขึ้น
+const LoadingOverlay = ({ message = "กำลังประมวลผล..." }) => (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-md transition-all">
+    <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-center gap-4 max-w-[80%] text-center border border-white/20">
+      <div className="relative">
+        <Loader2 size={48} className="animate-spin text-indigo-600" />
+        <div className="absolute inset-0 blur-xl bg-indigo-400/20 animate-pulse rounded-full"></div>
+      </div>
+      <div className="space-y-1">
+        <p className="text-sm font-black text-slate-800 uppercase tracking-tight">{message}</p>
+        <p className="text-[10px] text-slate-400 font-medium">กรุณารอสักครู่ ระบบกำลังสื่อสารกับเซิร์ฟเวอร์</p>
+      </div>
+    </div>
+  </div>
+);
+
+const App = () => {
+  const [view, setView] = useState('home');
+  const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState("");
+  const [statusMsg, setStatusMsg] = useState(null);
+
+  const [initialData, setInitialData] = useState({ priorities: [], assetTypes: [], shifts: [] });
+  const [rawDeptList, setRawDeptList] = useState([]);
+  const [buildings, setBuildings] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  
+  const [selectedBuilding, setSelectedBuilding] = useState('');
+  const [selectedFloor, setSelectedFloor] = useState('');
+  const [filteredDepts, setFilteredDepts] = useState([]);
+  const [selectedDept, setSelectedDept] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [logSearchQuery, setLogSearchQuery] = useState('');
+
+  const [auditForm, setAuditForm] = useState({
+    Asset_ID: '', 
+    Serial: '', 
+    BrandDetail: '', 
+    MAStatus: '',
+    ImageData: '', 
+    gps: '', 
+    Asset_Type_ID: '',
+    PIORITY_ID: '', 
+    Shift_Work: [], 
+    IsPac: false, 
+    IsRent: false, 
+    ASS_ON_OUT: '1',
+    IT_User_Mail: 'demo@it.audit',
+    Activity_ID: 'Ac-2569'
+  });
+
+  const videoRef = useRef(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [scanTarget, setScanTarget] = useState(null);
+  const searchTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    fetchGlobalData();
+  }, []);
+
+  const fetchGlobalData = async () => {
+    setLoading(true);
+    setLoadingMsg("กำลังโหลดข้อมูลพื้นฐาน...");
+    try {
+      const [resInit, resDept, resLogs] = await Promise.all([
+        fetch(`${API_URL}?action=getInitialData`).then(r => r.json()),
+        fetch(`${API_URL}?action=getDeptList`).then(r => r.json()),
+        fetch(`${API_URL}?action=getAuditLogs`).then(r => r.json())
+      ]);
+      
+      setInitialData(resInit || { priorities: [], assetTypes: [], shifts: [] });
+      setRawDeptList(resDept || []);
+      setAuditLogs(resLogs || []);
+      
+      if (resDept && Array.isArray(resDept)) {
+        const bldgs = [...new Set(resDept.map(item => item.BUILDING))].filter(Boolean).sort();
+        setBuildings(bldgs);
+      }
+    } catch (err) {
+      showStatus('การเชื่อมต่อล้มเหลว', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedBuilding) {
+      const availableFloors = rawDeptList
+        .filter(item => item.BUILDING === selectedBuilding)
+        .map(item => String(item.FL))
+        .filter((v, i, a) => v && v !== "undefined" && a.indexOf(v) === i)
+        .sort();
+      setFloors(availableFloors);
+      setSelectedFloor('');
+    } else {
+      setFloors([]);
+    }
+  }, [selectedBuilding, rawDeptList]);
+
+  useEffect(() => {
+    if (selectedBuilding && selectedFloor) {
+      const depts = rawDeptList.filter(
+        item => item.BUILDING === selectedBuilding && String(item.FL) === selectedFloor
+      );
+      setFilteredDepts(depts);
+    } else {
+      setFilteredDepts([]);
+    }
+  }, [selectedFloor, selectedBuilding, rawDeptList]);
+
+  const showStatus = (msg, type) => {
+    setStatusMsg({ msg, type });
+    setTimeout(() => setStatusMsg(null), 4000);
+  };
+
+  const executeSearch = async (queryValue) => {
+    let q = queryValue.trim();
+    if (!q) { setSearchResults([]); return; }
+    setLoading(true);
+    setLoadingMsg("กำลังค้นหาข้อมูล...");
+    try {
+      const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setSearchResults(data || []);
+      if (data && data.length === 0) {
+        showStatus('ไม่พบข้อมูลครุภัณฑ์นี้', 'error');
+      }
+    } catch (err) {
+      showStatus('การค้นหาล้มเหลว', 'error');
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (val) => {
+    setSearchQuery(val);
+    clearTimeout(searchTimeoutRef.current);
+    if (val.trim()) {
+      searchTimeoutRef.current = setTimeout(() => executeSearch(val), 500);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const startCamera = (mode) => {
+    setCameraActive(true);
+    setScanTarget(mode);
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(stream => { if (videoRef.current) videoRef.current.srcObject = stream; })
+      .catch(() => { showStatus('เปิดกล้องไม่ได้', 'error'); setCameraActive(false); });
+  };
+
+  const captureAction = () => {
+    const canvas = document.createElement('canvas');
+    const video = videoRef.current;
+    
+    const MAX_WIDTH = 800;
+    const scale = Math.min(1, MAX_WIDTH / video.videoWidth);
+    canvas.width = video.videoWidth * scale;
+    canvas.height = video.videoHeight * scale;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const base64Img = canvas.toDataURL('image/jpeg', 0.6);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const gpsStr = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+          if (scanTarget === 'photo') {
+            setAuditForm(prev => ({...prev, ImageData: base64Img, gps: gpsStr}));
+          }
+        },
+        (err) => {
+          if (scanTarget === 'photo') setAuditForm(prev => ({...prev, ImageData: base64Img, gps: 'Unknown'}));
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      if (scanTarget === 'photo') setAuditForm(prev => ({...prev, ImageData: base64Img, gps: 'Not Supported'}));
+    }
+
+    stopCamera();
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+    }
+    setCameraActive(false);
+  };
+
+  const toggleShift = (shiftId) => {
+    setAuditForm(prev => {
+      const currentShifts = [...prev.Shift_Work];
+      if (currentShifts.includes(shiftId)) {
+        return { ...prev, Shift_Work: currentShifts.filter(id => id !== shiftId) };
+      } else {
+        return { ...prev, Shift_Work: [...currentShifts, shiftId] };
+      }
+    });
+  };
+
+  const handleFinalSubmit = async () => {
+    if (!auditForm.ImageData) { showStatus('กรุณาถ่ายรูปยืนยัน', 'error'); return; }
+    if (!auditForm.Asset_Type_ID) { showStatus('กรุณาเลือกประเภทอุปกรณ์', 'error'); return; }
+    if (auditForm.Shift_Work.length === 0) { showStatus('กรุณาเลือกกะการทำงาน', 'error'); return; }
+    
+    setLoading(true);
+    setLoadingMsg("กำลังบันทึกข้อมูลและรูปภาพ...");
+    const isNonNumber = !selectedAsset;
+    const note2Value = (auditForm.IsPac ? "PAC" : "") + (auditForm.IsRent ? (auditForm.IsPac ? "/RENT" : "RENT") : "");
+
+    const payload = {
+      NoID: isNonNumber ? "" : (selectedAsset.NoID || ""),
+      Asset_ID: isNonNumber ? auditForm.Asset_ID : selectedAsset.AssetID,
+      Serial: auditForm.Serial || (selectedAsset ? selectedAsset.Serial : "-"),
+      Asset_Type_ID: auditForm.Asset_Type_ID,
+      Detail_ID: auditForm.BrandDetail || "-",
+      DEPT_ID: selectedDept?.DEP_ID || "",
+      PIORITY_ID: auditForm.PIORITY_ID,
+      Shift_Work: auditForm.Shift_Work.join(','),
+      IT_User_Mail: auditForm.IT_User_Mail,
+      gps: auditForm.gps,
+      Activity_ID: auditForm.Activity_ID,
+      Note1: "2569",
+      Note2: note2Value,
+      MAStatus: "-",
+      IMAGE_NAME: auditForm.ImageData 
+    };
+
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: isNonNumber ? 'saveNonNumber' : 'saveSurvey',
+          data: payload
+        })
+      });
+      
+      setTimeout(() => {
+        showStatus('บันทึกข้อมูลสำเร็จ', 'success');
+        fetchGlobalData(); 
+        setSearchQuery('');
+        setSearchResults([]);
+        setAuditForm(prev => ({...prev, ImageData: '', Asset_ID: '', Serial: '', Shift_Work: []}));
+        setSelectedAsset(null);
+        setView('search');
+        setLoading(false);
+      }, 2000);
+
+    } catch (err) {
+      showStatus('เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
+      setLoading(false);
+    }
+  };
+
+  const groupedLogs = useMemo(() => {
+    if (!auditLogs || !Array.isArray(auditLogs)) return [];
+    let filtered = auditLogs;
+    if (logSearchQuery) {
+      const q = logSearchQuery.toLowerCase();
+      filtered = auditLogs.filter(log => 
+        (log.DEPT_NAME || log.Department || "").toLowerCase().includes(q) ||
+        (log.AssetID || log.Asset_ID || "").toLowerCase().includes(q) ||
+        (log.FullDescription || "").toLowerCase().includes(q)
+      );
+    }
+    const groups = {};
+    filtered.forEach(log => {
+      const dName = log.DEPT_NAME || log.Department || "ทั่วไป / ไม่ทราบหน่วยงาน";
+      if (!groups[dName]) groups[dName] = [];
+      groups[dName].push(log);
+    });
+    return Object.entries(groups)
+      .map(([name, data]) => ({ name, data }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'th'));
+  }, [auditLogs, logSearchQuery]);
+
+  return (
+    <div className="min-h-screen w-full sm:max-w-md sm:mx-auto bg-slate-50 shadow-2xl relative pb-28 flex flex-col font-['Prompt']">
+      
+      {/* ปรับปรุง Overlay */}
+      {loading && <LoadingOverlay message={loadingMsg} />}
+      
+      {/* ปรับปรุง Status Notification */}
+      {statusMsg && (
+        <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[210] px-5 py-3.5 rounded-[2rem] shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 whitespace-nowrap border-2 ${
+          statusMsg.type === 'error' 
+          ? 'bg-white border-rose-500 text-rose-600' 
+          : 'bg-white border-emerald-500 text-emerald-600'
+        }`}>
+          {statusMsg.type === 'error' ? <AlertCircle size={22} /> : <CheckCircle2 size={22} />}
+          <span className="font-black text-sm tracking-tight">{statusMsg.msg}</span>
+        </div>
+      )}
+
+      {cameraActive && (
+        <div className="fixed inset-0 z-[120] bg-black flex flex-col sm:max-w-md sm:mx-auto">
+          <div className="p-6 flex justify-between items-center text-white bg-black/50 backdrop-blur-md border-b border-white/10">
+            <span className="font-bold text-sm tracking-tight">
+              {scanTarget === 'photo' ? 'ถ่ายภาพครุภัณฑ์' : 'สแกน Barcode/QR'}
+            </span>
+            <button onClick={stopCamera} className="p-2 bg-white/20 rounded-full"><X size={18} /></button>
+          </div>
+          <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+            <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
+              <div className="w-full h-full border-2 border-dashed border-white/50 rounded-lg relative">
+                 <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-500"></div>
+                 <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-500"></div>
+                 <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-500"></div>
+                 <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-500"></div>
+              </div>
             </div>
-        );
+          </div>
+          <div className="p-10 flex justify-center bg-black">
+            <button onClick={captureAction} className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.3)] active:scale-90 transition-transform">
+              <div className="w-16 h-16 border-4 border-slate-900 rounded-full"></div>
+            </button>
+          </div>
+        </div>
+      )}
 
-        const API_URL = "https://script.google.com/macros/s/AKfycbzlwkwuMk9Y7qpEqT7JlnDFjWwlmvYVpW0NOuaEBcS6_3iocDVC6Jpc2ZL9P1qvbHM/exec";
+      <header className="bg-white/80 backdrop-blur-md px-6 py-4 sticky top-0 z-[60] flex items-center justify-between border-b border-slate-100 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100 p-2 overflow-hidden relative">
+            <MonitorSmartphone className="text-white relative z-10" size={24} />
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-800 to-indigo-400 opacity-50"></div>
+          </div>
+          <div>
+            <h1 className="font-bold text-slate-800 leading-tight uppercase tracking-tight text-sm">IT Audit System</h1>
+            <p className="text-[9px] text-indigo-500 font-black uppercase tracking-widest">Inventory Intelligence</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`}></div>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{loading ? 'Syncing' : 'Online'}</span>
+        </div>
+      </header>
 
-        const App = () => {
-            const [view, setView] = useState('home');
-            const [loading, setLoading] = useState(false);
-            const [statusMsg, setStatusMsg] = useState(null);
-
-            const [initialData, setInitialData] = useState({ priorities: [], assetTypes: [], shifts: [] });
-            const [rawDeptList, setRawDeptList] = useState([]);
-            const [buildings, setBuildings] = useState([]);
-            const [floors, setFloors] = useState([]);
-            const [auditLogs, setAuditLogs] = useState([]);
-            
-            const [selectedBuilding, setSelectedBuilding] = useState('');
-            const [selectedFloor, setSelectedFloor] = useState('');
-            const [filteredDepts, setFilteredDepts] = useState([]);
-            const [selectedDept, setSelectedDept] = useState(null);
-
-            const [searchQuery, setSearchQuery] = useState('');
-            const [searchResults, setSearchResults] = useState([]);
-            const [selectedAsset, setSelectedAsset] = useState(null);
-            const [logSearchQuery, setLogSearchQuery] = useState('');
-
-            // Mapped to Backend Schema
-            const [auditForm, setAuditForm] = useState({
-                Asset_ID: '', 
-                Serial: '', 
-                BrandDetail: '', 
-                MAStatus: 'ตรวจสอบแล้ว',
-                ImageData: '', 
-                gps: '', 
-                Asset_Type_ID: '',
-                PIORITY_ID: '', 
-                Shift_Work: '', // เก็บเป็น String (ID)
-                IsPac: false, 
-                IsRent: false, 
-                ASS_ON_OUT: '1',
-                IT_User_Mail: 'demo@it.audit',
-                Activity_ID: 'Ac-2569'
-            });
-
-            const videoRef = useRef(null);
-            const [cameraActive, setCameraActive] = useState(false);
-            const [scanTarget, setScanTarget] = useState(null);
-            const searchTimeoutRef = useRef(null);
-
-            useEffect(() => {
-                fetchGlobalData();
-            }, []);
-
-            const fetchGlobalData = async () => {
-                setLoading(true);
-                try {
-                    const [resInit, resDept, resLogs] = await Promise.all([
-                        fetch(`${API_URL}?action=getInitialData`).then(r => r.json()),
-                        fetch(`${API_URL}?action=getDeptList`).then(r => r.json()),
-                        fetch(`${API_URL}?action=getAuditLogs`).then(r => r.json())
-                    ]);
-                    setInitialData(resInit);
-                    setRawDeptList(resDept);
-                    setAuditLogs(resLogs);
-                    const bldgs = [...new Set(resDept.map(item => item.BUILDING))].filter(Boolean).sort();
-                    setBuildings(bldgs);
-                } catch (err) {
-                    showStatus('ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            useEffect(() => {
-                if (selectedBuilding) {
-                    const availableFloors = rawDeptList
-                        .filter(item => item.BUILDING === selectedBuilding)
-                        .map(item => String(item.FL))
-                        .filter((v, i, a) => v && v !== "undefined" && a.indexOf(v) === i)
-                        .sort();
-                    setFloors(availableFloors);
-                }
-            }, [selectedBuilding, rawDeptList]);
-
-            useEffect(() => {
-                if (selectedBuilding && selectedFloor) {
-                    const depts = rawDeptList.filter(
-                        item => item.BUILDING === selectedBuilding && String(item.FL) === selectedFloor
-                    );
-                    setFilteredDepts(depts);
-                } else {
-                    setFilteredDepts([]);
-                }
-            }, [selectedFloor, selectedBuilding, rawDeptList]);
-
-            const showStatus = (msg, type) => {
-                setStatusMsg({ msg, type });
-                setTimeout(() => setStatusMsg(null), 3000);
-            };
-
-            const executeSearch = async (queryValue) => {
-                let q = queryValue.trim();
-                if (!q) { setSearchResults([]); return; }
-                setLoading(true);
-                try {
-                    const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
-                    const data = await res.json();
-                    setSearchResults(data);
-                } catch (err) {
-                    showStatus('ค้นหาขัดข้อง', 'error');
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const handleInputChange = (val) => {
-                setSearchQuery(val);
-                clearTimeout(searchTimeoutRef.current);
-                if (val.trim()) {
-                    searchTimeoutRef.current = setTimeout(() => executeSearch(val), 500);
-                } else {
-                    setSearchResults([]);
-                }
-            };
-
-            const startCamera = (mode) => {
-                setCameraActive(true);
-                setScanTarget(mode);
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                    .then(stream => { if (videoRef.current) videoRef.current.srcObject = stream; })
-                    .catch(() => { showStatus('เปิดกล้องไม่ได้', 'error'); setCameraActive(false); });
-            };
-
-            const captureAction = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = videoRef.current.videoWidth;
-                canvas.height = videoRef.current.videoHeight;
-                canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
-                const base64Img = canvas.toDataURL('image/jpeg', 0.6);
-                if (scanTarget === 'photo') {
-                    setAuditForm(prev => ({...prev, ImageData: base64Img}));
-                } else {
-                    const mockResult = "SCN-" + Math.floor(Math.random() * 100000);
-                    if (scanTarget === 'serial') setAuditForm(prev => ({...prev, Serial: mockResult}));
-                    if (scanTarget === 'asset_id') setAuditForm(prev => ({...prev, Asset_ID: mockResult}));
-                    if (scanTarget === 'search') handleInputChange(mockResult);
-                }
-                stopCamera();
-            };
-
-            const stopCamera = () => {
-                if (videoRef.current && videoRef.current.srcObject) {
-                    videoRef.current.srcObject.getTracks().forEach(t => t.stop());
-                }
-                setCameraActive(false);
-            };
-
-            const handleFinalSubmit = async () => {
-                if (!auditForm.ImageData) { showStatus('กรุณาถ่ายรูปเพื่อยืนยัน', 'error'); return; }
-                if (!auditForm.Asset_Type_ID) { showStatus('กรุณาเลือกประเภทอุปกรณ์', 'error'); return; }
-                if (!auditForm.Shift_Work) { showStatus('กรุณาเลือกเวร/กะ', 'error'); return; }
-                
-                setLoading(true);
-                const isNonNumber = !selectedAsset;
-                const note2Value = (auditForm.IsPac ? "PAC" : "") + (auditForm.IsRent ? "/RENT" : "");
-
-                // Updated Mapping to match your requested structure
-                const payloadData = {
-                    ...auditForm,
-                    NoID: isNonNumber ? "" : selectedAsset.NoID,
-                    Asset_ID: isNonNumber ? auditForm.Asset_ID : selectedAsset.AssetID,
-                    DEPT_ID: selectedDept?.DEP_ID,
-                    Shift_Work: auditForm.Shift_Work, // ส่งเป็น ID "1", "2", หรือ "3"
-                    Detail_ID: auditForm.BrandDetail || "-",
-                    Note1: "2569", 
-                    Note2: note2Value,
-                    IMAGE_NAME: auditForm.ImageData 
-                };
-
-                try {
-                    const res = await fetch(API_URL, { 
-                        method: 'POST', 
-                        body: JSON.stringify({
-                            action: isNonNumber ? 'saveNonNumber' : 'saveSurvey',
-                            data: payloadData
-                        }) 
-                    });
-                    const result = await res.json();
-                    if (result.status === 'success') {
-                        showStatus('บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
-                        clearAuditForm();
-                        setView('search');
-                        // Refresh logs
-                        const newLogs = await fetch(`${API_URL}?action=getAuditLogs`).then(r => r.json());
-                        setAuditLogs(newLogs);
-                    }
-                } catch (err) {
-                    showStatus('เกิดข้อผิดพลาดในการบันทึก', 'error');
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const clearAuditForm = () => {
-                setAuditForm({
-                    Asset_ID: '', Serial: '', BrandDetail: '', MAStatus: 'ตรวจสอบแล้ว',
-                    ImageData: '', gps: '', Asset_Type_ID: '',
-                    PIORITY_ID: '', Shift_Work: '', IsPac: false, IsRent: false, ASS_ON_OUT: '1',
-                    IT_User_Mail: 'demo@it.audit',
-                    Activity_ID: 'Ac-2569'
-                });
-                setSelectedAsset(null);
-            };
-
-            const groupedLogs = useMemo(() => {
-                let filtered = auditLogs;
-                if (logSearchQuery) {
-                    const q = logSearchQuery.toLowerCase();
-                    filtered = auditLogs.filter(log => 
-                        (log.DEPT_NAME || log.Department || "").toLowerCase().includes(q) ||
-                        (log.AssetID || log.Asset_ID || "").toLowerCase().includes(q) ||
-                        (log.FullDescription || "").toLowerCase().includes(q)
-                    );
-                }
-                
-                const groups = {};
-                filtered.forEach(log => {
-                    const dName = log.DEPT_NAME || log.Department || "ทั่วไป / ไม่ทราบหน่วยงาน";
-                    if (!groups[dName]) groups[dName] = [];
-                    groups[dName].push(log);
-                });
-
-                return Object.entries(groups)
-                    .map(([name, data]) => ({ name, data }))
-                    .sort((a, b) => a.name.localeCompare(b.name, 'th'));
-            }, [auditLogs, logSearchQuery]);
-
-            const getShiftName = (id) => {
-                const shift = initialData.shifts?.find(s => s.id === String(id));
-                return shift ? shift.name : (id || '-');
-            };
-
-            return (
-                <div className="min-h-screen max-w-md mx-auto bg-slate-50 shadow-2xl relative pb-28">
-                    {loading && <LoadingOverlay />}
-                    {statusMsg && (
-                        <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in ${statusMsg.type === 'error' ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'}`}>
-                            <Icon name={statusMsg.type === 'error' ? 'alert-circle' : 'check-circle-2'} size={20} />
-                            <span className="font-bold text-sm">{statusMsg.msg}</span>
-                        </div>
-                    )}
-
-                    {cameraActive && (
-                        <div className="fixed inset-0 z-[120] bg-black flex flex-col">
-                            <div className="p-6 flex justify-between items-center text-white glass-morphism border-b border-white/10">
-                                <span className="font-bold text-sm tracking-tight">Camera Preview</span>
-                                <button onClick={stopCamera} className="p-2 bg-white/20 rounded-full"><Icon name="x" size={16} /></button>
-                            </div>
-                            <div className="flex-1 flex items-center justify-center relative overflow-hidden">
-                                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
-                                    <div className="w-full h-full border-2 border-dashed border-white/50 rounded-lg"></div>
-                                </div>
-                            </div>
-                            <div className="p-10 flex justify-center bg-black/80">
-                                <button onClick={captureAction} className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform">
-                                    <div className="w-16 h-16 border-4 border-slate-900 rounded-full"></div>
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    <header className="bg-white px-6 py-4 sticky top-0 z-[60] flex items-center justify-between border-b border-slate-100 shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100 p-2 overflow-hidden">
-                                <img src="https://raw.githubusercontent.com/github/explore/main/topics/html/html.png" alt="Logo" className="w-full h-full object-contain logo-shadow" />
-                            </div>
-                            <div>
-                                <h1 className="font-bold text-slate-800 leading-tight uppercase tracking-tight text-sm">IT Audit System</h1>
-                                <p className="text-[9px] text-indigo-500 font-black uppercase tracking-widest">v2.0 Inventory Mapping</p>
-                            </div>
-                        </div>
-                    </header>
-
-                    <main className="p-6">
-                        {view === 'home' && (
-                            <div className="space-y-6 animate-in">
-                                <div className="bg-white p-7 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-6 text-slate-700">
-                                        <Icon name="map-pin" size={18} className="text-indigo-500" />
-                                        <span className="font-bold text-lg">ระบุสถานที่</span>
-                                    </div>
-                                    <div className="space-y-5">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-slate-400 ml-2 uppercase">อาคาร (Building)</label>
-                                            <div className="relative">
-                                                <select value={selectedBuilding} onChange={(e) => setSelectedBuilding(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold border-none outline-none appearance-none">
-                                                    <option value="">-- เลือกอาคาร --</option>
-                                                    {buildings.map(b => <option key={b} value={b}>{b}</option>)}
-                                                </select>
-                                                <Icon name="chevron-down" size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-slate-400 ml-2 uppercase">ชั้น (Floor)</label>
-                                            <div className="relative">
-                                                <select value={selectedFloor} onChange={(e) => setSelectedFloor(e.target.value)} disabled={!selectedBuilding} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold border-none outline-none disabled:opacity-50 appearance-none">
-                                                    <option value="">-- เลือกชั้น --</option>
-                                                    {floors.map(f => <option key={f} value={f}>ชั้น {f}</option>)}
-                                                </select>
-                                                <Icon name="chevron-down" size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-2">หน่วยงานที่พบ ({filteredDepts.length})</p>
-                                    <div className="grid gap-3">
-                                        {filteredDepts.map(dept => (
-                                            <button key={dept.DEP_ID} onClick={() => { setSelectedDept(dept); setView('search'); }} className="w-full bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between active:scale-[0.97] transition-all shadow-sm group">
-                                                <div className="text-left">
-                                                    <p className="text-[10px] font-bold text-indigo-500 mb-0.5 tracking-tight">{dept.DEP_ID}</p>
-                                                    <p className="font-bold text-slate-700">{dept.DEPNAME}</p>
-                                                </div>
-                                                <Icon name="arrow-right" size={18} className="text-slate-300 group-hover:text-indigo-500" />
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {view === 'search' && (
-                            <div className="space-y-5 animate-in">
-                                <div className="bg-slate-900 p-6 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-                                    <div className="relative z-10 pr-12">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Icon name="building-2" size={14} className="text-indigo-400" />
-                                            <p className="text-[10px] font-bold text-indigo-400 uppercase">{selectedDept?.DEPNAME}</p>
-                                        </div>
-                                        <p className="text-xs opacity-60"> {selectedBuilding} | ชั้น {selectedFloor}</p>
-                                    </div>
-                                    <button onClick={() => setView('home')} className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 rounded-2xl"><Icon name="refresh-cw" size={18}/></button>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-slate-400 ml-3 uppercase">ค้นหาครุภัณฑ์</label>
-                                    <div className="relative">
-                                        <input type="text" value={searchQuery} onChange={(e) => handleInputChange(e.target.value)} placeholder="พิมพ์รหัสครุภัณฑ์ หรือสแกน..." className="w-full p-5 pr-16 bg-white rounded-3xl border border-slate-100 font-bold text-sm outline-none shadow-sm focus:ring-2 focus:ring-indigo-100" />
-                                        <button onClick={() => startCamera('search')} className="absolute right-2 top-2 bottom-2 px-4 bg-indigo-50 text-indigo-600 rounded-2xl"><Icon name="scan" /></button>
-                                    </div>
-                                </div>
-                                <div className="space-y-4 pt-2">
-                                    <button onClick={() => { setSelectedAsset(null); clearAuditForm(); setAuditForm(p => ({...p, Asset_ID: searchQuery})); setView('audit'); }} className="w-full py-5 bg-white border-2 border-dashed border-slate-200 text-slate-400 rounded-3xl text-xs font-bold flex flex-col items-center justify-center gap-2 hover:border-indigo-300 hover:text-indigo-500 shadow-sm transition-all">
-                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center"><Icon name="plus" size={20}/></div>
-                                        เพิ่มครุภัณฑ์นอกระบบ (Non-Number)
-                                    </button>
-                                    {searchResults.map(item => (
-                                        <div key={item.AssetID} onClick={() => { setSelectedAsset(item); setView('audit'); }} className="bg-white p-5 rounded-3xl border-l-4 border-l-indigo-600 shadow-sm active:scale-[0.98] cursor-pointer">
-                                            <p className="font-black text-indigo-600 text-sm mb-1">{item.AssetID}</p>
-                                            <p className="text-xs font-bold text-slate-600 leading-snug mb-2">{item.FullDescription}</p>
-                                            <div className="flex items-center gap-3 text-[10px] text-slate-400">
-                                                <span className="flex items-center gap-1 font-bold"><Icon name="clock" size={10} /> {item.AgeInfo}</span>
-                                                <span className="flex items-center gap-1 font-bold"><Icon name="tag" size={10} /> SN: {item.Serial || '-'}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {view === 'audit' && (
-                            <div className="space-y-6 animate-in">
-                                <div className="flex items-center justify-between">
-                                    <button onClick={() => setView('search')} className="p-3 bg-white rounded-2xl text-slate-400 shadow-sm active:scale-90"><Icon name="chevron-left" /></button>
-                                    <h2 className="font-black text-slate-700 tracking-tight">Audit Form</h2>
-                                    <button onClick={clearAuditForm} className="text-[10px] font-bold text-rose-500 bg-rose-50 px-3 py-2 rounded-xl active:scale-95 uppercase">Reset</button>
-                                </div>
-
-                                {!selectedAsset ? (
-                                    <div className="bg-amber-50/50 p-6 rounded-[2.5rem] border border-amber-100 space-y-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Asset ID / Code</label>
-                                            <div className="flex gap-2">
-                                                <input type="text" value={auditForm.Asset_ID} onChange={(e) => setAuditForm({...auditForm, Asset_ID: e.target.value})} className="flex-1 p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none" placeholder="ระบุเลขที่พบ..." />
-                                                <button onClick={() => startCamera('asset_id')} className="p-4 bg-white text-amber-600 border border-amber-200 rounded-2xl active:scale-90"><Icon name="scan" size={18}/></button>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Serial Number</label>
-                                            <div className="flex gap-2">
-                                                <input type="text" value={auditForm.Serial} onChange={(e) => setAuditForm({...auditForm, Serial: e.target.value})} className="flex-1 p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none" placeholder="SN-XXXXXXX" />
-                                                <button onClick={() => startCamera('serial')} className="p-4 bg-white text-amber-600 border border-amber-200 rounded-2xl active:scale-90"><Icon name="scan" size={18}/></button>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Brand / Specs</label>
-                                            <input type="text" value={auditForm.BrandDetail} onChange={(e) => setAuditForm({...auditForm, BrandDetail: e.target.value})} placeholder="ยี่ห้อ / รุ่น / สเปค" className="w-full p-4 bg-white border border-amber-200 rounded-2xl text-sm font-semibold outline-none shadow-sm" />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="p-6 bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100 shadow-sm">
-                                        <p className="text-[13px] font-bold text-slate-800 leading-snug mb-4">{selectedAsset.FullDescription}</p>
-                                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-indigo-100/50">
-                                            <div>
-                                                <span className="text-[8px] font-black text-slate-400 uppercase block tracking-tighter">Asset ID</span>
-                                                <span className="text-xs font-black text-indigo-600">{selectedAsset.AssetID}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[8px] font-black text-slate-400 uppercase block tracking-tighter">Information</span>
-                                                <span className="text-xs font-bold text-slate-600">{selectedAsset.AgeInfo}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="space-y-3">
-                                    <label className="text-[11px] font-bold text-slate-400 ml-1 uppercase tracking-widest">ยืนยันภาพถ่าย (Required)</label>
-                                    <div onClick={() => startCamera('photo')} className="aspect-video w-full bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden cursor-pointer relative shadow-inner">
-                                        {auditForm.ImageData ? (
-                                            <img src={auditForm.ImageData} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="text-center">
-                                                <Icon name="camera" size={32} className="text-slate-300 mx-auto mb-2" />
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">แตะเพื่อถ่ายรูป</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Type</label>
-                                        <select value={auditForm.Asset_Type_ID} onChange={(e) => setAuditForm({...auditForm, Asset_Type_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm appearance-none">
-                                            <option value="">-- ประเภท --</option>
-                                            {initialData.assetTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Priority</label>
-                                        <select value={auditForm.PIORITY_ID} onChange={(e) => setAuditForm({...auditForm, PIORITY_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm appearance-none">
-                                            <option value="">-- ความสำคัญ --</option>
-                                            {initialData.priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-widest">ช่วงเวลาตรวจ (Audit Shift)</label>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        {initialData.shifts?.map((shift) => (
-                                            <button key={shift.id} onClick={() => setAuditForm({ ...auditForm, Shift_Work: shift.id })} className={`py-4 rounded-2xl text-xs font-bold border transition-all active:scale-95 shadow-sm ${auditForm.Shift_Work === shift.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400'}`}>
-                                                {shift.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-slate-700 uppercase">ติดตั้ง PAC</span>
-                                        <button onClick={() => setAuditForm({...auditForm, IsPac: !auditForm.IsPac})} className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${auditForm.IsPac ? 'bg-indigo-600' : 'bg-slate-200'}`}>
-                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${auditForm.IsPac ? 'left-7' : 'left-1'}`}></div>
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center justify-between border-t border-slate-50 pt-4">
-                                        <span className="text-xs font-bold text-slate-700 uppercase">เครื่องเช่า (Rental)</span>
-                                        <button onClick={() => setAuditForm({...auditForm, IsRent: !auditForm.IsRent})} className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${auditForm.IsRent ? 'bg-indigo-600' : 'bg-slate-200'}`}>
-                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${auditForm.IsRent ? 'left-7' : 'left-1'}`}></div>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <button disabled={loading} onClick={handleFinalSubmit} className="w-full py-5 bg-indigo-600 text-white rounded-[2.5rem] font-bold text-sm shadow-xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50">
-                                    {loading ? <Icon name="loader-2" className="animate-spin" /> : <><Icon name="save" size={18} /> บันทึกข้อมูล (SAVE)</>}
-                                </button>
-                            </div>
-                        )}
-
-                        {view === 'logs' && (
-                            <div className="animate-in space-y-6">
-                                <div className="flex items-center justify-between px-2">
-                                    <div>
-                                        <h2 className="font-black text-slate-800 text-2xl tracking-tight">Audit Logs</h2>
-                                        <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">แยกตามหน่วยงาน</p>
-                                    </div>
-                                    <div className="bg-indigo-600 text-white px-4 py-2 rounded-2xl text-[11px] font-black shadow-lg">{auditLogs.length} Records</div>
-                                </div>
-
-                                <div className="relative sticky top-[73px] z-[40] bg-slate-50/90 backdrop-blur-md pb-4 pt-1">
-                                    <input type="text" value={logSearchQuery} onChange={(e) => setLogSearchQuery(e.target.value)} placeholder="ค้นหาหน่วยงาน หรือ Asset ID..." className="w-full p-4 pl-12 bg-white rounded-2xl border border-slate-100 font-bold text-sm outline-none shadow-sm focus:ring-2 focus:ring-indigo-100" />
-                                    <Icon name="search" size={18} className="absolute left-4 top-[1.2rem] text-slate-400" />
-                                </div>
-
-                                <div className="space-y-10 pb-10">
-                                    {groupedLogs.map((group, gIdx) => (
-                                        <div key={gIdx} className="animate-in">
-                                            <div className="flex items-center justify-between px-3 mb-4 sticky top-[140px] z-30 py-2 bg-slate-50/80 backdrop-blur-sm rounded-xl">
-                                                <h3 className="font-black text-slate-800 text-sm uppercase line-clamp-1">{group.name}</h3>
-                                                <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{group.data.length} รายการ</span>
-                                            </div>
-                                            <div className="grid gap-3">
-                                                {group.data.map((log, idx) => (
-                                                    <div key={log.AL_ID || idx} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex gap-4">
-                                                        <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center border border-slate-100">
-                                                            {log.IMAGE_ID && log.IMAGE_ID !== "-" ? (
-                                                                <Icon name="image" size={24} className="text-slate-300" />
-                                                            ) : (
-                                                                <Icon name="image-off" size={20} className="text-slate-300" />
-                                                            )}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                            <div className="flex justify-between items-start mb-1.5">
-                                                                <span className="font-black text-indigo-600 text-[11px]">{log.AssetID || log.Asset_ID || 'NON-NUMBER'}</span>
-                                                                <span className="text-[8px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg">{log.TIMESTAMP ? log.TIMESTAMP.split('T')[0] : '-'}</span>
-                                                            </div>
-                                                            <p className="text-[11px] font-bold text-slate-700 line-clamp-2 leading-snug mb-2">{log.FullDescription || log.SPEC_DETAIL || 'ไม่ระบุรายละเอียด'}</p>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="text-[8px] px-2.5 py-1 bg-slate-50 text-indigo-500 rounded-full font-black border border-slate-100">{log.AgeInfo || 'N/A'}</div>
-                                                                <div className="text-[8px] text-slate-400 font-black opacity-60 flex items-center gap-1">
-                                                                    <Icon name="clock" size={10} /> {getShiftName(log.Shift_Work)}
-                                                                </div>
-                                                                {log.Note2 && log.Note2 !== "-" && (
-                                                                    <div className="text-[8px] px-2.5 py-1 bg-amber-50 text-amber-600 rounded-full font-black border border-amber-100">{log.Note2}</div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </main>
-
-                    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-morphism border-t border-slate-100 px-10 py-5 flex justify-between items-center z-[100] shadow-2xl rounded-t-[3rem]">
-                        <button onClick={() => { setView('home'); clearAuditForm(); }} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'home' ? 'text-indigo-600 scale-110' : 'text-slate-300'}`}>
-                            <Icon name="layout-grid" size={22} fill={view === 'home' ? "currentColor" : "none"} strokeWidth={2.5} />
-                            <span className="text-[8px] font-black uppercase tracking-widest">Main</span>
-                        </button>
-                        <div className="relative -top-12">
-                            <button onClick={() => { setView('search'); clearAuditForm(); }} className="w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl border-[6px] border-white flex items-center justify-center active:scale-90 transition-all">
-                                <Icon name="plus" size={32} strokeWidth={3} />
-                            </button>
-                        </div>
-                        <button onClick={() => setView('logs')} className={`flex flex-col items-center gap-1.5 transition-all ${view === 'logs' ? 'text-indigo-600 scale-110' : 'text-slate-300'}`}>
-                            <Icon name="folder-kanban" size={22} fill={view === 'logs' ? "currentColor" : "none"} strokeWidth={2.5} />
-                            <span className="text-[8px] font-black uppercase tracking-widest">Logs</span>
-                        </button>
-                    </nav>
+      <main className="flex-1 p-6 overflow-y-auto">
+        
+        {view === 'home' && (
+          <div className="space-y-6">
+            <div className="bg-white p-7 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-8 -top-8 w-32 h-32 bg-indigo-50 rounded-full opacity-50"></div>
+              <div className="flex items-center gap-2 mb-6 text-slate-700 relative z-10">
+                <MapPin size={18} className="text-indigo-500" />
+                <span className="font-bold text-lg">ระบุสถานที่ปฏิบัติงาน</span>
+              </div>
+              <div className="space-y-5 relative z-10">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 ml-2 uppercase tracking-widest font-black">อาคาร (Building)</label>
+                  <div className="relative">
+                    <select value={selectedBuilding} onChange={(e) => setSelectedBuilding(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-indigo-100 focus:bg-white outline-none appearance-none cursor-pointer transition-all">
+                      <option value="">-- เลือกอาคาร --</option>
+                      {buildings.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
-            );
-        };
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 ml-2 uppercase tracking-widest font-black">ชั้น (Floor)</label>
+                  <div className="relative">
+                    <select value={selectedFloor} onChange={(e) => setSelectedFloor(e.target.value)} disabled={!selectedBuilding} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-indigo-100 focus:bg-white outline-none disabled:opacity-50 appearance-none cursor-pointer transition-all">
+                      <option value="">-- เลือกชั้น --</option>
+                      {floors.map(f => <option key={f} value={f}>ชั้น {f}</option>)}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-2">หน่วยงานที่พบ ({filteredDepts.length})</p>
+              <div className="grid gap-3">
+                {filteredDepts.map(dept => (
+                  <button key={dept.DEP_ID} onClick={() => { setSelectedDept(dept); setView('search'); }} className="w-full bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between active:scale-[0.97] transition-all shadow-sm group text-left">
+                    <div>
+                      <p className="text-[10px] font-bold text-indigo-500 mb-0.5 tracking-tight uppercase">{dept.DEP_ID}</p>
+                      <p className="font-bold text-slate-700">{dept.DEPNAME}</p>
+                    </div>
+                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                        <ArrowRight size={18} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+        {view === 'search' && (
+          <div className="space-y-5">
+            <div className="bg-slate-900 p-6 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+              <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl"></div>
+              <div className="relative z-10 pr-12">
+                <div className="flex items-center gap-2 mb-2">
+                  <Building2 size={14} className="text-indigo-400" />
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">{selectedDept?.DEPNAME}</p>
+                </div>
+                <p className="text-xs opacity-60 font-medium"> อาคาร {selectedBuilding} | ชั้น {selectedFloor}</p>
+              </div>
+              <button onClick={() => setView('home')} className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 rounded-2xl active:scale-90 transition-transform hover:bg-white/20">
+                <RefreshCw size={18}/>
+              </button>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 ml-3 uppercase tracking-widest">ค้นหาครุภัณฑ์</label>
+              <div className="relative">
+                <input type="text" value={searchQuery} onChange={(e) => handleInputChange(e.target.value)} placeholder="พิมพ์รหัสครุภัณฑ์..." className="w-full p-5 pr-16 bg-white rounded-[2rem] border border-slate-100 font-bold text-sm outline-none shadow-sm focus:ring-4 focus:ring-indigo-50 transition-all" />
+                <button onClick={() => startCamera('search')} className="absolute right-2 top-2 bottom-2 px-4 bg-indigo-600 text-white rounded-2xl active:scale-95 shadow-lg shadow-indigo-100"><Scan size={20} /></button>
+              </div>
+            </div>
+            <div className="space-y-4 pt-2">
+              <button onClick={() => { setSelectedAsset(null); setAuditForm(p => ({...p, Asset_ID: searchQuery})); setView('audit'); }} className="w-full py-6 bg-white border-2 border-dashed border-slate-200 text-slate-400 rounded-[2.5rem] text-xs font-bold flex flex-col items-center justify-center gap-2 hover:border-indigo-300 hover:text-indigo-500 shadow-sm transition-all active:bg-slate-50 group">
+                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors"><Plus size={24}/></div>
+                <span className="uppercase tracking-widest">เพิ่มครุภัณฑ์นอกระบบ (Non-Number)</span>
+              </button>
+              {searchResults.map((item, idx) => (
+                <div key={item.AssetID || idx} onClick={() => { setSelectedAsset(item); setView('audit'); }} className="bg-white p-6 rounded-[2rem] border-l-[6px] border-l-indigo-600 shadow-sm active:scale-[0.98] cursor-pointer transition-all hover:shadow-md">
+                  <p className="font-black text-indigo-600 text-sm mb-1 tracking-tight">{item.AssetID}</p>
+                  <p className="text-xs font-bold text-slate-700 leading-snug mb-3">{item.FullDescription}</p>
+                  <div className="flex items-center gap-4 text-[10px] text-slate-400">
+                    <span className="flex items-center gap-1.5 font-bold"><Clock size={12} className="text-slate-300" /> {item.AgeInfo || 'ไม่ระบุอายุ'}</span>
+                    <span className="flex items-center gap-1.5 font-bold"><Tag size={12} className="text-slate-300" /> SN: {item.Serial || '-'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {view === 'audit' && (
+          <div className="space-y-6 pb-8">
+            <div className="flex items-center justify-between">
+              <button onClick={() => setView('search')} className="p-3 bg-white rounded-2xl text-slate-400 shadow-sm active:scale-90 hover:text-slate-600"><ChevronLeft /></button>
+              <h2 className="font-black text-slate-700 tracking-tight uppercase">Audit Detail</h2>
+              <button onClick={() => setAuditForm(prev => ({...prev, ImageData: '', Shift_Work: []}))} className="text-[10px] font-black text-rose-500 bg-rose-50 px-4 py-2 rounded-xl active:scale-95 uppercase tracking-widest">Reset</button>
+            </div>
+
+            {!selectedAsset ? (
+              <div className="bg-amber-50/50 p-6 rounded-[2.5rem] border border-amber-100 space-y-4">
+                <div className="flex items-center gap-2 mb-2 text-amber-600">
+                  <AlertTriangle size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Non-Number Entry</span>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Asset ID</label>
+                  <div className="flex gap-2">
+                    <input type="text" value={auditForm.Asset_ID} onChange={(e) => setAuditForm({...auditForm, Asset_ID: e.target.value})} className="flex-1 p-4 bg-white border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-amber-200 transition-all" placeholder="ระบุเลขที่พบ..." />
+                    <button onClick={() => startCamera('asset_id')} className="p-4 bg-white text-amber-600 border border-amber-100 rounded-2xl active:scale-90"><Scan size={18}/></button>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Serial Number</label>
+                  <div className="flex gap-2">
+                    <input type="text" value={auditForm.Serial} onChange={(e) => setAuditForm({...auditForm, Serial: e.target.value})} className="flex-1 p-4 bg-white border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-amber-200 transition-all" placeholder="ระบุ SN..." />
+                    <button onClick={() => startCamera('serial')} className="p-4 bg-white text-amber-600 border border-amber-100 rounded-2xl active:scale-90"><Scan size={18}/></button>
+                  </div>
+                </div>
+                <input type="text" value={auditForm.BrandDetail} onChange={(e) => setAuditForm({...auditForm, BrandDetail: e.target.value})} placeholder="ยี่ห้อ / รุ่น / สเปค" className="w-full p-4 bg-white border-2 border-transparent rounded-2xl text-sm font-bold outline-none shadow-sm focus:border-amber-200 transition-all" />
+              </div>
+            ) : (
+              <div className="p-7 bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-[1.2rem] uppercase tracking-widest">System Record</div>
+                <p className="text-[13px] font-black text-slate-800 leading-snug mb-4 mt-2 pr-12">{selectedAsset.FullDescription}</p>
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-indigo-100/50">
+                  <div><span className="text-[9px] font-black text-slate-400 uppercase block tracking-widest mb-0.5">Asset ID</span><span className="text-xs font-black text-indigo-600 tracking-tight">{selectedAsset.AssetID}</span></div>
+                  <div><span className="text-[9px] font-black text-slate-400 uppercase block tracking-widest mb-0.5">Device Age</span><span className="text-xs font-bold text-slate-600">{selectedAsset.AgeInfo || 'N/A'}</span></div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-slate-400 ml-1 uppercase tracking-widest">ยืนยันภาพถ่ายจริง <span className="text-rose-500">*</span></label>
+              <div onClick={() => startCamera('photo')} className="aspect-video w-full bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden cursor-pointer relative shadow-inner group transition-all hover:border-indigo-300">
+                {auditForm.ImageData ? <img src={auditForm.ImageData} className="w-full h-full object-cover animate-in fade-in zoom-in-95" alt="Captured" /> : (
+                  <div className="text-center group-hover:scale-110 transition-transform"><Camera size={40} className="text-slate-300 mx-auto mb-2" /><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">แตะเพื่อเปิดกล้อง</p></div>
+                )}
+                {auditForm.ImageData && <div className="absolute bottom-4 right-4 bg-slate-900/70 backdrop-blur-md text-white text-[10px] px-4 py-2 rounded-2xl flex items-center gap-2 font-black uppercase tracking-widest border border-white/10"><RefreshCcw size={12} /> ถ่ายใหม่</div>}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase ml-1 tracking-widest">ประเภท <span className="text-rose-500">*</span></label>
+                  <div className="relative">
+                    <select value={auditForm.Asset_Type_ID} onChange={(e) => setAuditForm({...auditForm, Asset_Type_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-xs font-bold outline-none appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-50">
+                      <option value="">- เลือก -</option>
+                      {initialData.assetTypes?.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase ml-1 tracking-widest">ลำดับความสำคัญ</label>
+                  <div className="relative">
+                    <select value={auditForm.PIORITY_ID} onChange={(e) => setAuditForm({...auditForm, PIORITY_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-xs font-bold outline-none appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-50">
+                      <option value="">- เลือก -</option>
+                      {initialData.priorities?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-slate-400 uppercase ml-1 tracking-widest">เวรการทำงาน (Shift) <span className="text-rose-500">*</span></label>
+                <div className="flex flex-wrap gap-2">
+                  {initialData.shifts?.map(shift => {
+                    const isSelected = auditForm.Shift_Work.includes(shift.id);
+                    return (
+                      <button
+                        key={shift.id}
+                        type="button"
+                        onClick={() => toggleShift(shift.id)}
+                        className={`flex-1 min-w-[100px] p-3.5 rounded-2xl border-2 font-black text-[10px] transition-all flex items-center justify-center gap-2 uppercase tracking-tighter ${
+                          isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100' : 'bg-white border-slate-100 text-slate-400 shadow-sm'
+                        }`}
+                      >
+                        {isSelected ? <CheckCircle size={14} /> : <Circle size={14} className="opacity-30" />}
+                        {shift.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <label className={`flex items-center justify-center gap-3 p-4 rounded-2xl border-2 flex-1 cursor-pointer transition-all ${auditForm.IsPac ? 'border-indigo-500 bg-indigo-50' : 'border-slate-100 bg-white'}`}>
+                <input type="checkbox" checked={auditForm.IsPac} onChange={(e) => setAuditForm({...auditForm, IsPac: e.target.checked})} className="hidden" />
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${auditForm.IsPac ? 'bg-indigo-600 border-indigo-600 text-white rotate-0' : 'border-slate-300'}`}>{auditForm.IsPac && <Check size={16} strokeWidth={4} />}</div>
+                <span className={`text-xs font-black tracking-widest ${auditForm.IsPac ? 'text-indigo-700' : 'text-slate-400'}`}>PAC</span>
+              </label>
+              <label className={`flex items-center justify-center gap-3 p-4 rounded-2xl border-2 flex-1 cursor-pointer transition-all ${auditForm.IsRent ? 'border-amber-500 bg-amber-50' : 'border-slate-100 bg-white'}`}>
+                <input type="checkbox" checked={auditForm.IsRent} onChange={(e) => setAuditForm({...auditForm, IsRent: e.target.checked})} className="hidden" />
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${auditForm.IsRent ? 'bg-amber-600 border-amber-600 text-white rotate-0' : 'border-slate-300'}`}>{auditForm.IsRent && <Check size={16} strokeWidth={4} />}</div>
+                <span className={`text-xs font-black tracking-widest ${auditForm.IsRent ? 'text-amber-700' : 'text-slate-400'}`}>RENT</span>
+              </label>
+            </div>
+
+            <button onClick={handleFinalSubmit} disabled={loading} className="w-full bg-slate-900 text-white font-black p-6 rounded-[2.5rem] shadow-2xl shadow-slate-300 active:scale-95 transition-all flex items-center justify-center gap-3 mt-4 group">
+              {loading ? <Loader2 className="animate-spin text-indigo-400" /> : <Save className="group-hover:scale-110 transition-transform" />}
+              <span className="uppercase tracking-[0.2em]">{loading ? 'Processing...' : 'Submit Audit'}</span>
+            </button>
+          </div>
+        )}
+
+        {view === 'logs' && (
+          <div className="space-y-5">
+            <div className="bg-indigo-600 p-7 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+              <div className="relative z-10">
+                <h2 className="text-xl font-black mb-1 uppercase tracking-tight">Audit History</h2>
+                <p className="text-xs text-indigo-100 font-medium">รายการครุภัณฑ์ที่ตรวจสอบสำเร็จ</p>
+              </div>
+              <ClipboardCheck size={80} className="absolute -right-2 -bottom-2 text-white opacity-20 rotate-12" />
+            </div>
+            <div className="relative">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="text" value={logSearchQuery} onChange={(e) => setLogSearchQuery(e.target.value)} placeholder="ค้นหารหัส หรือ หน่วยงาน..." className="w-full p-4 pl-12 bg-white rounded-2xl border border-slate-100 text-sm font-bold outline-none shadow-sm focus:ring-4 focus:ring-indigo-50" />
+            </div>
+            <div className="space-y-6 pb-6">
+              {groupedLogs.length === 0 ? (
+                <div className="text-center py-20 opacity-30">
+                  <Inbox size={60} strokeWidth={1} className="mx-auto mb-4" />
+                  <p className="text-xs font-black uppercase tracking-widest">No Records Found</p>
+                </div>
+              ) : groupedLogs.map(group => (
+                <div key={group.name} className="space-y-3">
+                  <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] px-3">{group.name}</h3>
+                  {group.data.map((log, idx) => (
+                    <div key={idx} className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex justify-between items-center group transition-all hover:shadow-md">
+                      <div className="pr-4 space-y-1">
+                        <p className="font-black text-sm text-slate-800 tracking-tight">{log.Asset_ID || log.AssetID}</p>
+                        <p className="text-[11px] font-bold text-slate-500 leading-tight line-clamp-2">{log.FullDescription}</p>
+                        {log.Timestamp && <p className="text-[9px] text-slate-400 pt-2 flex items-center gap-1.5 font-black uppercase"><Clock size={10} />{log.Timestamp}</p>}
+                      </div>
+                      <div className="flex flex-col items-center gap-1 shrink-0">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-inner"><CheckCircle size={20} strokeWidth={3} /></div>
+                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-tighter">Verified</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 pb-safe pt-2 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+        <div className="flex justify-around items-center px-4 py-2 sm:max-w-md sm:mx-auto">
+          <button onClick={() => setView('home')} className={`flex flex-col items-center gap-1 p-3 px-8 rounded-2xl transition-all ${view === 'home' || view === 'search' || view === 'audit' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'text-slate-400 hover:text-indigo-500'}`}>
+            <Home size={22} strokeWidth={view === 'home' || view === 'search' || view === 'audit' ? 3 : 2} />
+            <span className="text-[9px] font-black uppercase tracking-widest">Home</span>
+          </button>
+          <button onClick={() => setView('logs')} className={`flex flex-col items-center gap-1 p-3 px-8 rounded-2xl transition-all ${view === 'logs' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'text-slate-400 hover:text-indigo-500'}`}>
+            <ClipboardList size={22} strokeWidth={view === 'logs' ? 3 : 2} />
+            <span className="text-[9px] font-black uppercase tracking-widest">Logs</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  );
+};
+
+export default App;
