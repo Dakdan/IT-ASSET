@@ -105,66 +105,69 @@
         </div>
     </header>
 
-        <main class="max-w-6xl mx-auto p-4 md:p-8">
-        <!-- หน้าตรวจสอบ (Survey Page) -->
-        <div id="surveyPage">
-            <section id="locationPickerSection" class="space-y-6">
-                <div class="max-w-2xl mx-auto bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-50">
-                    <h2 class="text-sm font-bold text-gray-700 mb-6 flex items-center gap-2">
-                        <i data-lucide="map-pin" class="w-4 h-4 text-pink-500"></i> เลือกสถานที่ตรวจสอบ
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select id="selBuilding" onchange="onBuildingChange()" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 focus:ring-2 focus:ring-pink-500/20">
-                            <option value="" disabled selected>-- เลือกอาคาร --</option>
-                        </select>
-                        <select id="selFloor" onchange="renderDeptList()" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 focus:ring-2 focus:ring-pink-500/20">
-                            <option value="" disabled selected>-- เลือกชั้น --</option>
-                        </select>
+       <main class="max-w-6xl mx-auto p-4 md:p-8">
+            <div id="surveyPage">
+                <section id="locationPickerSection" class="space-y-6">
+                    <div class="max-w-2xl mx-auto bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-50">
+                        <h2 class="text-sm font-bold text-gray-700 mb-6 flex items-center gap-2">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-pink-500"></i> เลือกสถานที่ตรวจสอบ
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <select id="selBuilding" onchange="onBuildingChange()" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 focus:ring-2 focus:ring-pink-500/20">
+                                <option value="" disabled selected>-- เลือกอาคาร --</option>
+                            </select>
+                            <select id="selFloor" onchange="renderDeptList()" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 focus:ring-2 focus:ring-pink-500/20">
+                                <option value="" disabled selected>-- เลือกชั้น --</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div id="deptList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-            </section>
-    
-            <section id="searchAreaSection" class="hidden space-y-4 max-w-4xl mx-auto">
-                <div id="selectedDeptHeader" class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 md:p-8 rounded-[2.5rem] text-white relative overflow-hidden mb-4">
-                    <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">หน่วยงานที่เลือก</p>
-                    <h2 id="displayDeptName" class="text-lg md:text-xl font-bold leading-tight">---</h2>
-                    <button onclick="resetDeptSelection()" class="absolute top-4 right-4 p-2 bg-white/10 rounded-full"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-                </div>
-                <div class="flex gap-2">
-                    <div class="relative flex-grow">
-                        <input type="text" id="assetQuery" 
-                               oninput="debouncedSearch()" 
-                               onkeydown="if(event.key==='Enter'){ event.preventDefault(); searchAsset(); }"
-                               placeholder="🔻พิมย์เลขท้ายรหัสครุภัณฑ์ เพื่อค้นหา🔻" 
-                               class="w-full p-5 pl-12 bg-white border border-gray-100 rounded-3xl shadow-sm text-sm font-semibold focus:ring-2 focus:ring-pink-500/20 outline-none">
-                        <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
+                    <div id="deptList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                </section>
+        
+                <section id="searchAreaSection" class="hidden space-y-4 max-w-4xl mx-auto">
+                    <div id="selectedDeptHeader" class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 md:p-8 rounded-[2.5rem] text-white relative overflow-hidden mb-4">
+                        <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">หน่วยงานที่เลือก</p>
+                        <h2 id="displayDeptName" class="text-lg md:text-xl font-bold leading-tight">---</h2>
+                        <button onclick="resetDeptSelection()" class="absolute top-4 right-4 p-2 bg-white/10 rounded-full"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                     </div>
-                    <button onclick="openScanner('assetQuery')" class="p-4 bg-pink-50 text-pink-500 rounded-3xl active:scale-95 transition-transform"><i data-lucide="qr-code" class="w-6 h-6"></i></button>
-                </div>
-                <div id="resultsArea" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pb-10"></div>
-            </section>
-        </div>
-    
-        <!-- หน้ารายการ (Report Page) -->
-        <div id="reportPage" class="hidden">
-            <section id="recordedListSection" class="space-y-6 max-w-4xl mx-auto pb-24">
-                <div class="flex items-center justify-between px-2">
-                    <div>
-                        <h2 class="text-lg font-bold text-gray-800">รายการตรวจสอบวันนี้</h2>
-                        <p class="text-[10px] font-bold text-pink-500 uppercase tracking-widest">Daily Asset Audit Report</p>
+        
+                    <div class="flex gap-2">
+                        <div class="relative flex-grow">
+                            <input type="text" id="assetQuery" 
+                                   oninput="debouncedSearch()" 
+                                   onkeydown="if(event.key==='Enter'){ event.preventDefault(); searchAsset(); }"
+                                   placeholder="🔻พิมย์เลขท้ายรหัสครุภัณฑ์ เพื่อค้นหา🔻" 
+                                   class="w-full p-5 pl-12 bg-white border border-gray-100 rounded-3xl shadow-sm text-sm font-semibold focus:ring-2 focus:ring-pink-500/20 outline-none">
+                            <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
+                        </div>
+                        <button onclick="openScanner('assetQuery')" class="p-4 bg-pink-50 text-pink-500 rounded-3xl active:scale-95 transition-transform"><i data-lucide="qr-code" class="w-6 h-6"></i></button>
                     </div>
-                    <button onclick="loadRecordedData()" class="p-3 bg-white text-pink-500 rounded-2xl shadow-sm border border-pink-50 active:rotate-180 transition-transform duration-500">
-                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+        
+                    <button onclick="openNonRegisterModal()" class="w-full py-4 bg-gray-100 text-gray-600 rounded-3xl text-xs font-bold flex items-center justify-center gap-2 border border-dashed border-gray-300 active:bg-gray-200">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มครุภัณฑ์นอกทะเบียน
                     </button>
-                </div>
-            
-                <div id="recordedContainer" class="space-y-6">
-                    <!-- รายการจะแสดงที่นี่ -->
-                </div>
-            </section>
-        </div>
-    </main>
+        
+                    <div id="resultsArea" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pb-10"></div>
+                </section>
+            </div>
+        
+            <div id="reportPage" class="hidden">
+                <section id="recordedListSection" class="space-y-6 max-w-4xl mx-auto pb-24">
+                    <div class="flex items-center justify-between px-2">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-800">รายการตรวจสอบวันนี้</h2>
+                            <p class="text-[10px] font-bold text-pink-500 uppercase tracking-widest">Audit Summary Report</p>
+                        </div>
+                        <button onclick="loadRecordedData()" class="p-3 bg-white text-pink-500 rounded-2xl shadow-sm border border-pink-50 active:rotate-180 transition-transform duration-500">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                
+                    <div id="recordedContainer" class="space-y-6">
+                        </div>
+                </section>
+            </div>
+     </main>
 
     <div id="auditFormModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end modal-wrapper">
         <div class="w-full bg-white rounded-t-[3rem] max-h-[92vh] overflow-y-auto p-8 animate-in slide-in-from-bottom-full duration-300 modal-content-container">
@@ -1061,66 +1064,57 @@ function closeModal(id) {
     
 async function loadRecordedData() {
     const container = document.getElementById('recordedContainer');
-    container.innerHTML = `
-        <div class="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-100">
-            <div class="spinner mx-auto mb-4"></div>
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">กำลังรวบรวมข้อมูล...</p>
-        </div>`;
+    container.innerHTML = `<div class="text-center py-12"><div class="spinner mx-auto mb-4"></div><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">กำลังดึงข้อมูลล่าสุด...</p></div>`;
 
     try {
-        const response = await fetch(`${API_URL}?action=getTodayRecords`); 
-        const data = await response.json();
+        // เรียกข้อมูลจาก API (ใช้ Logic เดิมของคุณ)
+        google.script.run.withSuccessHandler(function(data) {
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="text-center py-16 bg-white rounded-[2.5rem] border border-dashed border-gray-200"><p class="text-xs font-bold text-gray-400 uppercase tracking-widest">ยังไม่มีรายการบันทึกในวันนี้</p></div>`;
+                return;
+            }
 
-        if (!data || data.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบรายการบันทึกของวันนี้</p>
-                </div>`;
-            return;
-        }
+            // --- จัดกลุ่มตามหน่วยงาน ---
+            const grouped = data.reduce((acc, item) => {
+                const dept = item.department || "ทั่วไป/ไม่ระบุ";
+                if (!acc[dept]) acc[dept] = [];
+                acc[dept].push(item);
+                return acc;
+            }, {});
 
-        // --- 1. จัดกลุ่มข้อมูลตามหน่วยงาน ---
-        const grouped = data.reduce((acc, item) => {
-            const dept = item.department || "ไม่ระบุหน่วยงาน";
-            if (!acc[dept]) acc[dept] = [];
-            acc[dept].push(item);
-            return acc;
-        }, {});
-
-        // --- 2. แสดงผล UI แยกตามกลุ่ม ---
-        container.innerHTML = '';
-        for (const [dept, items] of Object.entries(grouped)) {
-            let deptHtml = `
-                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6 animate-in slide-in-from-bottom-4 duration-500">
-                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
-                        <div class="flex items-center gap-3 text-white">
-                            <i data-lucide="building" class="w-5 h-5"></i>
-                            <h3 class="font-bold text-sm leading-tight">${dept}</h3>
+            container.innerHTML = '';
+            for (const [dept, items] of Object.entries(grouped)) {
+                let deptHtml = `
+                    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6 animate-in fade-in slide-in-from-bottom-4">
+                        <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
+                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                <i data-lucide="hospital" class="w-4 h-4"></i> ${dept}
+                            </h3>
                         </div>
-                    </div>
-                    <div class="p-3 space-y-2">`;
+                        <div class="p-3 space-y-2">`;
 
-            deptHtml += items.map(item => `
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-50 hover:border-pink-100 transition-all">
-                    <div class="overflow-hidden">
-                        <p class="text-[13px] font-bold text-gray-800 truncate mb-1">${item.asset_name}</p>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-lg border border-pink-100">${item.asset_id}</span>
-                            <span class="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">${item.asset_type || 'ทั่วไป'}</span>
+                deptHtml += items.map(item => `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-50">
+                        <div>
+                            <p class="text-[14px] font-bold text-gray-800 leading-tight">${item.asset_name}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 rounded">${item.asset_id}</span>
+                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">${item.asset_type || 'IT'}</span>
+                            </div>
                         </div>
+                        <button onclick='showReceipt(${JSON.stringify(item)})' class="p-3 bg-white text-gray-400 rounded-xl shadow-sm active:scale-90 transition-all">
+                            <i data-lucide="printer" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                    <button onclick='showReceipt(${JSON.stringify(item)})' class="p-3 bg-white text-gray-400 rounded-xl hover:text-pink-500 shadow-sm active:scale-90 transition-all">
-                        <i data-lucide="printer" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            `).join('');
+                `).join('');
 
-            deptHtml += `</div></div>`;
-            container.insertAdjacentHTML('beforeend', deptHtml);
-        }
-        lucide.createIcons();
-    } catch (error) {
-        container.innerHTML = '<div class="text-center py-10 text-red-400 text-xs font-bold">ไม่สามารถดึงข้อมูลได้ในขณะนี้</div>';
+                deptHtml += `</div></div>`;
+                container.insertAdjacentHTML('beforeend', deptHtml);
+            }
+            lucide.createIcons();
+        }).getTodayRecords(); // เปลี่ยนเป็นชื่อฟังก์ชันใน .gs ของคุณที่ดึงข้อมูลวันนี้
+    } catch (e) {
+        container.innerHTML = `<div class="text-center p-10 text-red-400 text-xs font-bold">Error: ขัดข้องในการเชื่อมต่อข้อมูล</div>`;
     }
 }
 // ==========================================
@@ -1231,35 +1225,25 @@ function hideProcess() {
         });
     }
    // ฟังก์ชันสลับหน้า
-    function switchPage(page) {
-        const surveyBtn = document.getElementById('btnNavSurvey');
-        const reportBtn = document.getElementById('btnNavReport');
-        const surveyPage = document.getElementById('surveyPage');
-        const reportPage = document.getElementById('reportPage');
-    
-        if (page === 'survey') {
-            // อัปเดตปุ่ม
-            surveyBtn.classList.add('bg-white', 'shadow-sm', 'text-pink-500');
-            surveyBtn.classList.remove('text-gray-400');
-            reportBtn.classList.remove('bg-white', 'shadow-sm', 'text-pink-500');
-            reportBtn.classList.add('text-gray-400');
-            // แสดงหน้า
-            surveyPage.classList.remove('hidden');
-            reportPage.classList.add('hidden');
-        } else {
-            // อัปเดตปุ่ม
-            reportBtn.classList.add('bg-white', 'shadow-sm', 'text-pink-500');
-            reportBtn.classList.remove('text-gray-400');
-            surveyBtn.classList.remove('bg-white', 'shadow-sm', 'text-pink-500');
-            surveyBtn.classList.add('text-gray-400');
-            // แสดงหน้า
-            reportPage.classList.remove('hidden');
-            surveyPage.classList.add('hidden');
-            // โหลดข้อมูล
-            loadRecordedData();
-        }
-    }
+  function switchPage(page) {
+    const btnSurvey = document.getElementById('btnNavSurvey');
+    const btnReport = document.getElementById('btnNavReport');
+    const surveyPage = document.getElementById('surveyPage');
+    const reportPage = document.getElementById('reportPage');
 
+    if (page === 'survey') {
+        btnSurvey.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all bg-white shadow-sm text-pink-500";
+        btnReport.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all text-gray-400";
+        surveyPage.classList.remove('hidden');
+        reportPage.classList.add('hidden');
+    } else {
+        btnReport.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all bg-white shadow-sm text-pink-500";
+        btnSurvey.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all text-gray-400";
+        reportPage.classList.remove('hidden');
+        surveyPage.classList.add('hidden');
+        loadRecordedData(); // โหลดข้อมูลรายการเมื่อเข้าหน้านี้
+    }
+}
 function setGpsStatus(status) {
     const gpsElem = document.getElementById('gpsIcon'); // เปลี่ยน 'gpsIcon' เป็น ID ที่คุณใช้จริงในบรรทัด 446
     if (gpsElem) {
