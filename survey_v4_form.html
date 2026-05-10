@@ -1079,17 +1079,29 @@ function closeModal(id) {
 async function loadRecordedData() {
     const container = document.getElementById('recordedContainer');
     if (!container) return;
-    container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div></div>';
+
+    // แสดงสถานะการโหลด
+    container.innerHTML = `
+        <div class="text-center py-12">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">กำลังดึงข้อมูลล่าสุด...</p>
+        </div>`;
 
     try {
         const response = await fetch(`${API_URL}?action=getTodayRecords`); 
         const data = await response.json();
 
         if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs font-bold">ไม่พบรายการบันทึกของวันนี้</div>';
+            container.innerHTML = `
+                <div class="text-center py-16 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                    <i data-lucide="inbox" class="w-12 h-12 text-gray-200 mx-auto mb-3"></i>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">ยังไม่มีรายการบันทึกในวันนี้</p>
+                </div>`;
+            lucide.createIcons();
             return;
         }
 
+        // --- 1. Logic การจัดกลุ่มข้อมูล (Group by Dept -> Group by Type) ---
         const grouped = data.reduce((acc, item) => {
             const dept = item.department || "ไม่ระบุหน่วยงาน";
             const type = item.asset_type || "ทั่วไป";
@@ -1098,30 +1110,45 @@ async function loadRecordedData() {
             acc[dept][type].push(item);
             return acc;
         }, {});
+
+        // --- 2. การสร้าง UI แบบสะอาดตา ---
         container.innerHTML = '';
         for (const [dept, types] of Object.entries(grouped)) {
             let deptHtml = `
-                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6">
+                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <!-- หัวข้อหน่วยงาน -->
                     <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
                         <div class="flex items-center gap-3 text-white">
-                            <i data-lucide="building" class="w-5 h-5"></i>
-                            <h3 class="font-bold text-sm">${dept}</h3>
+                            <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                                <i data-lucide="building" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm leading-none">${dept}</h3>
+                                <p class="text-[9px] opacity-80 uppercase tracking-widest mt-1">Hospital Department</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="p-2 space-y-2">`;
+                    <div class="p-4 space-y-6">`;
 
             for (const [type, items] of Object.entries(types)) {
                 deptHtml += `
-                    <div class="p-3">
-                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${type}</p>
-                        <div class="space-y-2">
+                    <div class="relative">
+                        <p class="text-[11px] font-bold text-pink-500 mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+                            ${type} <span class="text-gray-300 font-normal">(${items.length})</span>
+                        </p>
+                        <div class="grid grid-cols-1 gap-2">
                             ${items.map(item => `
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-pink-200 transition-colors">
                                     <div class="overflow-hidden">
-                                        <p class="text-xs font-bold text-gray-800 truncate">${item.asset_name}</p>
-                                        <p class="text-[10px] text-gray-400 font-mono">${item.asset_id}</p>
+                                        <p class="text-[13px] font-bold text-gray-800 truncate mb-0.5">${item.asset_name}</p>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] text-pink-400 font-mono font-bold bg-pink-50 px-1.5 rounded">${item.asset_id}</span>
+                                            <span class="text-[10px] text-gray-400">${item.record_time || ''}</span>
+                                        </div>
                                     </div>
-                                    <button onclick='showReceipt(${JSON.stringify(item)})' class="flex-shrink-0 ml-2 p-3 bg-white text-gray-400 rounded-xl hover:text-pink-500 shadow-sm">
+                                    <button onclick='showReceipt(${JSON.stringify(item)})' 
+                                            class="flex-shrink-0 ml-3 p-3 bg-white text-gray-400 rounded-2xl hover:text-pink-500 hover:shadow-md transition-all active:scale-90 border border-gray-100">
                                         <i data-lucide="printer" class="w-4 h-4"></i>
                                     </button>
                                 </div>
@@ -1129,12 +1156,18 @@ async function loadRecordedData() {
                         </div>
                     </div>`;
             }
+
             deptHtml += `</div></div>`;
             container.insertAdjacentHTML('beforeend', deptHtml);
         }
         lucide.createIcons();
+
     } catch (error) {
-        container.innerHTML = '<div class="text-center py-10 text-red-400 text-xs">ไม่สามารถโหลดข้อมูลได้</div>';
+        console.error("Load Error:", error);
+        container.innerHTML = `
+            <div class="text-center py-10 bg-red-50 rounded-[2.5rem] border border-red-100">
+                <p class="text-xs font-bold text-red-400 uppercase tracking-widest">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+            </div>`;
     }
 }
 
@@ -1167,70 +1200,7 @@ function showProcess(m) {
     if (msg) msg.innerText = m; 
     document.getElementById('processOverlay')?.classList.remove('hidden'); 
 }
-async function loadRecordedData() {
-    const container = document.getElementById('recordedContainer');
-    container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div></div>';
 
-    try {
-        // ดึงข้อมูลจากฐานข้อมูล (GAS)
-        const response = await fetch(`${API_URL}?action=getTodayRecords`); 
-        const data = await response.json();
-
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs font-bold">ไม่พบรายการบันทึกของวันนี้</div>';
-            return;
-        }
-
-        // --- 1. จัดกลุ่มข้อมูล (Group by Dept -> Group by Type) ---
-        const grouped = data.reduce((acc, item) => {
-            const dept = item.department || "ไม่ระบุหน่วยงาน";
-            const type = item.asset_type || "ทั่วไป";
-            if (!acc[dept]) acc[dept] = {};
-            if (!acc[dept][type]) acc[dept][type] = [];
-            acc[dept][type].push(item);
-            return acc;
-        }, {});
-
-        // --- 2. สร้าง UI ---
-        container.innerHTML = '';
-        for (const [dept, types] of Object.entries(grouped)) {
-            let deptHtml = `
-                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6">
-                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
-                        <div class="flex items-center gap-3 text-white">
-                            <i data-lucide="building" class="w-5 h-5"></i>
-                            <h3 class="font-bold text-sm">${dept}</h3>
-                        </div>
-                    </div>
-                    <div class="p-2 space-y-2">`;
-
-            for (const [type, items] of Object.entries(types)) {
-                deptHtml += `
-                    <div class="p-3">
-                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${type}</p>
-                        <div class="space-y-2">
-                            ${items.map(item => `
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                                    <div class="overflow-hidden">
-                                        <p class="text-xs font-bold text-gray-800 truncate">${item.asset_name}</p>
-                                        <p class="text-[10px] text-gray-400 font-mono">${item.asset_id}</p>
-                                    </div>
-                                    <button onclick='showReceipt(${JSON.stringify(item)})' class="flex-shrink-0 ml-2 p-3 bg-white text-gray-400 rounded-xl hover:text-pink-500 shadow-sm">
-                                        <i data-lucide="printer" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-            }
-            deptHtml += `</div></div>`;
-            container.insertAdjacentHTML('beforeend', deptHtml);
-        }
-        lucide.createIcons();
-    } catch (error) {
-        container.innerHTML = '<div class="text-center py-10 text-red-400 text-xs">ไม่สามารถโหลดข้อมูลได้</div>';
-    }
-}
 
 // ฟังก์ชันแสดงสลิปเพื่อเตรียมพิมพ์
 function showReceipt(item) {
