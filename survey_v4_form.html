@@ -1278,6 +1278,37 @@ function hideProcess() {
             };
         });
     }
+    function switchPage(page) {
+    const btnSurvey = document.getElementById('btnNavSurvey');
+    const btnReport = document.getElementById('btnNavReport');
+    const sectionLocation = document.getElementById('locationPickerSection');
+    const sectionSearch = document.getElementById('searchAreaSection');
+    const sectionRecorded = document.getElementById('recordedListSection');
+
+    if (page === 'survey') {
+        // จัดการปุ่ม
+        btnSurvey.classList.add('bg-white', 'shadow-sm', 'text-pink-500');
+        btnSurvey.classList.remove('text-gray-400');
+        btnReport.classList.remove('bg-white', 'shadow-sm', 'text-pink-500');
+        btnReport.classList.add('text-gray-400');
+        
+        // จัดการหน้าจอ
+        sectionLocation.classList.remove('hidden');
+        sectionSearch.classList.add('hidden');
+        sectionRecorded.classList.remove('hidden'); // แสดงรายการด้านล่างหน้าตรวจสอบด้วย
+    } else {
+        // หน้าสำหรับดูรายการทั้งหมด
+        btnReport.classList.add('bg-white', 'shadow-sm', 'text-pink-500');
+        btnReport.classList.remove('text-gray-400');
+        btnSurvey.classList.remove('bg-white', 'shadow-sm', 'text-pink-500');
+        btnSurvey.classList.add('text-gray-400');
+
+        sectionLocation.classList.add('hidden');
+        sectionSearch.classList.add('hidden');
+        sectionRecorded.classList.remove('hidden');
+        loadRecordedData(); // โหลดข้อมูลทันทีเมื่อกดหน้านี้
+    }
+}
 
 function setGpsStatus(status) {
     const gpsElem = document.getElementById('gpsIcon'); // เปลี่ยน 'gpsIcon' เป็น ID ที่คุณใช้จริงในบรรทัด 446
