@@ -550,12 +550,12 @@ async function handleImageSelection(input, previewId, placeholderId) {
         const priors = [document.getElementById('priorityId'), document.getElementById('nr_priorityId')];
         types.forEach(s => {
             if(!s) return;
-            s.innerHTML = '<option value="" disabled selected>-- ประเภท --</option>';
+            s.innerHTML = '<option value="" disabled selected>-- ประเภทครุภัณฑ์ --</option>';
             configData.assetTypes.forEach(a => s.add(new Option(a.name, a.id)));
         });
         priors.forEach(s => {
             if(!s) return;
-            s.innerHTML = '<option value="" disabled selected>-- ความสำคัญ --</option>';
+            s.innerHTML = '<option value="" disabled selected>-- การใช้งาน --</option>';
             configData.priorities.forEach(p => s.add(new Option(p.name, p.id)));
         });
     }
@@ -705,7 +705,7 @@ async function handleImageSelection(input, previewId, placeholderId) {
 
         // ตรวจสอบความครบถ้วน
         if (!typeId || !priorityId) {
-            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
+            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและการใช้งาน");
         }
         
         if (!currentBase64Image) {
@@ -1029,37 +1029,37 @@ function closeModal(id) {
         lucide.createIcons();
     }
 
- async function openScanner(id) {
-    document.getElementById('scannerModal').classList.remove('hidden');
+     async function openScanner(id) {
+        document.getElementById('scannerModal').classList.remove('hidden');
+        
+        // ล้างข้อความ Error เก่าทิ้งก่อน (ป้องกันตัวหนังสือ "ไม่พบรหัส" ค้าง)
+        const errorMsg = document.getElementById('searchError'); 
+        if (errorMsg) errorMsg.innerText = ''; 
     
-    // ล้างข้อความ Error เก่าทิ้งก่อน (ป้องกันตัวหนังสือ "ไม่พบรหัส" ค้าง)
-    const errorMsg = document.getElementById('searchError'); 
-    if (errorMsg) errorMsg.innerText = ''; 
-
-    try {
-        await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, async (text) => {
-            // แก้ไข: ไม่ใช้ .trim() ตามที่คุณสั่ง
-            let processedText = text; 
-            
-            if (processedText.includes("http")) {
-                const match = processedText.match(/IcmAssetDetail\/([^\/]+)/);
-                if (match && match[1]) processedText = match[1];
-            }
-            
-            // ใส่ค่าลง Input และปิดกล้องทันที
-            document.getElementById(id).value = processedText;
-            await closeScanner(); 
-            
-            // ถ้าเป็นช่องค้นหา ให้เริ่มค้นหาทันที
-            if (id === 'assetQuery') {
-                searchAsset(); 
-            }
-        });
-    } catch (e) { 
-        console.error("Camera error", e); 
-        closeScanner(); 
+        try {
+            await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, async (text) => {
+                // แก้ไข: ไม่ใช้ .trim() ตามที่คุณสั่ง
+                let processedText = text; 
+                
+                if (processedText.includes("http")) {
+                    const match = processedText.match(/IcmAssetDetail\/([^\/]+)/);
+                    if (match && match[1]) processedText = match[1];
+                }
+                
+                // ใส่ค่าลง Input และปิดกล้องทันที
+                document.getElementById(id).value = processedText;
+                await closeScanner(); 
+                
+                // ถ้าเป็นช่องค้นหา ให้เริ่มค้นหาทันที
+                if (id === 'assetQuery') {
+                    searchAsset(); 
+                }
+            });
+        } catch (e) { 
+            console.error("Camera error", e); 
+            closeScanner(); 
+        }
     }
-}
     function clearAuditForm() {
         // ล้างรูปภาพ
         currentBase64Image = "";
@@ -1287,27 +1287,27 @@ function hideProcess() {
 }
     function resetDeptSelection() { location.reload(); }
 // 1. ฟังก์ชันบีบอัดรูป (ต้องมีเพื่อให้บันทึกรูปผ่าน)
-async function compressImage(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const max = 800; 
-                let w = img.width, h = img.height;
-                if (w > h) { if (w > max) { h *= max / w; w = max; } }
-                else { if (h > max) { w *= max / h; h = max; } }
-                canvas.width = w; canvas.height = h;
-                ctx.drawImage(img, 0, 0, w, h);
-                resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const max = 800; 
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > max) { h *= max / w; w = max; } }
+                    else { if (h > max) { w *= max / h; h = max; } }
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                };
             };
-        };
-    });
-}
+        });
+    }
 
 function setGpsStatus(status) {
     const gpsElem = document.getElementById('gpsIcon'); // เปลี่ยน 'gpsIcon' เป็น ID ที่คุณใช้จริงในบรรทัด 446
