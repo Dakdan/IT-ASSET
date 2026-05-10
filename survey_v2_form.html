@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IT AUDIT SYSTEM v2.0</title>
+    <title>IT ASSET INVENTORY SYSTEM v2.0</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -85,7 +85,7 @@
                 Asset_ID: '', 
                 Serial: '', 
                 BrandDetail: '', 
-                MAStatus: 'ตรวจสอบแล้ว',
+                MAStatus: '',
                 ImageData: '', 
                 gps: '', 
                 Asset_Type_ID: '',
@@ -255,6 +255,7 @@
             const handleFinalSubmit = async () => {
                 if (!auditForm.ImageData) { showStatus('กรุณาถ่ายรูปเพื่อยืนยันการตรวจสอบ', 'error'); return; }
                 if (!auditForm.Asset_Type_ID) { showStatus('กรุณาเลือกประเภทอุปกรณ์', 'error'); return; }
+                if (!auditForm.Piority_ID) { showStatus('กรุณาเลือกการใช้งาน', 'error'); return; }
                 if (auditForm.Shift_Work.length === 0) { showStatus('กรุณาเลือกอย่างน้อย 1 กะ', 'error'); return; }
                 
                 setLoading(true);
@@ -394,7 +395,7 @@
                                 <Icon name="monitor-smartphone" className="text-white" size={24} />
                             </div>
                             <div>
-                                <h1 className="font-bold text-slate-800 leading-tight uppercase tracking-tight text-sm">IT Audit System</h1>
+                                <h1 className="font-bold text-slate-800 leading-tight uppercase tracking-tight text-sm">IT Asset System</h1>
                                 <p className="text-[9px] text-indigo-500 font-black uppercase tracking-widest">v2.0 Inventory Mapping</p>
                             </div>
                         </div>
