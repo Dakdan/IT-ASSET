@@ -1062,71 +1062,73 @@ function closeModal(id) {
         });
     }
     
-function loadRecordedData() {
+async function loadRecordedData() {
     const container = document.getElementById('recordedContainer');
     if (!container) return;
 
-    // 1. แสดงสถานะกำลังโหลด
-    container.innerHTML = `
-        <div class="text-center py-12">
-            <div class="spinner mx-auto mb-4"></div>
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">กำลังดึงข้อมูล...</p>
-        </div>`;
+    // แสดงตัวหมุนโหลด (คงเดิม)
+    container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div><p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">กำลังดึงข้อมูล...</p></div>';
 
-    // 2. เรียกฟังก์ชันเดิมจาก Code.gs (ใช้ชื่อที่คุณเคยใช้ในไฟล์ต้นฉบับ)
-    google.script.run
-        .withSuccessHandler(function(data) {
-            // เมื่อข้อมูลมาถึง ให้ล้างตัวหมุน (Overlay จะหายไป)
-            if (!data || data.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs font-bold">ไม่พบรายการบันทึกในวันนี้</div>';
-                return;
-            }
+    try {
+        // ใช้การเชื่อมต่อเดิมของคุณผ่าน API_URL และ fetch
+        const response = await fetch(`${API_URL}?action=getTodayRecords`); 
+        const data = await response.json();
 
-            // 3. Logic จัดกลุ่มตามหน่วยงาน และเน้นตัวหนา (Bold) ตามที่คุณต้องการ
-            const grouped = data.reduce((acc, item) => {
-                // อิงตามลำดับคอลัมน์เดิมของคุณ (สมมติหน่วยงานอยู่คอลัมน์ที่ 4 หรือ index 3)
-                const dept = item.department || item[3] || "หน่วยงานทั่วไป"; 
-                if (!acc[dept]) acc[dept] = [];
-                acc[dept].push(item);
-                return acc;
-            }, {});
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2.5rem] border border-dashed border-gray-200"><p class="text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบรายการบันทึกของวันนี้</p></div>';
+            return;
+        }
 
-            container.innerHTML = ''; // ล้าง Loader
-            
-            for (const [dept, items] of Object.entries(grouped)) {
-                let html = `
-                    <div class="mb-6 animate-in fade-in">
-                        <div class="flex items-center gap-2 mb-3 px-2">
-                            <div class="w-1 h-4 bg-pink-500 rounded-full"></div>
-                            <h3 class="text-[13px] font-bold text-gray-700 uppercase">${dept}</h3>
-                            <span class="text-[10px] font-bold text-gray-300 ml-auto">${items.length} รายการ</span>
-                        </div>
-                        <div class="grid gap-2">`;
+        // Logic การจัดกลุ่ม (Grouping) เดิมของคุณ
+        const grouped = data.reduce((acc, item) => {
+            const dept = item.department || "ไม่ระบุหน่วยงาน";
+            const type = item.asset_type || "ทั่วไป";
+            if (!acc[dept]) acc[dept] = {};
+            if (!acc[dept][type]) acc[dept][type] = [];
+            acc[dept][type].push(item);
+            return acc;
+        }, {});
 
-                html += items.map(item => `
-                    <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center hover:border-pink-200 transition-all">
-                        <div>
-                            <p class="text-[14px] font-bold text-gray-800 leading-tight">${item.asset_name || item[2]}</p>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 rounded">${item.asset_id || item[1]}</span>
-                                <span class="text-[10px] font-bold ${ (item.status || item[4]) === 'ชำรุด' ? 'text-red-500' : 'text-green-500' }">
-                                    ● ${item.status || item[4] || 'ตรวจสอบแล้ว'}
-                                </span>
-                            </div>
+        container.innerHTML = ''; // ล้างตัวหมุนออก
+
+        for (const [dept, types] of Object.entries(grouped)) {
+            let deptHtml = `
+                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6 animate-in fade-in">
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
+                        <div class="flex items-center gap-3 text-white">
+                            <i data-lucide="building" class="w-5 h-5"></i>
+                            <h3 class="font-bold text-sm">${dept}</h3>
                         </div>
                     </div>
-                `).join('');
+                    <div class="p-2 space-y-2">`;
 
-                html += `</div></div>`;
-                container.insertAdjacentHTML('beforeend', html);
+            for (const [type, items] of Object.entries(types)) {
+                deptHtml += `
+                    <div class="p-3">
+                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${type}</p>
+                        <div class="space-y-2">
+                            ${items.map(item => `
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-50">
+                                    <div class="overflow-hidden">
+                                        <p class="text-[14px] font-bold text-gray-800 leading-tight truncate">${item.asset_name}</p>
+                                        <p class="text-[10px] text-pink-500 font-bold mt-0.5">${item.asset_id}</p>
+                                    </div>
+                                    <button onclick='showReceipt(${JSON.stringify(item)})' class="flex-shrink-0 ml-2 p-3 bg-white text-gray-400 rounded-xl hover:text-pink-500 shadow-sm active:scale-90 transition-all">
+                                        <i data-lucide="printer" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`;
             }
-            lucide.createIcons(); // โหลดไอคอน
-        })
-        .withFailureHandler(function(err) {
-            // หากเกิด Error ให้หยุดหมุนและแจ้งเตือน
-            container.innerHTML = `<div class="p-6 bg-red-50 text-red-500 rounded-2xl text-[10px] font-bold text-center">เกิดข้อผิดพลาด: ${err}</div>`;
-        })
-        .ชื่อฟังก์ชันเดิมของคุณ(); // <--- *** สำคัญมาก: เปลี่ยนตรงนี้เป็นชื่อฟังก์ชันที่คุณเคยใช้ดึงข้อมูล ***
+            deptHtml += `</div></div>`;
+            container.insertAdjacentHTML('beforeend', deptHtml);
+        }
+        lucide.createIcons(); // โหลดไอคอน
+    } catch (error) {
+        // หากเกิด Error ให้หยุดหมุนและแสดงข้อความแจ้งเตือน
+        container.innerHTML = `<div class="text-center py-10 text-red-400 text-xs font-bold bg-red-50 rounded-3xl mx-4">⚠️ ไม่สามารถโหลดข้อมูลได้: ${error.message}</div>`;
+    }
 }
        // ==========================================
 // ส่วนที่ 2: ฟังก์ชันควบคุม UI และ Utility (ต้นฉบับของพี่)
