@@ -1064,62 +1064,69 @@ function closeModal(id) {
     
 function loadRecordedData() {
     const container = document.getElementById('recordedContainer');
-    
-    // 1. ใช้ Loader แบบที่คุณชอบ
+    if (!container) return;
+
+    // 1. แสดงสถานะกำลังโหลด
     container.innerHTML = `
-        <div class="text-center py-10">
+        <div class="text-center py-12">
             <div class="spinner mx-auto mb-4"></div>
-            <p class="text-[10px] font-bold text-gray-400 uppercase">กำลังโหลดรายการ...</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">กำลังดึงข้อมูล...</p>
         </div>`;
 
-    // 2. เรียกฟังก์ชันเดิมของคุณ (ห้ามเปลี่ยนชื่อฟังก์ชันที่อยู่หลังจุด)
-    google.script.run.withSuccessHandler(function(data) {
-        if (!data || data.length === 0) {
-            container.innerHTML = '<p class="text-center py-10 text-gray-400 text-xs font-bold">ไม่พบรายการของวันนี้</p>';
-            return;
-        }
+    // 2. เรียกฟังก์ชันเดิมจาก Code.gs (ใช้ชื่อที่คุณเคยใช้ในไฟล์ต้นฉบับ)
+    google.script.run
+        .withSuccessHandler(function(data) {
+            // เมื่อข้อมูลมาถึง ให้ล้างตัวหมุน (Overlay จะหายไป)
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs font-bold">ไม่พบรายการบันทึกในวันนี้</div>';
+                return;
+            }
 
-        // 3. Logic การจัดกลุ่ม (Grouping) โดยใช้ชื่อฟิลด์จาก Data เดิมของคุณ
-        // สมมติโครงสร้างเดิมคุณเป็น Object { department: "...", asset_name: "..." }
-        const grouped = data.reduce((acc, item) => {
-            const dept = item.department || "หน่วยงานทั่วไป"; 
-            if (!acc[dept]) acc[dept] = [];
-            acc[dept].push(item);
-            return acc;
-        }, {});
+            // 3. Logic จัดกลุ่มตามหน่วยงาน และเน้นตัวหนา (Bold) ตามที่คุณต้องการ
+            const grouped = data.reduce((acc, item) => {
+                // อิงตามลำดับคอลัมน์เดิมของคุณ (สมมติหน่วยงานอยู่คอลัมน์ที่ 4 หรือ index 3)
+                const dept = item.department || item[3] || "หน่วยงานทั่วไป"; 
+                if (!acc[dept]) acc[dept] = [];
+                acc[dept].push(item);
+                return acc;
+            }, {});
 
-        // 4. แสดงผลแยกตามหน่วยงาน และเน้นตัวหนาตามที่คุณต้องการ
-        container.innerHTML = '';
-        for (const [dept, items] of Object.entries(grouped)) {
-            let deptBlock = `
-                <div class="mb-6">
-                    <div class="bg-gray-100 p-2 px-4 rounded-xl mb-3">
-                        <h3 class="text-xs font-bold text-gray-600">${dept}</h3>
-                    </div>
-                    <div class="space-y-2">`;
+            container.innerHTML = ''; // ล้าง Loader
+            
+            for (const [dept, items] of Object.entries(grouped)) {
+                let html = `
+                    <div class="mb-6 animate-in fade-in">
+                        <div class="flex items-center gap-2 mb-3 px-2">
+                            <div class="w-1 h-4 bg-pink-500 rounded-full"></div>
+                            <h3 class="text-[13px] font-bold text-gray-700 uppercase">${dept}</h3>
+                            <span class="text-[10px] font-bold text-gray-300 ml-auto">${items.length} รายการ</span>
+                        </div>
+                        <div class="grid gap-2">`;
 
-            deptHtml = items.map(item => `
-                <div class="bg-white p-4 rounded-[1.5rem] border border-gray-50 shadow-sm flex justify-between items-center">
-                    <div>
-                        <p class="text-[14px] font-bold text-gray-800">${item.asset_name || 'ไม่มีชื่อ'}</p>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] font-bold text-pink-500">${item.asset_id || ''}</span>
-                            <span class="text-[10px] font-bold ${item.status === 'ชำรุด' ? 'text-red-500' : 'text-green-500'}">
-                                ${item.status || ''}
-                            </span>
+                html += items.map(item => `
+                    <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center hover:border-pink-200 transition-all">
+                        <div>
+                            <p class="text-[14px] font-bold text-gray-800 leading-tight">${item.asset_name || item[2]}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 rounded">${item.asset_id || item[1]}</span>
+                                <span class="text-[10px] font-bold ${ (item.status || item[4]) === 'ชำรุด' ? 'text-red-500' : 'text-green-500' }">
+                                    ● ${item.status || item[4] || 'ตรวจสอบแล้ว'}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
 
-            container.insertAdjacentHTML('beforeend', deptBlock + deptHtml + '</div></div>');
-        }
-        lucide.createIcons();
-    })
-    .withFailureHandler(err => {
-        container.innerHTML = `<p class="text-center text-red-500 text-xs font-bold">Error: ${err}</p>`;
-    })
-    .getAuditList(); // <--- เปลี่ยนตรงนี้ให้เป็น "ชื่อฟังก์ชันเดิม" ใน Code.gs ของคุณ
+                html += `</div></div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+            lucide.createIcons(); // โหลดไอคอน
+        })
+        .withFailureHandler(function(err) {
+            // หากเกิด Error ให้หยุดหมุนและแจ้งเตือน
+            container.innerHTML = `<div class="p-6 bg-red-50 text-red-500 rounded-2xl text-[10px] font-bold text-center">เกิดข้อผิดพลาด: ${err}</div>`;
+        })
+        .ชื่อฟังก์ชันเดิมของคุณ(); // <--- *** สำคัญมาก: เปลี่ยนตรงนี้เป็นชื่อฟังก์ชันที่คุณเคยใช้ดึงข้อมูล ***
 }
        // ==========================================
 // ส่วนที่ 2: ฟังก์ชันควบคุม UI และ Utility (ต้นฉบับของพี่)
