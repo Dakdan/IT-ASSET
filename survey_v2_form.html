@@ -325,7 +325,7 @@
 
             const clearAuditForm = () => {
                 setAuditForm({
-                    Asset_ID: '', Serial: '', BrandDetail: '', MAStatus: 'ตรวจสอบแล้ว',
+                    Asset_ID: '', Serial: '', BrandDetail: '',
                     ImageData: '', gps: '', Asset_Type_ID: '',
                     PIORITY_ID: '', Shift_Work: [], IsPac: false, IsRent: false, ASS_ON_OUT: '1',
                     IT_User_Mail: 'demo@it.audit',
@@ -544,7 +544,7 @@
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">ประเภท <span className="text-rose-500">*</span></label>
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">ประเภทครุภัณฑ์ <span className="text-rose-500">*</span></label>
                                             <div className="relative">
                                                 <select value={auditForm.Asset_Type_ID} onChange={(e) => setAuditForm({...auditForm, Asset_Type_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-xs font-bold outline-none appearance-none cursor-pointer">
                                                     <option value="">- เลือก -</option>
@@ -554,7 +554,7 @@
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">ความสำคัญ</label>
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">เลือกการใช้งาน</label>
                                             <div className="relative">
                                                 <select value={auditForm.PIORITY_ID} onChange={(e) => setAuditForm({...auditForm, PIORITY_ID: e.target.value})} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-xs font-bold outline-none appearance-none cursor-pointer">
                                                     <option value="">- เลือก -</option>
@@ -566,7 +566,7 @@
                                     </div>
 
                                     <div className="space-y-3">
-                                        <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-widest">เวร/กะ (Shift) <span className="text-rose-500">*</span></label>
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase ml-1 tracking-widest">ช่วงเวลาที่ใช้งาน (Shift) <span className="text-rose-500">*</span></label>
                                         <div className="flex flex-wrap gap-2">
                                             {initialData.shifts?.map(shift => {
                                                 const isSelected = auditForm.Shift_Work.includes(shift.id);
