@@ -10,294 +10,322 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Anuphan:wght@400;500;600;700&display=swap');
-        body { font-family: 'Anuphan', sans-serif; background-color: #fcfcfd; color: #1e293b; }
+        
+        body { 
+            font-family: 'Anuphan', sans-serif; 
+            background-color: #fcfcfd; 
+            color: #1e293b; 
+            -webkit-tap-highlight-color: transparent; /* ลบสีฟ้าเวลาแตะบนมือถือ */
+        }
+
+        /* ปรับปรุง Spinner */
         .spinner { width: 40px; height: 40px; border: 4px solid #fce7f3; border-top: 4px solid #ec4899; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .shift-checkbox:checked + label { background-color: #ec4899 !important; color: white !important; border-color: #ec4899 !important; }
-        .pac-radio:checked + label { background-color: #0f172a !important; color: white !important; }
-        .image-preview-container { width: 100%; aspect-ratio: 16/9; background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 2rem; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+
+        /* ปรับปรุง Checkbox ให้กดง่ายบนมือถือ */
+        .shift-checkbox:checked + label { background-color: #ec4899 !important; color: white !important; border-color: #ec4899 !important; transform: scale(0.98); }
+        .pac-radio:checked + label { background-color: #0f172a !important; color: white !important; border-color: #0f172a !important; }
+        
+        /* ปรับปรุง Image Preview */
+        .image-preview-container { 
+            width: 100%; 
+            aspect-ratio: 4/3; /* ปรับสัดส่วนให้เหมาะกับรูปถ่ายมือถือแนวตั้ง/นอน */
+            background-color: #f8fafc; 
+            border: 2px dashed #cbd5e1; 
+            border-radius: 1.5rem; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            position: relative; 
+        }
+
+        /* สำหรับหน้าจอเล็กมาก */
+        @media (max-width: 380px) {
+            h1 { font-size: 1rem !important; }
+            .modal-content-container { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+        }
+
         @media print { body * { visibility: hidden; } #successModal, #successModal * { visibility: visible; } #successModal { position: absolute; left: 0; top: 0; width: 100%; } .no-print { display: none !important; } }
     </style>
 </head>
-<body class="pb-24">
+<body class="pb-10">
 
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-200/60 p-4">
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-200/60 p-3 md:p-4">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-11 h-11 object-contain">
+            <div class="flex items-center gap-2 md:gap-3">
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-9 h-9 md:w-11 md:h-11 object-contain">
                 <div>
-                    <h1 class="text-xl font-extrabold text-slate-800">IT ASSET INVENTORY</h1>
-                    <p id="statusIndicator" class="text-[10px] font-bold text-pink-600 tracking-widest uppercase">Udon Hospital</p>
+                    <h1 class="text-sm md:text-xl font-extrabold text-slate-800 leading-tight">IT ASSET INVENTORY</h1>
+                    <p id="statusIndicator" class="text-[8px] md:text-[10px] font-bold text-pink-600 tracking-widest uppercase">Udon Hospital</p>
                 </div>
             </div>
-            <div class="flex bg-slate-100 p-1 rounded-2xl border">
-                <button onclick="switchPage('survey')" id="btnNavSurvey" class="px-5 py-2 rounded-xl text-[11px] font-bold bg-white shadow-sm text-pink-600">ตรวจสอบ</button>
-                <button onclick="switchPage('report')" id="btnNavReport" class="px-5 py-2 rounded-xl text-[11px] font-bold text-slate-400">รายการ</button>
+            <div class="flex bg-slate-100 p-1 rounded-xl border">
+                <button onclick="switchPage('survey')" id="btnNavSurvey" class="px-3 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-[11px] font-bold bg-white shadow-sm text-pink-600">ตรวจสอบ</button>
+                <button onclick="switchPage('report')" id="btnNavReport" class="px-3 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-[11px] font-bold text-slate-400">รายการ</button>
             </div>
         </div>
     </header>
 
     <main class="max-w-6xl mx-auto p-4 md:p-8">
         <div id="surveyPage">
-            <section id="locationPickerSection" class="space-y-6">
-                <div class="max-w-2xl mx-auto bg-white p-7 rounded-[2.5rem] shadow-sm border border-slate-100">
-                    <h2 class="text-sm font-bold text-slate-700 mb-6 flex items-center gap-2 uppercase tracking-wide">
-                        <i data-lucide="map-pin" class="w-4 h-4 text-pink-500"></i> เลือกสถานที่ตรวจสอบ
+            <section id="locationPickerSection" class="space-y-4">
+                <div class="max-w-2xl mx-auto bg-white p-5 md:p-7 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100">
+                    <h2 class="text-xs font-bold text-slate-700 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                        <i data-lucide="map-pin" class="w-3 h-3 text-pink-500"></i> เลือกสถานที่ตรวจสอบ
                     </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select id="selBuilding" onchange="onBuildingChange()" class="w-full p-4 bg-slate-50 border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none"></select>
-                        <select id="selFloor" onchange="renderDeptList()" class="w-full p-4 bg-slate-50 border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none"></select>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <select id="selBuilding" onchange="onBuildingChange()" class="w-full p-3.5 bg-slate-50 border-slate-100 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-500/20"></select>
+                        <select id="selFloor" onchange="renderDeptList()" class="w-full p-3.5 bg-slate-50 border-slate-100 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-500/20"></select>
                     </div>
                 </div>
-                <div id="deptList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <div id="deptList" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </section>
         
-            <section id="searchAreaSection" class="hidden space-y-5 max-w-4xl mx-auto">
-                <div id="selectedDeptHeader" class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-[3rem] text-white relative shadow-lg">
-                    <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">หน่วยงานที่เลือก</p>
-                    <h2 id="displayDeptName" class="text-xl font-bold">---</h2>
-                    <button onclick="resetDeptSelection()" class="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+            <section id="searchAreaSection" class="hidden space-y-4 max-w-4xl mx-auto">
+                <div id="selectedDeptHeader" class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] text-white relative shadow-lg overflow-hidden">
+                    <p class="text-[9px] font-bold opacity-60 uppercase tracking-widest mb-1">หน่วยงานที่เลือก</p>
+                    <h2 id="displayDeptName" class="text-base md:text-xl font-bold truncate pr-10">---</h2>
+                    <button onclick="resetDeptSelection()" class="absolute top-5 right-5 p-2 bg-white/10 hover:bg-white/20 rounded-full"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex gap-2">
                     <div class="relative flex-grow">
-                        <input type="text" id="assetQuery" oninput="debouncedSearch()" placeholder="พิมพ์เลขท้ายรหัสครุภัณฑ์" class="w-full p-5 pl-14 bg-white border-slate-200 rounded-[2rem] shadow-sm text-sm font-bold outline-none">
-                        <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300"></i>
+                        <input type="text" id="assetQuery" oninput="debouncedSearch()" placeholder="พิมพ์เลขท้ายรหัสครุภัณฑ์" class="w-full p-4 pl-12 bg-white border-slate-200 rounded-2xl shadow-sm text-sm font-bold outline-none focus:ring-2 focus:ring-pink-500/20">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300"></i>
                     </div>
-                    <button onclick="openScanner('assetQuery')" class="p-5 bg-pink-500 text-white rounded-[2rem] shadow-lg active:scale-95 transition-transform"><i data-lucide="qr-code" class="w-6 h-6"></i></button>
+                    <button onclick="openScanner('assetQuery')" class="p-4 bg-pink-500 text-white rounded-2xl shadow-lg active:scale-90 transition-transform"><i data-lucide="qr-code" class="w-6 h-6"></i></button>
                 </div>
-                <button onclick="openNonRegisterModal()" class="w-full py-4.5 bg-slate-50 text-slate-500 rounded-[2rem] text-xs font-bold border-2 border-dashed border-slate-200">
+                <button onclick="openNonRegisterModal()" class="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-[11px] font-bold border-2 border-dashed border-slate-200 active:bg-slate-100 transition-colors">
                     <i data-lucide="plus-circle" class="w-4 h-4 inline mr-1"></i> เพิ่มครุภัณฑ์นอกทะเบียน
                 </button>
-                <div id="resultsArea" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pb-10"></div>
+                <div id="resultsArea" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3 pb-10"></div>
             </section>
         </div>
         
         <div id="reportPage" class="hidden">
-            <section id="recordedListSection" class="space-y-6 max-w-4xl mx-auto pb-24">
-                <div class="flex items-center justify-between px-3">
-                    <h2 class="text-xl font-bold text-slate-800">รายการตรวจสอบวันนี้</h2>
-                    <button onclick="loadRecordedData()" class="p-3 bg-white text-pink-600 rounded-2xl shadow-md border active:rotate-180 transition-transform duration-700"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+            <section id="recordedListSection" class="space-y-4 max-w-4xl mx-auto pb-24">
+                <div class="flex items-center justify-between px-2">
+                    <h2 class="text-lg font-bold text-slate-800">รายการตรวจสอบวันนี้</h2>
+                    <button onclick="loadRecordedData()" class="p-2.5 bg-white text-pink-600 rounded-xl shadow-md border active:rotate-180 transition-transform duration-700"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
                 </div>
-                <div id="recordedContainer" class="space-y-6"></div>
+                <div id="recordedContainer" class="space-y-4"></div>
             </section>
         </div>
     </main>
 
-    <div id="auditFormModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end modal-wrapper">
-        <div class="w-full bg-white rounded-t-[3rem] max-h-[92vh] overflow-y-auto p-8 animate-in slide-in-from-bottom-full duration-300 modal-content-container">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <p class="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1">🆔รหัสครุภัณฑ์</p>
-                    <p id="detailAssetID" class="text-xx font-bold text-pink-500">--</p>
-                </div>
-                <div>
-                    <p class="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1">อายุการใช้งาน</p>
-                    <p id="detailAssetAge" class="text-xx font-bold text-pink-500">--</p>                    
-                </div>  
-                <button onclick="closeModal('auditFormModal')" class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center">
-                    ❌
-                </button>
-
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <div>
-                    <p class="text-[10px] font-bold text-pink-500 tracking-widest uppercase">📑รายละเอียดครุภัณฑ์</p>
-                    <h3 id="modalAssetName" class="text-xx font-bold text-gray-800 leading-tight">Asset Name</h3>
-                </div>                
-            </div>
-            <div class="space-y-5">
-                <div>
-                    <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">รูปภาพครุภัณฑ์</label>
-                    <div id="imgPreviewContainer" 
-                     class="image-preview-container cursor-pointer" 
-                     onclick="document.getElementById('imgInput').click()"> <div id="imgPlaceholder">
-                        <p>📸แตะเพื่อถ่ายรูป</p>
-                    </div>
-                    <img id="imgPreview" class="hidden w-full h-full object-cover">
-                </div>                
-                    <input type="file" id="imgInput" accept="image/*" capture="environment"onchange="handleImageSelection(this, 'imgPreview', 'imgPlaceholder')">
-                    
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div id="auditFormModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end">
+        <div class="w-full bg-white rounded-t-[2.5rem] max-h-[92vh] overflow-y-auto p-6 md:p-8 animate-in slide-in-from-bottom-full duration-300">
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex gap-4">
                     <div>
-                        <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">ประเภทครุภัณฑ์</label>
-                        <select id="assetTypeId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 mb-2"></select>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">🆔 รหัสครุภัณฑ์</p>
+                        <p id="detailAssetID" class="text-sm font-bold text-pink-500">--</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">อายุการใช้งาน</p>
+                        <p id="detailAssetAge" class="text-sm font-bold text-pink-500">--</p>                     
+                    </div>  
+                </div>
+                <button onclick="closeModal('auditFormModal')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-xs">✕</button>
+            </div>
+
+            <div class="mb-5 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p class="text-[9px] font-bold text-pink-500 tracking-widest uppercase mb-1">📑 รายละเอียดครุภัณฑ์</p>
+                <h3 id="modalAssetName" class="text-sm md:text-base font-bold text-slate-800 leading-snug uppercase">Asset Name</h3>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">📸 รูปภาพครุภัณฑ์</label>
+                    <div id="imgPreviewContainer" class="image-preview-container cursor-pointer active:opacity-80" onclick="document.getElementById('imgInput').click()"> 
+                        <div id="imgPlaceholder" class="text-center">
+                            <i data-lucide="camera" class="w-8 h-8 text-slate-300 mx-auto mb-1"></i>
+                            <p class="text-[10px] font-bold text-slate-400">แตะเพื่อถ่ายรูป</p>
+                        </div>
+                        <img id="imgPreview" class="hidden w-full h-full object-cover">
+                    </div>                 
+                    <input type="file" id="imgInput" accept="image/*" capture="environment" onchange="handleImageSelection(this, 'imgPreview', 'imgPlaceholder')" class="hidden">
+                </div>
+
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">ประเภทครุภัณฑ์</label>
+                        <select id="assetTypeId" class="w-full p-3.5 bg-slate-50 border-slate-100 rounded-xl text-sm font-bold text-slate-600 mb-2 outline-none focus:ring-2 focus:ring-pink-500/10"></select>
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="pac_toggle" class="hidden pac-radio">
-                            <label for="pac_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer transition-all">ใช้งานระบบ PAC</label>
+                            <label for="pac_toggle" class="flex-grow text-center p-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-400 cursor-pointer transition-all">PAC</label>
                             <input type="checkbox" id="rent_toggle" class="hidden pac-radio">
-                            <label for="rent_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer">เช่า</label>
+                            <label for="rent_toggle" class="flex-grow text-center p-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-400 cursor-pointer transition-all">เช่า</label>
                         </div>
                     </div>
                     <div>
-                        <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">กลุ่มผู้ใช้งาน</label>
-                        <select id="priorityId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600"></select>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">กลุ่มผู้ใช้งาน</label>
+                        <select id="priorityId" class="w-full p-3.5 bg-slate-50 border-slate-100 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-pink-500/10"></select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-[11px] font-bold text-pink-500 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift_Work)</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift Work)</label>
                     <div class="grid grid-cols-3 gap-2">
                         <input type="checkbox" name="shift_work" value="เช้า" id="shift_m" class="hidden shift-checkbox">
-                        <label for="shift_m" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">เช้า</label>
+                        <label for="shift_m" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer transition-all active:scale-95">เช้า</label>
                         <input type="checkbox" name="shift_work" value="บ่าย" id="shift_a" class="hidden shift-checkbox">
-                        <label for="shift_a" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">บ่าย</label>
+                        <label for="shift_a" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer transition-all active:scale-95">บ่าย</label>
                         <input type="checkbox" name="shift_work" value="ดึก" id="shift_n" class="hidden shift-checkbox">
-                        <label for="shift_n" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ดึก</label>
+                        <label for="shift_n" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer transition-all active:scale-95">ดึก</label>
                     </div>
                 </div>
 
-               
-
-                <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button onclick="closeModal('auditFormModal')" class="py-4 bg-gray-100 text-pink-500 rounded-2xl font-bold">❌ยกเลิก</button>
-                    <button onclick="submitAudit('EXISTING')" class="py-4 bg-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-pink-100">💾บันทึก</button>
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="closeModal('auditFormModal')" class="py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm">❌ ยกเลิก</button>
+                    <button onclick="submitAudit('EXISTING')" class="py-4 bg-pink-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-pink-100 active:bg-pink-600 transition-colors">💾 บันทึก</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="nonRegisterModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end modal-wrapper">
-        <div class="w-full bg-white rounded-t-[3rem] max-h-[92vh] overflow-y-auto p-8 animate-in slide-in-from-bottom-full duration-300 modal-content-container">
-            <div class="flex justify-between items-start mb-6">
+    <div id="nonRegisterModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end">
+        <div class="w-full bg-white rounded-t-[2.5rem] max-h-[92vh] overflow-y-auto p-6 md:p-8 animate-in slide-in-from-bottom-full duration-300">
+            <div class="flex justify-between items-start mb-5">
                 <div>
-                    <p class="text-[10px] font-bold text-orange-500 tracking-widest uppercase">New Asset</p>
-                    <h3 class="text-xl font-bold text-gray-800">➕เพิ่มครุภัณฑ์นอกทะเบียน</h3>
+                    <p class="text-[9px] font-bold text-orange-500 tracking-widest uppercase mb-0.5">New Asset</p>
+                    <h3 class="text-lg font-bold text-slate-800 uppercase">➕ เพิ่มครุภัณฑ์นอกทะเบียน</h3>
                 </div>
-                <button onclick="closeModal('nonRegisterModal')" class="p-2 bg-gray-50 rounded-full text-gray-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeModal('nonRegisterModal')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-xs">✕</button>
             </div>
     
             <div class="space-y-4">
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">📸รูปภาพ</label>
-                    <div id="nr_imgPreviewContainer" 
-                         class="image-preview-container cursor-pointer" 
-                         onclick="document.getElementById('nr_imgInput').click()"> 
-                        <div id="nr_imgPlaceholder">
-                            <p>📸 ถ่ายรูปภาพครุภัณฑ์</p>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">📸 รูปภาพ</label>
+                    <div id="nr_imgPreviewContainer" class="image-preview-container cursor-pointer active:opacity-80" onclick="document.getElementById('nr_imgInput').click()"> 
+                        <div id="nr_imgPlaceholder" class="text-center">
+                            <i data-lucide="camera" class="w-8 h-8 text-slate-300 mx-auto mb-1"></i>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">ถ่ายรูปภาพ</p>
                         </div>
                         <img id="nr_imgPreview" class="hidden w-full h-full object-cover">
-                    </div>                
+                    </div>                 
                     <input type="file" id="nr_imgInput" accept="image/*" capture="environment" onchange="handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')" class="hidden">
                 </div>
     
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">รหัสครุภัณฑ์ (ถ้ามี)</label>
-                        <input type="text" id="nr_asset_id" placeholder="ป้อนรหัสครุภัณฑ์..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold outline-none focus:ring-1 focus:ring-orange-500/30">
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Serial Number</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="nr_serial" placeholder="Serial No..." class="flex-grow p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold outline-none focus:ring-1 focus:ring-orange-500/30">
-                            <button onclick="openScanner('nr_serial')" class="p-4 bg-gray-100 text-gray-500 rounded-2xl active:scale-90 transition-transform"><i data-lucide="scan" class="w-5 h-5"></i></button>
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">รหัสครุภัณฑ์ (ถ้ามี)</label>
+                            <input type="text" id="nr_asset_id" placeholder="..." class="w-full p-3.5 bg-slate-50 rounded-xl text-sm font-bold border-none outline-none focus:ring-2 focus:ring-orange-500/20">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Serial Number</label>
+                            <div class="flex gap-1.5">
+                                <input type="text" id="nr_serial" placeholder="..." class="flex-grow p-3.5 bg-slate-50 rounded-xl text-sm font-bold border-none outline-none focus:ring-2 focus:ring-orange-500/20">
+                                <button onclick="openScanner('nr_serial')" class="p-3 bg-slate-100 text-slate-500 rounded-xl active:scale-90"><i data-lucide="scan" class="w-5 h-5"></i></button>
+                            </div>
                         </div>
                     </div>
-                </div>
-    
-                <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ยี่ห้อ + รายละเอียด (จำเป็น)</label>
-                    <input type="text" id="nr_brand_detail" placeholder="ยี่ห้อ, รุ่น, สเปค..." class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold outline-none focus:ring-1 focus:ring-orange-500/30">
-                </div>
-    
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
-                        <select id="nr_asset_type_id" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600 mb-2"></select>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">ยี่ห้อ + รายละเอียด (จำเป็น)</label>
+                        <input type="text" id="nr_brand_detail" placeholder="ระบุยี่ห้อ รุ่น และสเปค..." class="w-full p-3.5 bg-slate-50 rounded-xl text-sm font-bold border-none outline-none focus:ring-2 focus:ring-orange-500/20">
+                    </div>
+                </div>
+    
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
+                        <select id="nr_asset_type_id" class="w-full p-3.5 bg-slate-50 rounded-xl text-sm font-bold text-slate-600 mb-2 outline-none"></select>
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="nr_pac_toggle" class="hidden pac-radio">
-                            <label for="nr_pac_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer">ใช้งานระบบ PAC</label>
+                            <label for="nr_pac_toggle" class="flex-grow text-center p-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-400 cursor-pointer">PAC</label>
                             <input type="checkbox" id="nr_rent_toggle" class="hidden pac-radio">
-                            <label for="nr_rent_toggle" class="flex-grow text-center p-3 rounded-xl border border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 cursor-pointer">เช่า</label>
+                            <label for="nr_rent_toggle" class="flex-grow text-center p-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-400 cursor-pointer">เช่า</label>
                         </div>
                     </div>
                     <div>
-                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">กลุ่มผู้ใช้งาน</label>
-                        <select id="nr_priorityId" class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-semibold text-gray-600"></select>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">กลุ่มผู้ใช้งาน</label>
+                        <select id="nr_priorityId" class="w-full p-3.5 bg-slate-50 rounded-xl text-sm font-bold text-slate-600 outline-none"></select>
                     </div>
                 </div>
     
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift)</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift)</label>
                     <div class="grid grid-cols-3 gap-2">
                         <input type="checkbox" name="nr_shift_work" value="เช้า" id="nr_shift_m" class="hidden shift-checkbox">
-                        <label for="nr_shift_m" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">เช้า</label>
+                        <label for="nr_shift_m" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">เช้า</label>
                         <input type="checkbox" name="nr_shift_work" value="บ่าย" id="nr_shift_a" class="hidden shift-checkbox">
-                        <label for="nr_shift_a" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">บ่าย</label>
+                        <label for="shift_a" id="label_nr_shift_a" for="nr_shift_a" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">บ่าย</label>
+                        <label for="nr_shift_a" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">บ่าย</label>
                         <input type="checkbox" name="nr_shift_work" value="ดึก" id="nr_shift_n" class="hidden shift-checkbox">
-                        <label for="nr_shift_n" class="block text-center py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 cursor-pointer">ดึก</label>
+                        <label for="nr_shift_n" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">ดึก</label>
                     </div>
                 </div>                
     
-                <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">❌ยกเลิก</button>
-                    <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg">💾บันทึก</button>
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm">❌ ยกเลิก</button>
+                    <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-orange-100 active:bg-orange-600 transition-colors">💾 บันทึก</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="queueModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end">
-        <div class="w-full bg-white rounded-t-[3rem] max-h-[85vh] overflow-y-auto p-8 mx-auto shadow-2xl" style="max-width: 600px;">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-slate-800">รายการรอส่ง</h3>
-                <button onclick="closeModal('queueModal')" class="p-2 bg-slate-50 rounded-full">✕</button>
+        <div class="w-full bg-white rounded-t-[2.5rem] max-h-[85vh] overflow-y-auto p-6 mx-auto shadow-2xl" style="max-width: 600px;">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-bold text-slate-800">รายการรอส่ง</h3>
+                <button onclick="closeModal('queueModal')" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full text-xs">✕</button>
             </div>
-            <div id="auditListItems" class="space-y-3 mb-8"></div>
-            <button onclick="submitImmediately('DRAFT')" class="w-full py-4.5 bg-pink-500 text-white rounded-2xl font-bold shadow-xl">💾 บันทึกข้อมูลทั้งหมด</button>
+            <div id="auditListItems" class="space-y-3 mb-6"></div>
+            <button onclick="submitImmediately('DRAFT')" class="w-full py-4 bg-pink-500 text-white rounded-2xl font-bold shadow-lg active:bg-pink-600 transition-colors">💾 บันทึกข้อมูลทั้งหมด</button>
         </div>
     </div>
 
     <div id="confirmModal" class="fixed inset-0 z-[60] hidden bg-slate-900/80 flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white rounded-[3rem] p-8 text-center shadow-2xl">
-            <h3 class="text-xl font-bold text-slate-800 mb-6">ลงชื่อรับรองข้อมูล</h3>
-            <div class="bg-slate-50 rounded-[2rem] p-3 mb-6 border-2 border-slate-100">
-                <canvas id="signature-pad" class="w-full h-52 bg-white rounded-2xl touch-none"></canvas>
-                <button onclick="signaturePad.clear()" class="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">ล้างลายเซ็น</button>
+        <div class="w-full max-w-md bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-8 text-center shadow-2xl">
+            <h3 class="text-lg font-bold text-slate-800 mb-5">ลงชื่อรับรองข้อมูล</h3>
+            <div class="bg-slate-50 rounded-[1.5rem] p-2 mb-5 border-2 border-slate-100">
+                <canvas id="signature-pad" class="w-full h-48 bg-white rounded-xl touch-none"></canvas>
+                <button onclick="signaturePad.clear()" class="mt-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest active:text-pink-500">ล้างลายเซ็น</button>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="closeModal('confirmModal')" class="py-4.5 text-sm font-bold text-slate-400">✕ ยกเลิก</button>
-                <button onclick="handleFinalSubmit()" class="py-4.5 bg-slate-900 text-white rounded-[2rem] text-sm font-bold">💾 ยืนยันบันทึก</button>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeModal('confirmModal')" class="py-4 text-xs font-bold text-slate-400">✕ ยกเลิก</button>
+                <button onclick="handleFinalSubmit()" class="py-4 bg-slate-900 text-white rounded-2xl text-xs font-bold active:bg-black transition-colors">💾 ยืนยันบันทึก</button>
             </div>
         </div>
     </div>
 
-    <div id="successModal" class="fixed inset-0 z-[120] hidden bg-black/90 flex items-center justify-center p-6">
-        <div class="bg-white rounded-[2.5rem] p-8 w-full max-w-sm text-center shadow-2xl">
+    <div id="successModal" class="fixed inset-0 z-[120] hidden bg-black/95 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-xs text-center shadow-2xl overflow-y-auto max-h-[90vh]">
             <div class="no-print">
-                <div class="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="check" class="w-8 h-8"></i></div>
-                <h4 class="text-lg font-bold text-slate-800 mb-6">บันทึกสำเร็จ!</h4>
+                <div class="w-14 h-14 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="check" class="w-7 h-7"></i></div>
+                <h4 class="text-base font-bold text-slate-800 mb-5 uppercase tracking-wide">บันทึกสำเร็จ!</h4>
             </div>
-            <div id="successDetailList" class="bg-white text-left text-sm space-y-2 border-t border-b py-4"></div>
-            <div class="space-y-2 pt-6 no-print">
-                <button onclick="window.print()" class="w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-2">🧾 พิมพ์สลิป</button>
-                <button onclick="location.reload()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold">🔙 กลับหน้าหลัก</button>
+            <div id="successDetailList" class="bg-white text-left text-[11px] space-y-1.5 border-t border-b py-4 font-medium"></div>
+            <div class="space-y-2 pt-5 no-print">
+                <button onclick="window.print()" class="w-full py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:bg-slate-200">🧾 พิมพ์สลิป</button>
+                <button onclick="location.reload()" class="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold text-xs active:bg-black">🔙 กลับหน้าหลัก</button>
             </div>
         </div>
     </div>
 
     <div id="alertModal" class="fixed inset-0 bg-slate-900/40 z-[100] hidden flex items-center justify-center p-6">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-xs p-8 text-center shadow-2xl">
-            <p id="alertMessage" class="text-sm font-bold text-slate-600 mb-8"></p>
-            <button onclick="closeAlert()" class="w-full py-4 bg-pink-500 text-white font-bold rounded-[2rem]">ตกลง</button>
+        <div class="bg-white rounded-[2rem] w-full max-w-xs p-7 text-center shadow-2xl">
+            <p id="alertMessage" class="text-xs font-bold text-slate-600 mb-6 leading-relaxed"></p>
+            <button onclick="closeAlert()" class="w-full py-3.5 bg-pink-500 text-white font-bold rounded-xl text-xs active:bg-pink-600">ตกลง</button>
         </div>
     </div>
 
-    <div id="processOverlay" class="fixed inset-0 z-[100] hidden bg-white/95 flex flex-col items-center justify-center">
-        <div class="spinner mb-6"></div>
-        <p id="processMessage" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">กำลังประมวลผล...</p>
+    <div id="processOverlay" class="fixed inset-0 z-[200] hidden bg-white/95 flex flex-col items-center justify-center">
+        <div class="spinner mb-4"></div>
+        <p id="processMessage" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">กำลังประมวลผล...</p>
     </div>
 
     <div id="scannerModal" class="fixed inset-0 z-[70] hidden bg-black flex flex-col">
-        <div class="p-6 flex justify-end text-white"><button onclick="closeScanner()" class="p-2 bg-white/10 rounded-full">✕</button></div>
+        <div class="p-5 flex justify-end text-white"><button onclick="closeScanner()" class="p-2 bg-white/10 rounded-full active:bg-white/20">✕</button></div>
         <div id="reader" class="flex-grow"></div>
     </div>
 
- 
-    <footer class="mt-12 text-center p-6 no-print border-t border-slate-100 bg-slate-50/50">
-        <p class="text-[11px] font-bold text-slate-500">&copy; ทีม 👷 ช่างไอที กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</p>
-        <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">โรงพยาบาลอุดรธานี • IT ASSET INVENTORY</p>
+    <footer class="mt-8 text-center p-6 no-print border-t border-slate-100 bg-slate-50/50">
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter tracking-widest leading-loose">
+            &copy; ทีม 👷 ช่างไอที กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์<br>
+            โรงพยาบาลอุดรธานี • IT ASSET INVENTORY
+        </p>
     </footer>
     <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyEvENLP8zYARgtLjsl-61NvHqo-Va-oCdjPutajnkTZOrzsRm_QoHIgb75bKsMmlNQpw/exec";
