@@ -250,8 +250,7 @@
                     <div class="grid grid-cols-3 gap-2">
                         <input type="checkbox" name="nr_shift_work" value="เช้า" id="nr_shift_m" class="hidden shift-checkbox">
                         <label for="nr_shift_m" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">เช้า</label>
-                        <input type="checkbox" name="nr_shift_work" value="บ่าย" id="nr_shift_a" class="hidden shift-checkbox">
-                        <label for="shift_a" id="label_nr_shift_a" for="nr_shift_a" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">บ่าย</label>
+                        <input type="checkbox" name="nr_shift_work" value="บ่าย" id="nr_shift_a" class="hidden shift-checkbox">                       
                         <label for="nr_shift_a" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">บ่าย</label>
                         <input type="checkbox" name="nr_shift_work" value="ดึก" id="nr_shift_n" class="hidden shift-checkbox">
                         <label for="nr_shift_n" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">ดึก</label>
@@ -589,99 +588,7 @@ async function handleImageSelection(input, previewId, placeholderId) {
         document.getElementById(iId).value = "";
     }
 
-          // --- แก้ไขฟังก์ชัน submitAudit ให้เหลือเพียงอันเดียว และครอบคลุมทุกเงื่อนไข ---
-  async function submitAudit(type, event) {
-    if (event) event.preventDefault();
 
-    try {
-        // --- ส่วน GPS: ไม่รอให้พัง ส่งค่าหลอกไปก่อนถ้าดึงไม่ได้ ---
-        let currentGps = "0,0";
-        try {
-            const coords = await Promise.race([
-                getGPS(),
-                new Promise(resolve => setTimeout(() => resolve({lat:0, lng:0}), 1500))
-            ]);
-            currentGps = `${coords.lat}, ${coords.lng}`;
-        } catch (e) { /* silent fail */ }
-
-        const isExisting = type === 'EXISTING';
-        const suffix = isExisting ? '' : 'nr_';
-
-        // --- 1. ดึงค่าจาก UI มาเก็บไว้ในตัวแปร Local ทันที (ป้องกันค่าหายตอนปิด Modal) ---
-        const typeIdElem = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id');
-        const priorityIdElem = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId');
-        
-        const typeId = typeIdElem ? typeIdElem.value : "";
-        const priorityId = priorityIdElem ? priorityIdElem.value : "";
-        const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
-
-        // ตรวจสอบความครบถ้วน
-        if (!typeId || !priorityId) {
-            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและการใช้งาน");
-        }
-        
-        if (!currentBase64Image) {
-            return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
-        }
-
-        // --- 2. เตรียม Data Object ---
-        let itemData = {
-            Asset_Type_ID: typeId,
-            PIORITY_ID: priorityId,
-            ImageData: currentBase64Image,
-            gps: currentGps,
-            Note1: note1Value,
-            ASS_ON_OUT: isExisting ? "1" : "0",
-            Note2: [
-                document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
-                document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
-            ].filter(Boolean).join(", "),
-            Shift_Work: "-", 
-            CoStatus: "COS-001",
-            MAStatus: "-",
-            Detail_ID: "-"
-        };
-
-        let displayName = "";
-
-        if (isExisting) {
-            if (!currentAsset || !currentAsset.AssetID) {
-                return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
-            }
-            itemData.NoID = currentAsset.NoID || "-";
-            itemData.Asset_ID = currentAsset.AssetID;
-            itemData.AssetName = currentAsset.FullDescription;
-            itemData.Serial = currentAsset.Serial || "-";
-            displayName = itemData.AssetName;
-        } else {
-            // ห้ามใช้ .trim() ตามสั่ง
-            const brandDetail = document.getElementById('nr_brand_detail')?.value || ""; 
-            if (!brandDetail) {
-                return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
-            }
-            itemData.NoID = "NON-" + Date.now();
-            itemData.Asset_ID = "NR-" + Date.now();
-            itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
-            itemData.Serial = "-";
-            displayName = itemData.AssetName;
-        }
-
-        // --- 3. จัดการ Queue (ถ้าพี่ใช้ระบบ Queue ให้เปิดส่วนนี้) ---
-        // auditQueue.push({ DisplayName: displayName, data: itemData });
-        // updateQueueUI();
-
-        // --- 4. บันทึกและปิด Modal (ปิดทีหลังสุดหลังจากได้ data ครบ) ---
-        showProcess("กำลังบันทึกข้อมูล...");
-        await executeSave(itemData); // ส่ง data ก้อนนี้ไปเลย ห้ามดึงใหม่ใน executeSave
-
-        closeModal(isExisting ? 'auditFormModal' : 'nonRegisterModal');
-        hideProcess();
-
-    } catch (err) {
-        hideProcess();
-        showAlert("Error", err.message);
-    }
-}
     function updateQueueUI() {
         document.getElementById('auditCount').innerText = auditQueue.length;
         const list = document.getElementById('auditListItems');
@@ -724,31 +631,53 @@ async function handleImageSelection(input, previewId, placeholderId) {
 // 1. ฟังก์ชันบันทึกที่ตัด GPS ทิ้ง และใช้ showAlert เท่านั้น
 // --- ส่วนที่แก้ปัญหา getGPS is not defined แบบถาวร ---
 function getGPS() {
-    // คืนค่าหลอกๆ กลับไปทันที ไม่ต้องรอ ไม่ต้องดึงพิกัดจริง
-    // เพื่อให้ฟังก์ชันอื่นที่เรียกใช้ getGPS() ทำงานต่อได้โดยไม่ Error
     return new Promise((resolve) => {
-        resolve({ lat: "0", lng: "0" });
+        if (!navigator.geolocation) {
+            resolve({ lat: "0", lng: "0" });
+            return;
+        }
+        
+        // ตั้ง Timeout 1.5 วินาที ถ้าดึง GPS ไม่ได้ให้ข้ามเลย
+        const timeout = setTimeout(() => {
+            console.warn("GPS Timeout: Using default coordinates");
+            resolve({ lat: "0", lng: "0" });
+        }, 1500);
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                clearTimeout(timeout);
+                resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            },
+            (err) => {
+                clearTimeout(timeout);
+                resolve({ lat: "0", lng: "0" });
+            },
+            { enableHighAccuracy: false, timeout: 1500 }
+        );
     });
 }
 // ----------------------------------------------
 
+// --- 2. ฟังก์ชัน Submit หลักที่รวม Logic ทั้งหมด ---
 async function submitAudit(type, event) {
     if (event) event.preventDefault();
 
     try {
-        showProcess("กำลังตรวจสอบข้อมูล...");
+        showProcess("กำลังประมวลผลพิกัดและข้อมูล...");
 
-        // GPS ส่งค่าคงที่ไปเลย ไม่ต้องรอให้พัง
-        const currentGps = "0,0"; 
+        // ดึงพิกัด (รอไม่เกิน 1.5 วิ)
+        const coords = await getGPS();
+        const currentGps = `${coords.lat},${coords.lng}`;
 
         const isExisting = type === 'EXISTING';
         const suffix = isExisting ? '' : 'nr_';
 
-        // 1. ดึงค่าจาก UI
+        // ดึงค่าจาก UI
         const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
         const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
         const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
 
+        // จัดการ Shift Work (1=เช้า, 2=บ่าย, 3=ดึก)
         const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
         const shiftValues = Array.from(selectedShifts).map(input => {
             if (input.value === "เช้า") return "1";
@@ -757,7 +686,7 @@ async function submitAudit(type, event) {
             return "";
         }).filter(Boolean).join(",");
 
-        // 2. ตรวจสอบเงื่อนไข
+        // ตรวจสอบความครบถ้วน
         if (!typeId || !priorityId) {
             hideProcess();
             return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
@@ -768,7 +697,7 @@ async function submitAudit(type, event) {
             return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
         }
 
-        // 3. ปั้น Object ข้อมูล (ห้ามใช้ .trim())
+        // ปั้น Object ข้อมูล
         let itemData = {
             Asset_Type_ID: typeId,
             PIORITY_ID: priorityId,
@@ -787,50 +716,47 @@ async function submitAudit(type, event) {
         };
 
         if (isExisting) {
-            if (!currentAsset || !currentAsset.AssetID) {
-                hideProcess();
-                return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
-            }
+            if (!currentAsset) return showAlert("Error", "ไม่พบข้อมูลทรัพย์สิน");
             itemData.NoID = currentAsset.NoID || "-";
             itemData.Asset_ID = currentAsset.AssetID;
             itemData.AssetName = currentAsset.FullDescription;
             itemData.Serial = currentAsset.Serial || "-";
             closeModal('auditFormModal');
         } else {
-            const brandDetail = document.getElementById('nr_brand_detail')?.value; 
+            const brandDetail = document.getElementById('nr_brand_detail')?.value;
             if (!brandDetail) {
                 hideProcess();
-                return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
+                return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียดครุภัณฑ์นอกทะเบียน");
             }
             itemData.NoID = "NON-" + Date.now();
             itemData.Asset_ID = "NR-" + Date.now();
             itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
             itemData.Serial = "-";
+            itemData.Detail_ID = brandDetail;
             closeModal('nonRegisterModal');
         }
 
-        // --- จุดสำคัญ: ส่ง itemData ที่ปั้นเสร็จแล้วไปบันทึกเลย ---
+        // ส่งไปบันทึก
         await executeSave(itemData);
 
     } catch (err) {
         hideProcess();
-        showAlert("เกิดข้อผิดพลาด", "ระบบขัดข้อง: " + err.message);
+        showAlert("เกิดข้อผิดพลาด", err.message);
     }
 }
-
-// แก้ไข executeSave ให้รับข้อมูลจาก submitAudit มาใช้โดยตรง ไม่ต้องไป getElement ใหม่
 async function executeSave(preparedData) {
-    showProcess("กำลังบันทึกข้อมูล...");
-
+    showProcess("กำลังบันทึกข้อมูลลงฐานข้อมูล...");
     try {
         const deptId = document.getElementById('selectedDeptId')?.value || "-";
-
         const payload = {
             action: 'saveBulkSurvey',
             data: {
-                items: [preparedData], // ใช้ข้อมูลที่ส่งมาจากการปั้น Object
+                items: [{ 
+                    DisplayName: preparedData.AssetName, 
+                    data: preparedData 
+                }],
                 deptId: deptId,
-                signature: "", // หรือ signatureData ถ้ามี
+                signature: "", 
                 gps: preparedData.gps,
                 activityId: "Ac-2569",
                 IT_User_Mail: "user@udonhospital.com"
@@ -845,27 +771,19 @@ async function executeSave(preparedData) {
         const result = await res.json();
 
         if (result.status === 'success') {
-            // ปิดทุก Modal
-            ['confirmModal', 'auditModal', 'scannerModal'].forEach(id => {
-                const m = document.getElementById(id);
-                if (m) m.classList.add('hidden');
-            });
-            
             if (typeof renderSuccessSlip === 'function') {
                 renderSuccessSlip(result.actionId, payload.data.items);
             }
-            
             clearAuditForm();
             const q = document.getElementById('assetQuery');
             if (q) q.value = ""; 
         } else {
             showAlert("บันทึกไม่สำเร็จ", result.message);
         }
-
-    } catch (e) { 
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถส่งข้อมูลได้");
-    } finally { 
-        hideProcess(); 
+    } catch (e) {
+        showAlert("Network Error", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+    } finally {
+        hideProcess();
     }
 }
 
