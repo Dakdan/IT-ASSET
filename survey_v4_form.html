@@ -659,134 +659,99 @@ function getGPS() {
 // ----------------------------------------------
 
 // --- 2. ฟังก์ชัน Submit หลักที่รวม Logic ทั้งหมด ---
+// 1. ปรับปรุงการส่งค่า และการจัดการ Modal
 async function submitAudit(type, event) {
     if (event) event.preventDefault();
+    
+    const isExisting = type === 'EXISTING';
+    const suffix = isExisting ? '' : 'nr_';
 
-    try {
-        showProcess("กำลังประมวลผลพิกัดและข้อมูล...");
+    // ดึงค่า Input
+    const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
+    const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
+    const brandDetail = document.getElementById('nr_brand_detail')?.value; // สำหรับ Non-Regis
 
-        // ดึงพิกัด (รอไม่เกิน 1.5 วิ)
-        const coords = await getGPS();
-        const currentGps = `${coords.lat},${coords.lng}`;
+    // ตรวจสอบความครบถ้วน (Validation)
+    if (!typeId || !priorityId || !currentBase64Image) {
+        return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุประเภท ความสำคัญ และถ่ายรูปครุภัณฑ์");
+    }
+    
+    if (!isExisting && !brandDetail) {
+        return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด/แบรนด์ (Non-Register)");
+    }
 
-        const isExisting = type === 'EXISTING';
-        const suffix = isExisting ? '' : 'nr_';
+    showProcess("กำลังเตรียมข้อมูล...");
 
-        // ดึงค่าจาก UI
-        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
-        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
-        const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
+    // เตรียมข้อมูลส่งกลับ
+    let itemData = {
+        Asset_Type_ID: typeId,
+        PIORITY_ID: priorityId,
+        ImageData: currentBase64Image,
+        gps: currentGps,
+        Note1: document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-",
+        ASS_ON_OUT: isExisting ? "1" : "0",
+        Note2: [
+            document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
+            document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
+        ].filter(Boolean).join(", "),
+        Shift_Work: Array.from(document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`)).map(i => i.value).join(","),
+        CoStatus: "COS-001",
+        MAStatus: "-",
+        // แก้ไขจุดนี้: ถ้าเป็น Non-Regis ให้ส่งค่าจากช่องใส่ข้อมูล
+        Detail_ID: isExisting ? "-" : brandDetail 
+    };
 
-        // จัดการ Shift Work (1=เช้า, 2=บ่าย, 3=ดึก)
-        const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
-        const shiftValues = Array.from(selectedShifts).map(input => {
-            if (input.value === "เช้า") return "1";
-            if (input.value === "บ่าย") return "2";
-            if (input.value === "ดึก") return "3";
-            return "";
-        }).filter(Boolean).join(",");
+    if (isExisting) {
+        itemData.NoID = currentAsset.NoID || "-";
+        itemData.Asset_ID = currentAsset.AssetID;
+        itemData.AssetName = currentAsset.FullDescription;
+    } else {
+        itemData.NoID = "NON-" + Date.now();
+        itemData.Asset_ID = "NR-" + Date.now();
+        itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
+    }
 
-        // ตรวจสอบความครบถ้วน
-        if (!typeId || !priorityId) {
-            hideProcess();
-            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
-        }
-        
-        if (!currentBase64Image) {
-            hideProcess();
-            return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
-        }
-
-        // ปั้น Object ข้อมูล
-        let itemData = {
-            Asset_Type_ID: typeId,
-            PIORITY_ID: priorityId,
-            ImageData: currentBase64Image,
-            gps: currentGps,
-            Note1: note1Value,
-            ASS_ON_OUT: isExisting ? "1" : "0",
-            Note2: [
-                document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
-                document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
-            ].filter(Boolean).join(", "),
-            Shift_Work: shiftValues || "-",
-            CoStatus: "COS-001",
-            MAStatus: "-",
-            Detail_ID: "-"
-        };
-
-        if (isExisting) {
-            if (!currentAsset) return showAlert("Error", "ไม่พบข้อมูลทรัพย์สิน");
-            itemData.NoID = currentAsset.NoID || "-";
-            itemData.Asset_ID = currentAsset.AssetID;
-            itemData.AssetName = currentAsset.FullDescription;
-            itemData.Serial = currentAsset.Serial || "-";
-            closeModal('auditFormModal');
-        } else {
-            const brandDetail = document.getElementById('nr_brand_detail')?.value;
-            if (!brandDetail) {
-                hideProcess();
-                return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียดครุภัณฑ์นอกทะเบียน");
-            }
-            itemData.NoID = "NON-" + Date.now();
-            itemData.Asset_ID = "NR-" + Date.now();
-            itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
-            itemData.Serial = "-";
-            itemData.Detail_ID = brandDetail;
-            closeModal('nonRegisterModal');
-        }
-
-        // ส่งไปบันทึก
-        await executeSave(itemData);
-
-    } catch (err) {
-        hideProcess();
-        showAlert("เกิดข้อผิดพลาด", err.message);
+    // เรียกฟังก์ชันบันทึก
+    const success = await executeSave(itemData);
+    
+    if (success) {
+        // ปิด Modal เฉพาะเมื่อบันทึกสำเร็จเท่านั้น
+        closeModal(isExisting ? 'auditFormModal' : 'nonRegisterModal');
     }
 }
+// 2. ปรับปรุงการคืนค่าสถานะการบันทึก
 async function executeSave(preparedData) {
-    showProcess("กำลังบันทึกข้อมูลลงฐานข้อมูล...");
+    showProcess("กำลังส่งข้อมูล...");
     try {
-        const deptId = document.getElementById('selectedDeptId')?.value || "-";
         const payload = {
             action: 'saveBulkSurvey',
             data: {
-                items: [{ 
-                    DisplayName: preparedData.AssetName, 
-                    data: preparedData 
-                }],
-                deptId: deptId,
-                signature: "", 
+                items: [{ DisplayName: preparedData.AssetName, data: preparedData }],
+                deptId: document.getElementById('selectedDeptId')?.value || "-",
                 gps: preparedData.gps,
                 activityId: "Ac-2569",
                 IT_User_Mail: "user@udonhospital.com"
             }
         };
 
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
 
         if (result.status === 'success') {
-            if (typeof renderSuccessSlip === 'function') {
-                renderSuccessSlip(result.actionId, payload.data.items);
-            }
-            clearAuditForm();
-            const q = document.getElementById('assetQuery');
-            if (q) q.value = ""; 
+            renderSuccessSlip(result.actionId, payload.data.items);
+            clearAuditForm(); // ล้างค่ารวมถึงช่องค้นหา
+            return true;
         } else {
-            showAlert("บันทึกไม่สำเร็จ", result.message);
+            showAlert("Error", result.message);
+            return false;
         }
     } catch (e) {
-        showAlert("Network Error", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+        showAlert("Network Error", "ไม่สามารถติดต่อ Server ได้");
+        return false;
     } finally {
         hideProcess();
     }
 }
-
 function getGPS() { return new Promise(res => res({lat:0, lng:0})); }
 
 // 2. ฟังก์ชันควบคุม Process แบบไม่มี Alert Browser
@@ -890,21 +855,31 @@ function closeModal(id) {
             closeScanner(); 
         }
     }
-    function clearAuditForm() {
-        // ล้างรูปภาพ
-        currentBase64Image = "";
-        // รีเซ็ต Input และ Preview (สำหรับทั้ง 2 หน้า)
-        const forms = [
-            {p: 'imgPreview', h: 'imgPlaceholder', i: 'imgInput'},
-            {p: 'nr_imgPreview', h: 'nr_imgPlaceholder', i: 'nr_imgInput'}
-        ];
-        forms.forEach(f => {
-            document.getElementById(f.p).src = "";
-            document.getElementById(f.p).classList.add('hidden');
-            document.getElementById(f.h).classList.remove('hidden');
-            document.getElementById(f.i).value = "";
-        });
-    }
+   // 3. ปรับปรุงการล้างช่องค้นหา (Search Clear)
+function clearAuditForm() {
+    currentBase64Image = "";
+    currentAsset = null;
+
+    // ล้างช่องค้นหาและผลลัพธ์การค้นหา
+    const searchInput = document.getElementById('assetQuery');
+    const searchResult = document.getElementById('assetResult');
+    if (searchInput) searchInput.value = "";
+    if (searchResult) searchResult.innerHTML = "";
+
+    // ล้างฟอร์ม Non-Regis
+    const brandInput = document.getElementById('nr_brand_detail');
+    if (brandInput) brandInput.value = "";
+
+    // ล้างรูปภาพ (Logic เดิมที่ถูกต้องแล้ว)
+    const ids = ['imgPreview', 'nr_imgPreview', 'imgInput', 'nr_imgInput', 'imgPlaceholder', 'nr_imgPlaceholder'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (id.includes('Preview')) { el.src = ""; el.classList.add('hidden'); }
+        else if (id.includes('Input')) { el.value = ""; }
+        else if (id.includes('Placeholder')) { el.classList.remove('hidden'); }
+    });
+}
     
 async function loadRecordedData() {
     const container = document.getElementById('recordedContainer');
