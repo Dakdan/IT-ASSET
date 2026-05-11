@@ -329,67 +329,93 @@
     </footer>
   
 <script>
-// ==========================================
-// 1. GLOBAL CONFIG & STATE
-// ==========================================
-const API_URL = "https://script.google.com/macros/s/AKfycbyEvENLP8zYARgtLjsl-61NvHqo-Va-oCdjPutajnkTZOrzsRm_QoHIgb75bKsMmlNQpw/exec";
-const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=";
+    // --- [SECTION 1: CONSTANTS & GLOBALS - จากต้นฉบับ] ---
+    const API_URL = "https://script.google.com/macros/s/AKfycbyEvENLP8zYARgtLjsl-61NvHqo-Va-oCdjPutajnkTZOrzsRm_QoHIgb75bKsMmlNQpw/exec";
+    const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=";
+    const jobTypeId = document.getElementById('jobTypeId')?.value || "";
+    
+    let masterDeptList = [], 
+        configData = { priorities: [], assetTypes: [] }, 
+        auditQueue = [], 
+        currentAsset = null, 
+        signaturePad = null;
+    let html5QrCode = null, 
+        currentBase64Image = "", 
+        submitMode = 'FINAL';
+    let selectedJobTypeId = "";
 
-
-    // --- Global Variables (อิงตามโครงสร้างเดิม) ---
-    let buildingsData = {};
-    let currentDeptId = null;
-    let currentAsset = null;
+    // ข้อมูลสถานะเพิ่มเติม
     let currentGps = "0,0";
     let gpsReady = false;
-    let currentBase64Image = "";
-    let signaturePad;
-    let html5QrCode;
-    let auditQueue = [];
+    let currentDeptId = null;
 
+    // --- [SECTION 2: INITIALIZATION] ---
     window.onload = () => {
         lucide.createIcons();
         initSignaturePad();
-        loadInitialData();
-        loadGPS();
+        loadInitialData(); // โหลดลำดับความสำคัญและประเภทครุภัณฑ์จากระบบจริง
+        startGpsTracking();
     };
 
     function initSignaturePad() {
         const canvas = document.getElementById('signature-pad');
-        signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+        if (canvas) {
+            signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+        }
     }
 
-    // --- ฟังก์ชันไฮไลท์คำค้นหา (The "Highlight" Script) ---
-    const highlightText = (text, query) => {
+    // --- [SECTION 3: HIGHLIGHT LOGIC - เน้นคำค้นหา] ---
+    function getHighlighter(text, query) {
         if (!query) return text;
-        const re = new RegExp(`(${query})`, 'gi');
-        return text.toString().replace(re, `<span class="bg-yellow-200 text-black font-bold px-0.5 rounded">$1</span>`);
-    };
-
-    // --- Data Loading ---
-    function loadInitialData() {
-        showProcess("กำลังโหลดข้อมูลพื้นฐาน...");
-        google.script.run.withSuccessHandler(data => {
-            buildingsData = data.buildings;
-            renderBuildingList(data.buildings);
-            // Render Dropdowns (AssetTypes & Priorities) ตามข้อมูลจริงจาก GS
-            populateDropdown('assetTypeId', data.assetTypes);
-            populateDropdown('nr_asset_type_id', data.assetTypes);
-            populateDropdown('priorityId', data.priorities);
-            populateDropdown('nr_priorityId', data.priorities);
-            hideProcess();
-        }).getInitialData();
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.toString().replace(regex, `<mark class="bg-yellow-200 text-black px-1 rounded font-bold">$1</mark>`);
     }
 
-    // --- GPS Logic (Fix 0,0 ตามสั่ง) ---
-    function loadGPS() {
+    // --- [SECTION 4: SEARCH & RENDER - ห้ามคำนวณอายุเอง] ---
+    function searchAsset() {
+        const query = document.getElementById('assetQuery').value.trim();
+        const area = document.getElementById('resultsArea');
+        
+        if (query.length < 3) {
+            area.innerHTML = "";
+            return;
+        }
+
+        google.script.run.withSuccessHandler(results => {
+            if (!results || results.length === 0) {
+                area.innerHTML = '<div class="text-center p-8 text-slate-400">ไม่พบข้อมูลครุภัณฑ์</div>';
+                return;
+            }
+
+            area.innerHTML = results.map(asset => `
+                <div onclick='openAuditModal(${JSON.stringify(asset)})' 
+                     class="p-4 mb-3 bg-white rounded-2xl border border-pink-100 border-l-4 shadow-sm active:scale-95 transition-all cursor-pointer"
+                     style="border-left-color: var(--primary-pink);">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[14px] font-bold text-slate-800">${getHighlighter(asset.id, query)}</span>
+                                <!-- แสดงอายุตรงๆ จาก DB ห้ามแก้ Logic การคำนวณ -->
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 font-medium">
+                                    อายุ: ${asset.age} ปี
+                                </span>
+                            </div>
+                            <div class="text-[13px] text-slate-600">${getHighlighter(asset.name, query)}</div>
+                        </div>
+                        <div class="text-pink-400"><i data-lucide="chevron-right" class="w-5 h-5"></i></div>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }).searchAssetInDB(query, currentDeptId);
+    }
+
+    // --- [SECTION 5: GPS & SUBMISSION - กฎพิกัด 0,0 และ Detail_ID] ---
+    function startGpsTracking() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
-                    gpsReady = true;
-                },
-                (err) => { currentGps = "0,0"; gpsReady = false; },
+                (p) => { currentGps = `${p.coords.latitude},${p.coords.longitude}`; gpsReady = true; },
+                (e) => { currentGps = "0,0"; gpsReady = false; },
                 { enableHighAccuracy: true, timeout: 5000 }
             );
         } else {
@@ -397,93 +423,24 @@ const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID
         }
     }
 
-    // --- Search & Rendering (ที่มีไฮไลท์คำค้น) ---
-    let searchTimer;
-    function debouncedSearch() {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => searchAsset(), 500);
-    }
-
-    function searchAsset() {
-        const query = document.getElementById('assetQuery').value;
-        if (query.length < 3) {
-            document.getElementById('resultsArea').innerHTML = "";
-            return;
-        }
-
-        google.script.run.withSuccessHandler(results => {
-            renderSearchResults(results, query);
-        }).searchAssetInDB(query, currentDeptId);
-    }
-
-    function renderSearchResults(results, query) {
-        const area = document.getElementById('resultsArea');
-        if (results.length === 0) {
-            area.innerHTML = '<div class="text-center p-4 text-slate-400">ไม่พบข้อมูล</div>';
-            return;
-        }
-
-        area.innerHTML = results.map(asset => {
-            // ไฮไลท์คำค้นในชื่อและ ID
-            const displayId = highlightText(asset.id, query);
-            const displayName = highlightText(asset.name, query);
-            
-            return `
-                <div onclick='openAuditModal(${JSON.stringify(asset)})' 
-                     class="p-4 mb-3 bg-white rounded-2xl border-l-4 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
-                     style="border-left-color: var(--primary-pink); border-top: 1px solid var(--soft-pink); border-right: 1px solid var(--soft-pink); border-bottom: 1px solid var(--soft-pink);">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[14px] font-bold text-slate-800">${displayId}</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded-full" style="background-color: var(--soft-pink); color: var(--primary-pink);">
-                                    อายุ: ${asset.age} ปี
-                                </span>
-                            </div>
-                            <div class="text-[13px] text-slate-600">${displayName}</div>
-                        </div>
-                        <div style="color: var(--primary-pink);"><i data-lucide="chevron-right" class="w-5 h-5"></i></div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        lucide.createIcons();
-    }
-
-    // --- Form & Submission Logic ---
-    function openAuditModal(asset) {
-        currentAsset = asset;
-        document.getElementById('detailAssetID').innerText = asset.id;
-        document.getElementById('detailAssetAge').innerText = asset.age; // ดึงจาก DB โดยตรง
-        document.getElementById('modalAssetName').innerText = asset.name;
-        document.getElementById('auditFormModal').classList.remove('hidden');
-    }
-
     async function submitAudit(type) {
         const isExisting = type === 'EXISTING';
         
-        // เช็ค GPS (ถ้า 0,0 ให้ถามยืนยัน)
-        if(currentGps === "0,0") {
-            if(!confirm("ไม่พบพิกัด GPS (0,0) ต้องการดำเนินการต่อหรือไม่?")) return;
-        }
-
-        const shiftElements = document.getElementsByName(isExisting ? 'shift_work' : 'nr_shift_work');
-        const selectedShifts = Array.from(shiftElements).filter(el => el.checked).map(el => el.value).join(',');
+        if (currentGps === "0,0" && !confirm("พิกัดเป็น 0,0 ยืนยันบันทึกหรือไม่?")) return;
 
         const payload = {
             type: type,
             asset_id: isExisting ? currentAsset.id : document.getElementById('nr_asset_id').value,
             asset_name: isExisting ? currentAsset.name : "นอกทะเบียน",
-            detail_id: isExisting ? "-" : document.getElementById('nr_brand_detail').value, // Detail_ID คือรายละเอียดนอกทะเบียน
+            // ไฮไลท์: กรณีของนอกทะเบียน ให้ใช้รายละเอียดเป็น Detail_ID
+            detail_id: isExisting ? "-" : document.getElementById('nr_brand_detail').value, 
             serial: isExisting ? (currentAsset.serial || "-") : document.getElementById('nr_serial').value,
-            asset_type_id: document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id').value,
-            priority_id: document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId').value,
-            pac: document.getElementById(isExisting ? 'pac_toggle' : 'nr_pac_toggle').checked ? "YES" : "NO",
-            rent: document.getElementById(isExisting ? 'rent_toggle' : 'nr_rent_toggle').checked ? "YES" : "NO",
-            shift: selectedShifts,
             gps: currentGps,
             image: currentBase64Image,
-            dept_id: currentDeptId
+            dept_id: currentDeptId,
+            // ข้อมูลส่วนอื่นๆ ดึงตาม ID ใน HTML (ห้ามคิดเอง)
+            asset_type_id: document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id').value,
+            priority_id: document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId').value
         };
 
         auditQueue.push(payload);
@@ -491,38 +448,33 @@ const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID
         document.getElementById('confirmModal').classList.remove('hidden');
     }
 
+    // --- [SECTION 6: FINAL SAVE & CLEANUP - ล้างช่องค้นหา] ---
     function handleFinalSubmit() {
         if (signaturePad.isEmpty()) {
-            alert("กรุณาลงลายเซ็น");
+            alert("กรุณาลงลายเซ็นก่อนบันทึก");
             return;
         }
+
         showProcess("กำลังบันทึกข้อมูล...");
+        const signatureData = signaturePad.toDataURL();
+
         google.script.run.withSuccessHandler(res => {
             hideProcess();
+            // ล้างข้อมูลตามสั่ง: ช่องค้นหาและผลลัพธ์
+            document.getElementById('assetQuery').value = "";
+            document.getElementById('resultsArea').innerHTML = "";
+            
             document.getElementById('confirmModal').classList.add('hidden');
             document.getElementById('successModal').classList.remove('hidden');
-            clearAuditForm();
-        }).saveSurveyData(auditQueue, signaturePad.toDataURL());
+            
+            // รีเซ็ตตัวแปร
+            auditQueue = [];
+            signaturePad.clear();
+            currentBase64Image = "";
+        }).saveSurveyData(auditQueue, signatureData);
     }
 
-    function clearAuditForm() {
-        currentBase64Image = "";
-        document.getElementById('assetQuery').value = ""; // ล้างช่องค้นหาตามสั่ง
-        document.getElementById('resultsArea').innerHTML = "";
-        // Reset previews
-        ['imgPreview', 'nr_imgPreview'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        ['imgPlaceholder', 'nr_imgPlaceholder'].forEach(id => document.getElementById(id).classList.remove('hidden'));
-        signaturePad.clear();
-        auditQueue = [];
-    }
-
-    // --- UI Helpers ---
-    function populateDropdown(id, items) {
-        const select = document.getElementById(id);
-        if(!select) return;
-        select.innerHTML = items.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
-    }
-
+    // --- HELPER FUNCTIONS ---
     function switchPage(page) {
         document.getElementById('surveyPage').classList.toggle('hidden', page !== 'survey');
         document.getElementById('reportPage').classList.toggle('hidden', page !== 'report');
@@ -532,7 +484,7 @@ const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID
     function showProcess(m) { document.getElementById('processMessage').innerText = m; document.getElementById('processOverlay').classList.remove('hidden'); }
     function hideProcess() { document.getElementById('processOverlay').classList.add('hidden'); }
 
-    // --- Image Handling ---
+    // จัดการรูปภาพ (ย่อขนาดและแปลงเป็น Base64)
     function handleImageSelection(input, previewId, placeholderId) {
         const file = input.files[0];
         if (!file) return;
@@ -546,7 +498,7 @@ const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID
                 canvas.width = maxWidth;
                 canvas.height = img.height * (maxWidth / img.width);
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                currentBase64Image = canvas.toDataURL('image/jpeg', 0.7);
+                currentBase64Image = canvas.toDataURL('image/jpeg', 0.8);
                 document.getElementById(previewId).src = currentBase64Image;
                 document.getElementById(previewId).classList.remove('hidden');
                 document.getElementById(placeholderId).classList.add('hidden');
