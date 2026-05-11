@@ -330,24 +330,19 @@
   
 <script>
     // --- [SECTION 1: CONSTANTS & GLOBALS - จากต้นฉบับ] ---
-    const API_URL = "https://script.google.com/macros/s/AKfycbyEvENLP8zYARgtLjsl-61NvHqo-Va-oCdjPutajnkTZOrzsRm_QoHIgb75bKsMmlNQpw/exec";
-    const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=";
-    const jobTypeId = document.getElementById('jobTypeId')?.value || "";
-    
-    let masterDeptList = [], 
-        configData = { priorities: [], assetTypes: [] }, 
-        auditQueue = [], 
-        currentAsset = null, 
-        signaturePad = null;
-    let html5QrCode = null, 
-        currentBase64Image = "", 
-        submitMode = 'FINAL';
-    let selectedJobTypeId = "";
+const API_URL = "https://script.google.com/macros/s/AKfycbyEvENLP8zYARgtLjsl-61NvHqo-Va-oCdjPutajnkTZOrzsRm_QoHIgb75bKsMmlNQpw/exec";
+const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=";
+const jobTypeId = document.getElementById('jobTypeId')?.value || "";
 
-    // ข้อมูลสถานะเพิ่มเติม
-    let currentGps = "0,0";
-    let gpsReady = false;
-    let currentDeptId = null;
+let masterDeptList = [], 
+    configData = { priorities: [], assetTypes: [] }, 
+    auditQueue = [], 
+    currentAsset = null, 
+    signaturePad = null;
+let html5QrCode = null, 
+    currentBase64Image = "", 
+    submitMode = 'FINAL';
+let selectedJobTypeId = "";
 
     // --- [SECTION 2: INITIALIZATION] ---
     window.onload = () => {
@@ -372,44 +367,42 @@
     }
 
     // --- [SECTION 4: SEARCH & RENDER - ห้ามคำนวณอายุเอง] ---
-    function searchAsset() {
-        const query = document.getElementById('assetQuery').value.trim();
-        const area = document.getElementById('resultsArea');
-        
-        if (query.length < 3) {
-            area.innerHTML = "";
-            return;
-        }
-
-        google.script.run.withSuccessHandler(results => {
-            if (!results || results.length === 0) {
-                area.innerHTML = '<div class="text-center p-8 text-slate-400">ไม่พบข้อมูลครุภัณฑ์</div>';
-                return;
-            }
-
-            area.innerHTML = results.map(asset => `
-                <div onclick='openAuditModal(${JSON.stringify(asset)})' 
-                     class="p-4 mb-3 bg-white rounded-2xl border border-pink-100 border-l-4 shadow-sm active:scale-95 transition-all cursor-pointer"
-                     style="border-left-color: var(--primary-pink);">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[14px] font-bold text-slate-800">${getHighlighter(asset.id, query)}</span>
-                                <!-- แสดงอายุตรงๆ จาก DB ห้ามแก้ Logic การคำนวณ -->
-                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 font-medium">
-                                    อายุ: ${asset.age} ปี
-                                </span>
-                            </div>
-                            <div class="text-[13px] text-slate-600">${getHighlighter(asset.name, query)}</div>
-                        </div>
-                        <div class="text-pink-400"><i data-lucide="chevron-right" class="w-5 h-5"></i></div>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }).searchAssetInDB(query, currentDeptId);
+   function searchAsset() {
+    const query = document.getElementById('assetQuery').value.trim();
+    const resultsArea = document.getElementById('resultsArea');
+    
+    // ไฮไลท์: ใช้ Logic เดิมของคุณในการส่งค่า
+    if (query.length < 3) {
+        resultsArea.innerHTML = "";
+        return;
     }
 
+    // เรียกใช้ฟังก์ชันเดิมจากฝั่ง Server ที่คุณทำไว้
+    google.script.run.withSuccessHandler(function(results) {
+        if (!results || results.length === 0) {
+            resultsArea.innerHTML = '<div class="text-center p-8 text-slate-400">ไม่พบข้อมูล</div>';
+            return;
+        }
+        
+        // Render โดยใช้ตัวแปรชื่อเดิม (id, name, age, serial) จาก Object เดิม
+        resultsArea.innerHTML = results.map(function(asset) {
+            // ฟังก์ชันเน้นคำค้น (Highlight) ที่คุณเขียนไว้ในสคริปต์
+            const displayId = getHighlighter(asset.id, query);
+            const displayName = getHighlighter(asset.name, query);
+            
+            return `
+                <div onclick='openAuditModal(${JSON.stringify(asset)})' class="card-item-original-style">
+                    <div class="asset-info">
+                        <strong>${displayId}</strong>
+                        <p>${displayName}</p>
+                        <span class="age-tag">อายุ: ${asset.age} ปี</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        lucide.createIcons();
+    }).searchAssetInDB(query, currentDeptId); // ตรวจสอบว่า currentDeptId ต้องไม่เป็น null ตาม Logic คุณ
+}
     // --- [SECTION 5: GPS & SUBMISSION - กฎพิกัด 0,0 และ Detail_ID] ---
     function startGpsTracking() {
         if (navigator.geolocation) {
