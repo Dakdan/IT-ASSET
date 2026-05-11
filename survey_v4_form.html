@@ -329,9 +329,10 @@
     </footer>
   
 
-  <script>
+ <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyEvENLP8zYARgtLjsl-61NvHqo-Va-oCdjPutajnkTZOrzsRm_QoHIgb75bKsMmlNQpw/exec";
     const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=";
+    const jobTypeId = document.getElementById('jobTypeId')?.value || "";
     
     let masterDeptList = [], configData = { priorities: [], assetTypes: [] }, auditQueue = [], currentAsset = null, signaturePad = null;
     let html5QrCode = null, currentBase64Image = "", submitMode = 'FINAL';
@@ -342,44 +343,31 @@
     window.onload = () => {
         lucide.createIcons();
         initApp();
+    
         signaturePad = new SignaturePad(document.getElementById('signature-pad'));
         html5QrCode = new Html5Qrcode("reader");
         window.addEventListener('resize', handleResize);
+    
         loadGPS();
     };
 
-    async function initApp() {
-        showProcess("กำลังโหลดข้อมูล...");
-        try {
-            const [resConfig, resDept] = await Promise.all([
-                fetch(`${API_URL}?action=getInitialData`),
-                fetch(`${API_URL}?action=getDeptList`)
-            ]);
-            configData = await resConfig.json();
-            masterDeptList = await resDept.json();
-            populateSelects();
-            const bSel = document.getElementById('selBuilding');
-            if (bSel) {
-                bSel.innerHTML = '<option value="">เลือกตึก/อาคาร...</option>';
-                const buildings = [...new Set(masterDeptList.map(i => i.BUILDING))].filter(Boolean).sort();
-                buildings.forEach(b => bSel.add(new Option(b, b)));
-            }
-            const indicator = document.getElementById('statusIndicator');
-            if (indicator) {
-                indicator.innerText = "ONLINE";
-                indicator.classList.replace('text-pink-500', 'text-green-500');
-            }
-        } catch (e) { console.error("Init Error:", e); }
-        finally { hideProcess(); }
-    }
-
+    // --- GPS & UI Helpers ---
     function setGpsStatus(status, text) {
         const dot = document.getElementById('gpsDot');
         const label = document.getElementById('gpsStatusText');
-        const icon = document.getElementById('gpsIcon');
-        if (dot) dot.className = "w-2 h-2 rounded-full " + (status === "loading" ? "gps-loading" : status === "success" ? "gps-success" : "gps-error");
-        if (label) label.innerText = text;
-        if (icon) icon.className = (status === 'success') ? 'text-pink-500' : 'text-gray-400';
+        const gpsElem = document.getElementById('gpsIcon');
+
+        if (dot && label) {
+            dot.className = "w-2 h-2 rounded-full";
+            if (status === "loading") dot.classList.add("gps-loading");
+            else if (status === "success") dot.classList.add("gps-success");
+            else if (status === "error") dot.classList.add("gps-error");
+            label.innerText = text;
+        }
+
+        if (gpsElem) {
+            gpsElem.className = (status === 'success') ? 'text-pink-500' : 'text-gray-400'; 
+        }
     }
 
     function loadGPS() {
@@ -403,48 +391,79 @@
                 },
                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
-        } catch (e) { console.error("GPS Error: ", e.message); }
+        } catch (e) { console.error("GPS Logic Error: ", e.message); }
     }
 
-    function renderFloorList() {
-        const bName = document.getElementById('selBuilding').value;
-        const fSel = document.getElementById('selFloor');
-        if (!fSel) return;
-        fSel.innerHTML = '<option value="">เลือกชั้น...</option>';
-        if (!bName) return;
-        const floors = [...new Set(masterDeptList.filter(i => i.BUILDING === bName).map(i => i.FLOOR))].filter(Boolean).sort();
-        floors.forEach(f => fSel.add(new Option(f, f)));
+    function getGPS() { return new Promise(res => res({lat:0, lng:0})); }
+
+    // --- Core Functions ---
+    async function initApp() {
+        showProcess("กำลังโหลดข้อมูล...");
+        try {
+            const [resConfig, resDept] = await Promise.all([
+                fetch(`${API_URL}?action=getInitialData`),
+                fetch(`${API_URL}?action=getDeptList`)
+            ]);
+            configData = await resConfig.json();
+            masterDeptList = await resDept.json();
+            populateSelects();
+            const bSel = document.getElementById('selBuilding');
+            if (bSel) {
+                [...new Set(masterDeptList.map(i => i.BUILDING))].filter(Boolean).sort().forEach(b => bSel.add(new Option(b, b)));
+            }
+            const statusInd = document.getElementById('statusIndicator');
+            if (statusInd) {
+                statusInd.innerText = "ONLINE";
+                statusInd.classList.replace('text-pink-500', 'text-green-500');
+            }
+        } catch (e) { console.error(e); }
+        finally { hideProcess(); }
     }
 
-    function renderDeptList() {
-        const bName = document.getElementById('selBuilding').value;
-        const fName = document.getElementById('selFloor').value;
-        const area = document.getElementById('deptListArea');
-        if (!area) return;
-        area.innerHTML = '';
-        const depts = masterDeptList.filter(i => i.BUILDING === bName && i.FLOOR === fName);
-        depts.forEach(d => {
-            const btn = document.createElement('button');
-            btn.className = "p-4 bg-white rounded-3xl border border-gray-100 text-left shadow-sm active:scale-95 transition-all";
-            btn.innerHTML = `<p class="text-[10px] font-bold text-pink-500 uppercase">${d.DEP_ID}</p><p class="text-sm font-bold text-gray-700">${d.DEP_NAME}</p>`;
-            btn.onclick = () => selectDept(d.DEP_ID, d.DEP_NAME);
-            area.appendChild(btn);
+    async function handleImageSelection(input, previewId, placeholderId) {
+        const file = input.files[0];
+        if (!file) return;
+        const base64 = await compressImage(file);
+        currentBase64Image = base64;
+        const preview = document.getElementById(previewId);
+        const placeholder = document.getElementById(placeholderId);
+        if (preview && placeholder) {
+            preview.src = base64;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+    }
+
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const max = 800; 
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > max) { h *= max / w; w = max; } }
+                    else { if (h > max) { w *= max / h; h = max; } }
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                };
+            };
         });
     }
 
-    function selectDept(id, name) {
-        document.getElementById('selectedDeptId').value = id;
-        document.getElementById('displayDeptName').innerText = name;
-        document.getElementById('deptSelectorPage').classList.add('hidden');
-        document.getElementById('mainAppPage').classList.remove('hidden');
-    }
-
+    // --- Search & UI Logic ---
     async function searchAsset() {
         let q = document.getElementById('assetQuery').value.trim();
         const area = document.getElementById('resultsArea');
+        if (!q) return;
         if (q.includes("http")) {
             const match = q.match(/IcmAssetDetail\/([^\/]+)/);
-            if (match && match[1]) { q = match[1]; document.getElementById('assetQuery').value = q; }
+            if (match && match[1]) q = match[1];
         }
         area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto"></div></div>';
         area.classList.remove('hidden');
@@ -461,12 +480,12 @@
                 d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all relative overflow-hidden mb-2";
                 d.innerHTML = `
                     <div class="flex-grow pr-4">
-                        <p class="text-[13px] font-bold text-pink-500 uppercase tracking-tighter mb-0.5">${highlightText(item.AssetID, q)}</p>
+                        <p class="text-[13px] font-bold text-pink-500 uppercase mb-0.5">${highlightText(item.AssetID, q)}</p>
                         <p class="text-xs font-bold text-gray-700 leading-tight mb-1">${highlightText(item.FullDescription, q)}</p>
                         <p class="text-[10px] text-gray-400 truncate">${item.Description || 'ไม่มีรายละเอียด'}</p>
                     </div>
                     <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-1 bg-pink-50 text-pink-500 text-[9px] font-bold rounded-lg border border-pink-100">อายุ: ${item.AgeInfo || "--"}</span>
+                        <span class="px-2 py-1 bg-pink-50 text-pink-500 text-[9px] font-bold rounded-lg border border-pink-100 whitespace-nowrap">อายุ: ${item.AgeInfo || "--"}</span>
                         <i data-lucide="plus-circle" class="w-5 h-5 text-gray-200"></i>
                     </div>`;
                 d.onclick = () => { currentAsset = item; openAuditModal(); };
@@ -476,12 +495,15 @@
         } catch (e) { area.innerHTML = '<p class="text-center text-red-400">Search Error</p>'; }
     }
 
+    // --- Submit & Save Logic ---
     async function submitAudit(type, event) {
         if (event) event.preventDefault();
         try {
             showProcess("กำลังตรวจสอบข้อมูล...");
+            const currentGps = "0,0"; 
             const isExisting = type === 'EXISTING';
             const suffix = isExisting ? '' : 'nr_';
+
             const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
             const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
             const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
@@ -494,32 +516,60 @@
                 return "";
             }).filter(Boolean).join(",");
 
-            if (!typeId || !priorityId) { hideProcess(); return alert("ข้อมูลไม่ครบ: กรุณาเลือกประเภทและความสำคัญ"); }
-            if (!currentBase64Image) { hideProcess(); return alert("ลืมถ่ายรูป?: กรุณาถ่ายภาพก่อนบันทึก"); }
+            if (!typeId || !priorityId) {
+                hideProcess();
+                return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
+            }
+            if (!currentBase64Image) {
+                hideProcess();
+                return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
+            }
 
             let itemData = {
-                Asset_Type_ID: typeId, PIORITY_ID: priorityId, ImageData: currentBase64Image, gps: currentGps, Note1: note1Value,
+                Asset_Type_ID: typeId,
+                PIORITY_ID: priorityId,
+                ImageData: currentBase64Image,
+                gps: currentGps,
+                Note1: note1Value,
                 ASS_ON_OUT: isExisting ? "1" : "0",
-                Note2: [document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "", document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""].filter(Boolean).join(", "),
-                Shift_Work: shiftValues || "-", CoStatus: "COS-001", MAStatus: "-", Detail_ID: "-"
+                Note2: [
+                    document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
+                    document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
+                ].filter(Boolean).join(", "),
+                Shift_Work: shiftValues || "-",
+                CoStatus: "COS-001",
+                MAStatus: "-",
+                Detail_ID: "-"
             };
 
             if (isExisting) {
+                if (!currentAsset || !currentAsset.AssetID) {
+                    hideProcess();
+                    return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
+                }
                 itemData.NoID = currentAsset.NoID || "-";
                 itemData.Asset_ID = currentAsset.AssetID;
                 itemData.AssetName = currentAsset.FullDescription;
                 itemData.Serial = currentAsset.Serial || "-";
                 closeModal('auditFormModal');
             } else {
-                const brandDetail = document.getElementById('nr_brand_detail')?.value;
+                const brandDetail = document.getElementById('nr_brand_detail')?.value; 
+                if (!brandDetail) {
+                    hideProcess();
+                    return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
+                }
                 itemData.NoID = "NON-" + Date.now();
                 itemData.Asset_ID = "NR-" + Date.now();
                 itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
                 itemData.Serial = "-";
                 closeModal('nonRegisterModal');
             }
+
             await executeSave(itemData);
-        } catch (err) { hideProcess(); alert("Error: " + err.message); }
+        } catch (err) {
+            hideProcess();
+            showAlert("เกิดข้อผิดพลาด", "ระบบขัดข้อง: " + err.message);
+        }
     }
 
     async function executeSave(preparedData) {
@@ -529,72 +579,35 @@
             const payload = {
                 action: 'saveBulkSurvey',
                 data: {
-                    items: [preparedData], deptId: deptId, signature: "", gps: preparedData.gps,
-                    activityId: "Ac-2569", IT_User_Mail: "user@udonhospital.com"
+                    items: [preparedData],
+                    deptId: deptId,
+                    signature: "",
+                    gps: preparedData.gps,
+                    activityId: "Ac-2569",
+                    IT_User_Mail: "user@udonhospital.com"
                 }
             };
             const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
+
             if (result.status === 'success') {
                 ['confirmModal', 'auditModal', 'scannerModal', 'auditFormModal', 'nonRegisterModal'].forEach(id => closeModal(id));
-                if (typeof renderSuccessSlip === 'function') renderSuccessSlip(result.actionId, payload.data.items);
+                if (typeof renderSuccessSlip === 'function') renderSuccessSlip(result.actionId, [ { DisplayName: preparedData.AssetName, data: preparedData } ]);
                 clearAuditForm();
-                if(document.getElementById('assetQuery')) document.getElementById('assetQuery').value = "";
-                if(document.getElementById('resultsArea')) document.getElementById('resultsArea').innerHTML = "";
-            } else { alert("บันทึกไม่สำเร็จ: " + result.message); }
-        } catch (e) { alert("Error: ไม่สามารถส่งข้อมูลได้"); }
+                const q = document.getElementById('assetQuery');
+                if (q) q.value = ""; 
+            } else {
+                showAlert("บันทึกไม่สำเร็จ", result.message);
+            }
+        } catch (e) { showAlert("เกิดข้อผิดพลาด", "ไม่สามารถส่งข้อมูลได้"); }
         finally { hideProcess(); }
     }
 
-    function showProcess(m) {
-        const msg = document.getElementById('processMessage');
-        const overlay = document.getElementById('processOverlay');
-        if (msg) msg.innerText = m;
-        if (overlay) overlay.classList.remove('hidden');
-    }
-
-    function hideProcess() {
-        const overlay = document.getElementById('processOverlay');
-        if (overlay) overlay.classList.add('hidden');
-    }
-
-    function closeModal(id) {
-        const modal = document.getElementById(id);
-        if (modal) {
-            modal.classList.add('hidden');
-            if (id === 'receiptModal') {
-                const detail = document.getElementById('receiptDetail');
-                if (detail) detail.innerHTML = '';
-            }
-        }
-    }
-
-    async function openScanner(id) {
-        document.getElementById('scannerModal').classList.remove('hidden');
-        try {
-            await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, async (text) => {
-                let processedText = text;
-                if (processedText.includes("http")) {
-                    const match = processedText.match(/IcmAssetDetail\/([^\/]+)/);
-                    if (match && match[1]) processedText = match[1];
-                }
-                document.getElementById(id).value = processedText;
-                await closeScanner();
-                if (id === 'assetQuery') searchAsset();
-            });
-        } catch (e) { console.error("Scanner Error", e); closeScanner(); }
-    }
-
-    async function closeScanner() {
-        if(html5QrCode && html5QrCode.isScanning) await html5QrCode.stop();
-        closeModal('scannerModal');
-    }
-
+    // --- UI Navigation & Utilities ---
     function switchPage(page) {
-        const btnSurvey = document.getElementById('btnNavSurvey');
-        const btnReport = document.getElementById('btnNavReport');
-        const surveyPage = document.getElementById('surveyPage');
-        const reportPage = document.getElementById('reportPage');
+        const btnSurvey = document.getElementById('btnNavSurvey'), btnReport = document.getElementById('btnNavReport');
+        const surveyPage = document.getElementById('surveyPage'), reportPage = document.getElementById('reportPage');
+        if (!btnSurvey || !btnReport) return;
         if (page === 'survey') {
             btnSurvey.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all bg-white shadow-sm text-pink-500";
             btnReport.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all text-gray-400";
@@ -609,160 +622,71 @@
         }
     }
 
-    function renderSuccessSlip(actionId, items) {
-        const deptId = document.getElementById('selectedDeptId').value;
-        const deptName = document.getElementById('displayDeptName').innerText;
-        const detailBox = document.getElementById('successDetailList');
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const targetUrl = DEPT_VIEW_URL + encodeURIComponent(deptId);
-        const qrImageUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8&chld=L|1`;
-        
-        const itemsListHtml = items.map(i => `
-            <div class="flex justify-between items-start py-1 border-b border-gray-50 last:border-0">
-                <span class="text-[9px] text-gray-500 flex-grow pr-2">${i.AssetName || i.DisplayName}</span>
-                <span class="text-[9px] font-bold text-gray-400 whitespace-nowrap">${i.Asset_ID}</span>
-            </div>
-        `).join('');
-
-        detailBox.innerHTML = `
-            <div class="flex flex-col items-center mb-6 pt-4 border-t border-dashed border-gray-200">
-                <div class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm mb-3">
-                    <img id="slipQrImg" src="${qrImageUrl}" class="w-32 h-32" crossorigin="anonymous">
-                </div>
-                <p class="text-[8px] text-blue-500 truncate max-w-full px-4 overflow-hidden break-all">${targetUrl}</p>
-            </div>
-            <div class="space-y-2 border-t border-gray-100 pt-4 mb-4">
-                <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">หน่วยงาน:</span> <span class="text-[10px] font-bold text-gray-700">${deptName}</span></div>
-                <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">ACTION ID:</span> <span class="text-[10px] font-bold text-pink-500">${actionId || 'N/A'}</span></div>
-            </div>
-            <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-50">
-                <div class="max-h-40 overflow-y-auto">${itemsListHtml}</div>
-            </div>
-        `;
-        document.getElementById('successStatusTitle').innerText = "บันทึกสำเร็จ!";
-        document.getElementById('successModal').classList.remove('hidden');
-        lucide.createIcons();
+    function showProcess(m) { 
+        const msg = document.getElementById('processMessage'); 
+        const overlay = document.getElementById('processOverlay');
+        if (msg) msg.innerText = m; 
+        if (overlay) overlay.classList.remove('hidden'); 
     }
 
-    async function loadRecordedData() {
-        const container = document.getElementById('recordedContainer');
-        if (!container) return;
-        container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div></div>';
-        try {
-            const response = await fetch(`${API_URL}?action=getTodayRecords`); 
-            const data = await response.json();
-            if (!data || data.length === 0) {
-                container.innerHTML = '<p class="text-center py-16 text-xs text-gray-400">ไม่พบรายการบันทึกของวันนี้</p>';
-                return;
+    function hideProcess() {
+        const overlay = document.getElementById('processOverlay');
+        if (overlay) overlay.classList.add('hidden');
+    }
+
+    function closeModal(id) { 
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('hidden'); 
+            if (id === 'receiptModal') {
+                const detail = document.getElementById('receiptDetail');
+                if (detail) detail.innerHTML = '';
             }
-            const grouped = data.reduce((acc, item) => {
-                const dept = item.department || "ไม่ระบุหน่วยงาน";
-                if (!acc[dept]) acc[dept] = [];
-                acc[dept].push(item);
-                return acc;
-            }, {});
-            container.innerHTML = '';
-            for (const [dept, items] of Object.entries(grouped)) {
-                let deptHtml = `<div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6">
-                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5 text-white font-bold text-sm">${dept}</div>
-                    <div class="p-2 space-y-2">
-                        ${items.map(item => `
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                                <div>
-                                    <p class="text-[14px] font-bold text-gray-800">${item.asset_name}</p>
-                                    <p class="text-[10px] text-pink-500 font-bold">${item.asset_id}</p>
-                                </div>
-                                <button onclick='showReceipt(${JSON.stringify(item)})' class="p-3 bg-white rounded-xl shadow-sm"><i data-lucide="printer" class="w-4 h-4"></i></button>
-                            </div>
-                        `).join('')}
-                    </div></div>`;
-                container.insertAdjacentHTML('beforeend', deptHtml);
-            }
-            lucide.createIcons();
-        } catch (error) { container.innerHTML = 'Error loading data'; }
+        }
     }
 
-    function showReceipt(item) {
-        const detail = document.getElementById('receiptDetail');
-        if (!detail) return;
-        detail.innerHTML = `
-            <div class="space-y-1">
-                <p><b>รหัส:</b> ${item.asset_id || item.Asset_ID}</p>
-                <p><b>รายการ:</b> ${item.asset_name || item.AssetName}</p>
-                <p><b>หน่วยงาน:</b> ${item.department || item.DEPT_NAME}</p>
-                <p><b>วันที่:</b> ${new Date().toLocaleString('th-TH')}</p>
-            </div>`;
-        document.getElementById('receiptModal')?.classList.remove('hidden');
-        lucide.createIcons();
-    }
+    async function closeScanner() { if(html5QrCode && html5QrCode.isScanning) await html5QrCode.stop(); closeModal('scannerModal'); }
 
-    function populateSelects() {
-        const selects = ['assetTypeId', 'nr_asset_type_id', 'priorityId', 'nr_priorityId'];
-        selects.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.innerHTML = '<option value="">เลือกข้อมูล...</option>';
-            const list = id.toLowerCase().includes('priority') ? configData.priorities : configData.assetTypes;
-            list.forEach(item => el.add(new Option(item.NAME, item.ID)));
+    function clearAuditForm() {
+        currentBase64Image = "";
+        const forms = [
+            {p: 'imgPreview', h: 'imgPlaceholder', i: 'imgInput'},
+            {p: 'nr_imgPreview', h: 'nr_imgPlaceholder', i: 'nr_imgInput'}
+        ];
+        forms.forEach(f => {
+            const p = document.getElementById(f.p), h = document.getElementById(f.h), i = document.getElementById(f.i);
+            if (p) { p.src = ""; p.classList.add('hidden'); }
+            if (h) h.classList.remove('hidden');
+            if (i) i.value = "";
         });
     }
 
+    // --- Helper Functions (Highlight, Populate, etc.) ---
     function highlightText(fullText, query) {
         if (!query || !fullText) return fullText || "";
         const regex = new RegExp(`(${query})`, 'gi');
         return String(fullText).replace(regex, '<span class="text-green-500 font-bold">$1</span>');
     }
 
-    function clearAuditForm() {
-        currentBase64Image = "";
-        const forms = [{p: 'imgPreview', h: 'imgPlaceholder', i: 'imgInput'}, {p: 'nr_imgPreview', h: 'nr_imgPlaceholder', i: 'nr_imgInput'}];
-        forms.forEach(f => {
-            const img = document.getElementById(f.p);
-            if(img) { img.src = ""; img.classList.add('hidden'); }
-            const ph = document.getElementById(f.h);
-            if(ph) ph.classList.remove('hidden');
-            const inp = document.getElementById(f.i);
-            if(inp) inp.value = "";
+    function populateSelects() {
+        const types = [document.getElementById('assetTypeId'), document.getElementById('nr_asset_type_id')];
+        const priors = [document.getElementById('priorityId'), document.getElementById('nr_priorityId')];
+        types.forEach(s => {
+            if(!s) return;
+            s.innerHTML = '<option value="" disabled selected>-- ประเภทครุภัณฑ์ --</option>';
+            configData.assetTypes.forEach(a => s.add(new Option(a.name, a.id)));
+        });
+        priors.forEach(s => {
+            if(!s) return;
+            s.innerHTML = '<option value="" disabled selected>-- การใช้งาน --</option>';
+            configData.priorities.forEach(p => s.add(new Option(p.name, p.id)));
         });
     }
 
-    async function compressImage(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const max = 800;
-                    let w = img.width, h = img.height;
-                    if (w > h) { if (w > max) { h *= max / w; w = max; } }
-                    else { if (h > max) { w *= max / h; h = max; } }
-                    canvas.width = w; canvas.height = h;
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-            };
-        });
-    }
-
-    async function handleFileSelect(event, previewId, placeholderId) {
-        const file = event.target.files[0];
-        if (!file) return;
-        showProcess("กำลังย่อรูป...");
-        currentBase64Image = await compressImage(file);
-        const preview = document.getElementById(previewId);
-        const placeholder = document.getElementById(placeholderId);
-        if (preview) { preview.src = currentBase64Image; preview.classList.remove('hidden'); }
-        if (placeholder) placeholder.classList.add('hidden');
-        hideProcess();
-    }
-
-    function handleResize() { if(signaturePad) signaturePad.clear(); }
+    function resetDeptSelection() { location.reload(); }
+    function handleResize() { /* Signature Pad Resize Logic */ }
 </script>
+<input type="hidden" id="selectedDeptId">
     <input type="hidden" id="selectedDeptId">
 </body>
 </html>
