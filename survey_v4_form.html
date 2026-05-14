@@ -994,29 +994,41 @@ async function loadRecordedData() {
     const container = document.getElementById('recordedContainer');
     if (!container) return;
 
-    // แสดงตัวหมุนโหลด (คงเดิม)
-    container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div><p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">กำลังดึงข้อมูล...</p></div>';
+    container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div></div>';
 
     try {
-        // ใช้การเชื่อมต่อเดิมของคุณผ่าน API_URL และ fetch
-        const response = await fetch(`${API_URL}?action=getTodayRecords`); 
+        const response = await fetch(`${API_URL}?action=getTodayRecords`);
         const data = await response.json();
 
         if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2.5rem] border border-dashed border-gray-200"><p class="text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบรายการบันทึกของวันนี้</p></div>';
+            container.innerHTML = '<div class="text-center py-16">...ไม่พบรายการ...</div>';
             return;
         }
 
-        // Logic การจัดกลุ่ม (Grouping) เดิมของคุณ
+        // --- จุดแก้ไข: สร้าง Mapping จาก configData ที่คุณมีอยู่แล้ว ---
+        const typeMap = {};
+        configData.assetTypes.forEach(t => {
+            typeMap[t.id] = t.name;
+        });
+
         const grouped = data.reduce((acc, item) => {
             const dept = item.department || "ไม่ระบุหน่วยงาน";
-            const type = item.asset_type || "ทั่วไป";
+            
+            // ดึง ID จากข้อมูลที่บันทึกมา (ตรวจสอบทั้งสองชื่อที่อาจเป็นไปได้)
+            const tid = item.Asset_Type_ID || item.asset_type_id;
+            
+            // ถ้าเจอ ID ใน Map ให้ดึงชื่อมา ถ้าไม่เจอให้โชว์ ID นั้นตรงๆ (อย่าเพิ่งสรุปว่าเป็น "ทั่วไป")
+            const typeLabel = typeMap[tid] || (tid ? `รหัส: ${tid}` : "ไม่ระบุประเภท");
+
             if (!acc[dept]) acc[dept] = {};
-            if (!acc[dept][type]) acc[dept][type] = [];
-            acc[dept][type].push(item);
+            if (!acc[dept][typeLabel]) acc[dept][typeLabel] = [];
+            acc[dept][typeLabel].push(item);
             return acc;
         }, {});
+        // ---------------------------------------------------------
 
+      
+        // ... (ส่วนการ Render HTML ด้านล่างใช้ตัวแปร typeLabel แทน type เดิม) ...
         container.innerHTML = ''; // ล้างตัวหมุนออก
 
         for (const [dept, types] of Object.entries(grouped)) {
