@@ -968,31 +968,11 @@ async function loadRecordedData() {
        // ==========================================
 // ส่วนที่ 2: ฟังก์ชันควบคุม UI และ Utility (ต้นฉบับของพี่)
 // ==========================================
-function showReceipt(item) {
-    const detail = document.getElementById('receiptDetail');
-    if (!detail) return;
-    // แก้ไข Mapping ข้อมูลให้ใช้ได้ทั้งจากรายงานและจากรายการวันนี้ (เพราะชื่อ field ใน db ต่างกัน)
-    detail.innerHTML = `
-        <div class="space-y-1">
-            <p><b>รหัส:</b> ${item.asset_id || item.Asset_ID}</p>
-            <p><b>รายการ:</b> ${item.asset_name || item.AssetName}</p>
-            <p><b>หน่วยงาน:</b> ${item.department || item.DEPT_NAME}</p>
-            <p><b>ผู้ตรวจสอบ:</b> ${item.auditor_name || '-'}</p>
-            <p><b>วันที่:</b> ${new Date().toLocaleString('th-TH')}</p>
-        </div>`;
-    document.getElementById('receiptModal')?.classList.remove('hidden');
-    lucide.createIcons();
-}
+
 
 async function closeScanner() { 
     if(html5QrCode && html5QrCode.isScanning) await html5QrCode.stop(); 
     closeModal('scannerModal'); 
-}
-
-function showProcess(m) { 
-    const msg = document.getElementById('processMessage');
-    if (msg) msg.innerText = m; 
-    document.getElementById('processOverlay')?.classList.remove('hidden'); 
 }
 
 
