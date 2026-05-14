@@ -708,19 +708,29 @@ async function submitAudit(type, event) {
             itemData.AssetName = currentAsset.FullDescription;
             itemData.Serial = currentAsset.Serial || "-";
             closeModal('auditFormModal');
-        } else {
+       } else {
+    // 1. ดึงค่าจากช่อง Input ที่เพิ่มเข้ามาใหม่
+            const nrAssetIDInput = document.getElementById('nr_asset_id')?.value || "-";
+            const nrSerialInput = document.getElementById('nr_serial')?.value || "-";
             const brandDetail = document.getElementById('nr_brand_detail')?.value; 
+        
+            // 2. ตรวจสอบเงื่อนไข (ยี่ห้อ+รายละเอียด ยังคงจำเป็นต้องมี)
             if (!brandDetail) {
                 hideProcess();
                 return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
             }
+        
+            // 3. กำหนดค่าลงใน itemData
+            // ถ้า User กรอก "รหัสครุภัณฑ์ (ถ้ามี)" มาให้ใช้ค่าที่กรอก ถ้าไม่กรอกให้ใช้ NON + timestamp
             itemData.NoID = "NON-" + Date.now();
-            itemData.Asset_ID =  "NR-" + Date.now();
+            itemData.Asset_ID = nrAssetIDInput || ("NR-" + Date.now()); 
             itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
-            itemData.Serial = nr_assetID;
+            
+            // ใช้ค่า Serial จากช่อง nr_serial ที่ดึงมา
+            itemData.Serial = nrSerialInput || "-"; 
+        
             closeModal('nonRegisterModal');
         }
-
         // --- จุดสำคัญ: ส่ง itemData ที่ปั้นเสร็จแล้วไปบันทึกเลย ---
         await executeSave(itemData);
 
