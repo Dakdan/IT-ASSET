@@ -519,62 +519,103 @@ async function handleImageSelection(input, previewId, placeholderId) {
         return String(fullText).replace(regex, '<span class="text-green-500 font-bold">$1</span>');
     }
 
-   async function searchAsset() {
-        let q = document.getElementById('assetQuery').value.trim();
-        const area = document.getElementById('resultsArea');
-        
-        // ... (ส่วนการจัดการ URL คงเดิม) ...
-    
-        try {
-            const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
-            let data = await res.json(); // เปลี่ยนจาก const เป็น let เพื่อให้เรียงลำดับได้
-            area.innerHTML = '';
-            
-            if (!data || data.length === 0) {
-                area.innerHTML = '<p class="col-span-full text-center p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบข้อมูล</p>';
-                return;
-            }
-    
-            // --- เพิ่มส่วนการเรียงลำดับ (Right-to-Left Sort) ตรงนี้ ---
-            data.sort((a, b) => {
-                const idA = String(a.AssetID || "");
-                const idB = String(b.AssetID || "");
-                const searchQ = String(q);
-    
-                const getSuffixMatch = (id, query) => {
-                    let count = 0;
-                    // กลับด้านข้อความเพื่อเช็คจากท้าย
-                    const revId = id.split('').reverse();
-                    const revQ = query.split('').reverse();
-                    for (let i = 0; i < Math.min(revId.length, revQ.length); i++) {
-                        if (revId[i] === revQ[i]) count++;
-                        else break; // หลุดทันทีถ้าไม่ตรง เพื่อเน้นเลขท้ายสุดจริงๆ
-                    }
-                    return count;
-                };
-    
-                const scoreA = getSuffixMatch(idA, searchQ);
-                const scoreB = getSuffixMatch(idB, searchQ);
-    
-                if (scoreB !== scoreA) return scoreB - scoreA; // ใครเลขท้ายตรงมากกว่าขึ้นก่อน
-                return idA.length - idB.length; // ถ้าเท่ากัน ใครรหัสสั้นกว่าขึ้นก่อน
-            });
-            // --- จบส่วนการเรียงลำดับ ---
-    
-            // เริ่มสร้าง HTML (Logic เดิมของคุณ)
-            data.forEach(item => {
-                const d = document.createElement('div');
-                // ... (โค้ดการแสดงผล highlightedID, highlightedName และ d.innerHTML เดิมของคุณ) ...
-                
-                d.onclick = () => { currentAsset = item; openAuditModal(); };
-                area.appendChild(d);
-            });
-            
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        } catch (e) { 
-            area.innerHTML = '<p class="text-center text-red-400">Search Error</p>'; 
+  async function searchAsset() {
+    // 1. จัดการตัวแปรและ URL (ลบส่วนที่ซ้ำออก)
+    let q = document.getElementById('assetQuery').value.trim();
+    const area = document.getElementById('resultsArea');
+    if (!area) return;
+
+    if (q.includes("http")) {
+        const match = q.match(/IcmAssetDetail\/([^\/]+)/);
+        if (match && match[1]) {
+            q = match[1];
+            document.getElementById('assetQuery').value = q;
         }
     }
+
+    if (!q) { area.innerHTML = ''; return; }
+
+    try {
+        const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
+        let data = await res.json();
+        area.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            area.innerHTML = '<p class="col-span-full text-center p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบข้อมูล</p>';
+            return;
+        }
+
+        // 2. การเรียงลำดับ (Right-to-Left Sort)
+        data.sort((a, b) => {
+            const idA = String(a.AssetID || a.Asset_ID || "");
+            const idB = String(b.AssetID || b.Asset_ID || "");
+            const searchQ = String(q);
+
+            const getSuffixMatch = (id, query) => {
+                let count = 0;
+                const revId = id.split('').reverse();
+                const revQ = query.split('').reverse();
+                for (let i = 0; i < Math.min(revId.length, revQ.length); i++) {
+                    if (revId[i] === revQ[i]) count++;
+                    else break;
+                }
+                return count;
+            };
+
+            const scoreA = getSuffixMatch(idA, searchQ);
+            const scoreB = getSuffixMatch(idB, searchQ);
+            if (scoreB !== scoreA) return scoreB - scoreA;
+            return idA.length - idB.length;
+        });
+
+        // 3. ฟังก์ชันสำหรับทำไฮไลท์
+        const getHighlight = (text, query) => {
+            if (!query) return text;
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // ป้องกันตัวอักษรพิเศษ
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            return String(text).replace(regex, `<span class="bg-yellow-200 text-black font-bold px-0.5 rounded">$1</span>`);
+        };
+
+        // 4. แสดงผล HTML
+        data.forEach(item => {
+            const d = document.createElement('div');
+            d.className = "p-3 mb-2 bg-white border border-pink-100 rounded-xl shadow-sm hover:bg-pink-50 cursor-pointer transition-all";
+
+            const rawID = item.AssetID || item.Asset_ID || "-";
+            const rawName = item.AssetName || item.asset_name || "ไม่ระบุชื่อ";
+
+            // ทำไฮไลท์
+            const highlightedID = getHighlight(rawID, q);
+            const highlightedName = getHighlight(rawName, q);
+
+            d.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-grow">
+                        <div class="mb-1">
+                            <span class="text-[10px] font-bold text-pink-500 tracking-wider">${highlightedID}</span>
+                        </div>
+                        <p class="text-[11px] text-gray-700 leading-tight">${highlightedName}</p>
+                    </div>
+                    <div class="ml-2 pt-1 text-pink-200">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            `;
+
+            d.onclick = () => { 
+                currentAsset = item; 
+                if (typeof openAuditModal === 'function') openAuditModal(); 
+            };
+            area.appendChild(d);
+        });
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    } catch (e) {
+        console.error("Search Error:", e);
+        area.innerHTML = '<p class="text-center text-red-400 p-4 text-xs font-bold">SEARCH ERROR</p>';
+    }
+}
 
     function openAuditModal() {
         resetImage('imgPreview', 'imgPlaceholder', 'imgInput');
