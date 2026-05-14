@@ -212,7 +212,10 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">รหัสครุภัณฑ์ (ถ้ามี)</label>
-                            <input type="text" id="nr_asset_id" placeholder="..." class="w-full p-3.5 bg-slate-50 rounded-xl text-sm font-bold border-none outline-none focus:ring-2 focus:ring-orange-500/20">
+                            <div class="flex gap-1.5">
+                                <input type="text" id="nr_asset_id" placeholder="..." class="w-full p-3.5 bg-slate-50 rounded-xl text-sm font-bold border-none outline-none focus:ring-2 focus:ring-orange-500/20">
+                                <button onclick="openScanner('nr_asset_id')" class="p-3 bg-slate-100 text-slate-500 rounded-xl active:scale-90"><i data-lucide="scan" class="w-5 h-5"></i></button>
+                            </div>
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Serial Number</label>
@@ -251,7 +254,6 @@
                         <input type="checkbox" name="nr_shift_work" value="เช้า" id="nr_shift_m" class="hidden shift-checkbox">
                         <label for="nr_shift_m" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">เช้า</label>
                         <input type="checkbox" name="nr_shift_work" value="บ่าย" id="nr_shift_a" class="hidden shift-checkbox">
-                        <label for="shift_a" id="label_nr_shift_a" for="nr_shift_a" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">บ่าย</label>
                         <label for="nr_shift_a" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">บ่าย</label>
                         <input type="checkbox" name="nr_shift_work" value="ดึก" id="nr_shift_n" class="hidden shift-checkbox">
                         <label for="nr_shift_n" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">ดึก</label>
