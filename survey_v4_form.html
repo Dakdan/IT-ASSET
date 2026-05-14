@@ -725,7 +725,7 @@ async function submitAudit(type, event) {
                 itemData.NoID = "NON-" + Date.now();
                 // ปรับ Asset_ID ให้สั้นลงเล็กน้อยหากไม่มีข้อมูล เพื่อป้องกัน Error ฝั่ง Server
                 itemData.Asset_ID = nrAssetIDInput || ("NR-" + Math.floor(Date.now() / 1000)); 
-                itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
+                itemData.Detail_ID = "[นอกทะเบียน] " + brandDetail;
                 itemData.Serial = nrSerialInput || "-"; 
             
                 hideProcess(); // ปิด Process ก่อนปิด Modal
