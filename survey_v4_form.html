@@ -1010,26 +1010,26 @@ function closeModal(id) {
         // --- ส่วนที่แก้ไข: สร้าง Map เพื่อแปลง ID เป็น Name ---
         const deptMap = {};
         masterDeptList.forEach(d => { deptMap[d.id] = d.name; });
-
         const typeMap = {};
         configData.assetTypes.forEach(t => { typeMap[t.id] = t.name; });
-
-        // Logic การจัดกลุ่ม (Grouping) โดยเปลี่ยนรหัสเป็นชื่อ
+      
+        // 2. ปรับปรุงตอน Group ข้อมูล (ในฟังก์ชัน loadRecordedData)
         const grouped = data.reduce((acc, item) => {
-            // แปลงรหัสหน่วยงาน -> ชื่อหน่วยงาน
-            const dId = item.department || item.dept_id;
-            const deptName = deptMap[dId] || dId || "ไม่ระบุหน่วยงาน";
+            // --- จุดสำคัญ ---
+            const dId = item.department || item.dept_id; // ดึงรหัสออกมา
+            const deptName = deptMap[dId] || dId;        // เอาตัว Map ไปส่องหาชื่อ ถ้าไม่เจอค่อยใช้รหัสเดิม
             
-            // แปลงรหัสประเภท -> ชื่อประเภท
             const tId = item.Asset_Type_ID || item.asset_type_id;
-            const typeName = typeMap[tId] || (tId ? `รหัส: ${tId}` : "ทั่วไป");
-
+            const typeName = (configData.assetTypes.find(t => t.id === tId)?.name) || tId;
+        
+            // ใช้ deptName (ชื่อหน่วยงาน) เป็น Key แทนการใช้รหัส
             if (!acc[deptName]) acc[deptName] = {};
             if (!acc[deptName][typeName]) acc[deptName][typeName] = [];
             acc[deptName][typeName].push(item);
             return acc;
         }, {});
-
+        // Logic การจัดกลุ่ม (Grouping) โดยเปลี่ยนรหัสเป็นชื่อ
+       
         container.innerHTML = ''; // ล้างตัวหมุนออก
 
         // การ Render HTML
