@@ -714,9 +714,9 @@ async function submitAudit(type, event) {
                 return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
             }
             itemData.NoID = "NON-" + Date.now();
-            itemData.Asset_ID = currentAsset.AssetID || "NR-" + Date.now();
+            itemData.Asset_ID =  "NR-" + Date.now();
             itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
-            itemData.Serial = currentAsset.Serial || "-";
+            itemData.Serial = "-";
             closeModal('nonRegisterModal');
         }
 
