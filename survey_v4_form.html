@@ -996,48 +996,50 @@ async function loadRecordedData() {
 
     container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div></div>';
 
+   // ... (ส่วนเริ่มฟังก์ชันและการดึงข้อมูล Fetch เหมือนเดิม)
+
     try {
-        const response = await fetch(`${API_URL}?action=getTodayRecords`);
+        const response = await fetch(`${API_URL}?action=getTodayRecords`); 
         const data = await response.json();
 
         if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-center py-16">...ไม่พบรายการ...</div>';
+            container.innerHTML = '<div class="text-center py-16...">ไม่พบรายการบันทึกของวันนี้</div>';
             return;
         }
 
-        // --- จุดแก้ไข: สร้าง Mapping จาก configData ที่คุณมีอยู่แล้ว ---
+        // --- 1. เตรียม Map สำหรับแปลงรหัสเป็นชื่อ (เพื่อความเร็วและไม่มั่ว) ---
+        const deptMap = {};
+        masterDeptList.forEach(d => { deptMap[d.id] = d.name; });
+
         const typeMap = {};
-        configData.assetTypes.forEach(t => {
-            typeMap[t.id] = t.name;
-        });
+        configData.assetTypes.forEach(t => { typeMap[t.id] = t.name; });
 
+        // --- 2. Logic การจัดกลุ่ม (Grouping) ที่แปลงรหัสเป็นชื่อทันที ---
         const grouped = data.reduce((acc, item) => {
-            const dept = item.department || "ไม่ระบุหน่วยงาน";
+            // แปลงรหัสหน่วยงาน -> ชื่อหน่วยงาน
+            const dId = item.department || item.dept_id;
+            const deptName = deptMap[dId] || dId || "ไม่ระบุหน่วยงาน";
             
-            // ดึง ID จากข้อมูลที่บันทึกมา (ตรวจสอบทั้งสองชื่อที่อาจเป็นไปได้)
-            const tid = item.Asset_Type_ID || item.asset_type_id;
-            
-            // ถ้าเจอ ID ใน Map ให้ดึงชื่อมา ถ้าไม่เจอให้โชว์ ID นั้นตรงๆ (อย่าเพิ่งสรุปว่าเป็น "ทั่วไป")
-            const typeLabel = typeMap[tid] || (tid ? `รหัส: ${tid}` : "ไม่ระบุประเภท");
+            // แปลงรหัสประเภท -> ชื่อประเภท
+            const tId = item.Asset_Type_ID || item.asset_type_id;
+            const typeName = typeMap[tId] || (tId ? `รหัส: ${tId}` : "ทั่วไป");
 
-            if (!acc[dept]) acc[dept] = {};
-            if (!acc[dept][typeLabel]) acc[dept][typeLabel] = [];
-            acc[dept][typeLabel].push(item);
+            if (!acc[deptName]) acc[deptName] = {};
+            if (!acc[deptName][typeName]) acc[deptName][typeName] = [];
+            acc[deptName][typeName].push(item);
             return acc;
         }, {});
-        // ---------------------------------------------------------
 
-      
-        // ... (ส่วนการ Render HTML ด้านล่างใช้ตัวแปร typeLabel แทน type เดิม) ...
         container.innerHTML = ''; // ล้างตัวหมุนออก
 
+        // --- 3. การ Render (ใช้ตัวแปรชื่อเดิม แต่ค่าใน Object ถูกแปลงเป็นชื่อแล้ว) ---
         for (const [dept, types] of Object.entries(grouped)) {
             let deptHtml = `
                 <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6 animate-in fade-in">
                     <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
                         <div class="flex items-center gap-3 text-white">
                             <i data-lucide="building" class="w-5 h-5"></i>
-                            <h3 class="font-bold text-sm">${dept}</h3>
+                            <h3 class="font-bold text-sm">${dept}</h3> <!-- แสดงชื่อหน่วยงาน -->
                         </div>
                     </div>
                     <div class="p-2 space-y-2">`;
@@ -1045,7 +1047,7 @@ async function loadRecordedData() {
             for (const [type, items] of Object.entries(types)) {
                 deptHtml += `
                     <div class="p-3">
-                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${type}</p>
+                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${type}</p> <!-- แสดงชื่อประเภท -->
                         <div class="space-y-2">
                             ${items.map(item => `
                                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-50">
@@ -1064,7 +1066,9 @@ async function loadRecordedData() {
             deptHtml += `</div></div>`;
             container.insertAdjacentHTML('beforeend', deptHtml);
         }
-        lucide.createIcons(); // โหลดไอคอน
+        lucide.createIcons();
+// ... (ส่วน catch error เหมือนเดิม)
+       // โหลดไอคอน
     } catch (error) {
         // หากเกิด Error ให้หยุดหมุนและแสดงข้อความแจ้งเตือน
         container.innerHTML = `<div class="text-center py-10 text-red-400 text-xs font-bold bg-red-50 rounded-3xl mx-4">⚠️ ไม่สามารถโหลดข้อมูลได้: ${error.message}</div>`;
