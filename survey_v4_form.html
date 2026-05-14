@@ -753,12 +753,12 @@ async function executeSave(preparedData) {
         const payload = {
             action: 'saveBulkSurvey',
             data: {
-                items: [preparedData],
+                items: [preparedData], // ส่งไปเป็น Array ตัวเดียว
                 deptId: deptId,
                 signature: "", 
                 gps: preparedData.gps,
-                activityId: "Ac-2569", // ตรวจสอบปีงบประมาณให้ถูกต้อง
-                IT_User_Mail: "user@udonhospital.com" // แนะนำให้ดึงจาก Session ถ้าทำได้
+                activityId: "Ac-2569",
+                IT_User_Mail: "user@udonhospital.com"
             }
         };
 
@@ -767,30 +767,41 @@ async function executeSave(preparedData) {
             body: JSON.stringify(payload)
         });
         
-        // เช็คว่า Server ตอบกลับมาเป็น HTTP 200 หรือไม่
         if (!res.ok) throw new Error("Server Response Error: " + res.status);
 
         const result = await res.json();
 
         if (result.status === 'success') {
-            // ปิดทุก Modal ที่เกี่ยวข้อง (รวมชื่อ ID ที่ใช้ใน submitAudit)
+            // 1. ปิด Modal ต่างๆ
             ['confirmModal', 'auditFormModal', 'nonRegisterModal', 'scannerModal'].forEach(id => {
                 const m = document.getElementById(id);
                 if (m) m.classList.add('hidden');
             });
             
-            if (typeof renderSuccessSlip === 'function') {
-                renderSuccessSlip(result.actionId, payload.data.items);
+            // 2. เปลี่ยนมาใช้ showReceipt แทน renderSuccessSlip
+            // ส่งข้อมูลรายการแรก (และรายการเดียว) จาก payload เข้าไปแสดงผล
+            if (typeof showReceipt === 'function') {
+                const savedItem = payload.data.items[0];
+                
+                // ตรวจสอบให้แน่ใจว่าฟิลด์ชื่อตรงกับที่ showReceipt ต้องการ
+                // ถ้า showReceipt ใช้ asset_name แต่ preparedData ใช้ AssetName ต้อง Mapping ให้ตรงกัน
+                const itemForReceipt = {
+                    asset_id: savedItem.Asset_ID || savedItem.asset_id,
+                    asset_name: savedItem.AssetName || savedItem.asset_name,
+                    department: document.getElementById('displayDeptName')?.innerText || "-",
+                    auditor_name: savedItem.auditor_name || "เจ้าหน้าที่ IT",
+                    timestamp: new Date().toLocaleString('th-TH')
+                };
+
+                showReceipt(itemForReceipt);
             }
             
-            // ล้างข้อมูลหลังบันทึกสำเร็จ
+            // 3. ล้างข้อมูลหลังบันทึกสำเร็จ
             if (typeof clearAuditForm === 'function') clearAuditForm();
-            
             const q = document.getElementById('assetQuery');
             if (q) q.value = ""; 
 
         } else {
-            // กรณี GAS ส่ง status: 'error' กลับมา
             showAlert("บันทึกไม่สำเร็จ", result.message || "โปรดตรวจสอบข้อมูลอีกครั้ง");
         }
 
