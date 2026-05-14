@@ -796,7 +796,57 @@ async function executeSave(preparedData) {
         hideProcess(); 
     }
 }
-
+// เพิ่มฟังก์ชันนี้ลงไปในไฟล์ survey_v4_form.html ของคุณ
+function showAlert(title, msg) {
+    // ถ้ายังไม่มี Modal ตามโครงสร้างเดิม ให้ใช้ alert ของเบราว์เซอร์ทดสอบก่อน
+    const modal = document.getElementById('alertModal');
+    if (modal) {
+        document.getElementById('alertTitle').textContent = title;
+        document.getElementById('alertMessage').textContent = msg;
+        modal.classList.remove('hidden');
+    } else {
+        alert(title + ": " + msg); 
+    }
+}
+function clearAuditForm() {
+    // 1. ล้างรูปภาพและรีเซ็ต Preview (โค้ดเดิมของคุณ)
+         currentBase64Image = "";
+         const forms = [
+                {p: 'imgPreview', h: 'imgPlaceholder', i: 'imgInput'},
+                {p: 'nr_imgPreview', h: 'nr_imgPlaceholder', i: 'nr_imgInput'}
+            ];
+            forms.forEach(f => {
+         const preview = document.getElementById(f.p);
+         const placeholder = document.getElementById(f.h);
+         const input = document.getElementById(f.i);
+            
+            if (preview) { preview.src = ""; preview.classList.add('hidden'); }
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (input) input.value = "";
+        });
+    
+        // 2. ล้างค่า Input ของหน้า Audit (ทรัพย์สินในทะเบียน)
+        const auditFields = ['assetTypeId', 'priorityId', 'note1'];
+        auditFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = ""; 
+        });
+    
+        // 3. ล้างค่า Input ของหน้า Non-Register (นอกทะเบียน)
+        const nrFields = ['nr_asset_id', 'nr_serial', 'nr_brand_detail', 'nr_asset_type_id', 'nr_priorityId', 'nr_note1'];
+        nrFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+    
+        // 4. รีเซ็ต Checkbox และ Toggle ทั้งหมด (PAC, Rent, เวรต่างๆ)
+        // ใช้ Selector ค้นหา input ที่เป็น checkbox ทั้งหมดในหน้าฟอร์มแล้วติ๊กออก
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = false);
+    
+        // 5. ล้างค่าตัวแปร Global (ถ้ามี)
+        currentAsset = null; 
+    }
 function getGPS() { return new Promise(res => res({lat:0, lng:0})); }
 
 // 2. ฟังก์ชันควบคุม Process แบบไม่มี Alert Browser
@@ -889,45 +939,7 @@ function closeModal(id) {
             closeScanner(); 
         }
     }
-    function clearAuditForm() {
-    // 1. ล้างรูปภาพและรีเซ็ต Preview (โค้ดเดิมของคุณ)
-         currentBase64Image = "";
-         const forms = [
-                {p: 'imgPreview', h: 'imgPlaceholder', i: 'imgInput'},
-                {p: 'nr_imgPreview', h: 'nr_imgPlaceholder', i: 'nr_imgInput'}
-            ];
-            forms.forEach(f => {
-         const preview = document.getElementById(f.p);
-         const placeholder = document.getElementById(f.h);
-         const input = document.getElementById(f.i);
-            
-            if (preview) { preview.src = ""; preview.classList.add('hidden'); }
-            if (placeholder) placeholder.classList.remove('hidden');
-            if (input) input.value = "";
-        });
     
-        // 2. ล้างค่า Input ของหน้า Audit (ทรัพย์สินในทะเบียน)
-        const auditFields = ['assetTypeId', 'priorityId', 'note1'];
-        auditFields.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = ""; 
-        });
-    
-        // 3. ล้างค่า Input ของหน้า Non-Register (นอกทะเบียน)
-        const nrFields = ['nr_asset_id', 'nr_serial', 'nr_brand_detail', 'nr_asset_type_id', 'nr_priorityId', 'nr_note1'];
-        nrFields.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = "";
-        });
-    
-        // 4. รีเซ็ต Checkbox และ Toggle ทั้งหมด (PAC, Rent, เวรต่างๆ)
-        // ใช้ Selector ค้นหา input ที่เป็น checkbox ทั้งหมดในหน้าฟอร์มแล้วติ๊กออก
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(cb => cb.checked = false);
-    
-        // 5. ล้างค่าตัวแปร Global (ถ้ามี)
-        currentAsset = null; 
-    }
     
 async function loadRecordedData() {
     const container = document.getElementById('recordedContainer');
