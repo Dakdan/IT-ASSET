@@ -659,6 +659,7 @@ async function submitAudit(type, event) {
         const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
         const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
         const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
+       
 
         const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
         const shiftValues = Array.from(selectedShifts).map(input => {
@@ -716,7 +717,7 @@ async function submitAudit(type, event) {
             itemData.NoID = "NON-" + Date.now();
             itemData.Asset_ID =  "NR-" + Date.now();
             itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
-            itemData.Serial = "-";
+            itemData.Serial = nr_assetID;
             closeModal('nonRegisterModal');
         }
 
