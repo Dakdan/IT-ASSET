@@ -798,14 +798,27 @@ async function executeSave(preparedData) {
 }
 // เพิ่มฟังก์ชันนี้ลงไปในไฟล์ survey_v4_form.html ของคุณ
 function showAlert(title, msg) {
-    // ถ้ายังไม่มี Modal ตามโครงสร้างเดิม ให้ใช้ alert ของเบราว์เซอร์ทดสอบก่อน
-    const modal = document.getElementById('alertModal');
-    if (modal) {
-        document.getElementById('alertTitle').textContent = title;
-        document.getElementById('alertMessage').textContent = msg;
-        modal.classList.remove('hidden');
+    // ใน HTML ของคุณมีแค่ alertMessage 
+    // ดังนั้นเราจะเอา title และ msg มาต่อกัน หรือโชว์แค่ msg
+    const messageEl = document.getElementById('alertMessage');
+    const modalEl = document.getElementById('alertModal');
+
+    if (messageEl && modalEl) {
+        // นำหัวข้อและข้อความมาแสดงร่วมกันในช่อง alertMessage
+        messageEl.innerHTML = `<span class="text-pink-500 block mb-1 uppercase">${title}</span>${msg}`;
+        
+        // แสดง Modal
+        modalEl.classList.remove('hidden');
     } else {
-        alert(title + ": " + msg); 
+        // กรณีหา ID ไม่เจอจริงๆ ให้ใช้ alert พื้นฐานป้องกันระบบค้าง
+        alert(title + ": " + msg);
+    }
+}
+
+function closeAlert() {
+    const modalEl = document.getElementById('alertModal');
+    if (modalEl) {
+        modalEl.classList.add('hidden');
     }
 }
 function clearAuditForm() {
