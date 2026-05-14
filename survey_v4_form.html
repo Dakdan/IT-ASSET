@@ -644,105 +644,103 @@ function getGPS() {
 // ----------------------------------------------
 
 async function submitAudit(type, event) {
-    if (event) event.preventDefault();
-
-    try {
-        showProcess("กำลังตรวจสอบข้อมูล...");
-
-        // GPS ส่งค่าคงที่ไปเลย ไม่ต้องรอให้พัง
-        const currentGps = "0,0"; 
-
-        const isExisting = type === 'EXISTING';
-        const suffix = isExisting ? '' : 'nr_';
-
-        // 1. ดึงค่าจาก UI
-        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
-        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
-        const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
-       
-
-        const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
-        const shiftValues = Array.from(selectedShifts).map(input => {
-            if (input.value === "เช้า") return "1";
-            if (input.value === "บ่าย") return "2";
-            if (input.value === "ดึก") return "3";
-            return "";
-        }).filter(Boolean).join(",");
-
-        // 2. ตรวจสอบเงื่อนไข
-        if (!typeId || !priorityId) {
-            hideProcess();
-            return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
-        }
-        
-        if (!currentBase64Image) {
-            hideProcess();
-            return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
-        }
-
-        // 3. ปั้น Object ข้อมูล (ห้ามใช้ .trim())
-        let itemData = {
-            Asset_Type_ID: typeId,
-            PIORITY_ID: priorityId,
-            ImageData: currentBase64Image,
-            gps: currentGps,
-            Note1: note1Value,
-            ASS_ON_OUT: isExisting ? "1" : "0",
-            Note2: [
-                document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
-                document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
-            ].filter(Boolean).join(", "),
-            Shift_Work: shiftValues || "-",
-            CoStatus: "COS-001",
-            MAStatus: "-",
-            Detail_ID: "-"
-        };
-
-        if (isExisting) {
-            if (!currentAsset || !currentAsset.AssetID) {
+        if (event) event.preventDefault();
+    
+        try {
+            showProcess("กำลังตรวจสอบข้อมูล...");
+    
+            const currentGps = "0,0"; 
+            const isExisting = type === 'EXISTING';
+            const suffix = isExisting ? '' : 'nr_';
+    
+            // 1. ดึงค่าจาก UI
+            const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
+            const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
+            const note1Value = document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-";
+    
+            const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
+            const shiftValues = Array.from(selectedShifts).map(input => {
+                if (input.value === "เช้า") return "1";
+                if (input.value === "บ่าย") return "2";
+                if (input.value === "ดึก") return "3";
+                return "";
+            }).filter(Boolean).join(",");
+    
+            // 2. ตรวจสอบเงื่อนไข
+            if (!typeId || !priorityId) {
                 hideProcess();
-                return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
+                return showAlert("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทและความสำคัญ");
             }
-            itemData.NoID = currentAsset.NoID || "-";
-            itemData.Asset_ID = currentAsset.AssetID;
-            itemData.AssetName = currentAsset.FullDescription;
-            itemData.Serial = currentAsset.Serial || "-";
-            closeModal('auditFormModal');
-       } else {
-    // 1. ดึงค่าจากช่อง Input ที่เพิ่มเข้ามาใหม่
-            const nrAssetIDInput = document.getElementById('nr_asset_id')?.value || "-";
-            const nrSerialInput = document.getElementById('nr_serial')?.value || "-";
-            const brandDetail = document.getElementById('nr_brand_detail')?.value; 
-        
-            // 2. ตรวจสอบเงื่อนไข (ยี่ห้อ+รายละเอียด ยังคงจำเป็นต้องมี)
-            if (!brandDetail) {
-                hideProcess();
-                return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
-            }
-        
-            // 3. กำหนดค่าลงใน itemData
-            // ถ้า User กรอก "รหัสครุภัณฑ์ (ถ้ามี)" มาให้ใช้ค่าที่กรอก ถ้าไม่กรอกให้ใช้ NON + timestamp
-            itemData.NoID = "NON-" + Date.now();
-            itemData.Asset_ID = nrAssetIDInput || ("NR-" + Date.now()); 
-            itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
             
-            // ใช้ค่า Serial จากช่อง nr_serial ที่ดึงมา
-            itemData.Serial = nrSerialInput || "-"; 
-        
-            closeModal('nonRegisterModal');
+            if (!currentBase64Image) {
+                hideProcess();
+                return showAlert("ลืมถ่ายรูป?", "กรุณาถ่ายภาพก่อนบันทึก");
+            }
+    
+            // 3. ปั้น Object ข้อมูล
+            let itemData = {
+                Asset_Type_ID: typeId,
+                PIORITY_ID: priorityId,
+                ImageData: currentBase64Image,
+                gps: currentGps,
+                Note1: note1Value,
+                ASS_ON_OUT: isExisting ? "1" : "0",
+                Note2: [
+                    document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
+                    document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
+                ].filter(Boolean).join(", "),
+                Shift_Work: shiftValues || "-",
+                CoStatus: "COS-001",
+                MAStatus: "-",
+                Detail_ID: "-"
+            };
+    
+            if (isExisting) {
+                if (!currentAsset || !currentAsset.AssetID) {
+                    hideProcess();
+                    return showAlert("ไม่พบข้อมูล", "กรุณาเลือกทรัพย์สินใหม่อีกครั้ง");
+                }
+                itemData.NoID = currentAsset.NoID || "-";
+                itemData.Asset_ID = currentAsset.AssetID;
+                itemData.AssetName = currentAsset.FullDescription;
+                itemData.Serial = currentAsset.Serial || "-";
+                
+                hideProcess(); // ปิด Process ก่อนปิด Modal
+                closeModal('auditFormModal');
+            } else {
+                const nrAssetIDInput = document.getElementById('nr_asset_id')?.value;
+                const nrSerialInput = document.getElementById('nr_serial')?.value || "-";
+                const brandDetail = document.getElementById('nr_brand_detail')?.value; 
+            
+                if (!brandDetail) {
+                    hideProcess();
+                    return showAlert("ข้อมูลไม่ครบ", "กรุณาระบุรายละเอียด");
+                }
+            
+                itemData.NoID = "NON-" + Date.now();
+                // ปรับ Asset_ID ให้สั้นลงเล็กน้อยหากไม่มีข้อมูล เพื่อป้องกัน Error ฝั่ง Server
+                itemData.Asset_ID = nrAssetIDInput || ("NR-" + Math.floor(Date.now() / 1000)); 
+                itemData.AssetName = "[นอกทะเบียน] " + brandDetail;
+                itemData.Serial = nrSerialInput || "-"; 
+            
+                hideProcess(); // ปิด Process ก่อนปิด Modal
+                closeModal('nonRegisterModal');
+            }
+    
+            // --- จุดสำคัญ: ส่งบันทึก และจัดการหน้าจอหลังบันทึก ---
+            showProcess("กำลังบันทึกข้อมูล..."); // โชว์ Process อีกครั้งเพื่อความชัดเจนตอนส่ง Data
+            await executeSave(itemData);
+            hideProcess(); // ต้องปิดหลังจากบันทึกสำเร็จ
+    
+        } catch (err) {
+            hideProcess();
+            showAlert("เกิดข้อผิดพลาด", "ระบบขัดข้อง: " + err.message);
         }
-        // --- จุดสำคัญ: ส่ง itemData ที่ปั้นเสร็จแล้วไปบันทึกเลย ---
-        await executeSave(itemData);
-
-    } catch (err) {
-        hideProcess();
-        showAlert("เกิดข้อผิดพลาด", "ระบบขัดข้อง: " + err.message);
     }
-}
 
 // แก้ไข executeSave ให้รับข้อมูลจาก submitAudit มาใช้โดยตรง ไม่ต้องไป getElement ใหม่
 async function executeSave(preparedData) {
-    showProcess("กำลังบันทึกข้อมูล...");
+    showProcess("กำลังบันทึกข้อมูลลงระบบ...");
 
     try {
         const deptId = document.getElementById('selectedDeptId')?.value || "-";
@@ -750,12 +748,12 @@ async function executeSave(preparedData) {
         const payload = {
             action: 'saveBulkSurvey',
             data: {
-                items: [preparedData], // ใช้ข้อมูลที่ส่งมาจากการปั้น Object
+                items: [preparedData],
                 deptId: deptId,
-                signature: "", // หรือ signatureData ถ้ามี
+                signature: "", 
                 gps: preparedData.gps,
-                activityId: "Ac-2569",
-                IT_User_Mail: "user@udonhospital.com"
+                activityId: "Ac-2569", // ตรวจสอบปีงบประมาณให้ถูกต้อง
+                IT_User_Mail: "user@udonhospital.com" // แนะนำให้ดึงจาก Session ถ้าทำได้
             }
         };
 
@@ -764,11 +762,14 @@ async function executeSave(preparedData) {
             body: JSON.stringify(payload)
         });
         
+        // เช็คว่า Server ตอบกลับมาเป็น HTTP 200 หรือไม่
+        if (!res.ok) throw new Error("Server Response Error: " + res.status);
+
         const result = await res.json();
 
         if (result.status === 'success') {
-            // ปิดทุก Modal
-            ['confirmModal', 'auditModal', 'scannerModal'].forEach(id => {
+            // ปิดทุก Modal ที่เกี่ยวข้อง (รวมชื่อ ID ที่ใช้ใน submitAudit)
+            ['confirmModal', 'auditFormModal', 'nonRegisterModal', 'scannerModal'].forEach(id => {
                 const m = document.getElementById(id);
                 if (m) m.classList.add('hidden');
             });
@@ -777,15 +778,20 @@ async function executeSave(preparedData) {
                 renderSuccessSlip(result.actionId, payload.data.items);
             }
             
-            clearAuditForm();
+            // ล้างข้อมูลหลังบันทึกสำเร็จ
+            if (typeof clearAuditForm === 'function') clearAuditForm();
+            
             const q = document.getElementById('assetQuery');
             if (q) q.value = ""; 
+
         } else {
-            showAlert("บันทึกไม่สำเร็จ", result.message);
+            // กรณี GAS ส่ง status: 'error' กลับมา
+            showAlert("บันทึกไม่สำเร็จ", result.message || "โปรดตรวจสอบข้อมูลอีกครั้ง");
         }
 
     } catch (e) { 
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถส่งข้อมูลได้");
+        console.error("Save Error:", e);
+        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + e.message);
     } finally { 
         hideProcess(); 
     }
@@ -794,17 +800,6 @@ async function executeSave(preparedData) {
 function getGPS() { return new Promise(res => res({lat:0, lng:0})); }
 
 // 2. ฟังก์ชันควบคุม Process แบบไม่มี Alert Browser
-function showProcess(m) { 
-    const msg = document.getElementById('processMessage'); 
-    const overlay = document.getElementById('processOverlay');
-    if (msg) msg.innerText = m; 
-    if (overlay) overlay.classList.remove('hidden'); 
-}
-
-function hideProcess() {
-    const overlay = document.getElementById('processOverlay');
-    if (overlay) overlay.classList.add('hidden');
-}
 
 // 3. ฟังก์ชันปิด Modal แบบไม่พัง
 function closeModal(id) { 
@@ -895,19 +890,43 @@ function closeModal(id) {
         }
     }
     function clearAuditForm() {
-        // ล้างรูปภาพ
-        currentBase64Image = "";
-        // รีเซ็ต Input และ Preview (สำหรับทั้ง 2 หน้า)
-        const forms = [
-            {p: 'imgPreview', h: 'imgPlaceholder', i: 'imgInput'},
-            {p: 'nr_imgPreview', h: 'nr_imgPlaceholder', i: 'nr_imgInput'}
-        ];
-        forms.forEach(f => {
-            document.getElementById(f.p).src = "";
-            document.getElementById(f.p).classList.add('hidden');
-            document.getElementById(f.h).classList.remove('hidden');
-            document.getElementById(f.i).value = "";
+    // 1. ล้างรูปภาพและรีเซ็ต Preview (โค้ดเดิมของคุณ)
+         currentBase64Image = "";
+         const forms = [
+                {p: 'imgPreview', h: 'imgPlaceholder', i: 'imgInput'},
+                {p: 'nr_imgPreview', h: 'nr_imgPlaceholder', i: 'nr_imgInput'}
+            ];
+            forms.forEach(f => {
+         const preview = document.getElementById(f.p);
+         const placeholder = document.getElementById(f.h);
+         const input = document.getElementById(f.i);
+            
+            if (preview) { preview.src = ""; preview.classList.add('hidden'); }
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (input) input.value = "";
         });
+    
+        // 2. ล้างค่า Input ของหน้า Audit (ทรัพย์สินในทะเบียน)
+        const auditFields = ['assetTypeId', 'priorityId', 'note1'];
+        auditFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = ""; 
+        });
+    
+        // 3. ล้างค่า Input ของหน้า Non-Register (นอกทะเบียน)
+        const nrFields = ['nr_asset_id', 'nr_serial', 'nr_brand_detail', 'nr_asset_type_id', 'nr_priorityId', 'nr_note1'];
+        nrFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+    
+        // 4. รีเซ็ต Checkbox และ Toggle ทั้งหมด (PAC, Rent, เวรต่างๆ)
+        // ใช้ Selector ค้นหา input ที่เป็น checkbox ทั้งหมดในหน้าฟอร์มแล้วติ๊กออก
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = false);
+    
+        // 5. ล้างค่าตัวแปร Global (ถ้ามี)
+        currentAsset = null; 
     }
     
 async function loadRecordedData() {
@@ -1036,12 +1055,7 @@ function hideProcess() {
         overlay.classList.add('hidden');
     }
 }
-   function closeModal(id) { 
-    document.getElementById(id).classList.add('hidden'); 
-    if (id === 'receiptModal') {
-        document.getElementById('receiptDetail').innerHTML = ''; // ล้างข้อมูลทิ้งเมื่อปิด
-    }
-}
+  
     function resetDeptSelection() { location.reload(); }
 // 1. ฟังก์ชันบีบอัดรูป (ต้องมีเพื่อให้บันทึกรูปผ่าน)
     async function compressImage(file) {
