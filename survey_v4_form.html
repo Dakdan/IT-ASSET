@@ -1003,11 +1003,9 @@ function closeModal(id) {
             return;
         }
 
-        // --- จุดแก้ไขสำคัญ: ปรับ Property ให้ตรงตาม masterDeptList ของคุณ ---
         const deptMap = {};
         if (Array.isArray(masterDeptList)) {
             masterDeptList.forEach(d => { 
-                // ใช้ DEP_ID เป็นรหัส และ DEPNAME เป็นชื่อ
                 if (d.DEP_ID) deptMap[String(d.DEP_ID).trim()] = d.DEPNAME; 
             });
         }
@@ -1021,33 +1019,42 @@ function closeModal(id) {
 
         // จัดกลุ่มข้อมูล
         const grouped = data.reduce((acc, item) => {
-            // ดึงรหัสแผนกจากข้อมูลที่บันทึกมา (ปกติเก็บไว้ใน item.department)
-            const rawId = String(item.department || "").trim();
+            const rawId = String(item.department || item.dept_id || "").trim();
             const deptName = deptMap[rawId] || rawId || "ไม่ระบุแผนก";
             
             const rawTid = String(item.Asset_Type_ID || item.asset_type_id || "").trim();
             const typeName = typeMap[rawTid] || rawTid || "ทั่วไป";
 
-            if (!acc[deptName]) acc[deptName] = {};
-            if (!acc[deptName][typeName]) acc[deptName][typeName] = [];
-            acc[deptName][typeName].push(item);
+            if (!acc[deptName]) acc[deptName] = { allItems: [], types: {} };
+            if (!acc[deptName].types[typeName]) acc[deptName].types[typeName] = [];
+            
+            acc[deptName].types[typeName].push(item);
+            acc[deptName].allItems.push(item); // เก็บรวมทุกรายการในแผนกเพื่อสั่งปริ้นทีเดียว
             return acc;
         }, {});
 
         container.innerHTML = ''; 
 
-        for (const [deptName, types] of Object.entries(grouped)) {
+        for (const [deptName, content] of Object.entries(grouped)) {
+            // สร้าง Header ของหน่วยงานพร้อมปุ่มปริ้นรวม
             let deptHtml = `
                 <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6 animate-in fade-in">
-                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5 flex justify-between items-center">
                         <div class="flex items-center gap-3 text-white">
                             <i data-lucide="building" class="w-5 h-5"></i>
-                            <h3 class="font-bold text-sm">${deptName}</h3> <!-- แสดงชื่อแผนกภาษาไทย -->
+                            <h3 class="font-bold text-sm">${deptName}</h3>
                         </div>
+                        <!-- ปุ่มปริ้นรวมของหน่วยงาน -->
+                        <button onclick='showReceipt(${JSON.stringify(content.allItems)})' 
+                                class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl backdrop-blur-md transition-all active:scale-95 text-[10px] font-bold uppercase">
+                            <i data-lucide="printer" class="w-4 h-4"></i>
+                            Print All
+                        </button>
                     </div>
                     <div class="p-2 space-y-2">`;
 
-            for (const [typeName, items] of Object.entries(types)) {
+            // แสดงรายการแยกตามประเภท
+            for (const [typeName, items] of Object.entries(content.types)) {
                 deptHtml += `
                     <div class="p-3">
                         <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${typeName}</p>
@@ -1058,9 +1065,9 @@ function closeModal(id) {
                                         <p class="text-[14px] font-bold text-gray-800 leading-tight truncate">${item.asset_name}</p>
                                         <p class="text-[10px] text-pink-500 font-bold mt-0.5">${item.asset_id}</p>
                                     </div>
-                                    <button onclick='showReceipt(${JSON.stringify(item)})' class="flex-shrink-0 ml-2 p-3 bg-white text-gray-400 rounded-xl hover:text-pink-500 shadow-sm active:scale-90 transition-all">
-                                        <i data-lucide="printer" class="w-4 h-4"></i>
-                                    </button>
+                                    <div class="text-[10px] text-gray-400 font-medium">
+                                        ${item.timestamp || ''}
+                                    </div>
                                 </div>
                             `).join('')}
                         </div>
@@ -1071,7 +1078,8 @@ function closeModal(id) {
         }
         lucide.createIcons();
     } catch (error) {
-        container.innerHTML = `<div class="text-center py-10 text-red-400 text-xs font-bold bg-red-50 rounded-3xl mx-4">⚠️ ไม่สามารถโหลดข้อมูลได้: ${error.message}</div>`;
+        console.error(error);
+        container.innerHTML = `<div class="text-center py-10 text-red-400 text-xs font-bold bg-red-50 rounded-3xl mx-4">⚠️ ไม่สามารถโหลดข้อมูลได้</div>`;
     }
 }
        // ==========================================
