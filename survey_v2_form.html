@@ -255,7 +255,7 @@
             const handleFinalSubmit = async () => {
                 if (!auditForm.ImageData) { showStatus('กรุณาถ่ายรูปเพื่อยืนยันการตรวจสอบ', 'error'); return; }
                 if (!auditForm.Asset_Type_ID) { showStatus('กรุณาเลือกประเภทอุปกรณ์', 'error'); return; }
-                if (!auditForm.Piority_ID) { showStatus('กรุณาเลือกการใช้งาน', 'error'); return; }
+                if (!auditForm.PIORITY_ID) { showStatus('กรุณาเลือกการใช้งาน', 'error'); return; }
                 if (auditForm.Shift_Work.length === 0) { showStatus('กรุณาเลือกอย่างน้อย 1 กะ', 'error'); return; }
                 
                 setLoading(true);
