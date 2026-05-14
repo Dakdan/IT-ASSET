@@ -519,54 +519,58 @@ async function handleImageSelection(input, previewId, placeholderId) {
         return String(fullText).replace(regex, '<span class="text-green-500 font-bold">$1</span>');
     }
 
-    async function searchAsset() {
+   async function searchAsset() {
         let q = document.getElementById('assetQuery').value.trim();
         const area = document.getElementById('resultsArea');
         
-        if (q.includes("http")) {
-            const match = q.match(/IcmAssetDetail\/([^\/]+)/);
-            if (match && match[1]) {
-                q = match[1];
-                document.getElementById('assetQuery').value = q;
-            }
-        }
-    
-        area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto"></div></div>';
-        area.classList.remove('hidden');
+        // ... (ส่วนการจัดการ URL คงเดิม) ...
     
         try {
             const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
-            const data = await res.json(); 
+            let data = await res.json(); // เปลี่ยนจาก const เป็น let เพื่อให้เรียงลำดับได้
             area.innerHTML = '';
             
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 area.innerHTML = '<p class="col-span-full text-center p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบข้อมูล</p>';
                 return;
             }
     
+            // --- เพิ่มส่วนการเรียงลำดับ (Right-to-Left Sort) ตรงนี้ ---
+            data.sort((a, b) => {
+                const idA = String(a.AssetID || "");
+                const idB = String(b.AssetID || "");
+                const searchQ = String(q);
+    
+                const getSuffixMatch = (id, query) => {
+                    let count = 0;
+                    // กลับด้านข้อความเพื่อเช็คจากท้าย
+                    const revId = id.split('').reverse();
+                    const revQ = query.split('').reverse();
+                    for (let i = 0; i < Math.min(revId.length, revQ.length); i++) {
+                        if (revId[i] === revQ[i]) count++;
+                        else break; // หลุดทันทีถ้าไม่ตรง เพื่อเน้นเลขท้ายสุดจริงๆ
+                    }
+                    return count;
+                };
+    
+                const scoreA = getSuffixMatch(idA, searchQ);
+                const scoreB = getSuffixMatch(idB, searchQ);
+    
+                if (scoreB !== scoreA) return scoreB - scoreA; // ใครเลขท้ายตรงมากกว่าขึ้นก่อน
+                return idA.length - idB.length; // ถ้าเท่ากัน ใครรหัสสั้นกว่าขึ้นก่อน
+            });
+            // --- จบส่วนการเรียงลำดับ ---
+    
+            // เริ่มสร้าง HTML (Logic เดิมของคุณ)
             data.forEach(item => {
                 const d = document.createElement('div');
-                d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all relative overflow-hidden mb-2";
+                // ... (โค้ดการแสดงผล highlightedID, highlightedName และ d.innerHTML เดิมของคุณ) ...
                 
-                const highlightedID = highlightText(item.AssetID, q);
-                const highlightedName = highlightText(item.FullDescription, q);
-                const assetAge = item.AgeInfo || "--";
-    
-                d.innerHTML = `
-                    <div class="flex-grow pr-4">
-                        <p class="text-[13px] font-bold text-pink-500 uppercase tracking-tighter mb-0.5">${highlightedID}</p>
-                        <p class="text-xs font-bold text-gray-700 leading-tight mb-1">${highlightedName}</p>
-                        <p class="text-[10px] text-gray-400 truncate">${item.Description || 'ไม่มีรายละเอียด'}</p>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-1 bg-pink-50 text-pink-500 text-[9px] font-bold rounded-lg border border-pink-100 whitespace-nowrap"> ${assetAge}</span>
-                        <i data-lucide="plus-circle" class="w-5 h-5 text-gray-200"></i>
-                    </div>
-                `;
                 d.onclick = () => { currentAsset = item; openAuditModal(); };
                 area.appendChild(d);
             });
-            lucide.createIcons();
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         } catch (e) { 
             area.innerHTML = '<p class="text-center text-red-400">Search Error</p>'; 
         }
