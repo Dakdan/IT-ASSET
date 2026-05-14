@@ -996,58 +996,75 @@ function closeModal(id) {
     const container = document.getElementById('recordedContainer');
     if (!container) return;
 
-    container.innerHTML = '<div class="text-center py-10"><div class="spinner mx-auto"></div><p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">กำลังดึงข้อมูล...</p></div>';
+    // 1. แสดงตัวหมุนโหลดระหว่างรอข้อมูล
+    container.innerHTML = `
+        <div class="text-center py-10">
+            <div class="spinner mx-auto"></div>
+            <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">กำลังดึงข้อมูลจากระบบ...</p>
+        </div>`;
 
     try {
-        const response = await fetch(`${API_URL}?action=getTodayRecords`); 
+        // 2. ดึงข้อมูลจาก API
+        const response = await fetch(`${API_URL}?action=getTodayRecords`);
         const data = await response.json();
 
+        // ตรวจสอบข้อมูล
         if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2.5rem] border border-dashed border-gray-200"><p class="text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบรายการบันทึกของวันนี้</p></div>';
+            container.innerHTML = `
+                <div class="text-center py-16 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบรายการบันทึกของวันนี้</p>
+                </div>`;
             return;
         }
 
-        // --- ส่วนที่แก้ไข: สร้าง Map เพื่อแปลง ID เป็น Name ---
+        // 3. เตรียมตัวแปล Mapping (รหัส -> ชื่อ) จากข้อมูลหลักที่คุณมีอยู่แล้ว
         const deptMap = {};
-        masterDeptList.forEach(d => { deptMap[d.id] = d.name; });
+        if (Array.isArray(masterDeptList)) {
+            masterDeptList.forEach(d => { deptMap[d.id] = d.name; });
+        }
+
         const typeMap = {};
-        configData.assetTypes.forEach(t => { typeMap[t.id] = t.name; });
-      
-        // 2. ปรับปรุงตอน Group ข้อมูล (ในฟังก์ชัน loadRecordedData)
+        if (configData && Array.isArray(configData.assetTypes)) {
+            configData.assetTypes.forEach(t => { typeMap[t.id] = t.name; });
+        }
+
+        // 4. จัดกลุ่มข้อมูล (Grouping) และเปลี่ยน "รหัส" เป็น "ชื่อ" ทันทีในขั้นตอนนี้
         const grouped = data.reduce((acc, item) => {
-            // --- จุดสำคัญ ---
-            const dId = item.department || item.dept_id; // ดึงรหัสออกมา
-            const deptName = deptMap[dId] || dId;        // เอาตัว Map ไปส่องหาชื่อ ถ้าไม่เจอค่อยใช้รหัสเดิม
-            
+            // ดึงชื่อหน่วยงานจากรหัส (ถ้าหาไม่เจอให้โชว์รหัสเดิม)
+            const dId = item.department || item.dept_id;
+            const deptName = deptMap[dId] || dId || "ไม่ระบุหน่วยงาน";
+
+            // ดึงชื่อประเภทจากรหัส
             const tId = item.Asset_Type_ID || item.asset_type_id;
-            const typeName = (configData.assetTypes.find(t => t.id === tId)?.name) || tId;
-        
-            // ใช้ deptName (ชื่อหน่วยงาน) เป็น Key แทนการใช้รหัส
+            const typeName = typeMap[tId] || tId || "ทั่วไป";
+
             if (!acc[deptName]) acc[deptName] = {};
             if (!acc[deptName][typeName]) acc[deptName][typeName] = [];
+            
             acc[deptName][typeName].push(item);
             return acc;
         }, {});
-        // Logic การจัดกลุ่ม (Grouping) โดยเปลี่ยนรหัสเป็นชื่อ
-       
-        container.innerHTML = ''; // ล้างตัวหมุนออก
 
-        // การ Render HTML
-        for (const [dept, types] of Object.entries(grouped)) {
+        // 5. ล้างหน้าจอเพื่อเตรียม Render HTML ใหม่
+        container.innerHTML = '';
+
+        // วนลูปแสดงผลตามหน่วยงาน
+        for (const [deptName, types] of Object.entries(grouped)) {
             let deptHtml = `
                 <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-6 animate-in fade-in">
                     <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-5">
                         <div class="flex items-center gap-3 text-white">
                             <i data-lucide="building" class="w-5 h-5"></i>
-                            <h3 class="font-bold text-sm">${dept}</h3> <!-- แสดงชื่อหน่วยงานแล้ว -->
+                            <h3 class="font-bold text-sm">${deptName}</h3>
                         </div>
                     </div>
-            <div class="p-2 space-y-2">`;
-           
-            for (const [type, items] of Object.entries(types)) {
+                    <div class="p-2 space-y-2">`;
+
+            // วนลูปแสดงผลตามประเภทครุภัณฑ์
+            for (const [typeName, items] of Object.entries(types)) {
                 deptHtml += `
                     <div class="p-3">
-                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${type}</p> <!-- แสดงชื่อประเภทที่นี่ -->
+                        <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${typeName}</p>
                         <div class="space-y-2">
                             ${items.map(item => `
                                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-50">
@@ -1063,15 +1080,24 @@ function closeModal(id) {
                         </div>
                     </div>`;
             }
+
             deptHtml += `</div></div>`;
             container.insertAdjacentHTML('beforeend', deptHtml);
         }
-        lucide.createIcons();
+
+        // โหลดไอคอน Lucide ใหม่หลังสร้าง Element เสร็จ
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
     } catch (error) {
-        container.innerHTML = `<div class="text-center py-10 text-red-400 text-xs font-bold bg-red-50 rounded-3xl mx-4">⚠️ ไม่สามารถโหลดข้อมูลได้: ${error.message}</div>`;
+        console.error("Load Error:", error);
+        container.innerHTML = `
+            <div class="text-center py-10 text-red-400 text-xs font-bold bg-red-50 rounded-3xl mx-4">
+                ⚠️ ไม่สามารถโหลดข้อมูลได้: ${error.message}
+            </div>`;
     }
 }
- 
        // ==========================================
 // ส่วนที่ 2: ฟังก์ชันควบคุม UI และ Utility (ต้นฉบับของพี่)
 // ==========================================
