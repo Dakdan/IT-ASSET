@@ -867,72 +867,93 @@ function closeModal(id) {
     }
 }
     function renderSuccessSlip(actionId, items) {
-            try {
-                // --- ส่วนที่ 1: ดึงค่ามาแสดง (ปรับให้ดึงจาก items ถ้า Element หน้าจอไม่มี) ---
-                const deptId = document.getElementById('selectedDeptId')?.value || "0";
-                
-                // กฎเหล็ก: ไม่แก้ Logic การหาชื่อ แต่เพิ่มตัวสำรองกรณีหน้า Report ไม่มี Element ชื่อหน่วยงาน
-                let deptName = document.getElementById('displayDeptName')?.innerText;
-                if (!deptName || deptName === "---" || deptName === "ไม่ทราบหน่วยงาน") {
-                    deptName = items[0]?.department || "ไม่ทราบหน่วยงาน"; 
-                }
-        
-                const detailBox = document.getElementById('successDetailList');
-                if (!detailBox) return; // ถ้าไม่มีกล่องแสดงผล ให้หยุดทำงาน (กัน Error null)
-        
-                // --- ส่วนที่ 2: จัดการ URL และ QR Code (ใช้ตัวแปรที่ใช้งานได้จริง) ---
-                // ถ้า DEPT_VIEW_URL ไม่มี ให้ใช้ Link พื้นฐานของระบบ
-                const baseUrl = (typeof DEPT_VIEW_URL !== 'undefined') ? DEPT_VIEW_URL : "https://it.udh.go.th/survey/view?dept=";
-                const targetUrl = baseUrl + encodeURIComponent(deptId);
-                const qrImageUrl = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8`;
-        
-                // --- ส่วนที่ 3: จัดการรายการ (กฎ: แสดงทั้งหมด ห้ามตัดทอน) ---
-                const itemsListHtml = items.map(i => {
-                    const aName = i.asset_name || i.AssetName || "-";
+        try {
+            // 1. ดึงค่าแบบปลอดภัย (เพิ่ม Logic สำรองเพื่อหา deptId จากข้อมูลที่มี)
+            const deptId = document.getElementById('selectedDeptId')?.value || items[0]?.dept_id || items[0]?.DEP_ID || "-";
+            let deptName = document.getElementById('displayDeptName')?.innerText || "ไม่ทราบหน่วยงาน";
+            
+            if ((deptName === "ไม่ทราบหน่วยงาน" || !deptName) && typeof masterDeptList !== 'undefined') {
+                const found = masterDeptList.find(d => String(d.DEP_ID) === String(deptId));
+                if (found) deptName = found.DEPNAME;
+            } else if (deptName === "ไม่ทราบหน่วยงาน") {
+                deptName = items[0]?.department || items[0]?.dept_name || "ไม่ทราบหน่วยงาน";
+            }
+    
+            const detailBox = document.getElementById('successDetailList');
+            if (!detailBox) return console.error("Error: successDetailList element not found!");
+    
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('th-TH', { 
+                year: 'numeric', month: 'long', day: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+            });
+    
+            // แก้ไข Link ให้แสดงผลได้แน่นอน
+            const baseUrl = typeof DEPT_VIEW_URL !== 'undefined' ? DEPT_VIEW_URL : "https://it.udh.go.th/survey/view?dept=";
+            const targetUrl = deptId !== "-" ? baseUrl + encodeURIComponent(deptId) : "https://it.udh.go.th/asset";
+            const qrImageUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8&chld=L|1`;
+    
+            // 2. ปั้น HTML รายการครุภัณฑ์
+            const itemsListHtml = items && items.length > 0 
+                ? items.map(i => {
+                    const aName = i.asset_name || i.AssetName || "ไม่ระบุชื่อ";
                     const aId = i.asset_id || i.Asset_ID || "-";
                     return `
                         <div class="flex justify-between items-start py-1 border-b border-pink-50 last:border-0">
-                            <span class="text-[10px] text-gray-600 flex-grow pr-2">${aName}</span>
-                            <span class="text-[10px] font-bold text-pink-500">${aId}</span>
+                            <span class="text-[9px] text-gray-500 flex-grow pr-2">${aName}</span>
+                            <span class="text-[9px] font-bold text-pink-400 whitespace-nowrap font-mono">${aId}</span>
                         </div>`;
-                }).join('');
-        
-                // --- ส่วนที่ 4: การแสดงผล (คงสไตล์ ชมพู-ขาว ตามเดิม) ---
-                detailBox.innerHTML = `
-                    <div class="flex flex-col items-center mb-4 pt-2">
-                        <div class="p-2 bg-white border border-pink-100 rounded-2xl mb-2">
-                            <img src="${qrImageUrl}" class="w-32 h-32" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}'">
-                        </div>
-                        <!-- แสดง Link ให้เห็นชัดเจนตามที่พี่ต้องการ -->
-                        <p class="text-[9px] text-blue-500 underline break-all px-6 text-center mb-1">${targetUrl}</p>
-                        <p class="text-[8px] text-gray-400 tracking-widest uppercase">Scan to View</p>
+                }).join('')
+                : '<p class="text-[9px] text-gray-400 text-center py-2">ไม่มีรายการข้อมูล</p>';
+    
+            // 3. แสดงผลในสลิป (เอาตัวจำกัดความสูงออกเพื่อให้แสดงครบทั้งหมด)
+            detailBox.innerHTML = `
+                <div class="flex flex-col items-center mb-6 pt-4 border-t border-dashed border-gray-200">
+                    <div class="p-3 bg-white border border-pink-50 rounded-2xl shadow-sm mb-3">
+                        <img id="slipQrImg" src="${qrImageUrl}" class="w-32 h-32" crossorigin="anonymous" 
+                             onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}';">
                     </div>
-                    
-                    <div class="space-y-1 border-t border-gray-100 pt-3 mb-3">
-                        <div class="flex justify-between"><span class="text-[10px] text-gray-400">หน่วยงาน:</span> <span class="text-[10px] font-bold">${deptName}</span></div>
-                        <div class="flex justify-between"><span class="text-[10px] text-gray-400">จำนวน:</span> <span class="text-[10px] font-bold">${items.length} รายการ</span></div>
-                    </div>
-        
-                    <div class="bg-pink-50/30 p-2 rounded-xl border border-pink-100">
-                        <p class="text-[9px] font-bold text-pink-400 mb-1 border-b border-pink-100 pb-1">รายการตรวจสอบทั้งหมด</p>
-                        <!-- ลบขีดจำกัดความสูงออกเพื่อให้แสดงรายการทั้งหมดตามที่พี่สั่ง -->
-                        <div class="flex flex-col">
-                            ${itemsListHtml}
-                        </div>
-                    </div>
-                `;
-        
-                // เปิด Modal (ใช้ ID เดิมที่พี่มีอยู่)
-                const modal = document.getElementById('successModal');
-                if (modal) modal.classList.remove('hidden');
+                    <p class="text-[8px] text-pink-500 font-bold uppercase tracking-[0.2em] mb-1 italic underline break-all px-4 text-center">${targetUrl}</p>
+                    <p class="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em]">SCAN TO VIEW ASSETS</p>
+                </div>
                 
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-        
-            } catch (err) {
-                console.error("Error in renderSuccessSlip:", err);
+                <div class="space-y-2 border-t border-gray-100 pt-4 mb-4">
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">วันที่ตรวจสอบ:</span> <span class="text-[10px] font-bold text-gray-700">${dateStr} น.</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">หน่วยงาน:</span> <span class="text-[10px] font-bold text-gray-700">${deptName}</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">ID:</span> <span class="text-[10px] font-bold text-pink-500">${actionId || 'N/A'}</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">จำนวนทั้งหมด:</span> <span class="text-[10px] font-bold text-gray-700">${items.length} รายการ</span></div>
+                </div>
+    
+                <div class="bg-pink-50/30 p-3 rounded-xl border border-pink-100/50">
+                    <p class="text-[9px] font-bold text-pink-400 uppercase tracking-widest mb-2 border-b border-pink-100 pb-1">รายการตรวจสอบทั้งหมด</p>
+                    <!-- ลบ max-h-40 เพื่อให้แสดงรายการทั้งหมดตามสั่ง -->
+                    <div class="flex flex-col">${itemsListHtml}</div>
+                </div>
+    
+                <div class="mt-6 pt-4 border-t border-dashed border-gray-200 text-center">
+                    <p class="text-[9px] text-gray-400 font-bold">ขอบคุณที่ทำการตรวจสอบระบบครุภัณฑ์</p>
+                    <p class="text-[8px] text-gray-300 uppercase mt-1 tracking-tighter">IT Department - Udon Thani Hospital</p>
+                </div>
+            `;
+    
+            // ส่วนที่เหลือคงเดิมตาม Logic พี่
+            const statusTitle = document.getElementById('successStatusTitle');
+            if (statusTitle) {
+                const isDraft = (typeof submitMode !== 'undefined' && submitMode === 'DRAFT');
+                statusTitle.innerText = isDraft ? "บันทึกการตรวจสอบชั่วคราว" : "ส่งรายงานสำเร็จ!";
             }
+    
+            const modal = document.getElementById('successModal');
+            if (modal) modal.classList.remove('hidden');
+    
+            if (typeof auditQueue !== 'undefined') auditQueue = []; 
+            if (typeof updateQueueUI === 'function') updateQueueUI();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+    
+        } catch (err) {
+            console.error("Slip Render Error:", err);
         }
-
+    }
      async function openScanner(id) {
         document.getElementById('scannerModal').classList.remove('hidden');
         
