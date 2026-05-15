@@ -520,12 +520,11 @@ async function handleImageSelection(input, previewId, placeholderId) {
     }
 
   async function searchAsset() {
-    // --- ส่วนที่ 1: เตรียมตัวแปร (ตัดส่วนที่ประกาศซ้ำออกแล้ว) ---
         let q = document.getElementById('assetQuery').value.trim();
         const area = document.getElementById('resultsArea');
         if (!area) return;
     
-        // จัดการ URL กรณี Scan มาจากระบบอื่น
+        // ตรวจสอบ URL ถ้ามี
         if (q.includes("http")) {
             const match = q.match(/IcmAssetDetail\/([^\/]+)/);
             if (match && match[1]) {
@@ -534,10 +533,13 @@ async function handleImageSelection(input, previewId, placeholderId) {
             }
         }
     
-        if (!q) { area.innerHTML = ''; return; }
+        if (!q) { 
+            area.innerHTML = ''; 
+            return; 
+        }
     
         try {
-            // --- ส่วนที่ 2: ดึงข้อมูลจาก Server ---
+            // เริ่มต้นการ Fetch ข้อมูล
             const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
             let data = await res.json();
             area.innerHTML = '';
