@@ -576,7 +576,7 @@ async function handleImageSelection(input, previewId, placeholderId) {
             
             // ใช้ Property เดิม (AssetID, FullDescription) และฟังก์ชัน highlightText เดิม
             const highlightedID = typeof highlightText === 'function' ? highlightText(item.AssetID, q) : item.AssetID;
-            const highlightedName = typeof highlightText === 'function' ? highlightText(item.FullDescription, q) : item.FullDescription;
+            const highlightedName = item.FullDescription ;
             const assetAge = item.AgeInfo || "--";
 
             d.innerHTML = `
@@ -599,6 +599,69 @@ async function handleImageSelection(input, previewId, placeholderId) {
         area.innerHTML = '<p class="text-center text-red-400 p-4">เกิดข้อผิดพลาดในการค้นหา</p>'; 
     }
 }
+        async function searchAsset() {
+        let q = document.getElementById('assetQuery').value.trim();
+        const area = document.getElementById('resultsArea');
+        
+        // ... ส่วนจัดการ URL คงเดิม ...
+    
+        area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto"></div></div>';
+        area.classList.remove('hidden');
+    
+        try {
+            // เพิ่ม Parameter &searchType=ID เพื่อส่งไปบอก GAS
+            const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}&searchType=ID`);
+            let data = await res.json(); 
+            area.innerHTML = '';
+            
+            if (data.length === 0) {
+                area.innerHTML = '<p class="col-span-full text-center p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบรหัสครุภัณฑ์นี้</p>';
+                return;
+            }
+    
+            // เรียงลำดับเน้นเลขท้ายเหมือนเดิม
+            data.sort((a, b) => {
+                const idA = String(a.AssetID || "");
+                const idB = String(b.AssetID || "");
+                const getSuffix = (id, query) => {
+                    let count = 0;
+                    const revId = id.split('').reverse();
+                    const revQ = query.split('').reverse();
+                    for (let i = 0; i < Math.min(revId.length, revQ.length); i++) {
+                        if (revId[i] === revQ[i]) count++; else break;
+                    }
+                    return count;
+                };
+                const scoreA = getSuffix(idA, q);
+                const scoreB = getSuffix(idB, q);
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return idA.length - idB.length;
+            });
+    
+            data.forEach(item => {
+                const d = document.createElement('div');
+                d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all mb-2";
+                
+                // ไฮไลท์เฉพาะ AssetID
+                const highlightedID = typeof highlightText === 'function' ? highlightText(item.AssetID, q) : item.AssetID;
+                
+                d.innerHTML = `
+                    <div class="flex-grow pr-4">
+                        <p class="text-[14px] font-bold text-pink-500 uppercase tracking-tight mb-0.5">${highlightedID}</p>
+                        <p class="text-xs font-bold text-gray-700 leading-tight">${item.FullDescription}</p>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-pink-300"></i>
+                    </div>
+                `;
+                d.onclick = () => { currentAsset = item; openAuditModal(); };
+                area.appendChild(d);
+            });
+            if (window.lucide) lucide.createIcons();
+        } catch (e) { 
+            area.innerHTML = '<p class="text-center text-red-400">Search Error</p>'; 
+        }
+    }
 
     function openAuditModal() {
         resetImage('imgPreview', 'imgPlaceholder', 'imgInput');
