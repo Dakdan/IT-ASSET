@@ -519,93 +519,70 @@ async function handleImageSelection(input, previewId, placeholderId) {
         return String(fullText).replace(regex, '<span class="text-green-500 font-bold">$1</span>');
     }
 
- async function searchAsset() {
-    const queryInput = document.getElementById('assetQuery');
-    const area = document.getElementById('resultsArea');
-    
-    // 1. ตรวจสอบว่ามี Element หรือไม่ (ป้องกัน Error บรรทัดที่เป็นปัญหา)
-    if (!area || !queryInput) {
-        console.warn("ไม่พบพื้นที่แสดงผลลัพธ์ (resultsArea)");
-        return; 
-    }
-
-    let q = queryInput.value.trim();
-    
-    // 2. ถ้าช่องค้นหาว่าง ให้ซ่อนพื้นที่ผลลัพธ์และหยุดทำงาน
-    if (q === "") {
-        area.classList.add('hidden');
-        area.innerHTML = '';
-        return;
-    }
-
-    // 3. แสดงพื้นที่ผลลัพธ์ และใส่ Spinner รอ
-    area.classList.remove('hidden');
-    area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto border-4 border-pink-500 border-t-transparent rounded-full w-8 h-8 animate-spin"></div></div>';
-
-    try {
-        // ดึงข้อมูลจาก API (ตรวจสอบ API_URL ของคุณให้ถูกต้อง)
-        const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}`);
-        let rawData = await res.json(); 
+  async function searchAsset() {
+        let q = document.getElementById('assetQuery').value.trim();
+        const area = document.getElementById('resultsArea');
         
-        // กรองเฉพาะรหัสครุภัณฑ์ (AssetID)
-        let data = rawData.filter(item => {
-            const id = String(item.AssetID || "").toLowerCase();
-            return id.includes(q.toLowerCase());
-        });
-
-        area.innerHTML = ''; // ล้าง Spinner ออก
-
-        if (data.length === 0) {
-            area.innerHTML = '<p class="col-span-full text-center p-8 text-xs font-bold text-slate-400">❌ ไม่พบรหัสครุภัณฑ์นี้ในระบบ</p>';
-            return;
-        }
-
-        // เรียงลำดับเน้นเลขท้าย
-        data.sort((a, b) => {
-            const idA = String(a.AssetID || "");
-            const idB = String(b.AssetID || "");
-            const getSuffix = (id, query) => {
-                let count = 0;
-                const revId = id.split('').reverse();
-                const revQ = query.split('').reverse();
-                for (let i = 0; i < Math.min(revId.length, revQ.length); i++) {
-                    if (revId[i] === revQ[i]) count++; else break;
-                }
-                return count;
-            };
-            const scoreA = getSuffix(idA, q);
-            const scoreB = getSuffix(idB, q);
-            return (scoreB !== scoreA) ? scoreB - scoreA : idA.length - idB.length;
-        });
-
-        // แสดง Card ครุภัณฑ์
-        data.forEach(item => {
-            const card = document.createElement('div');
-            card.className = "p-4 bg-white rounded-[2rem] border border-slate-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all mb-1";
+        // ... ส่วนจัดการ URL คงเดิม ...
+    
+        area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto"></div></div>';
+        area.classList.remove('hidden');
+    
+        try {
+            // เพิ่ม Parameter &searchType=ID เพื่อส่งไปบอก GAS
+            const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}&searchType=ID`);
+            let data = await res.json(); 
+            area.innerHTML = '';
             
-            card.innerHTML = `
-                <div class="flex-grow pr-4">
-                    <p class="text-[13px] font-bold text-pink-500 uppercase mb-0.5">${item.AssetID}</p>
-                    <p class="text-[11px] font-bold text-slate-700 leading-tight">${item.FullDescription || item.AssetName}</p>
-                </div>
-                <div class="flex flex-col items-end gap-1">
-                    <span class="px-2 py-1 bg-pink-50 text-pink-500 text-[9px] font-bold rounded-lg">${item.AgeInfo || '--'}</span>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
-                </div>
-            `;
-            card.onclick = () => { 
-                currentAsset = item; 
-                openAuditModal(item); // ฟังก์ชันเปิด Modal ของคุณ
-            };
-            area.appendChild(card);
-        });
-
-        if (window.lucide) lucide.createIcons();
-
-    } catch (e) { 
-        area.innerHTML = `<p class="col-span-full text-center p-4 text-red-500 text-[10px]">Error: ${e.message}</p>`; 
+            if (data.length === 0) {
+                area.innerHTML = '<p class="col-span-full text-center p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบรหัสครุภัณฑ์นี้</p>';
+                return;
+            }
+    
+            // เรียงลำดับเน้นเลขท้ายเหมือนเดิม
+            data.sort((a, b) => {
+                const idA = String(a.AssetID || "");
+                const idB = String(b.AssetID || "");
+                const getSuffix = (id, query) => {
+                    let count = 0;
+                    const revId = id.split('').reverse();
+                    const revQ = query.split('').reverse();
+                    for (let i = 0; i < Math.min(revId.length, revQ.length); i++) {
+                        if (revId[i] === revQ[i]) count++; else break;
+                    }
+                    return count;
+                };
+                const scoreA = getSuffix(idA, q);
+                const scoreB = getSuffix(idB, q);
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return idA.length - idB.length;
+            });
+    
+            data.forEach(item => {
+                const d = document.createElement('div');
+                d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all mb-2";
+                
+                // ไฮไลท์เฉพาะ AssetID
+                const highlightedID = typeof highlightText === 'function' ? highlightText(item.AssetID, q) : item.AssetID;
+                
+                d.innerHTML = `
+                    <div class="flex-grow pr-4">
+                        <p class="text-[14px] font-bold text-pink-500 uppercase tracking-tight mb-0.5">${highlightedID}</p>
+                        <p class="text-xs font-bold text-gray-700 leading-tight">${item.FullDescription}</p>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-pink-300"></i>
+                    </div>
+                `;
+                d.onclick = () => { currentAsset = item; openAuditModal(); };
+                area.appendChild(d);
+            });
+            if (window.lucide) lucide.createIcons();
+        } catch (e) { 
+            area.innerHTML = '<p class="text-center text-red-400">Search Error</p>'; 
+        }
     }
-}
+
     function openAuditModal() {
         resetImage('imgPreview', 'imgPlaceholder', 'imgInput');
         document.getElementById('modalAssetName').innerText = currentAsset.FullDescription; 
