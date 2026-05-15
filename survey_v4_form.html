@@ -867,93 +867,96 @@ function closeModal(id) {
     }
 }
     function renderSuccessSlip(actionId, items) {
-        try {
-            // 1. ดึงค่าแบบปลอดภัย (เพิ่ม Logic สำรองเพื่อหา deptId จากข้อมูลที่มี)
-            const deptId = document.getElementById('selectedDeptId')?.value || items[0]?.dept_id || items[0]?.DEP_ID || "-";
-            let deptName = document.getElementById('displayDeptName')?.innerText || "ไม่ทราบหน่วยงาน";
-            
-            if ((deptName === "ไม่ทราบหน่วยงาน" || !deptName) && typeof masterDeptList !== 'undefined') {
+    try {
+        // --- 1. การดึงค่าแบบยืดหยุ่น (เพื่อให้ทำงานได้ทั้งหน้าหลักและหน้า Report) ---
+        // ถ้าหน้าจอไม่มี ID ให้ดึงจากข้อมูลชิ้นแรกในรายการ (items)
+        const deptId = document.getElementById('selectedDeptId')?.value || items[0]?.dept_id || items[0]?.DEP_ID || "-";
+        
+        let deptName = document.getElementById('displayDeptName')?.innerText;
+        
+        // ถ้าชื่อบนหน้าจอไม่มี หรือเป็นค่าเริ่มต้น ให้หาจาก masterDeptList หรือข้อมูลใน items
+        if (!deptName || deptName === "---" || deptName === "ไม่ทราบหน่วยงาน") {
+            if (typeof masterDeptList !== 'undefined') {
                 const found = masterDeptList.find(d => String(d.DEP_ID) === String(deptId));
-                if (found) deptName = found.DEPNAME;
-            } else if (deptName === "ไม่ทราบหน่วยงาน") {
-                deptName = items[0]?.department || items[0]?.dept_name || "ไม่ทราบหน่วยงาน";
+                deptName = found ? found.DEPNAME : (items[0]?.department || "ไม่ทราบหน่วยงาน");
+            } else {
+                deptName = items[0]?.department || "ไม่ทราบหน่วยงาน";
             }
-    
-            const detailBox = document.getElementById('successDetailList');
-            if (!detailBox) return console.error("Error: successDetailList element not found!");
-    
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('th-TH', { 
-                year: 'numeric', month: 'long', day: 'numeric', 
-                hour: '2-digit', minute: '2-digit' 
-            });
-    
-            // แก้ไข Link ให้แสดงผลได้แน่นอน
-            const baseUrl = typeof DEPT_VIEW_URL !== 'undefined' ? DEPT_VIEW_URL : "https://it.udh.go.th/survey/view?dept=";
-            const targetUrl = deptId !== "-" ? baseUrl + encodeURIComponent(deptId) : "https://it.udh.go.th/asset";
-            const qrImageUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8&chld=L|1`;
-    
-            // 2. ปั้น HTML รายการครุภัณฑ์
-            const itemsListHtml = items && items.length > 0 
-                ? items.map(i => {
-                    const aName = i.asset_name || i.AssetName || "ไม่ระบุชื่อ";
-                    const aId = i.asset_id || i.Asset_ID || "-";
-                    return `
-                        <div class="flex justify-between items-start py-1 border-b border-pink-50 last:border-0">
-                            <span class="text-[9px] text-gray-500 flex-grow pr-2">${aName}</span>
-                            <span class="text-[9px] font-bold text-pink-400 whitespace-nowrap font-mono">${aId}</span>
-                        </div>`;
-                }).join('')
-                : '<p class="text-[9px] text-gray-400 text-center py-2">ไม่มีรายการข้อมูล</p>';
-    
-            // 3. แสดงผลในสลิป (เอาตัวจำกัดความสูงออกเพื่อให้แสดงครบทั้งหมด)
-            detailBox.innerHTML = `
-                <div class="flex flex-col items-center mb-6 pt-4 border-t border-dashed border-gray-200">
-                    <div class="p-3 bg-white border border-pink-50 rounded-2xl shadow-sm mb-3">
-                        <img id="slipQrImg" src="${qrImageUrl}" class="w-32 h-32" crossorigin="anonymous" 
-                             onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}';">
-                    </div>
-                    <p class="text-[8px] text-pink-500 font-bold uppercase tracking-[0.2em] mb-1 italic underline break-all px-4 text-center">${targetUrl}</p>
-                    <p class="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em]">SCAN TO VIEW ASSETS</p>
-                </div>
-                
-                <div class="space-y-2 border-t border-gray-100 pt-4 mb-4">
-                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">วันที่ตรวจสอบ:</span> <span class="text-[10px] font-bold text-gray-700">${dateStr} น.</span></div>
-                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">หน่วยงาน:</span> <span class="text-[10px] font-bold text-gray-700">${deptName}</span></div>
-                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">ID:</span> <span class="text-[10px] font-bold text-pink-500">${actionId || 'N/A'}</span></div>
-                    <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">จำนวนทั้งหมด:</span> <span class="text-[10px] font-bold text-gray-700">${items.length} รายการ</span></div>
-                </div>
-    
-                <div class="bg-pink-50/30 p-3 rounded-xl border border-pink-100/50">
-                    <p class="text-[9px] font-bold text-pink-400 uppercase tracking-widest mb-2 border-b border-pink-100 pb-1">รายการตรวจสอบทั้งหมด</p>
-                    <!-- ลบ max-h-40 เพื่อให้แสดงรายการทั้งหมดตามสั่ง -->
-                    <div class="flex flex-col">${itemsListHtml}</div>
-                </div>
-    
-                <div class="mt-6 pt-4 border-t border-dashed border-gray-200 text-center">
-                    <p class="text-[9px] text-gray-400 font-bold">ขอบคุณที่ทำการตรวจสอบระบบครุภัณฑ์</p>
-                    <p class="text-[8px] text-gray-300 uppercase mt-1 tracking-tighter">IT Department - Udon Thani Hospital</p>
-                </div>
-            `;
-    
-            // ส่วนที่เหลือคงเดิมตาม Logic พี่
-            const statusTitle = document.getElementById('successStatusTitle');
-            if (statusTitle) {
-                const isDraft = (typeof submitMode !== 'undefined' && submitMode === 'DRAFT');
-                statusTitle.innerText = isDraft ? "บันทึกการตรวจสอบชั่วคราว" : "ส่งรายงานสำเร็จ!";
-            }
-    
-            const modal = document.getElementById('successModal');
-            if (modal) modal.classList.remove('hidden');
-    
-            if (typeof auditQueue !== 'undefined') auditQueue = []; 
-            if (typeof updateQueueUI === 'function') updateQueueUI();
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-    
-        } catch (err) {
-            console.error("Slip Render Error:", err);
         }
+
+        const detailBox = document.getElementById('successDetailList');
+        if (!detailBox) return console.error("Error: successDetailList element not found!");
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('th-TH', { 
+            year: 'numeric', month: 'long', day: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+        });
+
+        // --- 2. จัดการ URL และ QR Code ให้แสดงผลได้แน่นอน ---
+        const baseUrl = typeof DEPT_VIEW_URL !== 'undefined' ? DEPT_VIEW_URL : "https://it.udh.go.th/survey/view?dept=";
+        const targetUrl = deptId !== "-" ? baseUrl + encodeURIComponent(deptId) : "#";
+        const qrImageUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8&chld=L|1`;
+
+        // --- 3. ปั้น HTML รายการ (คงเดิมแต่ปรับสีให้ชัดขึ้น) ---
+        const itemsListHtml = items && items.length > 0 
+            ? items.map(i => {
+                const aName = i.AssetName || i.asset_name || "ไม่ระบุชื่อ";
+                const aId = i.Asset_ID || i.asset_id || "-";
+                return `
+                    <div class="flex justify-between items-start py-1 border-b border-pink-50 last:border-0">
+                        <span class="text-[9px] text-gray-500 flex-grow pr-2 leading-tight">${aName}</span>
+                        <span class="text-[9px] font-bold text-pink-500 font-mono">${aId}</span>
+                    </div>`;
+            }).join('')
+            : '<p class="text-[9px] text-gray-400 text-center py-2">ไม่มีรายการข้อมูล</p>';
+
+        // --- 4. แสดงผลในสลิป (ลบ max-h-40 เพื่อแสดงผลทั้งหมดตามสั่ง) ---
+        detailBox.innerHTML = `
+            <div class="flex flex-col items-center mb-6 pt-4 border-t border-dashed border-gray-200">
+                <div class="p-3 bg-white border border-pink-100 rounded-2xl shadow-sm mb-3">
+                    <img id="slipQrImg" src="${qrImageUrl}" class="w-32 h-32" crossorigin="anonymous" 
+                         onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}';">
+                </div>
+                <p class="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em] mb-1">SCAN TO VIEW ASSETS</p>
+                <p class="text-[8px] text-blue-500 underline truncate max-w-full px-6 overflow-hidden break-all italic">${targetUrl}</p>
+            </div>
+            
+            <div class="space-y-2 border-t border-gray-100 pt-4 mb-4">
+                <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">วันที่:</span> <span class="text-[10px] font-bold text-gray-700">${dateStr} น.</span></div>
+                <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">หน่วยงาน:</span> <span class="text-[10px] font-bold text-gray-700">${deptName}</span></div>
+                <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">ACTION ID:</span> <span class="text-[10px] font-bold text-pink-500">${actionId || 'N/A'}</span></div>
+                <div class="flex justify-between"><span class="text-[10px] font-bold text-gray-400 uppercase">จำนวน:</span> <span class="text-[10px] font-bold text-gray-700">${items.length} รายการ</span></div>
+            </div>
+
+            <div class="bg-pink-50/30 p-3 rounded-xl border border-pink-100/50">
+                <p class="text-[9px] font-bold text-pink-400 uppercase tracking-widest mb-2 border-b border-pink-100 pb-1">รายการตรวจสอบทั้งหมด</p>
+                <!-- ลบคลาสจำกัดความสูงออกเพื่อให้แสดงครบถ้วน -->
+                <div class="flex flex-col">${itemsListHtml}</div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-dashed border-gray-200 text-center">
+                <p class="text-[9px] text-gray-400 font-bold">ขอบคุณที่ทำการตรวจสอบระบบครุภัณฑ์</p>
+                <p class="text-[8px] text-gray-300 uppercase mt-1 tracking-tighter">IT Department - Udon Thani Hospital</p>
+            </div>
+        `;
+
+        // 5. เปิด Modal และจัดการ UI
+        const modal = document.getElementById('successModal');
+        if (modal) modal.classList.remove('hidden');
+
+        // ตรวจสอบเงื่อนไขการล้าง Queue (ให้ทำเฉพาะหน้าหลัก)
+        if (document.getElementById('selectedDeptId') && typeof auditQueue !== 'undefined') {
+            auditQueue = []; 
+            if (typeof updateQueueUI === 'function') updateQueueUI();
+        }
+        
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    } catch (err) {
+        console.error("Slip Render Error:", err);
     }
+}
      async function openScanner(id) {
         document.getElementById('scannerModal').classList.remove('hidden');
         
