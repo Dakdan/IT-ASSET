@@ -193,7 +193,7 @@
                     <p class="text-[9px] font-bold text-orange-500 tracking-widest uppercase mb-0.5">New Asset</p>
                     <h3 class="text-lg font-bold text-slate-800 uppercase">➕ เพิ่มครุภัณฑ์นอกทะเบียน</h3>
                 </div>
-                <button onclick="closeModal('nonRegisterModal')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-xs">✕</button>
+                <button onclick="closeModal('nonRegisterModal')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-xs">❌</button>
             </div>
     
             <div class="space-y-4">
@@ -273,7 +273,7 @@
         <div class="w-full bg-white rounded-t-[2.5rem] max-h-[85vh] overflow-y-auto p-6 mx-auto shadow-2xl" style="max-width: 600px;">
             <div class="flex justify-between items-center mb-5">
                 <h3 class="text-lg font-bold text-slate-800">รายการรอส่ง</h3>
-                <button onclick="closeModal('queueModal')" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full text-xs">✕</button>
+                <button onclick="closeModal('queueModal')" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full text-xs">❌</button>
             </div>
             <div id="auditListItems" class="space-y-3 mb-6"></div>
             <button onclick="submitImmediately('DRAFT')" class="w-full py-4 bg-pink-500 text-white rounded-2xl font-bold shadow-lg active:bg-pink-600 transition-colors">💾 บันทึกข้อมูลทั้งหมด</button>
@@ -346,7 +346,7 @@
     </div>
 
     <div id="scannerModal" class="fixed inset-0 z-[70] hidden bg-black flex flex-col">
-        <div class="p-5 flex justify-end text-white"><button onclick="closeScanner()" class="p-2 bg-white/10 rounded-full active:bg-white/20">✕</button></div>
+        <div class="p-5 flex justify-end text-white"><button onclick="closeScanner()" class="p-2 bg-white/10 rounded-full active:bg-white/20">❌</button></div>
         <div id="reader" class="flex-grow"></div>
     </div>
 
