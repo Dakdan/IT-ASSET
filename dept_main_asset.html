@@ -318,18 +318,7 @@
                     <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight">ตั้งค่าตัวกรองข้อมูล</h3>
                     <p id="filterSummaryText" class="text-[10px] font-bold text-pink-400 uppercase mt-0.5 tracking-wider">คลิกเพื่อปรับแต่งการแสดงผล</p>
                 </div>
-                 <div class="flex items-center gap-4">
-                    <button onclick="openReportModal()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg">
-                        <i class="fas fa-file-alt"></i> รายงาน
-                    </button>
-                <div class="view-controls">
-                    <button onclick="switchMainView('grid')" id="vGrid" class="view-btn-main active"><i class="fas fa-th-large"></i></button>
-                    <button onclick="switchMainView('table')" id="vTable" class="view-btn-main"><i class="fas fa-list"></i></button>
-                </div>
-               
-                </div>
-            </div>
-            
+                           
             <div class="flex items-center gap-4">
                 <button onclick="event.stopPropagation(); clearDashboardFilters()" class="text-[10px] font-black text-slate-400 hover:text-pink-500 underline uppercase tracking-widest mr-4">
                     <i class="fas fa-undo-alt mr-1"></i> ล้างตัวกรอง
@@ -337,7 +326,6 @@
                 <i id="filterArrow" class="fas fa-chevron-down text-slate-300 rotate-icon"></i>
             </div>
         </div>
-
         <!-- Filter Content (พับได้) -->
         <div id="dashFilterContent" class="filter-content px-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 py-6 border-t border-slate-100">
@@ -391,6 +379,17 @@
                         <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">หน่วยงานที่พบ</p>
                         <p id="statDepts" class="text-2xl font-black text-slate-800 leading-tight">-</p>
                     </div>
+                      <div class="flex items-center gap-4">
+                        <button onclick="openReportModal()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg">
+                            <i class="fas fa-file-alt"></i> รายงาน
+                        </button>
+                     <div class="view-controls">
+                        <button onclick="switchMainView('grid')" id="vGrid" class="view-btn-main active"><i class="fas fa-th-large"></i></button>
+                        <button onclick="switchMainView('table')" id="vTable" class="view-btn-main"><i class="fas fa-list"></i></button>
+                     </div>
+                   
+                    </div>
+                </div>
                 </div>
                 <span class="text-[10px] font-bold text-pink-300 uppercase italic">Departments</span>
             </div>
