@@ -359,7 +359,7 @@
                 <div class="space-y-4">
                     <!-- Priority Filter -->
                     <div class="flex items-start gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span class="text-[10px] font-black text-slate-400 uppercase px-3 border-r min-w-[70px] pt-1.5">ความสำคัญ:</span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase px-3 border-r min-w-[70px] pt-1.5">การใช้งาน:</span>
                         <div id="dashPriorityFilters" class="flex flex-wrap gap-1.5 p-1"></div>
                     </div>
                     <!-- Age Filter -->
@@ -468,7 +468,7 @@
                 </div>
                 <div class="space-y-3">
                     <div class="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200">
-                        <span class="text-[10px] font-black text-slate-400 uppercase px-2 border-r min-w-[50px]">ความสำคัญ:</span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase px-2 border-r min-w-[50px]">การใช้งาน:</span>
                         <div id="rPriorityFilters" class="flex flex-wrap gap-1"></div>
                     </div>
                     <div class="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200">
@@ -1209,13 +1209,13 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-start mb-1 gap-2">
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 truncate max-w-[100px]">${item.Asset_ID || '-'}</span>
-                                    ${item.CoStatus && item.CoStatus.includes('ใช้งาน') ? '<span class="text-[9px] font-bold text-emerald-500 bg-emerald-50 border border-emerald-100 px-2 rounded-full whitespace-nowrap"><i class="fas fa-check-circle mr-1"></i>ใช้งาน</span>' : '<span class="text-[9px] font-bold text-amber-500 bg-amber-50 border border-amber-100 px-2 rounded-full whitespace-nowrap"><i class="fas fa-exclamation-circle mr-1"></i>ยังไม่ระบุ</span>'}
+                                    <span class="text-[12px] font-bold font-black px-2 py-0.5 rounded bg-slate-900 text-slate-800 truncate max-w-[100px]">${item.Asset_ID || '-'}</span>
+                                    ${item.CoStatus && item.CoStatus.includes('ใช้งานอยู่') ? '<span class="text-[9px] font-bold text-emerald-500 bg-emerald-50 border border-emerald-100 px-2 rounded-full whitespace-nowrap"><i class="fas fa-check-circle mr-1"></i>ใช้งาน</span>' : '<span class="text-[9px] font-bold text-amber-500 bg-amber-50 border border-amber-100 px-2 rounded-full whitespace-nowrap"><i class="fas fa-exclamation-circle mr-1"></i>ยังไม่ระบุ</span>'}
                                 </div>
-                                <h5 class="font-bold text-sm text-slate-800 truncate leading-snug">${item.Detail_ID || 'ไม่ระบุรุ่นครุภัณฑ์'}</h5>
+                                <h5 class="text-sm text-slate-300 truncate leading-snug">${item.Detail_ID || 'ไม่ระบุรุ่นครุภัณฑ์'}</h5>
                                 <p class="text-[10px] text-slate-400 truncate mb-2">S/N: <span class="font-bold text-slate-600">${item.NOID || '-'}</span></p>
                                 <div class="flex flex-wrap gap-1">
-                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border ${pStyle}"><i class="fas fa-flag mr-1"></i>${item.Priority || 'ทั่วไป'}</span>
+                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border ${pStyle}"><i class="fas fa-flag mr-1"></i>${item.Priority || '-'}</span>
                                     <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border bg-slate-50 text-slate-500 border-slate-200"><i class="fas fa-clock mr-1"></i>${item.DB_Age || '-'} ปี</span>
                                 </div>
                             </div>
