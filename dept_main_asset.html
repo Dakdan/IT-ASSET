@@ -572,7 +572,7 @@
 
     function getDeptNameVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
-        return dept['DEPNAME'] || dept['DEPARTMENT'] || Object.keys(dept)[2];
+        return dept['DEPNAME'] || dept['DEPARTMENT'] || Object.keys(dept)[1];
     }
 
     // --------------------------------------------------------------------------------------------------
@@ -1164,9 +1164,9 @@
                 const mLoc = document.getElementById('mDeptLoc');
                 if (mLoc) mLoc.innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${bName} • ชั้น ${fName}`;
                 
-                const mDetailBtn = document.getElementById('mDeptDetailBtn') ;
+                const mDetailBtn = document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
                 if (mDetailBtn) {
-                    mDetailBtn.href = rawDept.LINK_URL || 'dept_detail.html?DEP_ID=${dept.DEP_ID}';
+                    mDetailBtn.href = rawDept.LINK_URL || '#';
                 }
             } else {
                 const mPic = document.getElementById('mDeptPic');
