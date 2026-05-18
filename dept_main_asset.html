@@ -572,7 +572,7 @@
 
     function getDeptNameVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
-        return dept['DEPNAME'] || dept['DEPARTMENT'] || Object.keys(dept)[1];
+        return dept['DEPNAME'] || dept['DEPARTMENT'] || Object.keys(dept)[2];
     }
 
     // --------------------------------------------------------------------------------------------------
