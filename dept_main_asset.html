@@ -1164,9 +1164,9 @@
                 const mLoc = document.getElementById('mDeptLoc');
                 if (mLoc) mLoc.innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${bName} • ชั้น ${fName}`;
                 
-                const mDetailBtn = document.getElementById('mDeptDetailBtn').href = `dept_detail.html?DEP_ID=${dept.DEP_ID}`;
+                const mDetailBtn = document.getElementById('mDeptDetailBtn') ;
                 if (mDetailBtn) {
-                    mDetailBtn.href = rawDept.LINK_URL || '#';
+                    mDetailBtn.href = rawDept.LINK_URL || 'dept_detail.html?DEP_ID=${dept.DEP_ID}';
                 }
             } else {
                 const mPic = document.getElementById('mDeptPic');
