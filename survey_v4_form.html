@@ -628,8 +628,6 @@ async function handleImageSelection(input, previewId, placeholderId) {
         document.getElementById(iId).value = "";
     }
 
-          // --- แก้ไขฟังก์ชัน submitAudit ให้เหลือเพียงอันเดียว และครอบคลุมทุกเงื่อนไข ---
-
     function updateQueueUI() {
         document.getElementById('auditCount').innerText = auditQueue.length;
         const list = document.getElementById('auditListItems');
