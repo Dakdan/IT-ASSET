@@ -1186,7 +1186,8 @@
                 
                 const mDetailBtn = document.getElementById('mDeptDetailBtn');
                 if (mDetailBtn) {
-                    mDetailBtn.href = rawDept.LINK_URL || '#';
+                    // แก้ไขตรงนี้เพื่อเปลี่ยนเส้นทางลิงก์และส่งค่า DEP_ID
+                    mDetailBtn.href = `dept_detail.html?DEP_ID=${deptId}`;
                 }
             } else {
                 const mPic = document.getElementById('mDeptPic');
