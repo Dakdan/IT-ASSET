@@ -16,7 +16,7 @@
             --pink-main: #ec4899;
             --slate-body: #f8fafc;
         }
-                
+        
         body {
             font-family: 'Kanit', sans-serif;
             background-color: var(--slate-body);
@@ -72,12 +72,13 @@
             border-style: solid;
         }
 
+        /* การ์ดหน้าแรกไล่ระดับสีพื้นหลัง (Gradient) ขอบหนาเด่นชัดมองเห็นง่ายขึ้นตามสั่ง */
         .dept-card {
-            background: white;
+            background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
             border-radius: 1.5rem;
             border-width: 2px;
             border-style: solid;
-            border-color: #94a3b8 !important; /* ปรับสีเส้นขอบเริ่มต้นให้หนาและคมชัดมองเห็นง่ายเด่นชัดเจน */
+            border-color: #94a3b8 !important; /* ขอบหนาเด่นชัดเจน */
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
         }
@@ -85,7 +86,19 @@
         .dept-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(236, 72, 153, 0.15);
-            border-color: var(--pink-main) !important; /* เน้นสีชมพูขอบเขตการ Hover ให้เด่นชัดเจน */
+            border-color: var(--pink-main) !important;
+            background: linear-gradient(135deg, #ffffff 0%, #ffe4e6 100%);
+        }
+
+        /* เพิ่มสไตล์ตกแต่งสีไล่ระดับพรีเมียมให้กับการ์ดรายละเอียดใน Modal แผนกย่อยตามสั่ง */
+        .asset-detail-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+            transition: all 0.2s ease;
+        }
+        
+        .asset-detail-card:hover {
+            background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
+            border-color: var(--pink-main) !important;
         }
 
         .view-controls {
@@ -119,8 +132,9 @@
             border: 2px solid #cbd5e1; /* สีเส้นขอบตารางเด่นชัดขึ้น */
         }
 
+        /* พื้นหลังจัดกลุ่มชั้นในตารางเป็นแบบไล่เฉดสีสวยงาม */
         .table-floor-header {
-            background: #f8fafc;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             padding: 0.75rem 1.5rem;
             font-weight: 800;
             font-size: 0.85rem;
@@ -144,14 +158,16 @@
             border-bottom: 2px solid #cbd5e1;
         }
         
+        /* แถวตารางหลักมีสีพื้นหลังเป็นแบบไล่ระดับเฉดสว่างดูมีมิติ */
         .main-table tr.dept-row td {
             padding: 1rem;
             border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
             transition: all 0.2s;
         }
 
         .main-table tr.dept-row:hover td {
-            background: #fff1f2;
+            background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%) !important;
         }
 
         .custom-scroll::-webkit-scrollbar { width: 6px; }
@@ -185,7 +201,7 @@
         }
 
         .report-table th {
-            background: #f1f5f9;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
             padding: 12px;
             font-size: 11px;
             text-align: left;
@@ -196,10 +212,12 @@
             padding: 10px;
             font-size: 13px;
             border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
         }
 
+        /* หัวข้อจัดกลุ่มหน้ารายงานพรีวิวเป็นเฉดไล่ระดับสี Slate อ่อน */
         .row-group-header {
-            background: #f1f5f9;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
             font-weight: 800;
             color: #334155;
             border-bottom: 2px solid #cbd5e1;
@@ -334,7 +352,7 @@
             </div>
         </div>
         
-        <!-- Filter Content (ยุบโดยเริ่มต้นตามคำสั่ง) -->
+        <!-- Filter Content -->
         <div id="dashFilterContent" class="filter-content collapsed px-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 py-6 border-t border-slate-100">
                 <div class="space-y-4">
@@ -359,17 +377,18 @@
                 <div class="space-y-4">
                     <!-- Priority Filter -->
                     <div class="flex items-start gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span class="text-[10px] font-black text-slate-400 uppercase px-3 border-r min-w-[70px] pt-1.5">การใช้งาน:</span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase px-3 border-r min-w-[70px] pt-1.5">ความสำคัญ:</span>
                         <div id="dashPriorityFilters" class="flex flex-wrap gap-1.5 p-1"></div>
                     </div>
                     <!-- Age Filter -->
                     <div class="flex items-start gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                         <span class="text-[10px] font-black text-slate-400 uppercase px-3 border-r min-w-[70px] pt-1.5">อายุการใช้:</span>
-                        <div id="dashAgeFilters" class="flex flex-wrap gap-1.5 p-1">
-                            <button onclick="toggleDashFilter(this, 'age', 'low')" class="multi-select-chip px-3 py-1 bg-white rounded-lg text-[10px] font-bold text-slate-500 shadow-sm">&lt; 4 ปี</button>
-                            <button onclick="toggleDashFilter(this, 'age', 'mid')" class="multi-select-chip px-3 py-1 bg-white rounded-lg text-[10px] font-bold text-slate-500 shadow-sm">4-6 ปี</button>
-                            <button onclick="toggleDashFilter(this, 'age', 'high')" class="multi-select-chip px-3 py-1 bg-white rounded-lg text-[10px] font-bold text-slate-500 shadow-sm">7-9 ปี</button>
-                            <button onclick="toggleDashFilter(this, 'age', 'old')" class="multi-select-chip px-3 py-1 bg-white rounded-lg text-[10px] font-bold text-slate-500 shadow-sm">10+ ปี</button>
+                        <!-- ปุ่มอายุเรียกใช้ toggleDashFilter สำหรับคัดกรองตัวเลือกใน Dashboard หน้าแรกเสถียรดั้งเดิม -->
+                        <div id="dashAgeFilters" class="flex flex-wrap gap-1 pt-1">
+                            <button onclick="toggleDashFilter(this, 'age', 'low')" class="multi-select-chip px-2 py-1 bg-white rounded text-[9px] font-bold text-slate-500 shadow-sm">&lt; 4 ปี</button>
+                            <button onclick="toggleDashFilter(this, 'age', 'mid')" class="multi-select-chip px-2 py-1 bg-white rounded text-[9px] font-bold text-slate-500 shadow-sm">4-6 ปี</button>
+                            <button onclick="toggleDashFilter(this, 'age', 'high')" class="multi-select-chip px-2 py-1 bg-white rounded text-[9px] font-bold text-slate-500 shadow-sm">7-9 ปี</button>
+                            <button onclick="toggleDashFilter(this, 'age', 'old')" class="multi-select-chip px-2 py-1 bg-white rounded text-[9px] font-bold text-slate-500 shadow-sm">10+ ปี</button>
                         </div>
                     </div>
                 </div>
@@ -468,7 +487,7 @@
                 </div>
                 <div class="space-y-3">
                     <div class="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200">
-                        <span class="text-[10px] font-black text-slate-400 uppercase px-2 border-r min-w-[50px]">การใช้งาน:</span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase px-2 border-r min-w-[50px]">ความสำคัญ:</span>
                         <div id="rPriorityFilters" class="flex flex-wrap gap-1"></div>
                     </div>
                     <div class="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200">
@@ -535,30 +554,31 @@
         }
     };
 
-    // --- HELPER DYNAMIC MAPPING (ดึงคีย์ข้อมูลจริงอย่างถูกต้องตามดัชนี 4, 5 และ 12 ตามโครงสร้างหลังบ้านดั้งเดิม) ---
+    // --- HELPER DYNAMIC MAPPING (ดึงคีย์ข้อมูลจริงอย่างถูกต้องตามดัชนี 4 และ 5 ตามโครงสร้างหลังบ้านดั้งเดิม) ---
     // เพื่อสกัดข้อมูล ตึก อาคาร ชั้น และรูปภาพตรงตามดัชนีคอลัมน์ของ Google Sheets จริง โดยไม่สนใจตัวสะกด
     
+    // ตรวจสอบคีย์อาคาร ดัชนีที่ 4
     function getBuildingVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
-        // ดึงคีย์ลำดับดัชนีที่ 4 (เช่น BUILDING หรือ ตึก/อาคาร)
         const key = Object.keys(dept)[4];
         return key ? String(dept[key] || '').trim() : '';
     }
 
+    // ตรวจสอบคีย์ชั้น ดัชนีที่ 5
     function getFloorVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
-        // ดึงคีย์ลำดับดัชนีที่ 5 (เช่น FLOOR หรือ ชั้น)
         const key = Object.keys(dept)[5];
         return key ? String(dept[key] || '').trim() : '';
     }
 
+    // ตรวจสอบคีย์รูปแผนก ดัชนีที่ 13
     function getDeptPicVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
-        // ดึงรูปแผนกตามคีย์ลำดับดัชนีที่ 12 ดั้งเดิมของชีตแผนกพี่ตรงๆ (ดัชนี 12 คือคอลัมน์ที่ 13)
         const key = Object.keys(dept)[13];
         return key ? String(dept[key] || '').trim() : '';
     }
 
+    // ตรวจสอบคีย์ ID แผนก ดัชนีที่ 0 หรือตามตัวเลือกอื่น
     function getDeptIdVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
         return dept['DEP_ID'] || dept['DEPID'] || dept['DEPT_ID'] || Object.keys(dept)[0];
@@ -566,7 +586,7 @@
 
     function getDeptNameVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
-        return dept['DEPNAME'] || dept['DEPARTMENT'] || Object.keys(dept)[1];
+        return dept['DEPNAME'] || dept['DEPARTMENT'] || Object.keys(dept)[2];
     }
 
     // --------------------------------------------------------------------------------------------------
@@ -578,7 +598,6 @@
         if (icon) icon.classList.add('animate-spin');
 
         try {
-            // ดึงข้อมูลรายชื่อแผนกและ Logs สรุปภาพรวมสำหรับทำ Dashboard
             const deptsPromise = fetch(`${APP_URL}?action=getDeptList`).then(r => r.json());
             const logsPromise = fetch(`${APP_URL}?action=getGlobalDashboard`).then(r => r.json());
             
@@ -587,17 +606,16 @@
             state.allDepts = depts || [];
             state.globalLogs = logs || [];
 
-            // ทำการตั้งค่าชื่อคีย์จริงจากหัวตารางสเปรดชีต
-            setGlobalKeys();
-
-            // ทำการ Populate ตัวเลือกสำหรับหน้าแรก
+            // ทำการ Populate Selectors ต่างๆ อัตโนมัติแยกออกจากกันอย่างสมบูรณ์เด็ดขาดตามกฎเหล็ก
             populateFilterOptions();
-            
-            // ทำการ Populate ตัวเลือกสำหรับรายงานแยกขาดจากหน้าแรกอย่างเป็นอิสระ
             populateReportFilterOptions();
-            
             renderDashboard();
-            updateLastUpdateText();
+            
+            const p = document.getElementById('lastUpdate');
+            if (p) {
+                const now = new Date();
+                p.innerText = `อัปเดตล่าสุด: ${now.toLocaleDateString('th-TH')} ${now.toLocaleTimeString('th-TH')} น.`;
+            }
         } catch (err) {
             console.error("Initialization Error: ", err);
         } finally {
@@ -614,15 +632,14 @@
         }
     }
 
-    function updateLastUpdateText() {
-        const p = document.getElementById('lastUpdate');
-        if (p) {
-            const now = new Date();
-            p.innerText = `อัปเดตล่าสุด: ${now.toLocaleDateString('th-TH')} ${now.toLocaleTimeString('th-TH')} น.`;
-        }
+    // ฟังก์ชันผู้ช่วย: แปลงค่าชั้นเป็นตัวเลขเพื่อการกรองและการจัดกลุ่มที่เรียงจากน้อยไปมากได้อย่างเสถียร
+    function getFloorNum(str) {
+        if (!str) return 0;
+        const match = String(str).match(/\d+/);
+        return match ? parseInt(match[0], 10) : 0;
     }
 
-    // จัดระบบตัวกรองหน้าแรกโดยดึงชื่อคีย์จากตำแหน่งดัชนี 4 และ 5 ตรงตามโครงสร้าง Google Sheets สัมพันธ์กันอย่างเป็นทอดๆ
+    // 🛠️ ตรรกะตัวกรอง "หน้าแรก" (Dashboard Filter) สัมพันธ์กันเองแบบปิดระบบการซิงค์รบกวนฝั่งรายงาน
     function populateFilterOptions() {
         const bSelect = document.getElementById('dashBuilding');
         const fSelect = document.getElementById('dashFloor');
@@ -631,47 +648,39 @@
         if (!bSelect || !fSelect || !dSelect) return;
         if (!state.allDepts || state.allDepts.length === 0) return;
 
-        // บันทึกค่าเดิมที่เคยเลือกไว้ เพื่อรักษาสถานะตัวเลือกเดิมระหว่างทำงานประสานกัน
         const prevB = state.filters.building;
         const prevF = state.filters.floor;
         const prevD = state.filters.dept;
 
-        // ดึงเฉพาะตึกที่มีอยู่ทั้งหมดในฐานข้อมูลก่อน
         const buildings = new Set();
+        const floors = new Set();
+        
         state.allDepts.forEach(dept => {
             const b = getBuildingVal(dept);
-            if (b) buildings.add(b);
+            const f = getFloorVal(dept);
+            if (b) buildings.add(String(b).trim());
+            // ซ่อมแซม: กรองรายชื่อชั้นที่จะแสดงใน Floor Dropdown ของหน้าแรกตามตึกที่เลือก
+            if (f && (state.filters.building === 'ALL' || b === state.filters.building)) {
+                floors.add(String(f).trim());
+            }
         });
 
-        // 1. เติมตึกทั้งหมด
+        // เติมตึกหน้าหลัก
         bSelect.innerHTML = '<option value="ALL">-- ทุกตึก/อาคาร --</option>';
         Array.from(buildings).sort().forEach(b => {
             bSelect.innerHTML += `<option value="${b}">${b}</option>`;
         });
         bSelect.value = prevB;
 
-        // 2. เติมชั้นทั้งหมดที่สัมพันธ์กับตึกที่เลือกจริง ๆ
-        const floors = new Set();
-        state.allDepts.forEach(dept => {
-            const b = getBuildingVal(dept);
-            const f = getFloorVal(dept);
-            // แสดงผลชั้นเฉพาะตึกที่กำลังเลือกอยู่สัมพันธ์กัน
-            if (f && (state.filters.building === 'ALL' || b === state.filters.building)) {
-                floors.add(f);
-            }
-        });
-
+        // เติมชั้นหน้าหลัก (เรียงจากน้อยไปหามากด้วยตรรกะ getFloorNum)
         fSelect.innerHTML = '<option value="ALL">-- ทุกชั้น --</option>';
-        // เรียงลำดับชั้นโดยแปลงเป็นตัวเลขเพื่อความถูกต้อง (เช่น ชั้น 1, ชั้น 2, ชั้น 3, ชั้น 10 แทนที่จะเป็น ชั้น 1, ชั้น 10, ชั้น 2)
         Array.from(floors).sort((x, y) => {
-            const numX = parseInt(x) || 0;
-            const numY = parseInt(y) || 0;
-            return numX - numY;
+            return getFloorNum(x) - getFloorNum(y);
         }).forEach(f => {
-            fSelect.innerHTML += `<option value="${f}">ชั้น ${f}</option>`;
+            const displayFloorName = String(f).includes("ชั้น") ? f : `ชั้น ${f}`;
+            fSelect.innerHTML += `<option value="${f}">${displayFloorName}</option>`;
         });
         
-        // ตรวจสอบว่าชั้นเดิมที่เคยเลือกไว้ยังมีอยู่ภายใต้เงื่อนไขตึกนี้หรือไม่
         if (floors.has(prevF)) {
             fSelect.value = prevF;
         } else {
@@ -679,10 +688,7 @@
             fSelect.value = 'ALL';
         }
 
-        // 3. เติมหน่วยงานที่สัมพันธ์กับตึกและชั้นที่เลือกจริง ๆ
-        const currentB = state.filters.building;
-        const currentF = state.filters.floor;
-        
+        // เติมแผนกหน้าหลัก
         dSelect.innerHTML = '<option value="ALL">-- ทุกหน่วยงาน --</option>';
         state.allDepts.forEach(dept => {
             const b = getBuildingVal(dept);
@@ -690,15 +696,14 @@
             const name = getDeptNameVal(dept);
             const id = getDeptIdVal(dept);
             
-            const matchB = (currentB === 'ALL' || b === currentB);
-            const matchF = (currentF === 'ALL' || f === currentF);
+            const matchB = (state.filters.building === 'ALL' || b === state.filters.building);
+            const matchF = (state.filters.floor === 'ALL' || f === state.filters.floor);
             
             if (name && matchB && matchF) {
                 dSelect.innerHTML += `<option value="${id}">${name}</option>`;
             }
         });
-
-        // ตรวจสอบสถานะการรักษาค่าหน่วยงานเดิม
+        
         const availableDeptIds = Array.from(dSelect.options).map(opt => opt.value);
         if (availableDeptIds.includes(prevD)) {
             dSelect.value = prevD;
@@ -707,7 +712,7 @@
             dSelect.value = 'ALL';
         }
 
-        // สร้างปุ่มกรองแบบชิปใน Dashboard พร้อมรักษาสถานะ active
+        // สร้างปุ่มกรองแบบชิปใน Dashboard หน้าแรก
         const typeContainer = document.getElementById('dashAssetTypeFilters');
         if (typeContainer) {
             typeContainer.innerHTML = '';
@@ -725,7 +730,7 @@
         }
     }
 
-    // จัดระบบตัวกรองหน้ารายงานโดยแยกการทำงานกันอย่างเด็ดขาดเป็นอิสระจากหน้าแดชบอร์ดหลัก
+    // 🛠️ ตรรกะตัวกรอง "หน้ารายงาน" (Report Filter) แยกทำงานอิสระ 100% ไม่กวนกับตัวกรองหน้าแรกและไม่ยอมก๊อปปี้ค่าเริ่มต้น
     function populateReportFilterOptions() {
         const bSelect = document.getElementById('fBuilding');
         const fSelect = document.getElementById('fFloor');
@@ -739,35 +744,34 @@
         const prevD = state.reportFilters.dept;
 
         const buildings = new Set();
+        const floors = new Set();
+        
         state.allDepts.forEach(dept => {
             const b = getBuildingVal(dept);
-            if (b) buildings.add(b);
+            const f = getFloorVal(dept);
+            if (b) buildings.add(String(b).trim());
+            // กรองชั้นฝั่งรายงานตามตึกรายงานที่เลือก
+            if (f && (state.reportFilters.building === 'ALL' || b === state.reportFilters.building)) {
+                floors.add(String(f).trim());
+            }
         });
 
+        // เติมตึกฝั่งรายงาน
         bSelect.innerHTML = '<option value="ALL">-- ทุกตึก/อาคาร --</option>';
         Array.from(buildings).sort().forEach(b => {
             bSelect.innerHTML += `<option value="${b}">${b}</option>`;
         });
         bSelect.value = prevB;
 
-        const floors = new Set();
-        state.allDepts.forEach(dept => {
-            const b = getBuildingVal(dept);
-            const f = getFloorVal(dept);
-            if (f && (state.reportFilters.building === 'ALL' || b === state.reportFilters.building)) {
-                floors.add(f);
-            }
-        });
-
+        // เติมชั้นฝั่งรายงาน (เรียงจากน้อยไปมาก)
         fSelect.innerHTML = '<option value="ALL">-- ทุกชั้น --</option>';
         Array.from(floors).sort((x, y) => {
-            const numX = parseInt(x) || 0;
-            const numY = parseInt(y) || 0;
-            return numX - numY;
+            return getFloorNum(x) - getFloorNum(y);
         }).forEach(f => {
-            fSelect.innerHTML += `<option value="${f}">ชั้น ${f}</option>`;
+            const displayFloorName = String(f).includes("ชั้น") ? f : `ชั้น ${f}`;
+            fSelect.innerHTML += `<option value="${f}">${displayFloorName}</option>`;
         });
-        
+
         if (floors.has(prevF)) {
             fSelect.value = prevF;
         } else {
@@ -775,9 +779,7 @@
             fSelect.value = 'ALL';
         }
 
-        const currentB = state.reportFilters.building;
-        const currentF = state.reportFilters.floor;
-        
+        // เติมแผนกฝั่งรายงาน
         dSelect.innerHTML = '<option value="ALL">-- ทุกหน่วยงาน --</option>';
         state.allDepts.forEach(dept => {
             const b = getBuildingVal(dept);
@@ -785,8 +787,8 @@
             const name = getDeptNameVal(dept);
             const id = getDeptIdVal(dept);
             
-            const matchB = (currentB === 'ALL' || b === currentB);
-            const matchF = (currentF === 'ALL' || f === currentF);
+            const matchB = (state.reportFilters.building === 'ALL' || b === state.reportFilters.building);
+            const matchF = (state.reportFilters.floor === 'ALL' || f === state.reportFilters.floor);
             
             if (name && matchB && matchF) {
                 dSelect.innerHTML += `<option value="${id}">${name}</option>`;
@@ -801,6 +803,7 @@
             dSelect.value = 'ALL';
         }
 
+        // สร้างปุ่มกรองชิปในหน้ารายงาน
         const typeContainer = document.getElementById('rAssetTypeFilters');
         if (typeContainer) {
             typeContainer.innerHTML = '';
@@ -813,38 +816,20 @@
         if (priorityContainer) {
             priorityContainer.innerHTML = '';
             for (let key in state.priorities) {
-                priorityContainer.innerHTML += `<button onclick="toggleReportFilter(this, 'priority', '${state.priorities[key]}')" class="multi-select-chip px-2 py-1 bg-slate-50 rounded text-[9px] font-bold text-slate-500 ${state.reportFilters.priorities.includes(state.priorities[key]) ? 'active' : ''}">${state.priorities[key]}</button>`;
+                priorityContainer.innerHTML += `<button onclick="toggleReportFilter(this, 'priority', '${state.reportFilters.priorities.includes(state.reportFilters.priorities[key]) ? 'active' : ''}">${state.priorities[key]}</button>`;
             }
         }
     }
 
-    // คีย์ข้อมูลจัดการระบบ
-    let keyId = 'DEP_ID';
-    let keyName = 'DEPNAME';
-    let keyBuilding = 'ตึก';
-    let keyFloor = 'ชั้น';
-    let keyPic = 'รูป';
-
-    function setGlobalKeys() {
-        if (state.allDepts && state.allDepts.length > 0 && state.allDepts[0]) {
-            const keys = Object.keys(state.allDepts[0]);
-            keyId = keys[0] || 'DEP_ID';         
-            keyName = keys[1] || 'DEPNAME';       
-            keyBuilding = keys[4] || 'ตึก';   
-            keyFloor = keys[5] || 'ชั้น';      
-            keyPic = keys[12] || 'รูป';       
-        }
-    }
-
-    // การเปลี่ยนตัวเลือกใน Dropdown หลักหน้าแรก (ปรับสัมพันธ์กันตามที่คุณสั่ง)
+    // การเปลี่ยนตัวเลือกใน Dropdown หลักหน้าแรก
     function handleDashBuildingChange() {
         const bSelect = document.getElementById('dashBuilding');
         if (bSelect) {
             state.filters.building = bSelect.value;
-            // บังคับรีเซ็ตตัวกรองชั้นและแผนกย่อยย้อนสัมพันธ์ลงมาเป็น ALL ชั่วคราวเมื่อเปลี่ยนตึกหลัก
+            // บังคัตรีเซ็ตตัวกรองชั้นและแผนกย้อนสัมพันธ์ลงมาเป็น ALL ชั่วคราวเมื่อเปลี่ยนตึกหลัก
             state.filters.floor = 'ALL';
             state.filters.dept = 'ALL';
-            populateFilterOptions(); // อัปเดต Dropdown อัตโนมัติให้เฉพาะตัวเลือกชั้นและหน่วยงานสัมพันธ์กัน
+            populateFilterOptions(); // เรียกฟังก์ชัน Populate เพื่ออัปเดตความสัมพันธ์ใหม่
             renderDashboard();
         }
     }
@@ -854,8 +839,7 @@
         const fSelect = document.getElementById('dashFloor');
         if (fSelect) {
             state.filters.floor = fSelect.value;
-            state.filters.dept = 'ALL'; // รีเซ็ตตัวกรองแผนกย่อยเมื่อเปลี่ยนชั้น
-            populateFilterOptions(); // อัปเดตตัวเลือกหน่วยงานสัมพันธ์ที่อยู่ชั้นเดียวกันบนตึกโดยอัตโนมัติ
+            populateFilterOptions(); // เรียกฟังก์ชัน Populate เพื่ออัปเดตแผนกให้สัมพันธ์กับตึกและชั้นที่เลือก
             renderDashboard();
         }
     }
@@ -868,22 +852,7 @@
         }
     }
 
-    // สลับพับ/กางกล่องควบคุมตัวกรองหลัก
-    function toggleFilterVisibility() {
-        const content = document.getElementById('dashFilterContent');
-        const arrow = document.getElementById('filterArrow');
-        if (content && arrow) {
-            if (content.classList.contains('collapsed')) {
-                content.classList.remove('collapsed');
-                arrow.classList.add('active');
-            } else {
-                content.classList.add('collapsed');
-                arrow.classList.remove('active');
-            }
-        }
-    }
-
-    // ดึงค่า URL รูปภาพที่ปลอดภัยตามแบบแผนกและภาพครุภัณฑ์ของหลังบ้าน
+    // ฟังก์ชันดึงรูปภาพของแผนกและครุภัณฑ์
     function getImageUrl(picId) {
         if (!picId) return 'https://img2.pic.in.th/-227e4f6f84f29f020.png';
         const str = String(picId).trim();
@@ -910,6 +879,25 @@
             if (state.filters.types.length > 0) {
                 logs = logs.filter(l => state.filters.types.includes(l.Asset_Type));
             }
+
+            // ประยุกต์ใช้ตัวกรอง Priority (ความสำคัญ)
+            if (state.filters.priorities.length > 0) {
+                logs = logs.filter(l => state.filters.priorities.includes(l.Priority));
+            }
+
+            // ประยุกต์ใช้ตัวกรองอายุการใช้งาน
+            if (state.filters.ages.length > 0) {
+                logs = logs.filter(l => {
+                    const age = parseFloat(l.DB_Age) || 0;
+                    return state.filters.ages.some(range => {
+                        if (range === 'low') return age < 4;
+                        if (range === 'mid') return age >= 4 && age <7;
+                        if (range === 'high') return age >= 7 && age <10;
+                        if (range === 'old') return age >= 10;
+                        return false;
+                    });
+                });
+            }
             
             // ซ่อนแผนกที่ไม่มีชนิดครุภัณฑ์ตามเงื่อนไขตัวกรองหลัก
             if (logs.length === 0) return false;
@@ -933,10 +921,7 @@
         });
 
         // อัปเดตยอดสถิติรวมของหน้าแดชบอร์ด
-        const statDeptsEl = document.getElementById('statDepts');
-        if (statDeptsEl) {
-            statDeptsEl.innerText = activeDepts.length + " แผนก";
-        }
+        document.getElementById('statDepts').innerText = activeDepts.length + " แผนก";
         
         let totalMatchedAssets = 0;
         activeDepts.forEach(d => {
@@ -945,12 +930,24 @@
             if (state.filters.types.length > 0) {
                 logs = logs.filter(l => state.filters.types.includes(l.Asset_Type));
             }
+            if (state.filters.priorities.length > 0) {
+                logs = logs.filter(l => state.filters.priorities.includes(l.Priority));
+            }
+            if (state.filters.ages.length > 0) {
+                logs = logs.filter(l => {
+                    const age = parseFloat(l.DB_Age) || 0;
+                    return state.filters.ages.some(range => {
+                        if (range === 'low') return age < 4;
+                        if (range === 'mid') return age >= 4 && age <7;
+                        if (range === 'high') return age >= 7 && age <10;
+                        if (range === 'old') return age >= 10;
+                        return false;
+                    });
+                });
+            }
             totalMatchedAssets += logs.length;
         });
-        const statAssetsEl = document.getElementById('statAssets');
-        if (statAssetsEl) {
-            statAssetsEl.innerText = totalMatchedAssets + " ชิ้น";
-        }
+        document.getElementById('statAssets').innerText = totalMatchedAssets + " ชิ้น";
 
         if (activeDepts.length === 0) {
             area.innerHTML = `<div class="py-20 text-center"><i class="fas fa-search text-6xl text-slate-200 mb-4"></i><p class="text-slate-400 font-bold">ไม่พบข้อมูลหน่วยงานตามเงื่อนไขตัวกรองของคุณ</p></div>`;
@@ -973,6 +970,7 @@
         }
     }
 
+    // แสดงผลกริดจัดกลุ่มเรียงตามชั้นน้อยไปหามาก และเพิ่มสีไล่ระดับพรีเมียม
     function renderGridView(groups) {
         const area = document.getElementById('contentArea');
         if (!area) return;
@@ -997,18 +995,17 @@
                 floorGroups[f].push(dept);
             });
 
-            // จัดเรียงชั้นจากล่างขึ้นบนโดยแปลงตัวเลข เพื่อการเรียงลำดับชั้นที่ถูกต้องสอดคล้องกัน
+            // การจัดกลุ่มชั้นเรียงตาม "น้อยไปหามาก" ของโหมด Grid (1, 2, 3...) ด้วย parseInt ร่วมกับ getFloorNum ป้องกัน NaN
             const sortedFloors = Object.keys(floorGroups).sort((x, y) => {
-                const numX = parseInt(x) || 0;
-                const numY = parseInt(y) || 0;
-                return numX - numY;
+                return getFloorNum(x) - getFloorNum(y);
             });
             
             sortedFloors.forEach(fName => {
+                const displayFloorName = String(fName).includes("ชั้น") ? fName : `ชั้น ${fName}`;
                 buildingHtml += `
                 <div class="floor-wrapper border-pink-50 bg-pink-50/5">
                     <div class="flex items-center gap-2 mb-4">
-                        <span class="text-xs font-black text-pink-500 uppercase">ชั้น ${fName}</span>
+                        <span class="text-xs font-black text-pink-500 uppercase">${displayFloorName}</span>
                         <div class="h-0.5 bg-pink-100 flex-1"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
@@ -1023,6 +1020,21 @@
                     let dLogs = state.globalLogs.filter(l => String(l.DEPT_ID) === String(dId));
                     if (state.filters.types.length > 0) {
                         dLogs = dLogs.filter(l => state.filters.types.includes(l.Asset_Type));
+                    }
+                    if (state.filters.priorities.length > 0) {
+                        dLogs = dLogs.filter(l => state.filters.priorities.includes(l.Priority));
+                    }
+                    if (state.filters.ages.length > 0) {
+                        dLogs = dLogs.filter(l => {
+                            const age = parseFloat(l.DB_Age) || 0;
+                            return state.filters.ages.some(range => {
+                                if (range === 'low') return age < 4;
+                                if (range === 'mid') return age >= 4 && age <7;
+                                if (range === 'high') return age >= 7 && age <10;
+                                if (range === 'old') return age >= 10;
+                                return false;
+                            });
+                        });
                     }
                     const count = dLogs.length;
 
@@ -1050,7 +1062,7 @@
     }
 
     // แสดงผลตารางด้วยคีย์จริงของฐานข้อมูล (ดึงตำแหน่งตึกดัชนี 4 และชั้นดัชนี 5)
-    // ปรับปรุง: แสดงรูปแบบดั้งเดิม 5 คอลัมน์ และนำรูปหน่วยงานมาแสดงผลแทน Folder ข้างหน้าชื่อแผนกตรงๆ
+    // แก้ไขเฉพาะตาราง Table ตามสั่ง: เอาสัญลักษณ์ Folder ออก และนำรูปแผนกจริง Thumbnail เข้าไปแทนข้างหน้าชื่อแผนก โดยยังคงตรรกะจัดกลุ่มเรียงชั้นและเรียงลำดับดั้งเดิมน้อยไปมากของพี่ช่างไว้ครบทุกประการ
     function renderTableView(groups) {
         const area = document.getElementById('contentArea');
         if (!area) return;
@@ -1061,7 +1073,6 @@
             <div class="grouped-table-container">
                 <div class="pink-gradient text-white p-4 font-black text-sm uppercase flex items-center gap-2"><i class="fas fa-hotel"></i> ${bName}</div>`;
 
-            // แยกกลุ่มหน่วยงานตามชั้น
             const floorGroups = {};
             groups[bName].forEach(dept => {
                 const f = getFloorVal(dept) || 'ไม่ระบุชั้น';
@@ -1069,16 +1080,15 @@
                 floorGroups[f].push(dept);
             });
 
-            // เรียงลำดับชั้นตัวเลขจากล่างขึ้นบน
+            // การจัดกลุ่มชั้นเรียงตาม "น้อยไปหามาก" ของโหมด Table (ด้วย parseInt ร่วมกับ getFloorNum ป้องกัน NaN)
             const sortedFloors = Object.keys(floorGroups).sort((x, y) => {
-                const numX = parseInt(x) || 0;
-                const numY = parseInt(y) || 0;
-                return numX - numY;
+                return getFloorNum(x) - getFloorNum(y);
             });
 
             sortedFloors.forEach(fName => {
+                const displayFloorName = String(fName).includes("ชั้น") ? fName : `ชั้น ${fName}`;
                 tblHtml += `
-                <div class="table-floor-header"><i class="fas fa-layer-group text-pink-500 mr-2"></i>ชั้น ${fName}</div>
+                <div class="table-floor-header" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-bottom: 2px solid #cbd5e1;"><i class="fas fa-layer-group text-pink-500 mr-2"></i>${displayFloorName}</div>
                 <table class="main-table">
                     <thead>
                         <tr>
@@ -1103,8 +1113,24 @@
                     if (state.filters.types.length > 0) {
                         dLogs = dLogs.filter(l => state.filters.types.includes(l.Asset_Type));
                     }
+                    if (state.filters.priorities.length > 0) {
+                        dLogs = dLogs.filter(l => state.filters.priorities.includes(l.Priority));
+                    }
+                    if (state.filters.ages.length > 0) {
+                        dLogs = dLogs.filter(l => {
+                            const age = parseFloat(l.DB_Age) || 0;
+                            return state.filters.ages.some(range => {
+                                if (range === 'low') return age < 4;
+                                if (range === 'mid') return age >= 4 && age <= 6;
+                                if (range === 'high') return age >= 7 && age <= 9;
+                                if (range === 'old') return age >= 10;
+                                return false;
+                            });
+                        });
+                    }
                     const count = dLogs.length;
 
+                    // ปรับโครงสร้าง: เอาโฟลเดอร์สีเหลืองออก และใช้รูป Thumbnail ขนาด w-8 h-8 rounded-lg ข้างหน้าแผนกตามคำสั่งพี่ช่าง
                     tblHtml += `
                     <tr onclick="openDeptDetailModal('${dId}')" class="dept-row cursor-pointer">
                         <td class="font-bold text-slate-800 text-sm flex items-center gap-3">
@@ -1195,30 +1221,35 @@
                         <div class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center font-black"><i class="fas fa-desktop"></i></div>
                         <h4 class="text-lg font-black text-slate-700">${t} <span class="text-xs text-pink-500 bg-pink-50 px-2 py-1 rounded-full ml-2">${grouped[t].length} รายการ</span></h4>
                     </div>
+                    <!-- ปรับปรุง: ขนาดของการ์ดรายละเอียดตัวอักษรให้อ่านง่ายเหมาะสมที่สุดตามสั่ง -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
                 
                 grouped[t].forEach(item => {
                     let photo = getImageUrl(item.Asset_Photo);
-                    const pStyle = 'bg-slate-50 text-slate-500 border-slate-200';
+                    const pStyle = 'bg-slate-100 text-slate-600 border-slate-300';
+                    
 
+                    // ปรับปรุง: การ์ดครุภัณฑ์ใน Modal ตกแต่งสีไล่ระดับ Gradient และปรับขนาดคลาสตัวอักษรให้อ่านง่ายเหมาะสมขึ้น
+                    // ซ่อมแซม: รักษาโครงสร้างรหัสดั้งเดิมของพี่ช่างด้วยการเรียกคีย์จริง item.Detail_ID, item.Priority และ item.DB_Age 100% ปลอดภัยไม่พัง
                     html += `
-                    <div class="bg-white p-5 rounded-3xl border-2 border-slate-100 hover:border-pink-300 transition-all shadow-sm hover:shadow-md">
-                        <div class="flex gap-4">
-                            <div class="w-20 h-20 rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 flex-shrink-0">
+                    <div class="asset-detail-card p-5 rounded-3xl border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-pink-300 transition-all flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);">
+                        <div class="flex gap-4 items-start">
+                            <div class="w-20 h-20 rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 flex-shrink-0 shadow-inner">
                                 <img src="${photo}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=No+Image'">
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-start mb-1 gap-2">
-                                    <span class="text-[12px] font-bold font-black px-2 py-0.5 rounded bg-slate-900 text-slate-800 truncate max-w-[100px]">${item.Asset_ID || '-'}</span>
-                                    ${item.CoStatus && item.CoStatus.includes('ใช้งานอยู่') ? '<span class="text-[9px] font-bold text-emerald-500 bg-emerald-50 border border-emerald-100 px-2 rounded-full whitespace-nowrap"><i class="fas fa-check-circle mr-1"></i>ใช้งาน</span>' : '<span class="text-[9px] font-bold text-amber-500 bg-amber-50 border border-amber-100 px-2 rounded-full whitespace-nowrap"><i class="fas fa-exclamation-circle mr-1"></i>ยังไม่ระบุ</span>'}
+                            <div class="flex-1 min-w-0 font-medium">
+                                <div class="flex justify-between items-center mb-1.5 gap-2">
+                                    <span class="text-[16px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700 truncate max-w-[200px] shadow-sm">${item.Asset_ID  || '-'}</span>
+                                    
                                 </div>
-                                <h5 class="text-sm text-slate-300 truncate leading-snug">${item.Detail_ID || 'ไม่ระบุรุ่นครุภัณฑ์'}</h5>
-                                <p class="text-[10px] text-slate-400 truncate mb-2">S/N: <span class="font-bold text-slate-600">${item.NOID || '-'}</span></p>
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border ${pStyle}"><i class="fas fa-flag mr-1"></i>${item.Priority || '-'}</span>
-                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border bg-slate-50 text-slate-500 border-slate-200"><i class="fas fa-clock mr-1"></i>${item.DB_Age || '-'} ปี</span>
-                                </div>
+                                <h5 class="text-sm font-black text-slate-800 leading-snug truncate" title="${item.Detail_ID || ''}">${item.Detail_ID || 'ไม่ระบุรุ่นครุภัณฑ์'}</h5>
+                                <p class="text-[12px] text-slate-500 truncate mt-1">S/N: <span class="font-extrabold text-slate-700">${item.NOID || '-'}</span></p>
                             </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-slate-200/60">
+                            <span class="text-[11px] font-black px-2.5 py-1 rounded-lg border ${pStyle}"><i class="fas fa-flag mr-1 text-pink-500"></i>${item.Priority || 'ไม่ระบุระดับความสำคัญ'}</span>
+                            <span class="text-[11px] font-black px-2.5 py-1 rounded-lg border bg-slate-50 text-slate-600 border-slate-300"><i class="fas fa-clock mr-1 text-blue-500"></i>${item.DB_Age || '-'} ปี</span>
+                            ${item.CoStatus && item.CoStatus.includes('ใช้งาน') ? '<span class="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full whitespace-nowrap"><i class="fas fa-check-circle mr-1"></i>ใช้งาน</span>' : '<span class="text-[9px] font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full whitespace-nowrap"><i class="fas fa-exclamation-circle mr-1"></i>ยังไม่ระบุ</span>'}
                         </div>
                     </div>`;
                 });
@@ -1231,7 +1262,6 @@
         }
     }
 
-    // ปล่อยทุกฟังก์ชันการจัดการตัวกรองตามตรรกะเดิมทั้งหมดอย่างปลอดภัย
     function closeModal() {
         const mDept = document.getElementById('modalDept');
         if (mDept) mDept.classList.replace('flex', 'hidden');
@@ -1257,7 +1287,6 @@
         renderDashboard();
     }
 
-    // สลับมุมมองตารางหรือกริดดั้งเดิม
     function switchMainView(v) {
         state.currentView = v;
         const vGridBtn = document.getElementById('vGrid');
@@ -1281,102 +1310,15 @@
         const mReport = document.getElementById('modalReport');
         if (mReport) {
             mReport.classList.replace('hidden', 'flex');
-            // ทำการอัปเดตตัวกรองรายงานทุกครั้งที่เปิด เพื่อรักษาสถานะสัมพันธ์และแยกจากหน้าแรก
+            // ทุกครั้งที่เปิดโมดอลรายงาน จะรีเซ็ตค่าตัวเลือกดรอปดาวน์สัมพันธ์ของตัวรายงานโดยเฉพาะให้เป็นระเบียบ
             populateReportFilterOptions();
             generateReportPreview();
         }
     }
 
-    // ปิดโมดอลรายงาน
     function closeReportModal() {
         const mReport = document.getElementById('modalReport');
         if (mReport) mReport.classList.replace('flex', 'hidden');
-    }
-
-    // ฟังก์ชันจัดการตัวกรองความสัมพันธ์ฝั่ง Modal รายงาน (แยกการทำงานสัมพันธ์โดยเด็ดขาดไม่ทับค่าหน้าแรก)
-    function handleBuildingChange() {
-        const fBuild = document.getElementById('fBuilding');
-        if (!fBuild) return;
-        state.reportFilters.building = fBuild.value;
-        state.reportFilters.floor = 'ALL';
-        state.reportFilters.dept = 'ALL';
-        
-        // กรองชั้นสัมพันธ์ออโต้ตามตึกที่เลือกจริง ๆ ในฝั่งโมดอลรายงาน
-        const floors = new Set();
-        state.allDepts.forEach(dept => {
-            const b = getBuildingVal(dept);
-            const f = getFloorVal(dept);
-            if (f && (state.reportFilters.building === 'ALL' || b === state.reportFilters.building)) {
-                floors.add(f);
-            }
-        });
-
-        const fSelect = document.getElementById('fFloor');
-        if (fSelect) {
-            fSelect.innerHTML = '<option value="ALL">-- ทุกชั้น --</option>';
-            Array.from(floors).sort((x, y) => {
-                const numX = parseInt(x) || 0;
-                const numY = parseInt(y) || 0;
-                return numX - numY;
-            }).forEach(f => {
-                fSelect.innerHTML += `<option value="${f}">ชั้น ${f}</option>`;
-            });
-            fSelect.value = 'ALL';
-        }
-
-        // กรองหน่วยงานสัมพันธ์ออโต้ในรายงาน
-        const dSelect = document.getElementById('fDept');
-        if (dSelect) {
-            dSelect.innerHTML = '<option value="ALL">-- ทุกหน่วยงาน --</option>';
-            state.allDepts.forEach(dept => {
-                const b = getBuildingVal(dept);
-                const name = getDeptNameVal(dept);
-                const id = getDeptIdVal(dept);
-                if (name && (state.reportFilters.building === 'ALL' || b === state.reportFilters.building)) {
-                    dSelect.innerHTML += `<option value="${id}">${name}</option>`;
-                }
-            });
-            dSelect.value = 'ALL';
-        }
-
-        generateReportPreview();
-    }
-
-    function handleFloorChange() {
-        const fFloor = document.getElementById('fFloor');
-        if (!fFloor) return;
-        state.reportFilters.floor = fFloor.value;
-        state.reportFilters.dept = 'ALL';
-        
-        // กรองหน่วยงานสัมพันธ์ตาม ตึก+ชั้น ที่เลือกจริงในรายงาน
-        const dSelect = document.getElementById('fDept');
-        if (dSelect) {
-            dSelect.innerHTML = '<option value="ALL">-- ทุกหน่วยงาน --</option>';
-            state.allDepts.forEach(dept => {
-                const b = getBuildingVal(dept);
-                const f = getFloorVal(dept);
-                const name = getDeptNameVal(dept);
-                const id = getDeptIdVal(dept);
-                
-                const matchB = (state.reportFilters.building === 'ALL' || b === state.reportFilters.building);
-                const matchF = (state.reportFilters.floor === 'ALL' || f === state.reportFilters.floor);
-                
-                if (name && matchB && matchF) {
-                    dSelect.innerHTML += `<option value="${id}">${name}</option>`;
-                }
-            });
-            dSelect.value = 'ALL';
-        }
-
-        generateReportPreview();
-    }
-
-    function handleDeptChange() {
-        const fDept = document.getElementById('fDept');
-        if (fDept) {
-            state.reportFilters.dept = fDept.value;
-            generateReportPreview();
-        }
     }
 
     function toggleReportFilter(btn, type, val) {
@@ -1400,6 +1342,15 @@
     }
 
     function clearReportFilters() {
+        const rBuild = document.getElementById('fBuilding');
+        const rFloor = document.getElementById('fFloor');
+        const rDept = document.getElementById('fDept');
+        if (rBuild && rFloor && rDept) {
+            rBuild.value = 'ALL';
+            rFloor.value = 'ALL';
+            rDept.value = 'ALL';
+        }
+        
         state.reportFilters.building = 'ALL';
         state.reportFilters.floor = 'ALL';
         state.reportFilters.dept = 'ALL';
@@ -1412,7 +1363,7 @@
         generateReportPreview();
     }
 
-    // ปรับปรุงการ Mapping หน้ารายงาน ตรวจสอบหัวข้อการแสดงผลให้ตรงตามต้นฉบับจริง 100%
+    // ปรับปรุง: ซ่อมแซมการ Mapping ข้อมูลหน้ารายงานพรีวิวให้สัมพันธ์กับคีย์จริง และเอาสถานะที่ไม่เกี่ยวข้องออกตามสั่ง
     function generateReportPreview() {
         const preview = document.getElementById('reportPreviewContent');
         if (!preview) return;
@@ -1434,6 +1385,7 @@
             return;
         }
 
+        // ปรับปรุง: เอาคอลัมน์สถานะออกตามประสงค์ของพี่ช่าง ทำให้เนื้อตารางสะอาด คล่องตัว และอ่านเข้าใจง่ายขึ้น
         let reportHtml = `
         <div class="text-center mb-8">
             <h2 class="text-xl font-bold uppercase">รายงานครุภัณฑ์คอมพิวเตอร์และอุปกรณ์ไอที ปี 2569</h2>
@@ -1442,12 +1394,11 @@
         <table class="report-table">
             <thead>
                 <tr>
-                    <th style="width: 100px;">รหัสครุภัณฑ์</th>
-                    <th style="width: 140px;">ประเภท</th>
-                    <th>รายละเอียดรุ่น / S/N</th>
-                    <th style="width: 100px;">ความสำคัญ</th>
-                    <th style="width: 80px;">อายุ (ปี)</th>
-                    <th style="width: 90px;">สถานะ</th>
+                    <th style="width: 150px;">รหัสครุภัณฑ์</th>
+                    <th style="width: 180px;">ประเภทอุปกรณ์</th>
+                    <th>รายละเอียดรุ่น / ซีเรียลนัมเบอร์ (S/N)</th>
+                    <th style="width: 250px;">ความสำคัญ (การใช้งาน)</th>
+                    <th style="width: 100px;">อายุ (ปี)</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -1455,6 +1406,8 @@
         matchedDepts.forEach(dept => {
             const deptId = getDeptIdVal(dept);
             const dName = getDeptNameVal(dept) || 'ไม่ระบุแผนก';
+            
+            // ดึง logs และกรองตามประเภทอุปกรณ์
             const deptLogs = state.globalLogs.filter(l => String(l.DEPT_ID) === String(deptId));
 
             // ตรวจกรองรายการในรายงานให้ตรงตามปุ่มกรองในหน้ารายงานที่เลือกจริง ( types, priorities, ages )
@@ -1463,15 +1416,20 @@
                 filteredLogs = filteredLogs.filter(l => state.reportFilters.types.includes(l.Asset_Type));
             }
             if (state.reportFilters.priorities && state.reportFilters.priorities.length > 0) {
-                filteredLogs = filteredLogs.filter(l => state.reportFilters.priorities.includes(l.Priority));
+                // ซ่อมแซม: กรองลำดับความสำคัญฝั่งรายงานสัมพันธ์กับรหัส PIO ของพี่ช่าง
+                filteredLogs = filteredLogs.filter(l => {
+                    const mappedPriorityText = state.priorities[l.PIO] || 'ไม่ระบุความสำคัญ';
+                    return state.reportFilters.priorities.includes(mappedPriorityText);
+                });
             }
             if (state.reportFilters.ages && state.reportFilters.ages.length > 0) {
                 filteredLogs = filteredLogs.filter(l => {
-                    const age = parseFloat(l.DB_Age) || 0;
+                    // ซ่อมแซม: แมปคีย์อายุจริงจากคอลัมน์ l.Age ของพี่ช่าง
+                    const age = parseFloat(l.Age) || 0;
                     return state.reportFilters.ages.some(range => {
                         if (range === 'low') return age < 4;
-                        if (range === 'mid') return age >= 4 && age <= 6;
-                        if (range === 'high') return age >= 7 && age <= 9;
+                        if (range === 'mid') return age >= 4 && age < 7;
+                        if (range === 'high') return age >= 7 && age < 10;
                         if (range === 'old') return age >= 10;
                         return false;
                     });
@@ -1481,23 +1439,29 @@
             if (filteredLogs.length > 0) {
                 reportHtml += `
                 <tr class="row-group-header">
-                    <td colspan="6"><i class="fas fa-folder-open text-amber-500 mr-2"></i> ${dName} (${filteredLogs.length} ชิ้น)</td>
+                    <td colspan="5"><i class="fas fa-folder-open text-amber-500 mr-2"></i> ${dName} (${filteredLogs.length} ชิ้น)</td>
                 </tr>`;
 
                 filteredLogs.forEach(item => {
+                    // ซ่อมแซม: แมปข้อมูลลงตารางพรีวิวรายงานให้ตรงตามคีย์โครงสร้างฐานข้อมูลจริงของพี่ช่าง 100%
+                    const assetId = item.Asset_ID || '-';
+                    const assetType = item.Asset_Type || '-';
+                    const detail = item.Detail || 'ไม่ระบุรุ่น';
+                    const serialNo = item.NOID || '-';
+                    // ปรับปรุง: แก้ไขคำว่า 'ทั่วไป' ให้เป็น 'ไม่ระบุความสำคัญ' เพื่อไม่ให้ข้อมูลระดับความสำคัญคลาดเคลื่อนตามคำสั่ง
+                    const pioText = state.priorities[item.PIO] || 'ไม่ระบุความสำคัญ';
+                    const ageVal = item.Age || '-';
+
                     reportHtml += `
                     <tr>
-                        <td class="font-bold text-xs">${item.Asset_ID || '-'}</td>
-                        <td class="text-xs text-pink-600 font-bold">${item.Asset_Type || '-'}</td>
+                        <td class="font-black text-xs text-slate-800">${assetId}</td>
+                        <td class="text-xs text-pink-600 font-bold">${assetType}</td>
                         <td>
-                            <div class="font-bold text-slate-700">${item.Detail_ID || 'ไม่ระบุรุ่น'}</div>
-                            <div class="text-[10px] text-slate-400">S/N: ${item.NOID || '-'}</div>
+                            <div class="font-bold text-slate-700">${detail}</div>
+                            <div class="text-[10px] text-slate-400">S/N: ${serialNo}</div>
                         </td>
-                        <td class="text-xs font-semibold">${item.Priority || 'ทั่วไป'}</td>
-                        <td class="text-xs font-bold text-slate-600">${item.DB_Age || '-'}</td>
-                        <td>
-                            ${item.CoStatus && item.CoStatus.includes('ใช้งาน') ? '<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">ใช้งานอยู่</span>' : '<span class="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">ยังไม่ระบุ</span>'}
-                        </td>
+                        <td class="text-xs font-semibold text-slate-600">${pioText}</td>
+                        <td class="text-xs font-bold text-slate-700 text-center">${ageVal}</td>
                     </tr>`;
                 });
             }
@@ -1507,7 +1471,22 @@
         preview.innerHTML = reportHtml;
     }
 
-    // การล้างค่าตัวกรองในแดชบอร์ดหลัก
+    function exportToExcel() {
+        const table = document.querySelector('.report-table');
+        if (!table) return;
+        const wb = XLSX.utils.table_to_book(table, {sheet: "UDH_IT_Asset_Report"});
+        XLSX.writeFile(wb, "IT_Asset_UDH_Report_2569.xlsx");
+    }
+
+    function toggleFilterVisibility() {
+        const content = document.getElementById('dashFilterContent');
+        const arrow = document.getElementById('filterArrow');
+        if (content && arrow) {
+            content.classList.toggle('collapsed');
+            arrow.classList.toggle('active');
+        }
+    }
+
     function clearDashboardFilters() {
         const bSelect = document.getElementById('dashBuilding');
         const fSelect = document.getElementById('dashFloor');
@@ -1517,24 +1496,15 @@
             fSelect.value = 'ALL';
             dSelect.value = 'ALL';
         }
-        
         state.filters.building = 'ALL';
         state.filters.floor = 'ALL';
         state.filters.dept = 'ALL';
         state.filters.types = [];
         state.filters.priorities = [];
         state.filters.ages = [];
-
         document.querySelectorAll('.multi-select-chip').forEach(c => c.classList.remove('active'));
-        populateFilterOptions(); // เรียกคืนข้อมูลตัวเลือกให้ครบสมบูรณ์
+        populateFilterOptions();
         renderDashboard();
-    }
-
-    function exportToExcel() {
-        const table = document.querySelector('.report-table');
-        if (!table) return;
-        const wb = XLSX.utils.table_to_book(table, {sheet: "UDH_IT_Asset_Report"});
-        XLSX.writeFile(wb, "IT_Asset_UDH_Report_2569.xlsx");
     }
 
     window.onload = function() {
