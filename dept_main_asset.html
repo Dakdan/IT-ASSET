@@ -817,7 +817,8 @@
         if (priorityContainer) {
             priorityContainer.innerHTML = '';
             for (let key in state.priorities) {
-                priorityContainer.innerHTML += `<button onclick="toggleReportFilter(this, 'priority', '${state.reportFilters.priorities.includes(state.reportFilters.priorities[key]) ? 'active' : ''}">${state.priorities[key]}</button>`;
+                priorityContainer.innerHTML += `<button onclick="toggleReportFilter(this, 'priority', '${state.priorities[key]}')" class="multi-select-chip px-3 py-1 bg-white rounded-lg text-[10px] font-bold text-slate-500 shadow-sm ${state.filters.priorities.includes(state.priorities[key]) ? 'active' : ''}">${state.priorities[key]}</button>`;
+            }
             }
         }
     }
