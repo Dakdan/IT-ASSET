@@ -473,8 +473,8 @@
         if (!ageStr) return false;
         const years = parseInt(ageStr.match(/(\d+)/)?.[1] || 0);
         if (reportFilters.age.includes('low') && years < 4) return true;
-        if (reportFilters.age.includes('mid') && years >= 4 && years <= 6) return true;
-        if (reportFilters.age.includes('high') && years >= 7 && years <= 9) return true;
+        if (reportFilters.age.includes('mid') && years >= 4 && years <7) return true;
+        if (reportFilters.age.includes('high') && years >= 7 && years <10) return true;
         if (reportFilters.age.includes('old') && years >= 10) return true;
         return false;
     }
