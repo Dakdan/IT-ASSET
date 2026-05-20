@@ -1472,12 +1472,57 @@
         preview.innerHTML = reportHtml;
     }
 
-    function exportToExcel() {
-        const table = document.querySelector('.report-table');
-        if (!table) return;
-        const wb = XLSX.utils.table_to_book(table, {sheet: "UDH_IT_Asset_Report"});
-        XLSX.writeFile(wb, "IT_Asset_UDH_Report_2569.xlsx");
+   function getFilteredLogs() {
+        // ดึง Logs ทั้งหมดมาตรวจสอบกับ Filter ปัจจุบัน
+        return state.logs.filter(l => {
+            // ค้นหาข้อมูลหน่วยงานของ Log นี้เพื่อกรอง Building/Floor
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim());
+            if (!dept) return false;
+
+            const matchB = !reportFilters.building || dept.BUILDING === reportFilters.building;
+            const matchF = !reportFilters.floor || dept.FL === reportFilters.floor;
+            const matchD = !reportFilters.deptId || String(l.DEPT_ID).trim() === String(reportFilters.deptId).trim();
+            const matchP = reportFilters.priority.length === 0 || reportFilters.priority.includes(String(l.Priority_ID || l.PIORITY_ID));
+            const matchT = reportFilters.assetType.length === 0 || reportFilters.assetType.includes(String(l.Asset_Type_ID));
+            const matchA = reportFilters.age.length === 0 || checkAgeMatch(l.AgeInfo);
+
+            return matchB && matchF && matchD && matchP && matchT && matchA;
+        });
     }
+
+    function exportToExcel() {
+        const filteredLogs = getFilteredLogs();
+        if (filteredLogs.length === 0) {
+            alert("ไม่มีข้อมูลที่จะส่งออกตามตัวกรองที่เลือก");
+            return;
+        }
+
+        const exportData = [];
+        // สร้างรายการข้อมูลสำหรับ Excel โดยใช้ข้อมูลที่ผ่านการกรองแล้ว
+        filteredLogs.forEach((l, i) => {
+            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(l.DEPT_ID).trim()) || {};
+            exportData.push({
+                "ลำดับ": i + 1,
+                "รหัสครุภัณฑ์": l.AssetID,
+                "Serial Number": l.Serial_Number || '-',
+                "ประเภท": getAssetTypeName(l.Asset_Type_ID),
+                "อายุการใช้งาน": l.AgeInfo || '-',
+                "รายละเอียด": l.FullDescription,                                   
+                "หน่วยงาน": dept.DEPNAME || '-',
+                "ตึก": dept.BUILDING || '-',
+                "ชั้น": dept.FL || '-',                  
+                "Priority": getPriorityName(l.Priority_ID || l.PIORITY_ID),
+                "สถานะทะเบียน":l.ASS_ON_OUT   
+            });
+        });
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Filtered_Asset_Report");
+        const fileName = `IT_Asset_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+    }
+
 
     function toggleFilterVisibility() {
         const content = document.getElementById('dashFilterContent');
