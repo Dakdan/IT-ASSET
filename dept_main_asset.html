@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <link rel="icon" type="image/png" href="logo1.png">
+    <link class="no-print" rel="icon" type="image/png" href="/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>IT Asset UDH - Inventory Check & Reports</title>
@@ -295,9 +295,7 @@
     <div class="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl overflow-hidden shadow-md border border-slate-100 flex items-center justify-center bg-white">
-                
-                 <img src="https://img1.pic.in.th/images/logo108d868d796a4dedf.png" alt="Logo" class="h-12">
-                
+                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="h-12">
             </div>
             <div>
                 <h1 class="text-xl font-black text-slate-800 leading-none">IT ASSET INVENTORY<span class="text-pink-500"> CHECK</span></h1>
@@ -306,12 +304,12 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <button onclick="openReportModal()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg">
-                <i class="fas fa-file-alt"></i> รายงาน
-            </button>
-            <button onclick="window.location.href='survey_v4_form.html'" 
+             <button onclick="window.location.href='survey_v4_form.html'" 
                     class="pink-gradient ml-2 px-6 py-2.5 rounded-xl text-white font-bold text-sm shadow-lg shadow-pink-100 hover:scale-105 transition-all">
                 <i class="fas fa-plus mr-2"></i> เพิ่มข้อมูล
+            </button>
+            <button onclick="openReportModal()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg">
+                <i class="fas fa-file-alt"></i> รายงาน
             </button>
             <div class="view-controls">
                 <button onclick="switchMainView('grid')" id="vGrid" class="view-btn-main active"><i class="fas fa-th-large"></i></button>
@@ -337,7 +335,7 @@
     <!-- Header Title Section -->
     <div class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h2 class="text-3xl font-black text-slate-900 tracking-tight text-center md:text-left uppercase">ตรวจสอบครุภัณฑ์ <span class="text-pink-500">2569</span></h2>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tight text-center md:text-left uppercase">ตรวจสอบครุภัณฑ์ประจำปี <span class="text-pink-500">2569</span></h2>
             <p id="lastUpdate" class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-[0.3em] text-center md:text-left">กำลังโหลดข้อมูล...</p>
         </div>
     </div>
@@ -384,7 +382,7 @@
                 </div>
                 <div class="space-y-4">
                     <div class="flex items-start gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span class="text-[10px] font-black text-slate-400 uppercase px-3 border-r min-w-[70px] pt-1.5">การใช้งาน:</span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase px-3 border-r min-w-[70px] pt-1.5">กลุ่มผู้ใช้งาน(การใช้งาน):</span>
                         <div id="dashPriorityFilters" class="flex flex-wrap gap-1.5 p-1"></div>
                     </div>
                     <div class="flex items-start gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
@@ -519,7 +517,7 @@
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">ความสำคัญ</label>
+                                    <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">กลุ่มผู้ใช้งาน(การใช้งาน)</label>
                                     <select id="selectPriority" disabled class="w-full px-3 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none focus:border-pink-500 disabled:bg-slate-50 disabled:text-slate-700 disabled:border-slate-300">
                                         <option value="ตรวจรักษา (แพทย์)">ตรวจรักษา (แพทย์)</option>
                                         <option value="ข้อมูลผู้ป่วย (พยาบาล)">ข้อมูลผู้ป่วย (พยาบาล)</option>
@@ -978,8 +976,8 @@
                     const age = parseFloat(l.Age || l.DB_Age) || 0;
                     return state.filters.ages.some(range => {
                         if (range === 'low') return age < 4;
-                        if (range === 'mid') return age >= 4 && age <= 6;
-                        if (range === 'high') return age >= 7 && age <= 9;
+                        if (range === 'mid') return age >= 4 && age < 7;
+                        if (range === 'high') return age >= 7 && age < 10;
                         if (range === 'old') return age >= 10;
                         return false;
                     });
@@ -1022,8 +1020,8 @@
                     const age = parseFloat(l.Age || l.DB_Age) || 0;
                     return state.filters.ages.some(range => {
                         if (range === 'low') return age < 4;
-                        if (range === 'mid') return age >= 4 && age <= 6;
-                        if (range === 'high') return age >= 7 && age <= 9;
+                        if (range === 'mid') return age >= 4 && age <7;
+                        if (range === 'high') return age >= 7 && age <10;
                         if (range === 'old') return age >= 10;
                         return false;
                     });
@@ -1100,8 +1098,8 @@
                             const age = parseFloat(l.Age || l.DB_Age) || 0;
                             return state.filters.ages.some(range => {
                                 if (range === 'low') return age < 4;
-                                if (range === 'mid') return age >= 4 && age <= 6;
-                                if (range === 'high') return age >= 7 && age <= 9;
+                                if (range === 'mid') return age >= 4 && age <7;
+                                if (range === 'high') return age >= 7 && age <10;
                                 if (range === 'old') return age >= 10;
                                 return false;
                             });
@@ -1182,8 +1180,8 @@
                             const age = parseFloat(l.Age || l.DB_Age) || 0;
                             return state.filters.ages.some(range => {
                                 if (range === 'low') return age < 4;
-                                if (range === 'mid') return age >= 4 && age <= 6;
-                                if (range === 'high') return age >= 7 && age <= 9;
+                                if (range === 'mid') return age >= 4 && age <7;
+                                if (range === 'high') return age >= 7 && age <10;
                                 if (range === 'old') return age >= 10;
                                 return false;
                             });
@@ -1281,6 +1279,12 @@
                     const pStyle = 'bg-slate-100 text-slate-600 border-slate-300';
                     const safeAssetId = item.Asset_ID || item.ASSET_ID || '';
 
+                    // 🛠️ เพิ่มเงื่อนไขตรวจสอบสถานะทะเบียนเพื่อแสดงสีส้มสำหรับ "นอกทะเบียน"
+                    const regStatus = item.RegStatus || 'มีทะเบียน';
+                    const isUnregistered = regStatus.includes('นอกทะเบียน');
+                    const regColorClass = isUnregistered ? 'text-orange-600 bg-orange-50 border-orange-200' : 'text-emerald-600 bg-emerald-50 border-emerald-200';
+                    const regIconClass = isUnregistered ? 'fa-exclamation-circle' : 'fa-check-circle';
+
                     html += `
                     <div onclick="openAssetDetailModal('${safeAssetId}', '${deptId}')" class="asset-detail-card p-5 rounded-3xl border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-pink-300 transition-all flex flex-col justify-between cursor-pointer">
                         <div class="flex gap-4 items-start">
@@ -1298,7 +1302,7 @@
                         <div class="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-slate-200/60 font-bold">
                             <span class="text-[11px] px-2.5 py-1 rounded-lg border ${pStyle}"><i class="fas fa-flag mr-1 text-pink-500"></i>${item.Priority || 'ไม่ระบุ'}</span>
                             <span class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 text-slate-600 border-slate-300"><i class="fas fa-clock mr-1 text-blue-500"></i>${item.DB_Age || '-'} ปี</span>
-                            <span class="text-[11px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full whitespace-nowrap flex items-center"><i class="fas fa-check-circle mr-1"></i>${item.RegStatus || 'มีทะเบียน'}</span>
+                            <span class="text-[11px] ${regColorClass} border px-2.5 py-0.5 rounded-full whitespace-nowrap flex items-center"><i class="fas ${regIconClass} mr-1"></i>${regStatus}</span>
                         </div>
                     </div>`;
                 });
@@ -1592,8 +1596,8 @@
                     const age = parseFloat(l.Age || l.DB_Age) || 0;
                     return state.reportFilters.ages.some(range => {
                         if (range === 'low') return age < 4;
-                        if (range === 'mid') return age >= 4 && age <= 6;
-                        if (range === 'high') return age >= 7 && age <= 9;
+                        if (range === 'mid') return age >= 4 && age <7;
+                        if (range === 'high') return age >= 7 && age <10;
                         if (range === 'old') return age >= 10;
                         return false;
                     });
@@ -1650,7 +1654,7 @@
                     <th style="width: 150px;">รหัสครุภัณฑ์</th>
                     <th style="width: 180px;">ประเภทอุปกรณ์</th>
                     <th>รายละเอียดรุ่น / ซีเรียลนัมเบอร์ (S/N)</th>
-                    <th style="width: 250px;">ความสำคัญ (การใช้งาน)</th>
+                    <th style="width: 250px;">กลุ่มผู้ใช้งาน(การใช้งาน)</th>
                     <th style="width: 100px; text-align:center;">อายุ (ปี)</th>
                 </tr>
             </thead>
@@ -1659,7 +1663,7 @@
         deptsWithLogs.forEach(d => {
             reportHtml += `
             <tr class="row-group-header">
-                <td colspan="5"><i class="fas fa-folder-open text-amber-500 mr-2"></i> ${d.deptName} (${d.logs.length} ชิ้น)</td>
+                <td colspan="5"><i class="fas fa-folder-open text-amber-500 mr-2"></i> ${d.deptName} (${d.logs.length} รายการ)</td>
             </tr>`;
 
             d.logs.forEach(item => {
