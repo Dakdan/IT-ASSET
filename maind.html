@@ -1,329 +1,958 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Audit Dashboard - UDH</title>
+    <title>ระบบเช็กและรายงานครุภัณฑ์คอมพิวเตอร์ โรงพยาบาลอุดรธานี</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Sarabun & Prompt) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f0f4f8; }
-        .pink-gradient { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
-        .spec-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 11px; line-height: 1.6; }
-        .modal-enter { animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .sticky-header { position: sticky; top: 72px; z-index: 40; background-color: rgba(240, 244, 248, 0.9); backdrop-filter: blur(8px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        /* สไตล์ปุ่มเมนูตามรูปที่แนบมา */
-        .nav-container { background: #eef2f7; border-radius: 1rem; padding: 4px; display: flex; gap: 4px; }
-        .nav-btn { padding: 8px 20px; border-radius: 0.75rem; font-size: 14px; font-weight: 600; transition: all 0.2s; }
-        .nav-btn.active { background: white; color: #ec4899; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 3px solid #ec4899; border-radius: 0.75rem 0.75rem 0 0; }
-        .nav-btn.inactive { color: #64748b; }
-        
-        .main-card { background: white; border-radius: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+        body {
+            font-family: 'Prompt', 'Sarabun', sans-serif;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .dashboard-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+        }
     </style>
 </head>
-<body class="text-slate-700 pb-20">
-
-    <!-- Nav ตามรูปภาพแนบ -->
-    <nav class="bg-white px-8 py-4 sticky top-0 z-50 shadow-sm flex items-center justify-between border-b border-slate-100">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 pink-gradient rounded-xl flex items-center justify-center shadow-lg">
-                <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" class="w-7 h-7 brightness-110" alt="Logo">
-            </div>
-            <div>
-                <h1 class="text-base font-bold text-slate-800 leading-tight">IT ASSET AUDIT</h1>
-                <p class="text-[9px] text-pink-500 font-bold uppercase tracking-widest">Udonthani Hospital</p>
-            </div>
-        </div>
-        
-        <div class="nav-container">
-            <button class="nav-btn active">หน้าหลัก</button>
-            <button class="nav-btn inactive" onclick="window.location.href='survey_v4_form.html'">เพิ่มการตรวจสอบ</button>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-6 mt-8">
-        
-        <!-- Welcome Card -->
-        <div class="main-card p-10 mb-8 flex items-center gap-8 relative overflow-hidden">
-            <div class="relative z-10">
-                <div class="w-12 h-12 bg-slate-100 rounded-2xl mb-4"></div>
-                <div class="h-4 w-48 bg-slate-100 rounded-full mb-3"></div>
-                <div class="h-8 w-32 bg-slate-100 rounded-full"></div>
-            </div>
-            <div class="absolute right-0 top-0 w-64 h-64 bg-pink-50 rounded-full -mr-20 -mt-20 opacity-50"></div>
-        </div>
-
-        <!-- Search & Title -->
-        <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-                <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                    <span class="w-2 h-8 pink-gradient rounded-full"></span>
-                    หน่วยงานที่ตรวจสอบแล้ว
-                </h2>
-                <p id="lastUpdate" class="text-slate-400 text-sm ml-5 mt-1">สรุปจำนวนอุปกรณ์แยกตามประเภท และรายละเอียดการตรวจสอบ</p>
-            </div>
-            <div class="relative">
-                <input type="text" id="searchInput" oninput="renderDashboard()" placeholder="ค้นหาหน่วยงาน หรือ อาคาร..." 
-                       class="w-full md:w-96 bg-white border border-slate-200 rounded-2xl px-6 py-4 text-sm outline-none focus:ring-4 ring-pink-500/10 shadow-sm transition-all">
-                <svg class="w-5 h-5 absolute right-5 top-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5" stroke-linecap="round"></path></svg>
-            </div>
-        </div>
-
-        <!-- Summary Stats -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">หน่วยงานที่ตรวจแล้ว</p>
-                <div id="statDepts" class="text-3xl font-black text-slate-800">-</div>
-            </div>
-            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">อุปกรณ์ทั้งหมดที่พบ</p>
-                <div id="statAssets" class="text-3xl font-black text-pink-500">-</div>
-            </div>
-            <div class="bg-slate-800 p-6 rounded-[2rem] text-white shadow-xl shadow-slate-200">
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">สถานะระบบ</p>
-                <div class="text-sm font-bold text-emerald-400 flex items-center gap-2">
-                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                    พร้อมเชื่อมต่อข้อมูล Master Sheet
-                </div>
-            </div>
-        </div>
-
-        <!-- รายการสรุป (Card Layout เดิม) -->
-        <div id="contentArea" class="space-y-16">
-            <div class="text-center py-32 text-slate-300 font-medium italic">กำลังรวบรวมข้อมูลจาก Master Sheets...</div>
-        </div>
-    </main>
-
-    <!-- Modal -->
-    <div id="modalDept" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/70 backdrop-blur-md hidden p-4">
-        <div class="bg-white w-full max-w-6xl rounded-[3rem] shadow-2xl overflow-hidden modal-enter flex flex-col max-h-[92vh]">
-            <!-- Modal Header -->
-            <div class="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
-                <div class="flex items-center gap-6">
-                    <div id="mDeptPic" class="w-24 h-24 rounded-[2rem] bg-white border-4 border-white shadow-xl overflow-hidden flex-shrink-0">
-                        <img src="" class="w-full h-full object-cover">
+<body class="h-full text-slate-800">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 text-white shadow-lg sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md border border-white/20">
+                        <i class="fas fa-desktop text-2xl text-pink-400"></i>
                     </div>
                     <div>
-                        <h3 id="mDeptName" class="text-3xl font-black text-slate-800 leading-tight">ชื่อหน่วยงาน</h3>
-                        <div id="mDeptLoc" class="flex items-center gap-2 text-slate-500 font-medium mt-1"></div>
+                        <h1 class="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
+                            ระบบเช็กและรายงานครุภัณฑ์ <span class="bg-pink-500 text-white text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider shadow-sm">IT UDH</span>
+                        </h1>
+                        <p class="text-xs text-indigo-200 mt-0.5">งานสารสนเทศและคอมพิวเตอร์ โรงพยาบาลอุดรธานี</p>
                     </div>
                 </div>
-                <button onclick="closeModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white shadow-sm border border-slate-100 hover:text-pink-500 transition-all active:scale-90">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" stroke-linecap="round"></path></svg>
+                <!-- Navigation Tabs -->
+                <nav class="flex bg-indigo-900/40 p-1.5 rounded-2xl border border-white/10 backdrop-blur-sm shadow-inner">
+                    <button onclick="switchTab('check')" id="tab-check" class="tab-btn active px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 text-white bg-indigo-600 shadow-sm">
+                        <i class="fas fa-clipboard-check"></i> เช็กครุภัณฑ์
+                    </button>
+                    <button onclick="switchTab('report')" id="tab-report" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 text-indigo-200 hover:text-white">
+                        <i class="fas fa-chart-pie"></i> หน้ารายงาน
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- 1. TAB: CHECK ASSET -->
+            <div id="section-check" class="tab-content block">
+                <!-- Department Selection Dropdown Card -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 mb-8">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="space-y-1.5">
+                            <h2 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-hospital-user text-indigo-600"></i> เลือกหน่วยงานที่รับผิดชอบ
+                            </h2>
+                            <p class="text-sm text-slate-500">กรุณาเลือกตึก/กลุ่มงานคอมพิวเตอร์เพื่อตรวจสอบรายการครุภัณฑ์ทั้งหมดที่อยู่ในระบบ</p>
+                        </div>
+                        <div class="w-full md:w-80 relative">
+                            <select id="dept-select" onchange="loadAssetsByDept()" class="w-full bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-2xl px-4 py-3.5 pr-10 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                                <option value="" disabled selected>กำลังโหลดรายชื่อตึก/กลุ่มงาน...</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Asset Categories & Grid Lists -->
+                <div id="dept-assets-container" class="hidden">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h3 id="current-dept-title" class="text-2xl font-black text-slate-800"></h3>
+                            <p class="text-sm text-slate-500 mt-1">แบ่งตามประเภทของอุปกรณ์เพื่อความสะดวกในการควบคุมและเช็กสภาพ</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                                <span id="dept-total-count" class="text-sm font-black text-indigo-700"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="assets-by-type-wrapper" class="space-y-8"></div>
+                </div>
+
+                <!-- Default State Illustration -->
+                <div id="default-state-container" class="text-center py-16 px-4 bg-white border border-slate-200 rounded-3xl shadow-sm">
+                    <div class="w-24 h-24 bg-slate-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner border border-slate-100">
+                        <i class="fas fa-search-location text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-800">ยังไม่ได้เลือกหน่วยงาน</h3>
+                    <p class="text-slate-500 text-sm mt-1 max-w-sm mx-auto">โปรดเลือกตึกหรือกลุ่มงานด้านบนเพื่อตรวจสอบ ประเมินผล และเรียกดูครุภัณฑ์แยกประเภทของแผนกนั้นๆ</p>
+                </div>
+            </div>
+
+            <!-- 2. TAB: REPORT / DASHBOARD -->
+            <div id="section-report" class="tab-content hidden space-y-8">
+                <!-- Overview Statistics Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="dashboard-card bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-pink-50 border border-pink-100 text-pink-600 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">ครุภัณฑ์ทั้งหมด</p>
+                            <h4 id="stat-total" class="text-2xl font-black text-slate-800 mt-0.5">-</h4>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">มีทะเบียน</p>
+                            <h4 id="stat-registered" class="text-2xl font-black text-emerald-700 mt-0.5">-</h4>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-orange-50 border border-orange-100 text-orange-600 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">นอกทะเบียน</p>
+                            <h4 id="stat-unregistered" class="text-2xl font-black text-orange-700 mt-0.5">-</h4>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-50 border border-blue-100 text-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">ครอบคลุมตึก/หน่วยงาน</p>
+                            <h4 id="stat-depts" class="text-2xl font-black text-slate-800 mt-0.5">-</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Priority & Registration Category Charts (Analytical Visualization) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Category Priority Block -->
+                    <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+                        <div class="mb-4">
+                            <h3 class="text-base font-extrabold text-slate-800"><i class="fas fa-signal text-pink-500 mr-2"></i>จำแนกตามความเร่งด่วน (Priority)</h3>
+                            <p class="text-xs text-slate-500">อัตราการใช้งานครุภัณฑ์ความเร็วสูง / ต่ำ ในกลุ่มงาน</p>
+                        </div>
+                        <div id="priority-chart-container" class="space-y-4"></div>
+                    </div>
+                    <!-- Device Classification Block -->
+                    <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+                        <div class="mb-4">
+                            <h3 class="text-base font-extrabold text-slate-800"><i class="fas fa-laptop text-indigo-500 mr-2"></i>สัดส่วนประเภทของครุภัณฑ์</h3>
+                            <p class="text-xs text-slate-500">จำนวนการติดตั้งและแบ่งสัดส่วนตามกลุ่มอุปกรณ์</p>
+                        </div>
+                        <div id="type-chart-container" class="space-y-4"></div>
+                    </div>
+                </div>
+
+                <!-- 🛠️ ตารางรายงานครุภัณฑ์ทั้งหมดพร้อมระบบ Pagination และสัญลักษณ์แสดงทะเบียน -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-list-ul text-pink-500"></i> ตารางรายงานรายละเอียดข้อมูลดิบ
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">แสดงข้อมูลอย่างละเอียด ค้นหา จับคู่ และเช็กประเภททะเบียนได้ทันที</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center gap-3">
+                            <!-- Search in Raw Data -->
+                            <div class="relative w-full sm:w-64">
+                                <input type="text" id="raw-search-input" oninput="handleRawSearch()" placeholder="ค้นหา รหัสครุภัณฑ์, S/N, รุ่น..." class="w-full bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all">
+                                <div class="absolute inset-y-0 left-3 flex items-center text-slate-400 pointer-events-none">
+                                    <i class="fas fa-search text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-2 rounded-xl">
+                                ข้อมูลทั้งหมด: <span id="filtered-raw-count" class="text-indigo-600 font-extrabold">0</span> รายการ
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto custom-scroll">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 text-xs font-extrabold border-b border-slate-200">
+                                    <th class="px-6 py-4">รหัสครุภัณฑ์ (Asset ID)</th>
+                                    <th class="px-6 py-4">รุ่น / รายละเอียด</th>
+                                    <th class="px-6 py-4">ซีเรียลนัมเบอร์ (S/N)</th>
+                                    <th class="px-6 py-4">หน่วยงานที่ดูแล</th>
+                                    <th class="px-6 py-4">อายุ (ปี)</th>
+                                    <th class="px-6 py-4 text-center">สถานะทะเบียน</th>
+                                </tr>
+                            </thead>
+                            <tbody id="raw-data-tbody" class="text-xs font-medium text-slate-700 divide-y divide-slate-100">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-10 text-center text-slate-400 font-bold">
+                                        <i class="fas fa-circle-notch fa-spin text-lg text-indigo-600 mr-2"></i> กำลังรวบรวมและโหลดข้อมูล...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 🛠️ ระบบแบ่งหน้า (Pagination Controls) -->
+                    <div id="raw-pagination-container" class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="text-xs font-bold text-slate-500">
+                            แสดงหน้า <span id="current-page-text" class="text-indigo-600">1</span> จากทั้งหมด <span id="total-pages-text" class="text-indigo-600">1</span> หน้า
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="changeRawPage(-1)" id="btn-prev-page" class="px-3 py-2 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed">
+                                <i class="fas fa-chevron-left"></i> ก่อนหน้า
+                            </button>
+                            <div id="page-numbers-wrapper" class="flex items-center gap-1">
+                                <!-- Dynamic Page Numbers -->
+                            </div>
+                            <button onclick="changeRawPage(1)" id="btn-next-page" class="px-3 py-2 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed">
+                                ถัดไป <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p>&copy; 2026 ระบบสารสนเทศและควบคุมครุภัณฑ์ไอที งานสารสนเทศและคอมพิวเตอร์ โรงพยาบาลอุดรธานี</p>
+                <div class="flex gap-4">
+                    <span class="text-slate-500"><i class="fas fa-database mr-1"></i> เชื่อมต่อผ่าน Google App Sheet DB v2</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal: Asset Details -->
+    <div id="asset-detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-lg shadow-xl border border-slate-100 overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="asset-detail-modal-card">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-indigo-100 text-indigo-700 rounded-2xl flex items-center justify-center font-black">
+                        <i class="fas fa-info-circle text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-black text-slate-800 leading-none">ข้อมูลครุภัณฑ์โดยละเอียด</h4>
+                        <p class="text-xs text-slate-500 mt-1">รายละเอียดเครื่องและประวัติการบันทึกสถานะ</p>
+                    </div>
+                </div>
+                <button onclick="closeAssetDetailModal()" class="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-            <!-- Modal Body -->
-            <div class="p-8 overflow-y-auto flex-1 bg-slate-50/30 custom-scrollbar">
-                <div id="mAssetGroupContainer" class="space-y-12"></div>
+            
+            <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto custom-scroll">
+                <div class="flex gap-4 items-start bg-slate-50 p-4 rounded-2xl border border-slate-150">
+                    <div class="w-24 h-24 rounded-xl overflow-hidden border border-slate-200 bg-white flex-shrink-0 shadow-sm">
+                        <img id="m-photo" src="" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://img2.pic.in.th/-227e4f6f84f29f020.png';">
+                    </div>
+                    <div class="space-y-1">
+                        <span id="m-id" class="text-xs font-black px-2 py-1 rounded bg-indigo-100 text-indigo-800 shadow-sm inline-block"></span>
+                        <h5 id="m-detail" class="text-sm font-black text-slate-800 leading-snug"></h5>
+                        <p class="text-xs text-slate-500">S/N: <span id="m-noid" class="font-bold text-slate-700"></span></p>
+                        <p id="m-reg-status-wrapper" class="pt-1">
+                            <!-- จะใส่ badge ทะเบียนที่คำนวณสีส้ม/เขียวแบบไดนามิก -->
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">ประเภทคอมพิวเตอร์</p>
+                        <p id="m-type" class="text-xs font-black text-slate-800 mt-0.5">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">กลุ่มความเร่งด่วน</p>
+                        <p id="m-priority" class="text-xs font-black text-slate-800 mt-0.5">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">อายุใช้งาน (ปี)</p>
+                        <p id="m-age" class="text-xs font-black text-slate-800 mt-0.5">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">หน่วยงานที่ดูแลอยู่</p>
+                        <p id="m-dept" class="text-xs font-black text-slate-800 mt-0.5 truncate">-</p>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-2">
+                    <p class="text-xs font-black text-slate-500 flex items-center gap-1.5"><i class="fas fa-file-invoice text-pink-500"></i> หมายเหตุเพิ่มเติม (Remark)</p>
+                    <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs text-slate-700 font-semibold italic whitespace-pre-line" id="m-remark">ไม่มีหมายเหตุหรือบันทึกเพิ่มเติม</div>
+                </div>
             </div>
-            <!-- Footer -->
-            <div class="p-8 bg-slate-50 border-t border-slate-100 flex justify-center">
-                <button onclick="closeModal()" class="px-20 py-4 pink-gradient text-white rounded-2xl text-base font-bold shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all">ปิดหน้าต่างนี้</button>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeAssetDetailModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black text-xs rounded-xl transition-all">
+                    ปิดหน้าต่างนี้
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Google Apps Script Runtime Integration Interface -->
     <script>
-        const APP_URL = "https://script.google.com/macros/s/AKfycbwb_1Yppy3h_hy4dX1RkN3-l_YKKlC3FWKewmzCHM-q6SHrlbxsm-U-SGMUj1mYXwkMuQ/exec";
-        let state = { logs: [], depts: [], assetTypes: [] };
+        // 1. STATE VARIABLES (GLOBAL WITHIN RUNTIME)
+        const apiKey = "https://script.google.com/macros/s/AKfycbznFwIHQsiqqydWSyR7eweKVsfchRyWtbQPZ_ogHma4ZL2X9QnHFb6sqVXvEeXJqwTx/exec"; // Web App URL
+        let rawDashboardData = []; // เก็บข้อมูลครุภัณฑ์ทั้งหมด
+        let listDepts = []; // เก็บรายชื่อแผนกทั้งหมด
+        let currentDeptAssets = []; // เก็บข้อมูลครุภัณฑ์แบบเจาะลึกของแผนกที่กำลังเลือก
 
-        async function init() {
+        // 🛠️ Pagination & Search states สำหรับตารางข้อมูลดิบ
+        let filteredRawData = [];
+        let currentRawPage = 1;
+        const rowsPerRawPage = 15; // จำนวนแถวต่อหนึ่งหน้า
+
+        // 2. BOOTSTRAPPING ON DOM READY
+        window.onload = function() {
+            // ดึงข้อมูลรายชื่อแผนกเพื่อใส่ Dropdown และดึงข้อมูล Dashboard พร้อมกัน
+            fetchDashboardAndDepts();
+        };
+
+        // 3. API CALL TO WEB APP BACKEND (FETCH API)
+        async function fetchDashboardAndDepts() {
             try {
-                const ts = new Date().getTime();
-                const [logRes, deptRes, initRes] = await Promise.all([
-                    fetch(`${APP_URL}?action=getAuditLogs&_=${ts}`).then(r => r.json()),
-                    fetch(`${APP_URL}?action=getDeptList&_=${ts}`).then(r => r.json()),
-                    fetch(`${APP_URL}?action=getInitialData&_=${ts}`).then(r => r.json())
+                // เรียกข้อมูล 2 ส่วนพร้อมกันเพื่อลดเวลาการรอ (Department List & Global Dashboard)
+                const [deptResponse, dashResponse] = await Promise.all([
+                    fetch(`${apiKey}?action=getDeptList`),
+                    fetch(`${apiKey}?action=getGlobalDashboard`)
                 ]);
-                state.logs = logRes || [];
-                state.depts = deptRes || [];
-                state.assetTypes = initRes.assetTypes || [];
-                document.getElementById('lastUpdate').innerText = `อัปเดตข้อมูลเมื่อ: ${new Date().toLocaleString('th-TH')}`;
-                renderDashboard();
+
+                if (!deptResponse.ok || !dashResponse.ok) throw new Error("Network response was not ok");
+
+                const deptsData = await deptResponse.json();
+                const dashData = await dashResponse.json();
+
+                // 🛠️ Mapping รายชื่อแผนกแบบเข้มงวด (Strict)
+                listDepts = deptsData.map(d => ({
+                    DEP_ID: String(d.DEP_ID || Object.values(d)[0]).trim(), 
+                    DEPNAME: String(d.DEPNAME || Object.values(d)[1]).trim()
+                }));
+
+                // 🛠️ Mapping โครงสร้างตามที่ Backend ส่งมา 100% ไม่มีเดาสถานะ
+                const mappedAssets = dashData.map(a => {
+                    return {
+                        Asset_ID: a.Asset_ID,
+                        Detail_ID: a.Detail_ID, 
+                        NOID: a.NOID, 
+                        DEPT_ID: a.DEPT_ID, 
+                        DB_Age: a.DB_Age, 
+                        Asset_Type: a.Asset_Type,
+                        Priority: a.Priority,
+                        CoStatus: a.CoStatus,
+                        RegStatus: a.RegStatus || "ไม่ระบุ" // getGlobalDashboard ไม่มีคีย์นี้ จึงให้เป็น 'ไม่ระบุ' ตามจริง
+                    };
+                });
+
+                onDataFetchSuccess({
+                    departments: listDepts,
+                    assets: mappedAssets
+                });
+
             } catch (err) {
-                console.error(err);
-                document.getElementById('contentArea').innerHTML = `<p class="text-center py-20 text-red-500 font-bold">ไม่สามารถเชื่อมต่อ Google Sheets ได้</p>`;
+                console.error("Fetch Error:", err);
+                showError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ฐานข้อมูลได้ กรุณาตรวจสอบ URL ของ Web App");
             }
         }
 
-        function getTypeName(typeId) {
-            const t = state.assetTypes.find(x => String(x.id).trim() === String(typeId).trim());
-            return t ? t.name : 'อุปกรณ์อื่นๆ';
+        // 🛠️ FUNCTION FOR ERROR HANDLING
+        function showError(message) {
+            const tbody = document.getElementById('raw-data-tbody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-10 text-center text-red-500 font-bold bg-red-50">
+                            <i class="fas fa-exclamation-triangle text-xl mb-2 block"></i> ${message}
+                        </td>
+                    </tr>`;
+            }
+            document.getElementById('stat-total').textContent = 'Error';
+            const select = document.getElementById('dept-select');
+            if(select) select.innerHTML = '<option value="" disabled selected>ไม่สามารถโหลดรายชื่อแผนกได้</option>';
+        }
+
+        // 4. DATA PROCESSING SUCCESS HANDLER
+        function onDataFetchSuccess(data) {
+            listDepts = data.departments || [];
+            populateDepartmentDropdown(listDepts);
+
+            rawDashboardData = data.assets || [];
+            filteredRawData = [...rawDashboardData];
+
+            renderDashboardStats();
+            renderDashboardCharts();
+            
+            currentRawPage = 1;
+            renderRawTable();
+        }
+
+        // ดรอปดาวน์สำหรับเลือกตึกแผนก
+        function populateDepartmentDropdown(depts) {
+            const select = document.getElementById('dept-select');
+            select.innerHTML = '<option value="" disabled selected>-- เลือกแผนกเพื่อเช็กทรัพย์สิน --</option>';
+            
+            depts.forEach(dept => {
+                const opt = document.createElement('option');
+                opt.value = dept.DEP_ID;
+                opt.textContent = dept.DEPNAME;
+                select.appendChild(opt);
+            });
+        }
+
+        // สลับแท็บสไตล์ SPA (Single Page Application)
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-white', 'bg-indigo-600', 'shadow-sm');
+                btn.classList.add('text-indigo-200', 'hover:text-white');
+            });
+
+            if (tabId === 'check') {
+                document.getElementById('section-check').classList.remove('hidden');
+                const activeBtn = document.getElementById('tab-check');
+                activeBtn.classList.add('active', 'text-white', 'bg-indigo-600', 'shadow-sm');
+                activeBtn.classList.remove('text-indigo-200');
+            } else {
+                document.getElementById('section-report').classList.remove('hidden');
+                const activeBtn = document.getElementById('tab-report');
+                activeBtn.classList.add('active', 'text-white', 'bg-indigo-600', 'shadow-sm');
+                activeBtn.classList.remove('text-indigo-200');
+            }
+        }
+
+        // เพิ่มฟังก์ชันตรวจสอบช่วงอายุตาม Logic ที่คุณกำหนด
+        function getAgeRangeLabel(age) {
+            if (age < 4) return 'low';
+            if (age >= 4 && age < 7) return 'mid';
+            if (age >= 7 && age < 10) return 'high';
+            if (age >= 10) return 'old';
+            return 'unknown';
         }
 
         function renderDashboard() {
-            const contentArea = document.getElementById('contentArea');
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            const area = document.getElementById('contentArea');
+            const search = document.getElementById('searchInput')?.value.toLowerCase() || "";
             
-            const activeDeptIds = [...new Set(state.logs.map(l => String(l.DEPT_ID).trim()))];
-            let filteredDepts = state.depts.filter(d => 
-                activeDeptIds.includes(String(d.DEP_ID).trim()) &&
-                (d.DEPNAME.toLowerCase().includes(search) || d.BUILDING.toLowerCase().includes(search))
+            // 1. กรองข้อมูลตาม Search
+            const filteredDepts = state.depts.filter(d => 
+                d.DEPNAME.toLowerCase().includes(search) || 
+                (d.BUILDING && d.BUILDING.toLowerCase().includes(search))
             );
 
+            // 2. คำนวณสถิติรวม
             document.getElementById('statDepts').innerText = filteredDepts.length;
             document.getElementById('statAssets').innerText = state.logs.length.toLocaleString();
 
-            const groupedData = {};
+            const structure = {};
             filteredDepts.forEach(d => {
-                const b = d.BUILDING || "ไม่ระบุอาคาร";
-                const f = `ชั้น ${d.FL || '?'}`;
-                if (!groupedData[b]) groupedData[b] = {};
-                if (!groupedData[b][f]) groupedData[b][f] = [];
-                groupedData[b][f].push(d);
+                const b = d.BUILDING || "อาคารทั่วไป";
+                const f = d.FL || "ชั้น 1";
+                if (!structure[b]) structure[b] = {};
+                if (!structure[b][f]) structure[b][f] = [];
+                structure[b][f].push(d);
             });
 
-            const buildings = Object.keys(groupedData).sort();
-            if (buildings.length === 0) {
-                contentArea.innerHTML = `<div class="text-center py-20 text-slate-400 italic">ไม่พบข้อมูลหน่วยงานที่ตรวจสอบ</div>`;
+            let html = "";
+            Object.keys(structure).sort().forEach(building => {
+                const floors = Object.keys(structure[building]).sort();
+                
+                html += `
+                    <div class="building-container">
+                        <div class="building-header">
+                            <h3 class="text-2xl font-black text-slate-800 uppercase">${building}</h3>
+                        </div>
+                        <div class="p-8 space-y-12">
+                            ${floors.map((floor, idx) => {
+                                const depts = structure[building][floor];
+                                const theme = floorColorThemes[idx % floorColorThemes.length];
+                                
+                                return `
+                                    <div class="floor-wrapper ${theme.bg} ${theme.border}">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                            ${depts.map(dept => {
+                                                const dLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
+                                                
+                                                // คำนวณสรุปตาม Priority และ Age Range
+                                                const stats = {
+                                                    'low': 0, 'mid': 0, 'high': 0, 'old': 0
+                                                };
+                                                
+                                                dLogs.forEach(log => {
+                                                    const age = parseInt(calculateAge(log.DateOfPurchase || log.DATE_PURCHASE)) || 0;
+                                                    const range = getAgeRangeLabel(age);
+                                                    if (stats.hasOwnProperty(range)) stats[range]++;
+                                                });
+
+                                                return `
+                                                    <div onclick="showDetail('${dept.DEP_ID}')" class="dept-card p-5 ${theme.cardBorder}">
+                                                        <h4 class="text-sm font-bold text-slate-800 mb-2">${dept.DEPNAME}</h4>
+                                                        <div class="grid grid-cols-2 gap-2 mt-3 text-[9px] font-bold">
+                                                            <div class="bg-emerald-50 text-emerald-600 p-1 rounded">ใหม่ <4ปี: ${stats.low}</div>
+                                                            <div class="bg-blue-50 text-blue-600 p-1 rounded">กลาง 4-6ปี: ${stats.mid}</div>
+                                                            <div class="bg-amber-50 text-amber-600 p-1 rounded">สูง 7-9ปี: ${stats.high}</div>
+                                                            <div class="bg-red-50 text-red-600 p-1 rounded">เก่า 10ปี+: ${stats.old}</div>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            area.innerHTML = html || `<div class="p-20 text-center text-slate-400 font-bold">ไม่พบข้อมูล</div>`;
+        }
+        // 5. RENDER OVERVIEW REPORT STATS
+        function renderDashboardStats() {
+            if (!rawDashboardData.length) return;
+
+            const total = rawDashboardData.length;
+            // 🛠️ นับข้อมูลตามที่ได้จาก Backend เป๊ะๆ 
+            const registered = rawDashboardData.filter(item => item.RegStatus === 'มีทะเบียน').length;
+            const unregistered = rawDashboardData.filter(item => item.RegStatus === 'นอกทะเบียน').length;
+
+            const deptsSet = new Set(rawDashboardData.map(item => item.DEPT_ID).filter(Boolean));
+
+            document.getElementById('stat-total').textContent = total.toLocaleString() + ' รายการ';
+            document.getElementById('stat-registered').textContent = registered.toLocaleString() + ' รายการ';
+            document.getElementById('stat-unregistered').textContent = unregistered.toLocaleString() + ' รายการ';
+            document.getElementById('stat-depts').textContent = deptsSet.size + ' แผนก';
+        }
+
+        // 6. ANALYTICAL CHARTS (Tailwind + CSS based)
+        function renderDashboardCharts() {
+            const containerPriority = document.getElementById('priority-chart-container');
+            const containerType = document.getElementById('type-chart-container');
+
+            if (!rawDashboardData.length) return;
+
+            const priorities = {};
+            const types = {};
+
+            rawDashboardData.forEach(item => {
+                const p = item.Priority || 'ไม่ระบุ';
+                priorities[p] = (priorities[p] || 0) + 1;
+
+                const t = item.Asset_Type || 'ไม่ระบุประเภท';
+                types[t] = (types[t] || 0) + 1;
+            });
+
+            containerPriority.innerHTML = '';
+            const maxPriority = Math.max(...Object.values(priorities));
+            Object.keys(priorities).sort().forEach(k => {
+                const count = priorities[k];
+                const pct = ((count / rawDashboardData.length) * 100).toFixed(1);
+                const widthPct = ((count / maxPriority) * 100).toFixed(0);
+
+                containerPriority.innerHTML += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-bold text-slate-700">
+                            <span><i class="fas fa-arrow-circle-right text-indigo-500 mr-1.5"></i>${k}</span>
+                            <span>${count} รายการ (${pct}%)</span>
+                        </div>
+                        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-pink-500 rounded-full transition-all duration-500" style="width: ${widthPct}%"></div>
+                        </div>
+                    </div>`;
+            });
+
+            containerType.innerHTML = '';
+            const maxType = Math.max(...Object.values(types));
+            Object.keys(types).sort((a,b) => types[b] - types[a]).slice(0, 5).forEach(k => {
+                const count = types[k];
+                const pct = ((count / rawDashboardData.length) * 100).toFixed(1);
+                const widthPct = ((count / maxType) * 100).toFixed(0);
+
+                containerType.innerHTML += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-bold text-slate-700">
+                            <span><i class="fas fa-cog text-slate-400 mr-1.5"></i>${k}</span>
+                            <span>${count} รายการ (${pct}%)</span>
+                        </div>
+                        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-indigo-600 rounded-full transition-all duration-500" style="width: ${widthPct}%"></div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // ฟังก์ชันช่วยดึงชื่อแผนกจากรหัสแผนก DEP_ID
+        function getDeptName(deptId) {
+            if (!deptId) return '-';
+            const cleanId = String(deptId).trim();
+            const dept = listDepts.find(d => d.DEP_ID === cleanId);
+            return dept ? dept.DEPNAME : cleanId;
+        }
+
+        // 🛠️ 7. RENDER RAW DATA TABLE WITH PAGINATION
+        function renderRawTable() {
+            const tbody = document.getElementById('raw-data-tbody');
+            document.getElementById('filtered-raw-count').textContent = filteredRawData.length.toLocaleString();
+
+            if (filteredRawData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-10 text-center text-slate-400 font-bold">
+                            <i class="fas fa-folder-open text-xl mb-2 block text-slate-300"></i> ไม่พบรายการข้อมูลที่ตรงกับการค้นหา
+                        </td>
+                    </tr>`;
+                setupPaginationControls(0);
                 return;
             }
 
-            let html = "";
-            buildings.forEach(building => {
-                html += `
-                <section>
-                    <div class="sticky-header py-4 mb-8 border-b border-slate-200">
-                        <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">${building}</h3>
-                    </div>`;
+            const totalPages = Math.ceil(filteredRawData.length / rowsPerRawPage);
+            if (currentRawPage > totalPages) currentRawPage = totalPages;
+            if (currentRawPage < 1) currentRawPage = 1;
+
+            const startIndex = (currentRawPage - 1) * rowsPerRawPage;
+            const endIndex = Math.min(startIndex + rowsPerRawPage, filteredRawData.length);
+            const pageData = filteredRawData.slice(startIndex, endIndex);
+
+            let html = '';
+            pageData.forEach(item => {
+                // 🛠️ อ่านข้อมูล RegStatus ตรงๆ ตามที่ Backend ส่งมา
+                const regStatus = item.RegStatus || '-';
                 
-                const floors = Object.keys(groupedData[building]).sort();
-                floors.forEach(floor => {
-                    html += `
-                        <div class="mb-12">
-                            <h4 class="text-xs font-black text-pink-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 ml-2">
-                                ${floor} <span class="flex-1 h-px bg-pink-100"></span>
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                ${groupedData[building][floor].map(dept => {
-                                    const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(dept.DEP_ID).trim());
-                                    const typeCounts = {};
-                                    deptLogs.forEach(l => {
-                                        const tName = getTypeName(l.Asset_Type_ID);
-                                        typeCounts[tName] = (typeCounts[tName] || 0) + 1;
-                                    });
-                                    const deptImg = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/200x120/f1f5f9/94a3b8?text=${dept.DEPNAME.substring(0,1)}`;
-                                    return `
-                                    <div onclick="showDetail('${dept.DEP_ID}')" 
-                                         class="bg-white rounded-[2.5rem] p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
-                                        <div class="flex items-start gap-5 mb-6">
-                                            <div class="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                                                <img src="${deptImg}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,1)}'">
-                                            </div>
-                                            <div class="min-w-0 flex-1 pt-1">
-                                                <h5 class="text-base font-bold text-slate-800 leading-tight mb-1 group-hover:text-pink-600 transition-colors line-clamp-2">${dept.DEPNAME}</h5>
-                                                <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">${building} &bull; ${floor}</p>
-                                            </div>
-                                        </div>
-                                        <div class="bg-slate-50/50 rounded-2xl p-4 mb-6 border border-slate-100/50">
-                                            <div class="flex flex-wrap gap-y-2">
-                                                ${Object.entries(typeCounts).map(([name, count]) => `
-                                                    <div class="w-1/2 flex items-center justify-between pr-4 border-r border-slate-100 last:border-r-0">
-                                                        <span class="text-[10px] text-slate-500 truncate mr-1">${name}</span>
-                                                        <span class="text-[11px] font-bold text-slate-800">${count}</span>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between bg-slate-800 rounded-3xl px-6 py-4">
-                                            <div class="flex flex-col">
-                                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">รวมทั้งหมด</span>
-                                                <span class="text-xl font-black text-white leading-none">${deptLogs.length} <small class="text-[11px] font-bold text-slate-400 ml-1">เครื่อง</small></span>
-                                            </div>
-                                            <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:bg-pink-500 transition-all">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                            </div>
-                                        </div>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-                        </div>`;
+                let badgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
+                let iconClass = 'fa-question-circle text-slate-400';
+
+                if (regStatus === 'มีทะเบียน') {
+                    badgeClass = 'bg-emerald-50 text-emerald-600 border-emerald-200';
+                    iconClass = 'fa-check-circle text-emerald-500';
+                } else if (regStatus === 'นอกทะเบียน') {
+                    badgeClass = 'bg-orange-50 text-orange-600 border-orange-200';
+                    iconClass = 'fa-exclamation-circle text-orange-500';
+                }
+
+                const safeAssetId = item.Asset_ID || '';
+                const deptName = getDeptName(item.DEPT_ID);
+
+                html += `
+                <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 font-semibold text-slate-700">
+                    <td class="px-6 py-3.5">
+                        <button onclick="openAssetDetailModal('${safeAssetId}', '${item.DEPT_ID || ''}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-pink-100 hover:text-pink-700 text-slate-700 font-black tracking-wider border border-slate-200 transition-all text-left">
+                            <i class="far fa-edit mr-1 text-slate-400"></i> ${safeAssetId || 'ไม่มีรหัส'}
+                        </button>
+                    </td>
+                    <td class="px-6 py-3.5 max-w-[240px] truncate" title="${item.Detail_ID || ''}">${item.Detail_ID || '-'}</td>
+                    <td class="px-6 py-3.5 font-bold text-slate-800">${item.NOID || '-'}</td>
+                    <td class="px-6 py-3.5 text-slate-500">${deptName}</td>
+                    <td class="px-6 py-3.5 font-bold">${item.DB_Age || '-'}</td>
+                    <td class="px-6 py-3.5 text-center">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold ${badgeClass}">
+                            <i class="fas ${iconClass}"></i>
+                            ${regStatus}
+                        </span>
+                    </td>
+                </tr>`;
+            });
+
+            tbody.innerHTML = html;
+            setupPaginationControls(totalPages);
+        }
+
+        // 8. PAGINATION CONTROLS GENERATOR
+        function setupPaginationControls(totalPages) {
+            document.getElementById('current-page-text').textContent = filteredRawData.length > 0 ? currentRawPage : 0;
+            document.getElementById('total-pages-text').textContent = totalPages;
+
+            const btnPrev = document.getElementById('btn-prev-page');
+            const btnNext = document.getElementById('btn-next-page');
+
+            btnPrev.disabled = currentRawPage <= 1;
+            btnNext.disabled = currentRawPage >= totalPages;
+
+            const wrapper = document.getElementById('page-numbers-wrapper');
+            wrapper.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            let startPage = Math.max(1, currentRawPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentRawPage;
+                const activeClasses = isActive 
+                    ? 'bg-indigo-600 border-indigo-600 text-white font-extrabold shadow-sm' 
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-bold';
+
+                wrapper.innerHTML += `
+                    <button onclick="jumpToRawPage(${i})" class="w-8 h-8 rounded-xl border-2 text-xs flex items-center justify-center transition-all ${activeClasses}">
+                        ${i}
+                    </button>
+                `;
+            }
+        }
+
+        function changeRawPage(direction) {
+            currentRawPage += direction;
+            renderRawTable();
+        }
+
+        function jumpToRawPage(pageNumber) {
+            currentRawPage = pageNumber;
+            renderRawTable();
+        }
+
+        // 9. SEARCH FILTER FOR RAW DATA TABLE
+        function handleRawSearch() {
+            const query = document.getElementById('raw-search-input').value.trim().toLowerCase();
+            
+            if (!query) {
+                filteredRawData = [...rawDashboardData];
+            } else {
+                filteredRawData = rawDashboardData.filter(item => {
+                    const assetId = String(item.Asset_ID || '').toLowerCase();
+                    const detail = String(item.Detail_ID || '').toLowerCase();
+                    const noid = String(item.NOID || '').toLowerCase();
+                    const dept = getDeptName(item.DEPT_ID).toLowerCase();
+                    const regStatus = String(item.RegStatus || '').toLowerCase();
+
+                    return assetId.includes(query) || 
+                           detail.includes(query) || 
+                           noid.includes(query) || 
+                           dept.includes(query) ||
+                           regStatus.includes(query);
                 });
-                html += `</section>`;
-            });
-            contentArea.innerHTML = html;
+            }
+
+            currentRawPage = 1;
+            renderRawTable();
         }
 
-        function showDetail(deptId) {
-            const dept = state.depts.find(d => String(d.DEP_ID).trim() === String(deptId).trim());
-            const deptLogs = state.logs.filter(l => String(l.DEPT_ID).trim() === String(deptId).trim());
-            
-            document.getElementById('mDeptName').innerText = dept.DEPNAME;
-            document.getElementById('mDeptLoc').innerHTML = `
-                <svg class="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-                ${dept.BUILDING} ชั้น ${dept.FL}
-            `;
-            
-            const pic = document.getElementById('mDeptPic').querySelector('img');
-            pic.src = dept.PIC_ID ? `https://lh3.googleusercontent.com/d/${dept.PIC_ID}` : `https://placehold.co/100x100?text=${dept.DEPNAME.substring(0,2)}`;
+        // 10. DEPT SELECTION - LOADS SPECIFIC DEPARTMENT ASSETS (FETCH API)
+        async function loadAssetsByDept() {
+            const select = document.getElementById('dept-select');
+            const deptId = select.value;
+            const deptName = select.options[select.selectedIndex].text;
+            const container = document.getElementById('dept-assets-container');
+            const defaultState = document.getElementById('default-state-container');
+            const wrapper = document.getElementById('assets-by-type-wrapper');
 
-            const groupedAssets = {};
-            deptLogs.forEach(a => {
-                const typeName = getTypeName(a.Asset_Type_ID);
-                if (!groupedAssets[typeName]) groupedAssets[typeName] = [];
-                groupedAssets[typeName].push(a);
+            if (!deptId) {
+                container.classList.add('hidden');
+                defaultState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.add('hidden');
+            defaultState.classList.add('hidden');
+            
+            wrapper.innerHTML = `
+                <div class="text-center py-10 px-4 bg-white border border-slate-200 rounded-3xl">
+                    <i class="fas fa-circle-notch fa-spin text-3xl text-indigo-500 mb-2"></i>
+                    <p class="text-slate-500 text-sm font-bold">กำลังโหลดข้อมูลครุภัณฑ์ของหน่วยงานนี้...</p>
+                </div>`;
+            container.classList.remove('hidden');
+
+            try {
+                // ยิงคำขอไปที่ Web App ด้วย action=getAuditLogs
+                const response = await fetch(`${apiKey}?action=getAuditLogs&DEP_ID=${deptId}`);
+                if (!response.ok) throw new Error("Fetch failed");
+                
+                // 🛠️ รับ JSON ตรงๆ ไม่มีการเขียนโค้ดเดา RegStatus เพิ่มเติมอีกต่อไป
+                const responseData = await response.json();
+                const logsData = responseData.auditLogs || responseData; // รองรับกรณี backend ส่งเป็น { auditLogs: [...] }
+                
+                currentDeptAssets = logsData;
+
+                renderDeptAssets({ deptName: deptName, records: logsData }, deptId);
+            } catch (err) {
+                console.error("Error fetching dept records", err);
+                wrapper.innerHTML = `<div class="p-6 text-center text-red-500 font-bold bg-red-50 rounded-2xl">เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงานนี้</div>`;
+            }
+        }
+
+        // แสดงผลรายการครุภัณฑ์แยกประเภทของแผนกนั้นๆ
+        function renderDeptAssets(data, deptId) {
+            const container = document.getElementById('dept-assets-container');
+            const wrapper = document.getElementById('assets-by-type-wrapper');
+            const title = document.getElementById('current-dept-title');
+            const totalCount = document.getElementById('dept-total-count');
+
+            title.textContent = data.deptName || '-';
+            totalCount.textContent = `ครุภัณฑ์ทั้งหมด ${data.records.length} รายการ`;
+
+            if (!data.records || data.records.length === 0) {
+                wrapper.innerHTML = `
+                <div class="text-center py-10 px-4 bg-white border border-slate-200 rounded-3xl">
+                    <i class="fas fa-folder-open text-3xl text-slate-300 mb-2"></i>
+                    <p class="text-slate-500 text-sm font-bold">ไม่พบข้อมูลหรือครุภัณฑ์บันทึกอยู่ในหน่วยงานนี้</p>
+                </div>`;
+                return;
+            }
+
+            const grouped = {};
+            data.records.forEach(item => {
+                const type = item.Asset_Type || 'อื่น ๆ';
+                if (!grouped[type]) grouped[type] = [];
+                grouped[type].push(item);
             });
 
-            const container = document.getElementById('mAssetGroupContainer');
-            
-            container.innerHTML = Object.keys(groupedAssets).sort().map(cat => `
-                <div>
-                    <div class="flex items-center gap-4 mb-6">
-                        <span class="w-2 h-6 pink-gradient rounded-full"></span>
-                        <h4 class="text-lg font-black text-slate-800 tracking-tight">${cat} <span class="text-pink-500 ml-1">(${groupedAssets[cat].length})</span></h4>
+            let html = '';
+            Object.keys(grouped).sort().forEach(t => {
+                html += `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 pb-2 border-b-2 border-indigo-100">
+                        <span class="w-2 h-5 bg-indigo-600 rounded-full"></span>
+                        <h4 class="text-base font-black text-indigo-900">${t}</h4>
+                        <span class="bg-indigo-100 text-indigo-700 text-xs px-2.5 py-0.5 rounded-full font-black ml-2">${grouped[t].length} รายการ</span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        ${groupedAssets[cat].map(a => `
-                            <div class="flex flex-col sm:flex-row gap-6 p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
-                                <div class="w-full sm:w-32 h-32 bg-slate-50 rounded-3xl border border-slate-100 flex-shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
-                                    <img src="${a.ASSET_IMG_DB ? 'https://lh3.googleusercontent.com/d/' + a.ASSET_IMG_DB : 'https://placehold.co/300x300/f1f5f9/94a3b8?text=NO+IMAGE'}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x300/f1f5f9/94a3b8?text=ERROR'">
-                                </div>
-                                <div class="flex-1 min-w-0 flex flex-col">
-                                    <!-- Highlight Row: Asset ID & Age -->
-                                    <div class="flex items-center justify-between gap-2 mb-4">
-                                        <div class="flex-1 bg-slate-800 text-white rounded-xl px-4 py-2 shadow-lg shadow-slate-200">
-                                            <span class="block text-[8px] uppercase tracking-widest text-slate-400 font-black">รหัสครุภัณฑ์ (Asset ID)</span>
-                                            <span class="text-sm font-black tracking-tight">${a.Asset_ID || 'N/A'}</span>
-                                        </div>
-                                        <div class="bg-pink-500 text-white rounded-xl px-4 py-2 shadow-lg shadow-pink-200 text-center min-w-[70px]">
-                                            <span class="block text-[8px] uppercase tracking-widest text-pink-200 font-black">อายุการใช้งาน</span>
-                                            <span class="text-lg font-black leading-none">${a.ASSET_AGE || '-'} <small class="text-[9px]">ปี</small></span>
-                                        </div>
-                                    </div>
-                                    <h5 class="text-base font-black text-slate-800 mb-1 truncate">${a.AssetName || 'ไม่ระบุชื่อครุภัณฑ์'}</h5>
-                                    <div class="flex items-center gap-3 mb-4 text-[11px] font-bold">
-                                        <span class="text-slate-400">S/N:</span>
-                                        <span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg">${a.Serial || 'N/A'}</span>
-                                        <span class="text-slate-200">|</span>
-                                        <span class="text-slate-400">NOID:</span>
-                                        <span class="text-slate-500">${a.NOID || '-'}</span>
-                                    </div>
-                                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-dashed border-slate-200 flex-1">
-                                         <p class="spec-text text-slate-500 font-medium leading-relaxed">${a.SPEC_DETAIL || 'ไม่มีข้อมูลรายละเอียดสเปค'}</p>
-                                    </div>
-                                </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">`;
+
+                grouped[t].forEach(item => {
+                    let photo = getImageUrl(item.Asset_Photo);
+                    const pStyle = 'bg-slate-100 text-slate-600 border-slate-300';
+                    const safeAssetId = item.Asset_ID || '';
+
+                    // 🛠️ อ่านข้อมูล RegStatus จาก JSON ตรงๆ 100%
+                    const regStatus = item.RegStatus || '-';
+                    const isUnregistered = regStatus === 'นอกทะเบียน';
+                    const isRegistered = regStatus === 'มีทะเบียน';
+
+                    let regColorClass = 'text-slate-600 bg-slate-50 border-slate-200';
+                    let regIconClass = 'fa-question-circle';
+
+                    if (isRegistered) {
+                        regColorClass = 'text-emerald-600 bg-emerald-50 border-emerald-200';
+                        regIconClass = 'fa-check-circle';
+                    } else if (isUnregistered) {
+                        regColorClass = 'text-orange-600 bg-orange-50 border-orange-200';
+                        regIconClass = 'fa-exclamation-circle';
+                    }
+
+                    html += `
+                    <div onclick="openAssetDetailModal('${safeAssetId}', '${deptId}')" class="asset-detail-card p-5 rounded-3xl border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-pink-300 transition-all flex flex-col justify-between cursor-pointer bg-white">
+                        <div class="flex gap-4 items-start">
+                            <div class="w-20 h-20 rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 flex-shrink-0 shadow-inner">
+                                <img src="${photo}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://img2.pic.in.th/-227e4f6f84f29f020.png'">
                             </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
+                            <div class="flex-1 min-w-0 font-medium">
+                                <div class="flex justify-between items-center mb-1.5 gap-2">
+                                    <span class="text-[14px] font-black px-2 py-0.5 rounded bg-slate-200 text-slate-700 truncate max-w-[170px] shadow-sm">${safeAssetId || '-'}</span>
+                                </div>
+                                <h5 class="text-xs font-black text-slate-800 leading-snug truncate" title="${item.Detail_ID || ''}">${item.Detail_ID || '-'}</h5>
+                                <p class="text-[11px] text-slate-500 truncate mt-1">S/N: <span class="font-extrabold text-slate-700">${item.NOID || '-'}</span></p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-slate-200/60 font-bold">
+                            <span class="text-[10px] px-2.5 py-1 rounded-lg border ${pStyle}"><i class="fas fa-flag mr-1 text-pink-500"></i>${item.Priority || '-'}</span>
+                            <span class="text-[10px] px-2.5 py-1 rounded-lg border bg-slate-50 text-slate-600 border-slate-300"><i class="fas fa-clock mr-1 text-blue-500"></i>${item.DB_Age || '-'}</span>
+                            <span class="text-[10px] ${regColorClass} border px-2.5 py-0.5 rounded-full whitespace-nowrap flex items-center"><i class="fas ${regIconClass} mr-1"></i>${regStatus}</span>
+                        </div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            });
+
+            wrapper.innerHTML = html;
+        }
+
+        // 11. DETAIL DIALOG MODAL CONTROLS
+        function openAssetDetailModal(assetId, deptId) {
+            let item = currentDeptAssets.find(x => String(x.Asset_ID || "").trim() === String(assetId).trim());
             
-            document.getElementById('modalDept').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            if (!item) {
+                item = rawDashboardData.find(x => String(x.Asset_ID || "").trim() === String(assetId).trim());
+            }
+
+            if (!item) return;
+
+            document.getElementById('m-id').textContent = item.Asset_ID || '-';
+            document.getElementById('m-detail').textContent = item.Detail_ID || '-';
+            document.getElementById('m-noid').textContent = item.NOID || '-';
+            document.getElementById('m-type').textContent = item.Asset_Type || '-';
+            document.getElementById('m-priority').textContent = item.Priority || '-';
+            document.getElementById('m-age').textContent = item.DB_Age || '-';
+            document.getElementById('m-dept').textContent = getDeptName(item.DEPT_ID);
+            document.getElementById('m-photo').src = getImageUrl(item.Asset_Photo);
+            document.getElementById('m-remark').textContent = item.CoStatus || '-';
+
+            // 🛠️ อ่านข้อมูลตรงตาม JSON
+            const regStatus = item.RegStatus || '-';
+            let badgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
+            let iconClass = 'fa-question-circle';
+
+            if (regStatus === 'มีทะเบียน') {
+                badgeClass = 'bg-emerald-50 text-emerald-600 border-emerald-200';
+                iconClass = 'fa-check-circle';
+            } else if (regStatus === 'นอกทะเบียน') {
+                badgeClass = 'bg-orange-50 text-orange-600 border-orange-200';
+                iconClass = 'fa-exclamation-circle';
+            }
+
+            document.getElementById('m-reg-status-wrapper').innerHTML = `
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${badgeClass}">
+                    <i class="fas ${iconClass}"></i> ${regStatus}
+                </span>
+            `;
+
+            const modal = document.getElementById('asset-detail-modal');
+            const card = document.getElementById('asset-detail-modal-card');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 50);
         }
 
-        function closeModal() { 
-            document.getElementById('modalDept').classList.add('hidden'); 
-            document.body.style.overflow = 'auto';
+        function closeAssetDetailModal() {
+            const modal = document.getElementById('asset-detail-modal');
+            const card = document.getElementById('asset-detail-modal-card');
+            
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
         }
 
-        window.onclick = function(e) { if (e.target == document.getElementById('modalDept')) closeModal(); }
-        window.onload = init;
+        // 12. HELPER FUNCTIONS
+        function getImageUrl(id) {
+            if (!id) return 'https://img2.pic.in.th/-227e4f6f84f29f020.png';
+            if (String(id).startsWith('http')) return id;
+            return `https://docs.google.com/uc?export=view&id=${id}`;
+        }
     </script>
 </body>
 </html>
