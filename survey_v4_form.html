@@ -311,7 +311,7 @@
             </div>
         </div>
     </div>
-    <!-- Modal สำหรับแสดงใบเสร็จ (Receipt) -->
+
     <div id="receiptModal" class="fixed inset-0 z-[150] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-xs shadow-2xl">
             <div class="text-center mb-4">
@@ -321,9 +321,9 @@
                 <h4 class="text-sm font-bold text-slate-800 uppercase">บันทึกสำเร็จ</h4>
             </div>
             
-            <!-- จุดที่ JavaScript จะเอาข้อมูลมาใส่ (id="receiptDetail") -->
+            
             <div id="receiptDetail" class="text-[11px] text-slate-600 bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200 font-medium">
-                <!-- ข้อมูลจาก function showReceipt จะแสดงตรงนี้ -->
+              
             </div>
     
             <div class="space-y-2 mt-5">
@@ -381,28 +381,25 @@
    let currentGps = "";
     let gpsReady = false;
     
-    // UI helper - แก้ไขให้ปลอดภัยขึ้น
     function setGpsStatus(status, text) {
         const dot = document.getElementById('gpsDot');
         const label = document.getElementById('gpsStatusText');
 
-        // ตรวจสอบ: ถ้าไม่มี Element ในหน้าจอนั้น ให้หยุดทำงานทันที ไม่ให้ Error
+        
         if (!dot || !label) return; 
 
-        // จัดการ Class แบบปลอดภัย
         dot.className = "w-2 h-2 rounded-full";
         
         if (status === "loading") dot.classList.add("gps-loading");
         else if (status === "success") dot.classList.add("gps-success");
         else if (status === "error") dot.classList.add("gps-error");
 
-        // จัดการ Text แบบปลอดภัย
         if (label) label.innerText = text;
     }
 
     function loadGPS() {
         try {
-            // เช็คว่า Browser รองรับไหม
+           
             if (!navigator || !navigator.geolocation) {
                 setGpsStatus("error", "อุปกรณ์ไม่รองรับ GPS");
                 return;
@@ -417,7 +414,7 @@
                     currentGps = `${lat},${lng}`;
                     gpsReady = true;
 
-                    // อัปเดตสถานะบนจอ (ถ้ามี)
+                  
                     setGpsStatus("success", "พร้อมใช้งาน");
                 },
                 (err) => {
@@ -432,12 +429,12 @@
                 },
                 { 
                     enableHighAccuracy: true, 
-                    timeout: 5000, // เพิ่มเวลาเป็น 5 วินาทีเพื่อให้เสถียรขึ้น
+                    timeout: 5000, 
                     maximumAge: 0 
                 }
             );
         } catch (e) {
-            // ถ้าพังในส่วน UI ให้ Script หลักทำงานต่อไปได้
+          
             console.error("GPS Logic Error: ", e.message);
         }
     }
@@ -467,9 +464,7 @@
         } catch (e) { console.error(e); }
         finally { hideProcess(); }
     }
-    // --- ปรับปรุงฟังก์ชันเลือกรูปภาพให้รองรับ Async/Await ---
-// ปรับปรุงฟังก์ชันเลือกรูปภาพให้รับค่า input และจัดการ preview ให้แม่นยำขึ้น
-   // ตัวอย่าง: แก้ในฟังก์ชันรับรูป
+ 
 async function handleImageSelection(input, previewId, placeholderId) {
     const file = input.files[0];
     if (!file) return;
@@ -482,9 +477,9 @@ async function handleImageSelection(input, previewId, placeholderId) {
 
     if (preview && placeholder) {
         preview.src = base64;
-        preview.classList.remove('hidden');    // โชว์รูป
-        placeholder.classList.add('hidden');    // ซ่อนไอคอนกล้อง
-        console.log("แสดงรูปที่ ID:", previewId); // เช็กใน Console ว่า ID ตรงไหม
+        preview.classList.remove('hidden');    
+        placeholder.classList.add('hidden');   
+        console.log("แสดงรูปที่ ID:", previewId); 
     } else {
         console.error("หา ID ไม่เจอ:", previewId, placeholderId);
     }
@@ -552,13 +547,13 @@ async function handleImageSelection(input, previewId, placeholderId) {
         let q = document.getElementById('assetQuery').value.trim();
         const area = document.getElementById('resultsArea');
         
-        // ... ส่วนจัดการ URL คงเดิม ...
+   
     
         area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto"></div></div>';
         area.classList.remove('hidden');
     
         try {
-            // เพิ่ม Parameter &searchType=ID เพื่อส่งไปบอก GAS
+          
             const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}&searchType=ID`);
             let data = await res.json(); 
             area.innerHTML = '';
@@ -568,7 +563,7 @@ async function handleImageSelection(input, previewId, placeholderId) {
                 return;
             }
     
-            // เรียงลำดับเน้นเลขท้ายเหมือนเดิม
+        
             data.sort((a, b) => {
                 const idA = String(a.AssetID || "");
                 const idB = String(b.AssetID || "");
@@ -591,7 +586,7 @@ async function handleImageSelection(input, previewId, placeholderId) {
                 const d = document.createElement('div');
                 d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all mb-2";
                 
-                // ไฮไลท์เฉพาะ AssetID
+             
                 const highlightedID = typeof highlightText === 'function' ? highlightText(item.AssetID, q) : item.AssetID;
                 
                 d.innerHTML = `
@@ -671,31 +666,25 @@ async function handleImageSelection(input, previewId, placeholderId) {
         executeSave(signaturePad.toDataURL());
     }
 
-// 1. ฟังก์ชันบันทึกที่ตัด GPS ทิ้ง และใช้ showAlert เท่านั้น
-// --- ส่วนที่แก้ปัญหา getGPS is not defined แบบถาวร ---
+
 function getGPS() {
-    // คืนค่าหลอกๆ กลับไปทันที ไม่ต้องรอ ไม่ต้องดึงพิกัดจริง
-    // เพื่อให้ฟังก์ชันอื่นที่เรียกใช้ getGPS() ทำงานต่อได้โดยไม่ Error
+  
     return new Promise((resolve) => {
         resolve({ lat: "0", lng: "0" });
     });
 }
-// ----------------------------------------------
+
 
 async function submitAudit(type, event) {
     if (event) event.preventDefault();
     try {
         showProcess("กำลังตรวจสอบข้อมูล...");
         const isExisting = type === 'EXISTING';
-        const suffix = isExisting ? '' : 'nr_';
-
-        // ดึงค่าพื้นฐาน
+        const suffix = isExisting ? '' : 'nr_';      
         const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
         const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
         if (!typeId || !priorityId) throw new Error("กรุณาเลือกประเภทและความสำคัญ");
         if (!currentBase64Image) throw new Error("กรุณาถ่ายภาพก่อนบันทึก");
-
-        // จัดการกะการทำงาน (Shift)
         const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
         const shiftValues = Array.from(selectedShifts).map(input => {
             const map = {"เช้า":"1", "บ่าย":"2", "ดึก":"3"};
@@ -1045,9 +1034,7 @@ function closeModal(id) {
                         <div class="flex items-center gap-3 text-white">
                             <i data-lucide="building" class="w-5 h-5"></i>
                             <h3 class="font-bold text-sm">${deptName}</h3>
-                        </div>
-                        <!-- ปุ่มปริ้นรวมของหน่วยงาน -->
-                        // แก้ไขบรรทัดปุ่มในลูปสร้าง Header หน่วยงาน
+                        </div>                                    
                             <button onclick='renderSuccessSlip("REPORT-"+new Date().getTime(), ${JSON.stringify(content.allItems)})' 
                                     class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl backdrop-blur-md transition-all active:scale-95 text-[10px] font-bold uppercase">
                                 <i data-lucide="printer" class="w-4 h-4"></i>
