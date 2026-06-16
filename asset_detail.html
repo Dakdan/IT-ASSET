@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Asset Detail 360° Dashboard</title>
+    <title>IT Asset Detail 360° Dashboard - Udon Thani Hospital</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icons -->
@@ -14,7 +14,7 @@
             --primary-pink: #D81B60;
             --light-pink: #F8BBD0;
             --soft-bg: #FFF0F5;
-            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.5);
             --text-dark: #2C3E50;
             --text-muted: #7F8C8D;
@@ -25,6 +25,8 @@
             --color-orange: #f39c12;
             --color-red: #e74c3c;
             --color-green: #2ecc71;
+            --color-purple: #9b59b6;
+            --color-dark: #34495e;
         }
 
         * {
@@ -196,11 +198,66 @@
             color: var(--text-muted);
         }
 
+        /* Gauge & Risk Styles */
+        .gauge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .gauge-bar-outer {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .gauge-bar-inner {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--color-green), var(--primary-pink));
+            transition: width 1s ease-in-out;
+        }
+
+        /* Images and QR Code layout */
+        .asset-media-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .asset-image-frame, .qr-image-frame {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            border: 2px solid var(--light-pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .asset-image-frame img, .qr-image-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .qr-image-frame img {
+            object-fit: contain;
+            padding: 5px;
+        }
+
         /* Timeline */
         .timeline {
             position: relative;
             padding-left: 20px;
             margin-top: 10px;
+            max-height: 350px;
+            overflow-y: auto;
         }
         .timeline::before {
             content: '';
@@ -230,6 +287,10 @@
             background: var(--primary-pink);
             border: 2px solid #fff;
         }
+        .timeline-item.move-blue::after { background: var(--color-blue); }
+        .timeline-item.move-orange::after { background: var(--color-orange); }
+        .timeline-item.move-red::after { background: var(--color-red); }
+
         .timeline-date { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
         .timeline-content { font-size: 0.9rem; }
 
@@ -261,6 +322,80 @@
             font-weight: 500;
             color: #fff;
             background: var(--primary-pink);
+            display: inline-block;
+        }
+
+        /* Gallery Styles */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .gallery-item {
+            width: 100%;
+            height: 150px;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid var(--light-pink);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(216, 27, 96, 0.3);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        /* Lightbox Styles */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .lightbox.show {
+            display: flex;
+            opacity: 1;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 80vh;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 25px; right: 35px;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .lightbox-close:hover { color: var(--light-pink); }
+        .lightbox-caption {
+            color: white;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: 300;
+            text-align: center;
         }
 
         /* Responsive */
@@ -272,6 +407,7 @@
             .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
             .header-container { flex-direction: column; align-items: flex-start; }
             .watermark { font-size: 4rem; }
+            .asset-media-box { justify-content: center; }
         }
 
         /* Print A4 Landscape */
@@ -317,7 +453,7 @@
         <div class="glass-card header-container">
             <div class="brand-section">
                 <div class="brand-logo">
-                    <i class="fa-solid fa-hospital"></i>
+                    <i class="fa-solid fa-hospital-user"></i>
                 </div>
                 <div class="brand-text">
                     <h1>โรงพยาบาลอุดรธานี</h1>
@@ -328,7 +464,7 @@
             <div class="text-right">
                 <p id="currentDateTime" style="color: var(--primary-pink); font-weight: 500; margin-bottom: 10px; text-align: right;"></p>
                 <div class="action-buttons">
-                    <button class="btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+                    <button class="btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Print A4</button>
                     <button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
                     <button class="btn" onclick="copyAssetLink()"><i class="fa-solid fa-link"></i> Copy Link</button>
                 </div>
@@ -340,18 +476,24 @@
             <div class="kpi-card">
                 <div class="kpi-label">Health Score</div>
                 <div class="kpi-value" id="kpiHealth">-</div>
+                <div class="gauge-bar-outer">
+                    <div class="gauge-bar-inner" id="kpiHealthBar"></div>
+                </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Risk Level</div>
                 <div class="kpi-value" id="kpiRisk" style="color: var(--color-orange);">-</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="valRiskScore">Score: 0</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">อายุการใช้งาน (Asset Age)</div>
                 <div class="kpi-value" id="kpiAge">-</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="valRemainingLife">เหลือ: - ปี</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">ประวัติซ่อม (MA Count)</div>
                 <div class="kpi-value" id="kpiMA">-</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="valTotalRepairCost">รวม: 0 ฿</div>
             </div>
         </div>
 
@@ -359,23 +501,27 @@
             <!-- SECTION 1: Asset Summary -->
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-boxes-stacked"></i> Asset Summary</h3>
-                <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 15px;">
-                    <div style="width: 100px; height: 100px; background: #eee; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <div class="asset-media-box">
+                    <!-- Photo Frame -->
+                    <div class="asset-image-frame" id="photoFrame">
                         <i class="fa-solid fa-image" style="font-size: 2rem; color: #ccc;"></i>
-                        <!-- <img> tag for Ass_Img can be placed here -->
+                    </div>
+                    <!-- QR Code Frame -->
+                    <div class="qr-image-frame" id="qrFrame">
+                        <i class="fa-solid fa-qrcode" style="font-size: 2rem; color: #ccc;"></i>
                     </div>
                     <div>
                         <h2 id="valAssetName" style="color: var(--primary-pink);">-</h2>
                         <p style="font-size: 1.1rem; font-weight: 500;" id="valAssetID">-</p>
-                        <div style="margin-top: 5px;">
+                        <div style="margin-top: 5px; display: flex; gap: 5px;">
                             <span class="badge" id="valMaStatus">Status</span>
+                            <span class="badge" id="valCoStatus" style="background: var(--color-purple);">CoStatus</span>
                         </div>
                     </div>
                 </div>
                 <ul class="info-list">
                     <li><span class="info-label">รหัสครุภัณฑ์:</span> <span class="info-value" id="valCode">-</span></li>
                     <li><span class="info-label">Serial Number:</span> <span class="info-value" id="valSerial">-</span></li>
-                    <li><span class="info-label">CoStatus:</span> <span class="info-value" id="valCoStatus">-</span></li>
                 </ul>
             </div>
 
@@ -384,9 +530,9 @@
                 <h3 class="section-title"><i class="fa-solid fa-location-dot"></i> Location Information</h3>
                 <ul class="info-list">
                     <li><span class="info-label">สถานที่ปัจจุบัน:</span> <span class="info-value" id="valCurrentLoc" style="color: var(--primary-pink); font-weight: 600;">-</span></li>
-                    <li><span class="info-label">หน่วยงานที่รับผิดชอบ (ปัจจุบัน):</span> <span class="info-value" id="valCurrentDept">-</span></li>
-                    <li><span class="info-label">สถานที่ติดตั้ง (ดั้งเดิม):</span> <span class="info-value" id="valInstallLoc">-</span></li>
-                    <li><span class="info-label">NOUPID:</span> <span class="info-value" id="valNoupid">-</span></li>
+                    <li><span class="info-label">หน่วยงานที่รับผิดชอบ (ดั้งเดิม):</span> <span class="info-value" id="valInstallLoc">-</span></li>
+                    <li><span class="info-label">สถานที่ติดตั้ง (ดั้งเดิม):</span> <span class="info-value" id="valInstallLocDesc">-</span></li>
+                    <li><span class="info-label">NOUPID / NOID_2:</span> <span class="info-value" id="valNoupid">-</span></li>
                 </ul>
             </div>
         </div>
@@ -398,7 +544,7 @@
                 <ul class="info-list">
                     <li><span class="info-label">หมวดครุภัณฑ์:</span> <span class="info-value" id="valCategory">-</span></li>
                     <li><span class="info-label">ประเภท (Type ID):</span> <span class="info-value" id="valTypeID">-</span></li>
-                    <li><span class="info-label">ยี่ห้อ / รุ่น / สเปค:</span> <span class="info-value" id="valSpec">-</span></li>
+                    <li><span class="info-label">ยี่ห้อ / รุ่น / รูปลักษณ์:</span> <span class="info-value" id="valSpec">-</span></li>
                     <li><span class="info-label">รหัสครุภัณฑ์เดิม:</span> <span class="info-value" id="valOldCode">-</span></li>
                 </ul>
             </div>
@@ -407,10 +553,10 @@
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-file-invoice-dollar"></i> Financial Information</h3>
                 <ul class="info-list">
-                    <li><span class="info-label">วันที่รับเข้า / ปี:</span> <span class="info-value" id="valReceiveDate">-</span></li>
+                    <li><span class="info-label">วันที่รับเข้า / ปีที่รับ:</span> <span class="info-value" id="valReceiveDate">-</span></li>
                     <li><span class="info-label">แหล่งเงินจัดซื้อ:</span> <span class="info-value" id="valFund">-</span></li>
-                    <li><span class="info-label">ราคา:</span> <span class="info-value" id="valPrice">-</span></li>
-                    <li><span class="info-label">การรับประกัน:</span> <span class="info-value" id="valWarranty">-</span></li>
+                    <li><span class="info-label">ราคาครุภัณฑ์:</span> <span class="info-value" id="valPrice">-</span></li>
+                    <li><span class="info-label">อายุการรับประกัน:</span> <span class="info-value" id="valWarranty">-</span></li>
                 </ul>
             </div>
 
@@ -418,11 +564,10 @@
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-network-wired"></i> Technical Information</h3>
                 <ul class="info-list" id="techInfoList">
-                    <!-- จะถูกซ่อนถ้าไม่มีข้อมูลใน JS -->
-                    <li><span class="info-label">IP Address:</span> <span class="info-value">-</span></li>
-                    <li><span class="info-label">MAC Address:</span> <span class="info-value">-</span></li>
-                    <li><span class="info-label">OS:</span> <span class="info-value">-</span></li>
-                    <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 10px;">(ประยุกต์ดึงจาก NOTE หรือรายละเอียด)</div>
+                    <li><span class="info-label">IP Address:</span> <span class="info-value" id="valTechIP">-</span></li>
+                    <li><span class="info-label">MAC Address:</span> <span class="info-value" id="valTechMAC">-</span></li>
+                    <li><span class="info-label">Operating System:</span> <span class="info-value" id="valTechOS">-</span></li>
+                    <li><span class="info-label">Hardware Specs:</span> <span class="info-value" id="valTechSpecs">-</span></li>
                 </ul>
             </div>
         </div>
@@ -432,58 +577,78 @@
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-truck-fast"></i> Movement History</h3>
                 <div class="timeline" id="timelineMovement">
-                    <!-- Data injected via JS -->
                     <p style="color: var(--text-muted); font-size: 0.9rem;">กำลังโหลดประวัติการย้าย...</p>
                 </div>
             </div>
 
             <!-- SECTION 7: Maintenance History -->
             <div class="glass-card">
-                <h3 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance History</h3>
+                <h3 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance & PM History</h3>
                 <div class="timeline" id="timelineMA">
-                    <!-- Data injected via JS -->
                     <p style="color: var(--text-muted); font-size: 0.9rem;">กำลังโหลดประวัติการซ่อมบำรุง...</p>
                 </div>
             </div>
         </div>
 
+        <!-- SECTION 13: Notes & Attachments -->
+        <div class="glass-card">
+            <h3 class="section-title"><i class="fa-solid fa-paperclip"></i> Notes & Attachments</h3>
+            <ul class="info-list">
+                <li><span class="info-label">บันทึกเพิ่มเติม 2 (Note2):</span> <span class="info-value" id="valNote2">-</span></li>
+                <li><span class="info-label">บันทึกเพิ่มเติม 3 (Note3):</span> <span class="info-value" id="valNote3">-</span></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 14: Image Gallery -->
+        <div class="glass-card">
+            <h3 class="section-title"><i class="fa-solid fa-images"></i> แกลลอรี่รูปภาพเพิ่มเติม (Asset Images)</h3>
+            <div id="galleryContainer" class="gallery-grid">
+                <p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1 / -1;">กำลังโหลดรูปภาพ...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightboxImg" src="" alt="Full Image" onclick="event.stopPropagation()">
+        <div id="lightboxCaption" class="lightbox-caption"></div>
     </div>
 
     <!-- JavaScript Logic -->
     <script>
-        // กำหนด URL ของ Google Apps Script Web App ของโรงพยาบาลคุณตรงนี้เพื่อให้ GitHub Pages เชื่อมโยงได้
+        // URL ของ Google Apps Script Web App ของโรงพยาบาลอุดรธานี
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_mX0O7D3PAl4uitg3V5apUECjXUZZPB4sM_B_3Ca7HnBdgJl9jPRiWgWKePrGRNdAFA/exec";
 
         document.addEventListener('DOMContentLoaded', () => {
             startClock();
 
-            // 1. ตรวจสอบ URL Parameter
+            // 1. ตรวจสอบ URL Parameter โดยรองรับทั้งแบบ AssetID, id, assetid
             const urlParams = new URLSearchParams(window.location.search);
-            const assetId = urlParams.get('id') || urlParams.get('assetid') || urlParams.get('AssetID');
+            const assetId = urlParams.get('AssetID') || urlParams.get('id') || urlParams.get('assetid');
 
             if (!assetId) {
-                showError("กรุณาระบุ Parameter ?id=, ?assetid= หรือ ?AssetID= ใน URL");
+                showError("กรุณาระบุ Parameter ?AssetID= หรือ ?id= ใน URL");
                 return;
             }
 
-            // 2. เรียกใช้งานข้อมูลจากฐานข้อมูล
-            // ระบบจะตรวจสอบว่าเปิดจากภายใน Google Apps Script (iFrame) หรือรันผ่าน GitHub Pages/เว็บภายนอก
+            // 2. เรียกใช้งานข้อมูลจากฐานข้อมูล Google Sheets ผ่าน Google Apps Script Web App API
             if (typeof google !== 'undefined' && google.script) {
-                // รันจากภายใน Google Apps Script โดยตรง
+                // กรณีรันภายใต้ iframe ของ GAS
                 google.script.run
                     .withSuccessHandler(renderDashboard)
-                    .withFailureHandler((err) => showError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + err))
+                    .withFailureHandler((err) => showError("เกิดข้อผิดพลาด: " + err))
                     .getAssetById(assetId); 
             } else {
-                // รันจาก GitHub Pages หรือ Server อื่นๆ ด้านนอก -> ทำการ Fetch ไปที่ Web App API ของคุณ
+                // กรณีรันบน GitHub Pages หรือ Server อื่นๆ ดึงผ่าน REST API
                 fetchDataFromGAS(assetId);
             }
         });
 
-        // ฟังก์ชันสำหรับเรียกข้อมูลผ่าน API เมื่อรันอยู่บน GitHub Pages
+        // ดึงข้อมูลผ่าน Web App Endpoint
         async function fetchDataFromGAS(assetId) {
             try {
-                // เรียกผ่าน API พร้อมแนบ Parameter ไปด้วย
                 const targetUrl = `${GAS_WEB_APP_URL}?action=getAsset&assetId=${encodeURIComponent(assetId)}`;
                 const response = await fetch(targetUrl);
                 
@@ -494,70 +659,115 @@
                 const result = await response.json();
                 renderDashboard(result);
             } catch (err) {
-                showError("ไม่สามารถเชื่อมต่อกับฐานข้อมูลโรงพยาบาลได้ (ตรวจสอบสิทธิ์การแชร์ของ Web App หรือการตั้งค่า CORS): " + err.message);
+                showError("ไม่สามารถเชื่อมต่อกับ Web App API ได้: " + err.message);
             }
         }
 
-        // 3. ฟังก์ชันนำข้อมูลที่ได้มาแสดงผลลง DOM (ดึงจากฐานข้อมูลจริง)
+        // 3. ฟังก์ชันการ Render ข้อมูลขึ้นระบบ Dashboard
         function renderDashboard(response) {
             if (!response || response.status === 'error' || !response.data) {
-                showError(response ? response.message : "ไม่พบข้อมูล Asset ID นี้ในฐานข้อมูล");
+                showError(response ? response.message : "ไม่พบข้อมูลรหัสครุภัณฑ์นี้ในฐานข้อมูล");
                 return;
             }
 
-            const asset = response.data.info || response.data; // รองรับโครงสร้างการส่งค่าทุกรูปแบบ
+            const asset = response.data.info || response.data;
             const calc = response.data.calculations || {};
-            const logs = response.data.logs || { move: [], ma: [], pm: [] };
+            const logs = response.data.logs || { move: [], ma: [], pm: [], images: [] };
 
-            // ปิดหน้าโหลด
+            // ซ่อนหน้า Loading และเปิดหน้า Dashboard หลัก
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'block';
 
-            // --- Mapping Section 1: Summary ---
+            // --- SECTION 1: Summary Mapping ---
             safeSetText('valAssetID', asset['AssetID']);
             safeSetText('valAssetName', asset['ชื่อรายการครุภัณฑ์']);
             safeSetText('valCode', asset['รหัสครุภัณฑ์']);
             safeSetText('valSerial', asset['Searail']);
-            safeSetText('valMaStatus', asset['MaStatus'], 'Active');
-            safeSetText('valCoStatus', asset['CoStatus']);
-            
-            // --- Mapping Section 2: Basic ---
+            safeSetText('valMaStatus', asset['MaStatus'] || 'Active');
+            safeSetText('valCoStatus', asset['CoStatus'] || 'Standby');
+
+            // --- PHOTO & QR CODE GEN ---
+            const photoFrame = document.getElementById('photoFrame');
+            if (asset['Ass_Img'] && asset['Ass_Img'] !== '-') {
+                photoFrame.innerHTML = `<img src="${asset['Ass_Img']}" alt="ครุภัณฑ์" onerror="this.innerHTML='<i class=\'fa-solid fa-image\' style=\'font-size:2rem;color:#ccc;\'></i>'">`;
+            }
+
+            // สร้าง QR Code อัตโนมัติจาก URL ปัจจุบัน
+            const qrFrame = document.getElementById('qrFrame');
+            const currentUrl = window.location.href;
+            qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}" alt="Scan QR">`;
+
+            // --- SECTION 2: Basic Info Mapping ---
             safeSetText('valCategory', asset['หมวดครุภัณฑ์']);
-            safeSetText('valTypeID', asset['Asset_Type_ID']);
+            safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Item_Type_ID'] || '-'}`);
             safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
             safeSetText('valOldCode', asset['รหัสครุภัณฑ์เดิม']);
 
-            // --- Mapping Section 3: Location ---
+            // --- SECTION 3: Location Mapping ---
             safeSetText('valCurrentLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน']);
-            safeSetText('valCurrentDept', asset['หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน']);
             safeSetText('valInstallLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']);
-            safeSetText('valNoupid', asset['NOUPID']);
+            safeSetText('valInstallLocDesc', asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']);
+            safeSetText('valNoupid', `${asset['NOUPID'] || '-'} / ${asset['NOID_2'] || '-'}`);
 
-            // --- Mapping Section 4: Financial ---
-            safeSetText('valReceiveDate', formatDate(asset['วันที่รับเข้า']));
+            // --- SECTION 4: Financial Mapping ---
+            safeSetText('valReceiveDate', `${formatDate(asset['วันที่รับเข้า'])} (ปี: ${asset['ปีที่รับเข้า'] || '-'})`);
             safeSetText('valFund', asset['แหล่งเงินที่ใช้จัดซื้อ']);
             safeSetText('valPrice', asset['ราคา'] ? Number(asset['ราคา']).toLocaleString() + ' ฿' : '-');
-            safeSetText('valWarranty', asset['Varanty']);
+            safeSetText('valWarranty', asset['Varanty'] || '-');
 
-            // --- Mapping Section 11 & 12: KPIs ---
-            // ดึงค่าผลลัพธ์การประมวลผลตรงๆ จากฝั่ง Google Sheets / GAS Backend
-            safeSetText('kpiAge', calc.assetAge || asset['อายุการใช้งาน'] || '-'); 
-            safeSetText('kpiHealth', calc.healthScore ? calc.healthScore + '%' : '-');
-            safeSetText('kpiRisk', calc.riskScore || 'Low');
+            // --- SECTION 5: Technical Info Extraction (Parsing from specs/notes if exists) ---
+            safeSetText('valTechIP', asset['IPAddress'] || 'ดึงตามสเปคด้านซ้าย');
+            safeSetText('valTechMAC', asset['MACAddress'] || '-');
+            safeSetText('valTechOS', asset['OS'] || '-');
+            safeSetText('valTechSpecs', asset['CPU_RAM_Specs'] || '-');
+
+            // --- SECTION 11 & 12: Performance Indicators & Gauges ---
+            const health = calc.healthScore !== undefined ? calc.healthScore : 100;
+            const risk = calc.riskScore !== undefined ? calc.riskScore : 0;
+            const riskLvl = calc.riskLevel || 'Low';
+
+            safeSetText('kpiHealth', health + '%');
+            const healthBar = document.getElementById('kpiHealthBar');
+            if (healthBar) healthBar.style.width = health + '%';
+
+            safeSetText('kpiRisk', riskLvl);
+            safeSetText('valRiskScore', 'คะแนนความเสี่ยง: ' + risk);
+            
+            // สี Badge ตามระดับความเสี่ยง
+            const kpiRiskEl = document.getElementById('kpiRisk');
+            if (riskLvl === 'High' || riskLvl === 'Critical') {
+                kpiRiskEl.style.color = 'var(--color-red)';
+            } else if (riskLvl === 'Medium') {
+                kpiRiskEl.style.color = 'var(--color-orange)';
+            } else {
+                kpiRiskEl.style.color = 'var(--color-green)';
+            }
+
+            safeSetText('kpiAge', (calc.assetAge || asset['อายุการใช้งาน'] || '0') + ' ปี');
+            safeSetText('valRemainingLife', 'อายุการใช้งานเหลือ: ' + (calc.remainingLife || '-') + ' ปี');
+            
             safeSetText('kpiMA', (logs.ma ? logs.ma.length : 0) + ' ครั้ง');
+            safeSetText('valTotalRepairCost', 'ยอดรวมค่าซ่อมบำรุง: ' + (calc.totalRepairCost || 0).toLocaleString() + ' ฿');
 
-            // --- Rendering Timelines ---
+            // --- SECTION 13: Notes Mapping ---
+            safeSetText('valNote2', asset['Note2']);
+            safeSetText('valNote3', asset['NOTE3']);
+
+            // --- TIMELINE RENDERING (SECTION 7 & 8) ---
             renderTimeline('timelineMovement', logs.move, formatMoveLog);
             renderTimeline('timelineMA', logs.ma, formatMALog);
+
+            // --- IMAGE GALLERY RENDERING (SECTION 14) ---
+            renderGallery('galleryContainer', logs.images);
         }
 
-        // --- Utility Functions ---
-        
+        // Utility: แปลงตัวหนังสือหรือค่าว่างให้ปลอดภัย
         function safeSetText(elementId, value, defaultText = '-') {
             const el = document.getElementById(elementId);
             if (el) el.textContent = (value !== undefined && value !== null && value !== '') ? value : defaultText;
         }
 
+        // Utility: แปลงวันที่ภาษาไทย
         function formatDate(dateString) {
             if (!dateString) return '-';
             const d = new Date(dateString);
@@ -565,41 +775,96 @@
             return d.toLocaleDateString('th-TH');
         }
 
+        // Utility: วาด Timeline
         function renderTimeline(containerId, dataArray, formatFn) {
             const container = document.getElementById(containerId);
             if (!dataArray || dataArray.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">ไม่มีประวัติข้อมูล</p>';
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">ไม่มีประวัติการบันทึกในระบบ</p>';
                 return;
             }
             container.innerHTML = dataArray.map(item => formatFn(item)).join('');
         }
 
+        // ตรรกะสี Layout การเคลื่อนย้าย (Blue: ภายในหน่วยงาน, Orange: ต่างหน่วยงาน, Red: ต่างอาคาร)
         function formatMoveLog(log) {
+            let colorClass = 'move-blue';
+            if (log.From_Department !== log.To_Department) colorClass = 'move-orange';
+            if (log.Reason && log.Reason.includes('ข้ามอาคาร')) colorClass = 'move-red';
+
             return `
-                <div class="timeline-item">
+                <div class="timeline-item ${colorClass}">
                     <div class="timeline-date">${formatDate(log.Move_Date)}</div>
                     <div class="timeline-content">
-                        <strong>ย้ายไป:</strong> ${log.To_Location || '-'}<br>
+                        <strong>ย้ายจาก:</strong> ${log.From_Department || '-'} ➜ <strong>ไป:</strong> ${log.To_Department || '-'}<br>
                         <span style="font-size: 0.85rem; color: var(--text-muted);">
-                        เหตุผล: ${log.Reason || '-'} | โดย: ${log.Moved_By || '-'}
+                        สถานที่ย้าย: ${log.From_Location || '-'} ➜ ${log.To_Location || '-'}<br>
+                        เหตุผล: ${log.Reason || '-'} | อนุมัติโดย: ${log.Approved_By || '-'}
                         </span>
                     </div>
                 </div>
             `;
         }
 
-        function formatMALog(log) {
-            return `
-                <div class="timeline-item">
-                    <div class="timeline-date">${formatDate(log.Repair_Date)}</div>
-                    <div class="timeline-content">
-                        <strong>อาการ:</strong> ${log.Problem || '-'}<br>
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">
-                        การแก้ไข: ${log.Solution || '-'} | ช่าง: ${log.Engineer || '-'}
-                        </span>
+        // แปลง Google Drive Link ให้เป็น Direct Link สำหรับแสดงในแท็ก img อัตโนมัติ
+        function getDirectImageUrl(url) {
+            if (!url) return '';
+            const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+            const match = url.match(driveRegex);
+            if (match && match[1]) {
+                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+            }
+            const idRegex = /id=([a-zA-Z0-9_-]+)/;
+            const matchId = url.match(idRegex);
+            if (matchId && matchId[1] && url.includes('drive.google.com')) {
+                return `https://drive.google.com/uc?export=view&id=${matchId[1]}`;
+            }
+            return url;
+        }
+
+        // Utility: วาด Image Gallery
+        function renderGallery(containerId, imagesArray) {
+            const container = document.getElementById(containerId);
+            if (!imagesArray || imagesArray.length === 0) {
+                container.style.display = 'block';
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1 / -1;">ไม่มีรูปภาพเพิ่มเติมในระบบ</p>';
+                return;
+            }
+            
+            container.style.display = 'grid';
+            container.innerHTML = imagesArray.map((img, index) => {
+                // รองรับคอลัมน์ที่เป็นลิงก์ภาพ เช่น URL, Image_URL, Link, File_URL
+                const rawUrl = img.Image_URL || img.URL || img.File_URL || img.Link || '';
+                const imgUrl = getDirectImageUrl(rawUrl);
+                const caption = img.Description || img.Caption || (img.Upload_Date ? formatDate(img.Upload_Date) : `รูปภาพที่ ${index + 1}`);
+                
+                if(!imgUrl) return '';
+
+                return `
+                    <div class="gallery-item" onclick="openLightbox('${imgUrl}', '${caption}')">
+                        <img src="${imgUrl}" alt="${caption}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/300x300/FFF0F5/D81B60?text=Image+Error';">
                     </div>
-                </div>
-            `;
+                `;
+            }).join('');
+        }
+
+        // เปิด Lightbox ดูรูปใหญ่
+        function openLightbox(url, caption) {
+            const lightbox = document.getElementById('lightbox');
+            const img = document.getElementById('lightboxImg');
+            const cap = document.getElementById('lightboxCaption');
+            
+            img.src = url;
+            cap.textContent = caption !== 'undefined' ? caption : '';
+            lightbox.classList.add('show');
+        }
+
+        // ปิด Lightbox
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.remove('show');
+            setTimeout(() => {
+                document.getElementById('lightboxImg').src = '';
+            }, 300); // clear image after fade out
         }
 
         function showError(message) {
@@ -618,7 +883,7 @@
 
         function copyAssetLink() {
             navigator.clipboard.writeText(window.location.href).then(() => {
-                alert("คัดลอก URL ของ Asset นี้เรียบร้อยแล้ว");
+                alert("คัดลอก URL ของครุภัณฑ์ชิ้นนี้เรียบร้อยแล้ว");
             }).catch(err => {
                 console.error('Failed to copy: ', err);
             });
