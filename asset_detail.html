@@ -9,16 +9,22 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <style>
+
+   <style>
         :root {
-            --primary-pink: #D81B60;
-            --light-pink: #F8BBD0;
-            --soft-bg: #FFF0F5;
-            --glass-bg: rgba(255, 255, 255, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.5);
-            --text-dark: #2C3E50;
-            --text-muted: #7F8C8D;
-            --shadow-soft: 0 8px 32px 0 rgba(216, 27, 96, 0.1);
+            /* โทนสีหลักถอดรหัสจากไฟล์ภาพตัวอย่าง {275B72D2-AAE7-482E-A647-30A5828F148F}.png */
+            --primary-pink: #DE1B61;       /* ชมพูสดใส (Fuchsia) */
+            --hover-pink: #B8104B;         /* ชมพูเข้มตอนโฮเวอร์ */
+            --light-pink: #F9CCD9;         /* ชมพูอ่อนสำหรับเส้นตัด */
+            --soft-bg: #FFF0F3;            /* สีพื้นหลังชมพูละมุนแบบในรูปตัวอย่าง */
+            --glass-bg: #FFFFFF;           /* พื้นหลังการ์ดสีขาวบริสุทธิ์ */
+            
+            /* เส้นขอบการ์ดสีชมพูสดใสเด่นชัดหนา 2px ตามแบบ */
+            --card-border: #DE1B61; 
+            
+            --text-dark: #1A2530;          /* สีข้อความหลักเข้มคมชัด */
+            --text-muted: #7F8C8D;         /* สีข้อความรอง */
+            --shadow-soft: 0 10px 30px rgba(222, 27, 97, 0.08);
             
             /* Status Colors */
             --color-blue: #3498db;
@@ -26,7 +32,9 @@
             --color-red: #e74c3c;
             --color-green: #2ecc71;
             --color-purple: #9b59b6;
-            --color-dark: #34495e;
+
+            /* ไล่เฉดสีส่วนหัว (Header) ผสมผสานแถบสีชมพูสดใสไปหาขาวเนียนตา */
+            --header-gradient: linear-gradient(100deg, #F9CCD9 0%, #FFF0F3 40%, #FFFFFF 100%);
         }
 
         * {
@@ -37,14 +45,15 @@
         }
 
         body {
-            background: linear-gradient(135deg, #fdfbfb 0%, var(--soft-bg) 100%);
+            /* ปรับพื้นหลังให้เป็นโทนชมพูอ่อนเนียนตา ไล่เฉดนุ่มนวลแบบในรูป */
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--soft-bg) 100%);
             color: var(--text-dark);
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
         }
 
-        /* Watermark */
+        /* Watermark เบื้องหลัง */
         .watermark {
             position: fixed;
             top: 50%;
@@ -52,38 +61,52 @@
             transform: translate(-50%, -50%) rotate(-30deg);
             font-size: 8rem;
             font-weight: 700;
-            color: rgba(216, 27, 96, 0.04);
+            color: rgba(222, 27, 97, 0.03);
             white-space: nowrap;
             z-index: -1;
             pointer-events: none;
         }
 
-        /* Layout & Container */
+        /* Layout Container */
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
         }
 
-        /* Glassmorphism Card */
+        /* การ์ดสไตล์ภาพตัวอย่าง โค้งมนสูง เส้นขอบชมพูสดชัดเจน */
         .glass-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
+            border: 2px solid var(--card-border); 
+            border-radius: 24px; /* เพิ่มความโค้งมนให้ละมุนตาขึ้นตามดีไซน์ใหม่ */
             box-shadow: var(--shadow-soft);
-            padding: 24px;
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
+            padding: 26px;
+            margin-bottom: 24px;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
         }
 
         .glass-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px 0 rgba(216, 27, 96, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 16px 36px rgba(222, 27, 97, 0.15);
         }
 
-        /* Header Layout */
+        /* การ์ดส่วนหัวดีไซน์พรีเมียม */
+        .header-card {
+            background: var(--header-gradient) !important;
+            border: 2px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* แถบสีชมพูสดใสหนาด้านบนสุดของ Header เพิ่มความโดดเด่น */
+        .header-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 8px;
+            background: var(--primary-pink);
+        }
+
         .header-container {
             display: flex;
             justify-content: space-between;
@@ -95,414 +118,345 @@
         .brand-section {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
 
-        .brand-logo i {
-            font-size: 2.5rem;
-            color: var(--primary-pink);
+        /* กรอบโลโก้วงกลมขอบชมพูแบบหน้าเว็บจริง */
+        .brand-logo img {
+            height: 70px;
+            width: 70px;
+            object-fit: contain;
+            border-radius: 50%; 
+            border: 3px solid var(--primary-pink);
+            padding: 4px;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(222, 27, 97, 0.2);
         }
 
+        /* จัดสีตัวอักษรหัวข้อตามแบบในรูป */
         .brand-text h1 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary-pink);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark); /* ชื่อโรงพยาบาลตัวหนาสีเข้ม */
+            line-height: 1.2;
         }
 
         .brand-text h2 {
-            font-size: 1rem;
-            color: var(--text-dark);
-            font-weight: 500;
+            font-size: 1.1rem;
+            color: var(--primary-pink); /* ชื่อกลุ่มงานใช้สีชมพูสดใสเด่นชัด */
+            font-weight: 600;
+            margin-top: 3px;
         }
 
         .brand-text p {
             font-size: 0.85rem;
             color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 500;
         }
 
+        /* ปุ่ม Action สไตล์ชมพู-ขาวคลีนๆ */
         .action-buttons {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
         .btn {
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid var(--light-pink);
+            background: #ffffff;
+            border: 2px solid var(--light-pink);
             color: var(--primary-pink);
-            padding: 8px 16px;
-            border-radius: 10px;
+            padding: 10px 18px;
+            border-radius: 14px;
             cursor: pointer;
             font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(222, 27, 97, 0.04);
         }
 
         .btn:hover {
             background: var(--primary-pink);
+            border-color: var(--primary-pink);
             color: #fff;
+            box-shadow: 0 6px 16px rgba(222, 27, 97, 0.25);
         }
 
-        /* Grid System */
-        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        /* Grid Layouts */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
         
-        /* Section Titles */
+        /* เส้นใต้หัวข้อ Section สีชมพูหนาและคมชัด */
         .section-title {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 600;
             color: var(--primary-pink);
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            border-bottom: 2px solid var(--light-pink);
-            padding-bottom: 8px;
+            gap: 10px;
+            border-bottom: 3px solid var(--primary-pink);
+            padding-bottom: 10px;
         }
 
-        /* Data Tables / Info Lists */
-        .info-list {
-            list-style: none;
-        }
+        /* รายการข้อมูลภายในแผงควบคุม */
         .info-list li {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed rgba(216, 27, 96, 0.2);
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--light-pink); /* เส้นประสีชมพูหวาน */
             font-size: 0.95rem;
         }
         .info-list li:last-child { border-bottom: none; }
         .info-label { color: var(--text-muted); font-weight: 500; }
-        .info-value { color: var(--text-dark); text-align: right; font-weight: 400; max-width: 60%; }
+        .info-value { color: var(--text-dark); text-align: right; font-weight: 600; max-width: 60%; }
 
-        /* KPI Cards */
+        /* KPI Cards สไตล์เดียวกับการ์ดหลักในรูป */
         .kpi-card {
             text-align: center;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 15px;
-            border: 1px solid var(--glass-border);
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 20px;
+            border: 2px solid var(--light-pink);
+            transition: all 0.2s ease;
+        }
+        .kpi-card:hover {
+            border-color: var(--primary-pink);
+            transform: scale(1.02);
         }
         .kpi-value {
-            font-size: 2rem;
+            font-size: 2.4rem;
             font-weight: 700;
-            color: var(--primary-pink);
+            color: var(--text-dark); /* ตัวเลขใหญ่สีเข้มตามสไตล์ในรูป */
             line-height: 1.2;
         }
         .kpi-label {
             font-size: 0.85rem;
-            color: var(--text-muted);
+            color: var(--primary-pink); /* หัวข้อ KPI ใช้สีชมพู */
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
         }
 
-        /* Gauge & Risk Styles */
-        .gauge-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-top: 15px;
-        }
+        /* แถบ Gauge ความพึงพอใจ/สุขภาพครุภัณฑ์ */
         .gauge-bar-outer {
             width: 100%;
-            height: 12px;
-            background: #e0e0e0;
+            height: 10px;
+            background: #F0F0F0;
             border-radius: 6px;
             overflow: hidden;
-            margin-top: 8px;
+            margin-top: 10px;
         }
         .gauge-bar-inner {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, var(--color-green), var(--primary-pink));
-            transition: width 1s ease-in-out;
+            background: linear-gradient(90deg, #2ecc71, var(--primary-pink));
         }
 
-        /* Images and QR Code layout */
+        /* สไตล์กรอบรูปถ่ายครุภัณฑ์และ QR Code */
         .asset-media-box {
             display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 16px;
+            margin-bottom: 18px;
             align-items: center;
             flex-wrap: wrap;
         }
         .asset-image-frame, .qr-image-frame {
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 12px;
-            border: 2px solid var(--light-pink);
+            width: 125px;
+            height: 125px;
+            background: #ffffff;
+            border-radius: 18px;
+            border: 2px solid var(--card-border);
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 14px rgba(222, 27, 97, 0.1);
         }
         .asset-image-frame img, .qr-image-frame img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .qr-image-frame img {
-            object-fit: contain;
-            padding: 5px;
-        }
 
-        /* Timeline */
+        /* Timeline ประวัติการซ่อมบำรุงและเคลื่อนย้าย */
         .timeline {
             position: relative;
-            padding-left: 20px;
-            margin-top: 10px;
+            padding-left: 24px;
+            margin-top: 12px;
             max-height: 350px;
             overflow-y: auto;
         }
         .timeline::before {
             content: '';
             position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 2px;
+            left: 0; top: 0; height: 100%; width: 3px;
             background: var(--light-pink);
         }
         .timeline-item {
             position: relative;
-            margin-bottom: 15px;
-            background: rgba(255,255,255,0.6);
-            padding: 10px 15px;
-            border-radius: 10px;
-            border: 1px solid var(--glass-border);
+            margin-bottom: 18px;
+            background: #ffffff;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid var(--light-pink);
         }
         .timeline-item::after {
             content: '';
             position: absolute;
-            left: -25px;
-            top: 15px;
-            width: 12px;
-            height: 12px;
+            left: -29.5px; top: 18px;
+            width: 14px; height: 14px;
             border-radius: 50%;
             background: var(--primary-pink);
-            border: 2px solid #fff;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px var(--light-pink);
         }
-        .timeline-item.move-blue::after { background: var(--color-blue); }
-        .timeline-item.move-orange::after { background: var(--color-orange); }
-        .timeline-item.move-red::after { background: var(--color-red); }
 
-        .timeline-date { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
-        .timeline-content { font-size: 0.9rem; }
+        /* ป้ายกำกับ (Badges) */
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary-pink);
+            display: inline-block;
+            box-shadow: 0 2px 6px rgba(222, 27, 97, 0.2);
+        }
 
-        /* Loading & Error Screens */
-        #loadingScreen, #errorScreen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--soft-bg);
+        /* คลังภาพประวัติการซ่อม (Image Logs Gallery) */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .gallery-item {
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid var(--light-pink);
+            transition: all 0.3s ease;
+            aspect-ratio: 1;
+        }
+        .gallery-item:hover {
+            border-color: var(--primary-pink);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 8px 20px rgba(222, 27, 97, 0.25);
+        }
+
+        /* Lightbox หน้าต่างขยายรูปภาพ */
+        .lightbox img {
+            border: 4px solid var(--primary-pink);
+            border-radius: 16px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+        }
+
+        /* หน้าจอโหลดข้อมูล (Loading Screen) */
+        #loadingScreen {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--soft-bg);
             z-index: 9999;
         }
         .spinner {
-            width: 50px; height: 50px;
+            width: 50px;
+            height: 50px;
             border: 5px solid var(--light-pink);
             border-top: 5px solid var(--primary-pink);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .badge {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: #fff;
-            background: var(--primary-pink);
-            display: inline-block;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        /* Gallery Styles */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .gallery-item {
-            width: 100%;
-            height: 150px;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            border: 2px solid var(--light-pink);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-        }
-        .gallery-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(216, 27, 96, 0.3);
-        }
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        .gallery-item:hover img {
-            transform: scale(1.1);
-        }
-
-        /* Lightbox Styles */
-        .lightbox {
-            display: none;
-            position: fixed;
-            z-index: 10000;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            backdrop-filter: blur(5px);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .lightbox.show {
-            display: flex;
-            opacity: 1;
-        }
-        .lightbox img {
-            max-width: 90%;
-            max-height: 80vh;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            object-fit: contain;
-        }
-        .lightbox-close {
-            position: absolute;
-            top: 25px; right: 35px;
-            color: white;
-            font-size: 2.5rem;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        .lightbox-close:hover { color: var(--light-pink); }
-        .lightbox-caption {
-            color: white;
-            margin-top: 15px;
-            font-size: 1.1rem;
-            font-weight: 300;
-            text-align: center;
-        }
-
-        /* Toast Popup notification */
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
+        /* ข้อความแจ้งเตือนป๊อปอัป (Toast Popup) */
         .toast {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--primary-pink);
-            border-radius: 10px;
-            padding: 12px 24px;
-            margin-top: 10px;
+            background: #ffffff;
+            border: 2px solid var(--primary-pink);
+            border-radius: 14px;
+            box-shadow: 0 12px 36px rgba(222, 27, 97, 0.2);
+            padding: 14px 24px;
             color: var(--text-dark);
-            box-shadow: var(--shadow-soft);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
+            font-weight: 600;
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .grid-4 { grid-template-columns: repeat(2, 1fr); }
-            .grid-3 { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 768px) {
-            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-            .header-container { flex-direction: column; align-items: flex-start; }
-            .watermark { font-size: 4rem; }
-            .asset-media-box { justify-content: center; }
-        }
-
-        /* Print A4 Landscape */
+        /* โหมดการพิมพ์เอกสาร (Print A4 Landscape) */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             body { background: #fff; }
             .watermark { display: none; }
-            .glass-card { 
-                box-shadow: none; 
-                border: 1px solid #ddd; 
+            .glass-card, .header-card { 
+                box-shadow: none !important; 
+                border: 1px solid #DE1B61 !important; 
+                background: #fff !important;
                 break-inside: avoid;
-                margin-bottom: 10px;
-                padding: 15px;
+                border-radius: 12px;
             }
             .action-buttons { display: none; }
-            .container { padding: 0; max-width: 100%; }
-            #loadingScreen, #errorScreen { display: none !important; }
         }
-    </style>
+</style>
 </head>
 <body>
 
+    <!-- ข้อความลายน้ำพื้นหลังระบบ -->
     <div class="watermark">IT UDON HOSP</div>
 
-    <!-- Loading Screen -->
+    <!-- หน้าจอแสดงผลขณะกำลังโหลดข้อมูล -->
     <div id="loadingScreen">
         <div class="spinner"></div>
-        <h2 style="color: var(--primary-pink);">Loading Asset Information...</h2>
-        <p style="color: var(--text-muted);">ระบบกำลังดึงข้อมูลจากฐานข้อมูล...</p>
+        <h2 style="color: var(--primary-pink); font-weight: 600;">Loading Asset Information...</h2>
+        <p style="color: var(--text-muted); margin-top: 5px;">ระบบกำลังดึงข้อมูลจากฐานข้อมูล...</p>
     </div>
 
-    <!-- Error Screen -->
-    <div id="errorScreen" style="display: none;">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size: 4rem; color: var(--color-red); margin-bottom: 20px;"></i>
-        <h2 id="errorMsg" style="color: var(--text-dark); margin-bottom: 15px;">ไม่พบข้อมูลครุภัณฑ์</h2>
-        <button class="btn" onclick="window.history.back()"><i class="fa-solid fa-arrow-left"></i> Back Home</button>
+    <!-- หน้าจอแสดงผลเมื่อเกิดข้อผิดพลาด / ไม่พบข้อมูล -->
+    <div id="errorScreen" style="display: none; text-align: center; padding: 100px 20px;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 5rem; color: var(--primary-pink); margin-bottom: 20px;"></i>
+        <h2 id="errorMsg" style="color: var(--text-dark); margin-bottom: 20px; font-weight: 600;">ไม่พบข้อมูลครุภัณฑ์ชิ้นนี้ในระบบ</h2>
+        <button class="btn" style="margin: 0 auto;" onclick="window.history.back()"><i class="fa-solid fa-arrow-left"></i> ย้อนกลับหน้าหลัก</button>
     </div>
 
-    <!-- Toast Notification Container -->
+    <!-- กล่องจัดการระบบแจ้งเตือนแอปพลิเคชัน -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Main Dashboard Container -->
+    <!-- แผงหน้าปัดข้อมูลหลัก (Main Dashboard) -->
     <div class="container" id="mainDashboard" style="display: none;">
         
-        <!-- HEADER -->
-        <div class="glass-card header-container">
+        <!-- HEADER: ข้อมูลส่วนหัวไล่เฉดสไตล์ชมพู-ขาวตามภาพตัวอย่าง -->
+        <div class="glass-card header-card header-container">
             <div class="brand-section">
                 <div class="brand-logo">
-                    <i class="fa-solid fa-hospital-user"></i>
+                    <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo ของระบบโรงพยาบาลอุดรธานี">
                 </div>
                 <div class="brand-text">
                     <h1>โรงพยาบาลอุดรธานี</h1>
                     <h2>กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</h2>
-                    <p>IT Asset Management System - Asset Detail Dashboard</p>
+                    <p>IT Asset Management System — Dashboard รายละเอียดครุภัณฑ์</p>
                 </div>
             </div>
             <div class="text-right">
-                <p id="currentDateTime" style="color: var(--primary-pink); font-weight: 500; margin-bottom: 10px; text-align: right;"></p>
+                <p id="currentDateTime" style="color: var(--primary-pink); font-weight: 600; margin-bottom: 12px; text-align: right;"></p>
                 <div class="action-buttons">
-                    <button class="btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Print A4</button>
-                    <button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
-                    <button class="btn" onclick="copyAssetLink()"><i class="fa-solid fa-link"></i> Copy Link</button>
+                    <button class="btn" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน A4</button>
+                    <button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล</button>
+                    <button class="btn" onclick="copyAssetLink()"><i class="fa-solid fa-link"></i> คัดลอกลิงก์ครุภัณฑ์</button>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 12: Asset Lifecycle Dashboard (KPIs Top) -->
+        <!-- แผงประเมินประสิทธิภาพครุภัณฑ์ด้านบนสุด (KPIs Top) -->
         <div class="glass-card grid-4">
             <div class="kpi-card">
                 <div class="kpi-label">Health Score</div>
@@ -514,124 +468,122 @@
             <div class="kpi-card">
                 <div class="kpi-label">Risk Level</div>
                 <div class="kpi-value" id="kpiRisk" style="color: var(--color-orange);">-</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="valRiskScore">Score: 0</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; font-weight: 500;" id="valRiskScore">คะแนนความเสี่ยง: 0</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">อายุการใช้งาน (Asset Age)</div>
+                <div class="kpi-label">อายุครุภัณฑ์ (Asset Age)</div>
                 <div class="kpi-value" id="kpiAge">-</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="valRemainingLife">เกณฑ์ต่ำกว่ามาตรฐาน: -</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; font-weight: 500;" id="valRemainingLife">เกณฑ์ต่ำกว่ามาตรฐาน: -</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">ประวัติซ่อม (MA Count)</div>
+                <div class="kpi-label">ประวัติการซ่อม (MA Count)</div>
                 <div class="kpi-value" id="kpiMA">-</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="valTotalRepairCost">รวม: 0 ฿</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; font-weight: 500;" id="valTotalRepairCost">มูลค่าซ่อมสะสม: 0 ฿</div>
             </div>
         </div>
 
         <div class="grid-2">
-            <!-- SECTION 1: Asset Summary -->
+            <!-- ข้อมูลสรุปตัวครุภัณฑ์ (Asset Summary) -->
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-boxes-stacked"></i> Asset Summary</h3>
                 <div class="asset-media-box">
-                    <!-- Photo Frame -->
                     <div class="asset-image-frame" id="photoFrame">
-                        <i class="fa-solid fa-image" style="font-size: 2rem; color: #ccc;"></i>
+                        <i class="fa-solid fa-image" style="font-size: 2.5rem; color: var(--light-pink);"></i>
                     </div>
-                    <!-- QR Code Frame -->
                     <div class="qr-image-frame" id="qrFrame">
-                        <i class="fa-solid fa-qrcode" style="font-size: 2rem; color: #ccc;"></i>
+                        <i class="fa-solid fa-qrcode" style="font-size: 2.5rem; color: var(--light-pink);"></i>
                     </div>
                     <div>
-                        <h2 id="valAssetName" style="color: var(--primary-pink);">-</h2>
-                        <p style="font-size: 1.1rem; font-weight: 500;" id="valAssetID">-</p>
-                        <div style="margin-top: 5px; display: flex; gap: 5px;">
-                            <span class="badge" id="valMaStatus">Status</span>
-                            <span class="badge" id="valCoStatus" style="background: var(--color-purple);">CoStatus</span>
+                        <h2 id="valAssetName" style="color: var(--primary-pink); font-weight: 700;">-</h2>
+                        <p style="font-size: 1.15rem; font-weight: 600; margin-top: 2px;" id="valAssetID">-</p>
+                        <div style="margin-top: 8px; display: flex; gap: 6px;">
+                            <span class="badge" id="valMaStatus">สถานะการใช้งาน</span>
+                            <span class="badge" id="valCoStatus" style="background: var(--color-purple);">สถานะความครอบครอง</span>
                         </div>
                     </div>
                 </div>
                 <ul class="info-list">
                     <li><span class="info-label">รหัสครุภัณฑ์:</span> <span class="info-value" id="valCode">-</span></li>
-                    <li><span class="info-label">Serial Number:</span> <span class="info-value" id="valSerial">-</span></li>
+                    <li><span class="info-label">Serial Number (S/N):</span> <span class="info-value" id="valSerial">-</span></li>
                 </ul>
             </div>
 
-            <!-- SECTION 3: Location Information -->
+            <!-- ข้อมูลสถานที่จัดวาง (Location Information) -->
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-location-dot"></i> Location Information</h3>
                 <ul class="info-list">
-                    <li><span class="info-label">สถานที่ปัจจุบัน:</span> <span class="info-value" id="valCurrentLoc" style="color: var(--primary-pink); font-weight: 600;">-</span></li>
-                    <li><span class="info-label">หน่วยงานที่รับผิดชอบ (ดั้งเดิม):</span> <span class="info-value" id="valInstallLoc">-</span></li>
-                    <li><span class="info-label">สถานที่ติดตั้ง (ดั้งเดิม):</span> <span class="info-value" id="valInstallLocDesc">-</span></li>
-                    <li><span class="info-label">NOUPID / NOID_2:</span> <span class="info-value" id="valNoupid">-</span></li>
+                    <li><span class="info-label">สถานที่ติดตั้งปัจจุบัน:</span> <span class="info-value" id="valCurrentLoc" style="color: var(--primary-pink); font-weight: 700;">-</span></li>
+                    <li><span class="info-label">หน่วยงานรับผิดชอบดั้งเดิม:</span> <span class="info-value" id="valInstallLoc">-</span></li>
+                    <li><span class="info-label">รายละเอียดสถานที่ติดตั้งเดิม:</span> <span class="info-value" id="valInstallLocDesc">-</span></li>
+                    <li><span class="info-label">รหัส NOUPID / NOID_2:</span> <span class="info-value" id="valNoupid">-</span></li>
                 </ul>
             </div>
         </div>
 
         <div class="grid-3">
-            <!-- SECTION 2: Basic Information -->
+            <!-- ข้อมูลพื้นฐานครุภัณฑ์ (Basic Information) -->
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-circle-info"></i> Basic Information</h3>
                 <ul class="info-list">
-                    <li><span class="info-label">หมวดครุภัณฑ์:</span> <span class="info-value" id="valCategory">-</span></li>
+                    <li><span class="info-label">หมวดหมู่ครุภัณฑ์:</span> <span class="info-value" id="valCategory">-</span></li>
                     <li><span class="info-label">ประเภท (Type ID):</span> <span class="info-value" id="valTypeID">-</span></li>
                     <li><span class="info-label">ยี่ห้อ / รุ่น / รูปลักษณ์:</span> <span class="info-value" id="valSpec">-</span></li>
-                    <li><span class="info-label">รหัสครุภัณฑ์เดิม:</span> <span class="info-value" id="valOldCode">-</span></li>
+                    <li><span class="info-label">รหัสครุภัณฑ์ชุดเดิม:</span> <span class="info-value" id="valOldCode">-</span></li>
                 </ul>
             </div>
 
-            <!-- SECTION 4: Financial Information -->
+            <!-- ข้อมูลด้านงบประมาณและจัดซื้อ (Financial Information) -->
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-file-invoice-dollar"></i> Financial Information</h3>
                 <ul class="info-list">
-                    <li><span class="info-label">วันที่รับเข้า / ปีที่รับ:</span> <span class="info-value" id="valReceiveDate">-</span></li>
-                    <li><span class="info-label">แหล่งเงินจัดซื้อ:</span> <span class="info-value" id="valFund">-</span></li>
-                    <li><span class="info-label">ราคาครุภัณฑ์:</span> <span class="info-value" id="valPrice">-</span></li>
-                    <li><span class="info-label">อายุการใช้งาน (จาก Sheet):</span> <span class="info-value" id="valAssetAgeSheet">-</span></li>
-                    <li><span class="info-label">ต่ำกว่าเกณฑ์ (จาก Sheet):</span> <span class="info-value" id="valAssetUnderStd">-</span></li>
-                    <li><span class="info-label">อายุการรับประกัน:</span> <span class="info-value" id="valWarranty">-</span></li>
+                    <li><span class="info-label">วันที่รับเข้าคลัง / ปีงบฯ:</span> <span class="info-value" id="valReceiveDate">-</span></li>
+                    <li><span class="info-label">แหล่งงบประมาณจัดซื้อ:</span> <span class="info-value" id="valFund">-</span></li>
+                    <li><span class="info-label">ราคาทุนครุภัณฑ์:</span> <span class="info-value" id="valPrice">-</span></li>
+                    <li><span class="info-label">อายุการใช้งานทางบัญชี:</span> <span class="info-value" id="valAssetAgeSheet">-</span></li>
+                    <li><span class="info-label">สถานะต่ำกว่าเกณฑ์มาตรฐาน:</span> <span class="info-value" id="valAssetUnderStd">-</span></li>
+                    <li><span class="info-label">ระยะเวลารับประกันสินค้า:</span> <span class="info-value" id="valWarranty">-</span></li>
                 </ul>
             </div>
 
-            <!-- SECTION 5: Technical Information -->
+            <!-- ข้อมูลทางเทคนิคและเครือข่าย (Technical Information) -->
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-network-wired"></i> Technical Information</h3>
                 <ul class="info-list" id="techInfoList">
-                    <li><span class="info-label">IP Address:</span> <span class="info-value" id="valTechIP">-</span></li>
+                    <li><span class="info-label">IP Address:</span> <span class="info-value" id="valTechIP" style="font-weight:600; color:var(--text-dark);">-</span></li>
                     <li><span class="info-label">MAC Address:</span> <span class="info-value" id="valTechMAC">-</span></li>
-                    <li><span class="info-label">Operating System:</span> <span class="info-value" id="valTechOS">-</span></li>
-                    <li><span class="info-label">Hardware Specs:</span> <span class="info-value" id="valTechSpecs">-</span></li>
+                    <li><span class="info-label">ระบบปฏิบัติการ (OS):</span> <span class="info-value" id="valTechOS">-</span></li>
+                    <li><span class="info-label">สเปกเครื่อง (Hardware Specs):</span> <span class="info-value" id="valTechSpecs">-</span></li>
                 </ul>
             </div>
         </div>
 
         <div class="grid-2">
-            <!-- SECTION 8: Asset Movement History -->
+            <!-- ประวัติการเคลื่อนย้ายครุภัณฑ์ (Movement History) -->
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-truck-fast"></i> Movement History</h3>
                 <div class="timeline" id="timelineMovement">
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">กำลังโหลดประวัติการย้าย...</p>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">ระบบกำลังดึงข้อมูลประวัติการย้ายสถานที่...</p>
                 </div>
             </div>
 
-            <!-- SECTION 7: Maintenance History -->
+            <!-- ประวัติการแจ้งซ่อมและ PM (Maintenance History) -->
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance & PM History</h3>
                 <div class="timeline" id="timelineMA">
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">กำลังโหลดประวัติการซ่อมบำรุง...</p>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">ระบบกำลังดึงข้อมูลประวัติการบำรุงรักษา...</p>
                 </div>
             </div>
         </div>
 
-        <!-- NEW SECTION: Image Gallery from Asset_Image_Logs -->
+        <!-- คลังภาพถ่ายประวัติบันทึกครุภัณฑ์ (Image Logs Gallery) -->
         <div class="glass-card">
             <h3 class="section-title"><i class="fa-solid fa-images"></i> Image Logs Gallery</h3>
             <div id="galleryContainer" class="gallery-grid">
-                <p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1;">ไม่มีรูปภาพบันทึกสำหรับครุภัณฑ์รหัสนี้</p>
+                <p style="color: var(--text-muted); font-size: 0.95rem; grid-column: 1/-1;">ไม่มีรูปภาพแนบประวัติเพิ่มเติมสำหรับครุภัณฑ์รหัสนี้</p>
             </div>
         </div>
 
-        <!-- SECTION 13: Notes & Attachments -->
+        <!-- บันทึกและเอกสารแนบอื่น ๆ (Notes & Attachments) -->
         <div class="glass-card">
             <h3 class="section-title"><i class="fa-solid fa-paperclip"></i> Notes & Attachments</h3>
             <ul class="info-list">
@@ -642,12 +594,13 @@
 
     </div>
 
-    <!-- Lightbox Modal container -->
+    <!-- กล่องทำหน้าที่เป็น Lightbox แสดงรูปภาพขนาดใหญ่เต็มหน้าจอ -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-        <img id="lightboxImg" src="" alt="Zoom Image">
+        <img id="lightboxImg" src="" alt="ขยายภาพถ่ายครุภัณฑ์">
         <div id="lightboxCaption" class="lightbox-caption"></div>
     </div>
+
 
     <!-- JavaScript Logic -->
     <script>
@@ -779,165 +732,118 @@
             // ดึงค่า 'อายุการใช้งาน' และ 'ต่ำกว่าเกณฑ์' จากตัวแปร asset ตรงๆ โดยไม่ผ่านการประมวลผลเพิ่มใน frontend
             const ageVal = asset['อายุ'];
             const ageString = (ageVal !== undefined && ageVal !== null && ageVal !== '') ? (String(ageVal).includes('ปี') ? ageVal : ageVal + ' ปี') : '-';
+            
             safeSetText('kpiAge', ageString);
             safeSetText('valAssetAgeSheet', ageString);
 
-            const underStdVal = asset['ต่ำกว่าเกณฑ์'] || '-';
-            safeSetText('valRemainingLife', 'เกณฑ์ต่ำกว่ามาตรฐาน: ' + underStdVal);
-            safeSetText('valAssetUnderStd', underStdVal);
-            
+            const underStd = asset['ต่ำกว่าเกณฑ์'] || '-';
+            safeSetText('valAssetUnderStd', underStd);
+            safeSetText('valRemainingLife', 'เกณฑ์ต่ำกว่ามาตรฐาน: ' + underStd);
+
+            // KPI ประวัติการซ่อมบำรุง
             safeSetText('kpiMA', (logs.ma ? logs.ma.length : 0) + ' ครั้ง');
-            
-            // สรุปค่าซ่อมรวมจากข้อมูลประวัติการซ่อมจริงใน Logs
-            let totalRepairCost = 0;
-            if (logs.ma && logs.ma.length > 0) {
-                totalRepairCost = logs.ma.reduce((sum, item) => sum + (Number(item.Cost) || 0), 0);
-            }
-            safeSetText('valTotalRepairCost', 'ค่าซ่อมบำรุงรวมในระบบ: ' + totalRepairCost.toLocaleString() + ' ฿');
+            safeSetText('valTotalRepairCost', 'รวมค่าซ่อม: ' + (calc.totalRepairCost ? Number(calc.totalRepairCost).toLocaleString() + ' ฿' : '0 ฿'));
 
-            // --- TIMELINE RENDERING (SECTION 7 & 8) ---
-            renderTimeline('timelineMovement', logs.move, formatMoveLog);
-            renderTimeline('timelineMA', logs.ma, formatMALog);
+            // --- SECTION 13: Notes & Attachments ---
+            safeSetText('valNote2', asset['Note2'] || '-');
+            safeSetText('valNote3', asset['Note3'] || '-');
 
-            // --- IMAGE GALLERY RENDERING (Connected with Asset_Image_Logs) ---
+            // --- SECTION 7 & 8: Timelines ---
+            renderTimeline(logs.move, 'timelineMovement', 'move');
+            renderTimeline(logs.ma, 'timelineMA', 'ma');
+
+            // --- NEW SECTION: Image Gallery from Logs ---
             renderGallery(logs.images);
-
-            // --- SECTION 13: Notes ---
-            safeSetText('valNote2', asset['Note2']);
-            safeSetText('valNote3', asset['NOTE3']);
         }
 
-        // แปลงแชร์ลิงก์ Google Drive ให้แสดงรูปได้
+        // ฟังก์ชันช่วยในการกำหนดข้อความอย่างปลอดภัย
+        function safeSetText(id, value) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerText = (value === undefined || value === null || value === '') ? '-' : value;
+            }
+        }
+
+        // แปลง Google Drive link เป็นลิ้งก์ที่แสดงผลภาพได้ตรง ๆ
         function convertDriveUrl(url) {
             if (!url) return '';
-            const reg = /\/file\/d\/([a-zA-Z0-9_-]+)/;
-            const match = url.match(reg);
-            if (match && match[1]) {
-                return `https://docs.google.com/uc?export=view&id=${match[1]}`;
-            }
-            const reg2 = /[?&]id=([a-zA-Z0-9_-]+)/;
-            const match2 = url.match(reg2);
-            if (match2 && match2[1] && url.includes('drive.google.com')) {
-                return `https://docs.google.com/uc?export=view&id=${match2[1]}`;
+            if (url.includes('drive.google.com')) {
+                let id = '';
+                const parts = url.split('/');
+                for (let i = 0; i < parts.length; i++) {
+                    if (parts[i] === 'd') {
+                        id = parts[i + 1];
+                        break;
+                    }
+                }
+                if (!id) {
+                    try {
+                        const u = new URL(url);
+                        id = u.searchParams.get('id');
+                    } catch(e) {}
+                }
+                if (id) {
+                    return `https://lh3.googleusercontent.com/d/${id}`;
+                }
             }
             return url;
         }
 
-        // Render คลังรูปภาพจากชีต Asset_Image_Logs
-        function renderGallery(images) {
-            const galleryContainer = document.getElementById('galleryContainer');
-            if (!images || images.length === 0) {
-                galleryContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1;">ไม่มีรูปภาพบันทึกสำหรับครุภัณฑ์รหัสนี้</p>';
-                return;
+        // แปลงรูปแบบวันที่เป็นภาษาไทย
+        function formatDate(dateVal) {
+            if (!dateVal || dateVal === '-') return '-';
+            try {
+                const date = new Date(dateVal);
+                if (isNaN(date.getTime())) return dateVal;
+                return date.toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } catch (e) {
+                return dateVal;
             }
-
-            galleryContainer.innerHTML = images.map((img, index) => {
-                const directUrl = convertDriveUrl(img.Image_URL || img.URL || img.Drive_Link);
-                const caption = img.Remark || img.Description || `รูปภาพที่ ${index + 1}`;
-                return `
-                    <div class="gallery-item" onclick="openLightbox('${directUrl}', '${caption.replace(/'/g, "\\'")}')">
-                        <img src="${directUrl}" alt="${caption}" onerror="this.src='https://placehold.co/150x150/FFF0F5/D81B60?text=No+Image'">
-                    </div>
-                `;
-            }).join('');
         }
 
-        // ฟังก์ชัน Zoom ภาพ (Lightbox)
-        function openLightbox(url, caption) {
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImg = document.getElementById('lightboxImg');
-            const lightboxCaption = document.getElementById('lightboxCaption');
-
-            lightboxImg.src = url;
-            lightboxCaption.textContent = caption;
-            lightbox.classList.add('show');
-        }
-
-        function closeLightbox() {
-            document.getElementById('lightbox').classList.remove('show');
-        }
-
-        // Mapping ปลอดภัย
-        function safeSetText(elementId, value, defaultText = '-') {
-            const el = document.getElementById(elementId);
-            if (el) el.textContent = (value !== undefined && value !== null && value !== '') ? value : defaultText;
-        }
-
-        // แปลงรูปแบบวันที่พุทธศักราช
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            const d = new Date(dateString);
-            if (isNaN(d)) return dateString;
-            return d.toLocaleDateString('th-TH');
-        }
-
-        // วาดไทม์ไลน์
-        function renderTimeline(containerId, dataArray, formatFn) {
-            const container = document.getElementById(containerId);
-            if (!dataArray || dataArray.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">ไม่มีข้อมูลการเปลี่ยนสถานะหรือความเคลื่อนไหว</p>';
-                return;
-            }
-            container.innerHTML = dataArray.map(item => formatFn(item)).join('');
-        }
-
-        // ประวัติการเคลื่อนย้าย
-        function formatMoveLog(log) {
-            let colorClass = 'move-blue';
-            if (log.From_Department !== log.To_Department) colorClass = 'move-orange';
-            if (log.Reason && (log.Reason.includes('ข้ามตึก') || log.Reason.includes('ต่างตึก'))) colorClass = 'move-red';
-
-            return `
-                <div class="timeline-item ${colorClass}">
-                    <div class="timeline-date">${formatDate(log.Move_Date)}</div>
-                    <div class="timeline-content">
-                        <strong>ย้ายจาก:</strong> ${log.From_Department || '-'} ➜ <strong>ไป:</strong> ${log.To_Department || '-'}<br>
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">
-                        สถานที่: ${log.From_Location || '-'} ➜ ${log.To_Location || '-'}<br>
-                        เหตุผล: ${log.Reason || '-'} | ผู้ย้าย: ${log.Moved_By || '-'}
-                        </span>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ประวัติการบำรุงรักษา
-        function formatMALog(log) {
-            return `
-                <div class="timeline-item">
-                    <div class="timeline-date">${formatDate(log.Repair_Date || log.PM_Date)}</div>
-                    <div class="timeline-content">
-                        <strong>ประเภท:</strong> ${log.Problem || log.PM_Type || 'การบำรุงรักษาเชิงป้องกัน (PM)'}<br>
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">
-                        การแก้ไข: ${log.Solution || log.PM_Result || '-'}<br>
-                        วิศวกรชีวการแพทย์/ช่าง: ${log.Engineer || '-'} | ค่าใช้จ่าย: ${log.Cost ? Number(log.Cost).toLocaleString() + ' ฿' : '0 ฿'}
-                        </span>
-                    </div>
-                </div>
-            `;
-        }
-
-        function showError(message) {
-            document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('mainDashboard').style.display = 'none';
-            document.getElementById('errorScreen').style.display = 'flex';
-            document.getElementById('errorMsg').textContent = message;
-        }
-
+        // แสดงเวลาปัจจุบันแบบเรียลไทม์
         function startClock() {
-            setInterval(() => {
+            const updateClock = () => {
                 const now = new Date();
-                document.getElementById('currentDateTime').textContent = now.toLocaleString('th-TH');
-            }, 1000);
+                const currentDateTimeEl = document.getElementById('currentDateTime');
+                if (currentDateTimeEl) {
+                    currentDateTimeEl.innerText = now.toLocaleString('th-TH', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                }
+            };
+            updateClock();
+            setInterval(updateClock, 1000);
         }
 
+        // คัดลอกลิงก์ข้อมูลของตัวครุภัณฑ์ปัจจุบัน
+        function copyAssetLink() {
+            const tempInput = document.createElement('input');
+            tempInput.value = window.location.href;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('คัดลอกลิงก์สำหรับครุภัณฑ์นี้เรียบร้อยแล้ว!');
+        }
+
+        // แสดง Toast Popup
         function showToast(message) {
             const container = document.getElementById('toastContainer');
+            if (!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast';
-            toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--primary-pink)"></i> <span>${message}</span>`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--primary-pink);"></i> <span>${message}</span>`;
             container.appendChild(toast);
-            
             setTimeout(() => toast.classList.add('show'), 100);
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -945,12 +851,92 @@
             }, 3000);
         }
 
-        function copyAssetLink() {
-            navigator.clipboard.writeText(window.location.href).then(() => {
-                showToast("คัดลอก URL ของครุภัณฑ์ชิ้นนี้เรียบร้อยแล้ว");
-            }).catch(err => {
-                console.error('Failed to copy link: ', err);
-            });
+        // เรนเดอร์ข้อมูล Timeline (Movement / Maintenance)
+        function renderTimeline(list, containerId, type) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (!list || list.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">ไม่มีข้อมูลประวัติในส่วนนี้</p>`;
+                return;
+            }
+
+            container.innerHTML = list.map(item => {
+                let badgeClass = '';
+                if (type === 'move') {
+                    badgeClass = 'move-blue';
+                } else if (type === 'ma') {
+                    badgeClass = item['Status'] === 'เสร็จสิ้น' ? 'move-green' : 'move-orange';
+                }
+                
+                const date = formatDate(item['วันที่'] || item['Date'] || item['Timestamp']);
+                const detail = item['รายละเอียด'] || item['Detail'] || item['Action'] || '-';
+                const user = item['ผู้บันทึก'] || item['User'] || '';
+
+                return `
+                    <div class="timeline-item ${badgeClass}">
+                        <div class="timeline-date">${date} ${user ? '| โดย ' + user : ''}</div>
+                        <div class="timeline-content">${detail}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // เรนเดอร์ Image Gallery (รองรับ IMAGE_ID)
+        function renderGallery(images) {
+            const container = document.getElementById('galleryContainer');
+            if (!container) return;
+            if (!images || images.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1;">ไม่มีรูปภาพบันทึกสำหรับครุภัณฑ์รหัสนี้</p>`;
+                return;
+            }
+
+            container.innerHTML = images.map(img => {
+                let url = '';
+                // ตรวจสอบและดึงภาพผ่าน IMAGE_ID (Google Drive File ID) ตามโครงสร้าง backend ใหม่
+                if (img['IMAGE_ID']) {
+                    url = `https://lh3.googleusercontent.com/d/${img['IMAGE_ID']}`;
+                } else {
+                    url = convertDriveUrl(img['URL'] || img['Url'] || img['Ass_Img'] || '');
+                }
+                
+                const caption = img['คำอธิบาย'] || img['Description'] || img['Caption'] || 'รูปภาพครุภัณฑ์';
+                return `
+                    <div class="gallery-item" onclick="openLightbox('${url}', '${caption}')">
+                        <img src="${url}" alt="${caption}" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // เปิด/ปิด การซูมรูปภาพ (Lightbox)
+        function openLightbox(src, caption) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            const lightboxCaption = document.getElementById('lightboxCaption');
+            if (lightbox && lightboxImg && lightboxCaption) {
+                lightboxImg.src = src;
+                lightboxCaption.innerText = caption;
+                lightbox.classList.add('show');
+            }
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox) {
+                lightbox.classList.remove('show');
+            }
+        }
+
+        // แสดงหน้าจอผิดพลาดเมื่อไม่พบข้อมูล
+        function showError(message) {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainDashboard').style.display = 'none';
+            const errScreen = document.getElementById('errorScreen');
+            const errMsg = document.getElementById('errorMsg');
+            if (errScreen && errMsg) {
+                errMsg.innerText = message;
+                errScreen.style.display = 'flex';
+            }
         }
     </script>
 </body>
