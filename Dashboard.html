@@ -501,7 +501,54 @@
             }
         }
 
-        // แสดงผลการ์ดหมวดหมู่ครุภัณฑ์
+        // ฟังก์ชันช่วยเหลือสำหรับเลือก Icon ให้ตรงกับหมวดหมู่
+        function getAssetIcon(assetName) {
+            const name = (assetName || '').toLowerCase();
+            let path = '';
+            
+            // ตรวจสอบคำสำคัญในชื่อหมวดหมู่เพื่อจับคู่ Icon
+            if (name.includes('พกพา') || name.includes('โน้ตบุ๊ก') || name.includes('notebook') || name.includes('laptop')) {
+                // Laptop Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />';
+            } else if (name.includes('ตั้งโต๊ะ') || (name.includes('คอมพิวเตอร์') && !name.includes('โปรแกรม'))) {
+                // Desktop PC Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />';
+            } else if (name.includes('พิมพ์') || name.includes('ปริ้นเตอร์') || name.includes('สติกเกอร์') || name.includes('บาร์โค้ด')) {
+                // Printer Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v2.796c0 .597.48 1.08 1.076 1.08h8.348c.596 0 1.076-.483 1.076-1.08V6.105z" />';
+            } else if (name.includes('สำรองไฟ') || name.includes('ups')) {
+                // UPS / Lightning Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />';
+            } else if (name.includes('โปรแกรม') || name.includes('ซอฟต์แวร์') || name.includes('software')) {
+                // Software / Code Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />';
+            } else if (name.includes('server') || name.includes('จัดเก็บข้อมูล') || name.includes('data center')) {
+                // Server Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602l-2.268 9.64a4.5 4.5 0 00-.12 1.03v.228m19.5 0a3 3 0 01-3 3H5.25a3 3 0 01-3-3m19.5 0a3 3 0 00-3-3H5.25a3 3 0 00-3 3m16.5 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />';
+            } else if (name.includes('เครือข่าย') || name.includes('network')) {
+                // Network / Wifi Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />';
+            } else if (name.includes('อินเตอร์คอม') || name.includes('โทรศัพท์')) {
+                // Phone / Intercom Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.896-1.596-5.54-4.24-7.136-7.136l1.292-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />';
+            } else if (name.includes('โปรเจ็คเตอร์')) {
+                // Projector / Monitor Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20.25h12m-7.5-3v3m3-3v3m-10.125-3h17.25c.621 0 1.125-.504 1.125-1.125V4.875c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125z" />';
+            } else if (name.includes('แพทย์') || name.includes('พยาบาล') || name.includes('การแพทย์')) {
+                // Medical Box Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12zM12 11.25v4.5m-2.25-2.25h4.5" />';
+            } else if (name.includes('สำนักงาน') || name.includes('งานบ้าน') || name.includes('เฟอร์นิเจอร์')) {
+                // Office Briefcase Icon
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />';
+            } else {
+                // Default / Other (Box)
+                path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />';
+            }
+            
+            return `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">${path}</svg>`;
+        }
+
+        // แสดงผลการ์ดหมวดหมู่ครุภัณฑ์พร้อมไอคอน
         function renderCards(cardData) {
             const container = document.getElementById('assetCardContainer');
             container.innerHTML = '';
@@ -512,14 +559,24 @@
             }
 
             cardData.forEach(item => {
+                const iconSvg = getAssetIcon(item.assetType);
+                
                 const cardHtml = `
-                    <div class="glass-card p-5 hover:bg-pink-50/20 flex flex-col justify-between min-h-[110px]">
-                        <div class="text-xs sm:text-sm font-semibold text-gray-700 tracking-tight leading-snug line-clamp-2" title="${item.assetType}">
-                            ${item.assetType || 'ไม่ระบุหมวดหมู่'}
+                    <div class="glass-card p-5 hover:bg-pink-50/20 flex flex-col justify-between min-h-[130px] relative overflow-hidden group">
+                        <div class="flex items-start gap-3">
+                            <!-- Icon Box -->
+                            <div class="p-2.5 bg-pink-50 text-hospital-primary rounded-xl group-hover:bg-hospital-primary group-hover:text-white transition-colors duration-300 shadow-sm shrink-0">
+                                ${iconSvg}
+                            </div>
+                            <!-- Title -->
+                            <div class="text-[0.95rem] sm:text-base font-semibold text-gray-700 tracking-tight leading-snug line-clamp-2 pt-1" title="${item.assetType}">
+                                ${item.assetType || 'ไม่ระบุหมวดหมู่'}
+                            </div>
                         </div>
-                        <div class="flex items-baseline justify-between mt-3">
-                            <span class="text-2xl font-bold text-hospital-primary leading-none">${Number(item.total).toLocaleString('th-TH')}</span>
-                            <span class="text-xs text-gray-400 font-medium">รายการ</span>
+                        <!-- Value -->
+                        <div class="flex items-end justify-between mt-4">
+                            <span class="text-3xl font-extrabold text-hospital-primary leading-none tracking-tight">${Number(item.total).toLocaleString('th-TH')}</span>
+                            <span class="text-xs text-gray-400 font-medium mb-1">รายการ</span>
                         </div>
                     </div>
                 `;
