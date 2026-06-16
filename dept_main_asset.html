@@ -535,8 +535,8 @@
 
                         <!-- Action Buttons -->
                         <div class="pt-6 border-t-2 border-slate-200 flex gap-3">
-                            <button type="button" id="btnEditAsset" onclick="enableEditMode(true)" class="flex-1 py-3 bg-pink-500 text-white rounded-xl font-bold text-xs hover:bg-pink-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-pink-100">
-                                <i class="fas fa-edit"></i> แก้ไขข้อมูลครุภัณฑ์
+                            <button type="button" id="editBtn" onclick="enableEditMode(true)" class="flex-1 py-3 bg-pink-500 text-white rounded-xl font-bold text-xs hover:bg-pink-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-pink-100">
+                                <i class="fas fa-edit"></i> ดูรายละเอียดเพิ่มเติม
                             </button>
                             <button type="button" id="btnCancelEdit" onclick="enableEditMode(false)" class="flex-1 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-300 transition-all hidden border border-slate-300">
                                 ยกเลิก
@@ -1327,8 +1327,8 @@
 
     let currentAssetData = null;
 
-    function openAssetDetailModal(assetId, deptId) {
-        // 🛠️ แก้ไข: ค้นหาข้อมูลจาก currentDeptLogs ก่อน เพราะมีฟิลด์ Asset_Photo ครบถ้วน (หากไม่พบจึงหาจาก globalLogs)
+   function openAssetDetailModal(assetId, deptId) {
+        // 🛠️ ค้นหาข้อมูล (โค้ดเดิมของคุณ)
         const item = state.currentDeptLogs.find(l => String(l.Asset_ID || l.ASSET_ID) === String(assetId)) || state.globalLogs.find(l => String(l.Asset_ID || l.ASSET_ID) === String(assetId));
         if (!item) return;
         currentAssetData = item;
@@ -1351,6 +1351,26 @@
         document.getElementById('editAssetDeptName').value = deptName + locInfo;
 
         enableEditMode(false);
+
+        // -------------------------------------------------------------------
+        // 🚀 ส่วนที่เพิ่มเข้ามา: จัดการปุ่ม "แก้ไข" ใน Modal ให้ลิงก์ไปยัง URL ที่ต้องการ
+        // -------------------------------------------------------------------
+        const targetUrl = `https://dakdan.github.io/IT-ASSET/asset_detail.html?AssetID=${assetId}`;
+        
+        // ⚠️ อย่าลืมเปลี่ยน 'btnEditSubmit' เป็น ID ของปุ่มแก้ไขในหน้า HTML ของคุณจริงๆ
+        const editBtn = document.getElementById('btnEditSubmit'); 
+        
+        if (editBtn) {
+            // หากปุ่มของคุณเป็นแท็ก <button> ใช้แบบนี้:
+            editBtn.onclick = function() {
+                window.location.href = targetUrl; // เปิดในหน้าต่างเดิม
+                // window.open(targetUrl, '_blank'); // ถ้าอยากให้เปิดแท็บใหม่ใช้บรรทัดนี้แทน
+            };
+
+            // 💡 ข้อแนะนำ: แต่ถ้าปุ่มแก้ไขใน HTML ของคุณเป็นแท็ก <a> ให้เปลี่ยนไปใช้คำสั่งนี้แทนครับ:
+            // editBtn.href = targetUrl;
+        }
+        // -------------------------------------------------------------------
 
         const modal = document.getElementById('modalAssetDetail');
         if (modal) modal.classList.replace('hidden', 'flex');
