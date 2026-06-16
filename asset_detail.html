@@ -777,7 +777,7 @@
 
             // [กฎเหล็กการ Mapping คอลัมน์ที่คำนวณมาแล้วจากชีตโดยตรง]
             // ดึงค่า 'อายุการใช้งาน' และ 'ต่ำกว่าเกณฑ์' จากตัวแปร asset ตรงๆ โดยไม่ผ่านการประมวลผลเพิ่มใน frontend
-            const ageVal = asset['อายุการใช้งาน'];
+            const ageVal = asset['อายุ'];
             const ageString = (ageVal !== undefined && ageVal !== null && ageVal !== '') ? (String(ageVal).includes('ปี') ? ageVal : ageVal + ' ปี') : '-';
             safeSetText('kpiAge', ageString);
             safeSetText('valAssetAgeSheet', ageString);
