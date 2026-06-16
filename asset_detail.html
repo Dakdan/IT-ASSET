@@ -4,37 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IT Asset Detail 360° Dashboard - Udon Thani Hospital</title>
-    <!-- Fonts -->
+    <!-- Fonts: Kanit -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Icons -->
+    <!-- Icons: FontAwesome 6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-
-   <style>
+    <style>
         :root {
-            /* โทนสีหลักถอดรหัสจากไฟล์ภาพตัวอย่าง {275B72D2-AAE7-482E-A647-30A5828F148F}.png */
-            --primary-pink: #DE1B61;       /* ชมพูสดใส (Fuchsia) */
-            --hover-pink: #B8104B;         /* ชมพูเข้มตอนโฮเวอร์ */
-            --light-pink: #F9CCD9;         /* ชมพูอ่อนสำหรับเส้นตัด */
-            --soft-bg: #FFF0F3;            /* สีพื้นหลังชมพูละมุนแบบในรูปตัวอย่าง */
-            --glass-bg: #FFFFFF;           /* พื้นหลังการ์ดสีขาวบริสุทธิ์ */
+            /* โทนสีบานเย็นเข้มสดและพรีเมียม (True Vibrant Fuchsia) เพื่อความเด่นชัดสูงสุด */
+            --primary-fuchsia: #E6005C;    /* สีบานเย็นสดสะดุดตา */
+            --dark-fuchsia: #B30045;       /* สีบานเย็นเข้มสไตล์พรีเมียม */
+            --light-fuchsia: #FFE6F0;      /* สีบานเย็นพาสเทลสำหรับพื้นผิวรองและเส้นแบ่ง */
+            --body-bg: #FDF8FA;            /* พื้นหลังสีขาวอมชมพูจางๆ เพื่อช่วยขับสีการ์ดให้โดดเด่นขึ้น */
+            --card-bg: #FFFFFF;            /* พื้นหลังการ์ดสีขาวบริสุทธิ์ */
             
-            /* เส้นขอบการ์ดสีชมพูสดใสเด่นชัดหนา 2px ตามแบบ */
-            --card-border: #DE1B61; 
+            /* เส้นขอบการ์ดหนา 2.5px สีบานเย็นสด คมชัดสูง */
+            --card-border: #E6005C; 
             
-            --text-dark: #1A2530;          /* สีข้อความหลักเข้มคมชัด */
-            --text-muted: #7F8C8D;         /* สีข้อความรอง */
-            --shadow-soft: 0 10px 30px rgba(222, 27, 97, 0.08);
+            --text-dark: #1A1A1A;          /* สีข้อความหลักสีเข้มสนิทเพื่อการอ่านที่ง่ายขึ้น */
+            --text-muted: #666666;         /* สีข้อความรอง */
+            --shadow-premium: 0 12px 32px rgba(230, 0, 92, 0.08);
             
-            /* Status Colors */
-            --color-blue: #3498db;
-            --color-orange: #f39c12;
-            --color-red: #e74c3c;
-            --color-green: #2ecc71;
-            --color-purple: #9b59b6;
+            /* สีสำหรับสถานะระบบต่าง ๆ */
+            --color-blue: #1E88E5;
+            --color-orange: #FB8C00;
+            --color-red: #E53935;
+            --color-green: #43A047;
+            --color-purple: #8E24AA;
 
-            /* ไล่เฉดสีส่วนหัว (Header) ผสมผสานแถบสีชมพูสดใสไปหาขาวเนียนตา */
-            --header-gradient: linear-gradient(100deg, #F9CCD9 0%, #FFF0F3 40%, #FFFFFF 100%);
+            /* พื้นหลัง Header แบบไล่เฉดสีบานเย็น-ขาว บนลงล่าง ตามที่ต้องการ */
+            --header-gradient: linear-gradient(180deg, #FFE6F0 0%, #FFFFFF 100%);
         }
 
         * {
@@ -45,15 +44,14 @@
         }
 
         body {
-            /* ปรับพื้นหลังให้เป็นโทนชมพูอ่อนเนียนตา ไล่เฉดนุ่มนวลแบบในรูป */
-            background: linear-gradient(135deg, #FFFFFF 0%, var(--soft-bg) 100%);
+            background: var(--body-bg);
             color: var(--text-dark);
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
         }
 
-        /* Watermark เบื้องหลัง */
+        /* Watermark พื้นหลังของโรงพยาบาลอุดรธานี */
         .watermark {
             position: fixed;
             top: 50%;
@@ -61,7 +59,7 @@
             transform: translate(-50%, -50%) rotate(-30deg);
             font-size: 8rem;
             font-weight: 700;
-            color: rgba(222, 27, 97, 0.03);
+            color: rgba(230, 0, 92, 0.03);
             white-space: nowrap;
             z-index: -1;
             pointer-events: none;
@@ -74,37 +72,39 @@
             padding: 24px;
         }
 
-        /* การ์ดสไตล์ภาพตัวอย่าง โค้งมนสูง เส้นขอบชมพูสดชัดเจน */
+        /* การ์ดข้อมูลสไตล์พรีเมียม เส้นขอบสีบานเย็นเด่นชัด โค้งมนสวยงาม */
         .glass-card {
-            background: var(--glass-bg);
-            border: 2px solid var(--card-border); 
-            border-radius: 24px; /* เพิ่มความโค้งมนให้ละมุนตาขึ้นตามดีไซน์ใหม่ */
-            box-shadow: var(--shadow-soft);
+            background: var(--card-bg);
+            border: 2.5px solid var(--card-border); 
+            border-radius: 20px; 
+            box-shadow: var(--shadow-premium);
             padding: 26px;
             margin-bottom: 24px;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .glass-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 16px 36px rgba(222, 27, 97, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 36px rgba(230, 0, 92, 0.18);
         }
 
-        /* การ์ดส่วนหัวดีไซน์พรีเมียม */
+        /* ปรับแต่งการ์ด Header แบบพรีเมียม ไล่เฉดสีชมพูบานเย็น-ขาว จากบนลงล่าง */
         .header-card {
             background: var(--header-gradient) !important;
-            border: 2px solid var(--card-border);
+            border: 2.5px solid var(--card-border) !important;
+            box-shadow: 0 12px 32px rgba(230, 0, 92, 0.1);
+            padding: 30px;
             position: relative;
             overflow: hidden;
         }
-        
-        /* แถบสีชมพูสดใสหนาด้านบนสุดของ Header เพิ่มความโดดเด่น */
+
+        /* แถบสีชมพูบานเย็นหนาด้านบนสุดของ Header เพิ่มความสมบูรณ์แบบ */
         .header-card::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
-            height: 8px;
-            background: var(--primary-pink);
+            height: 6px;
+            background: var(--primary-fuchsia);
         }
 
         .header-container {
@@ -121,41 +121,41 @@
             gap: 20px;
         }
 
-        /* กรอบโลโก้วงกลมขอบชมพูแบบหน้าเว็บจริง */
+        /* กรอบโลโก้วงกลมขอบสีขาวตัดกับขอบสีบานเย็นเด่นชัด */
         .brand-logo img {
-            height: 70px;
-            width: 70px;
+            height: 75px;
+            width: 75px;
             object-fit: contain;
             border-radius: 50%; 
-            border: 3px solid var(--primary-pink);
+            border: 3.5px solid var(--primary-fuchsia);
             padding: 4px;
             background: #ffffff;
-            box-shadow: 0 4px 12px rgba(222, 27, 97, 0.2);
+            box-shadow: 0 4px 15px rgba(230, 0, 92, 0.15);
         }
 
-        /* จัดสีตัวอักษรหัวข้อตามแบบในรูป */
+        /* ปรับสีตัวอักษรให้อ่านง่าย คมชัด โดดเด่นบนไล่เฉดชมพูบานเย็น-ขาว */
         .brand-text h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 700;
-            color: var(--text-dark); /* ชื่อโรงพยาบาลตัวหนาสีเข้ม */
+            color: var(--text-dark); /* ตัวหนาสีเข้มคมชัด */
             line-height: 1.2;
         }
 
         .brand-text h2 {
-            font-size: 1.1rem;
-            color: var(--primary-pink); /* ชื่อกลุ่มงานใช้สีชมพูสดใสเด่นชัด */
+            font-size: 1.2rem;
+            color: var(--primary-fuchsia); /* กลุ่มงานเทคโนโลยีสารสนเทศเป็นสีชมพูบานเย็นเด่น */
             font-weight: 600;
-            margin-top: 3px;
+            margin-top: 4px;
         }
 
         .brand-text p {
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-top: 4px;
+            margin-top: 6px;
             font-weight: 500;
         }
 
-        /* ปุ่ม Action สไตล์ชมพู-ขาวคลีนๆ */
+        /* กลุ่มปุ่มคำสั่ง Action บนส่วนหัว */
         .action-buttons {
             display: flex;
             gap: 12px;
@@ -164,119 +164,118 @@
 
         .btn {
             background: #ffffff;
-            border: 2px solid var(--light-pink);
-            color: var(--primary-pink);
-            padding: 10px 18px;
+            border: 2px solid var(--primary-fuchsia);
+            color: var(--primary-fuchsia);
+            padding: 10px 20px;
             border-radius: 14px;
             cursor: pointer;
             font-size: 0.9rem;
             font-weight: 600;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 8px rgba(222, 27, 97, 0.04);
+            box-shadow: 0 4px 12px rgba(230, 0, 92, 0.05);
         }
 
         .btn:hover {
-            background: var(--primary-pink);
-            border-color: var(--primary-pink);
-            color: #fff;
-            box-shadow: 0 6px 16px rgba(222, 27, 97, 0.25);
+            background: var(--primary-fuchsia);
+            border-color: var(--primary-fuchsia);
+            color: #ffffff;
+            box-shadow: 0 6px 20px rgba(230, 0, 92, 0.25);
         }
 
-        /* Grid Layouts */
+        /* ระบบ Grid Layout ตอบสนองการทำงานทุกดีไซน์หน้าจอ */
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
         .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
         
-        /* เส้นใต้หัวข้อ Section สีชมพูหนาและคมชัด */
+        /* สไตล์เส้นใต้หัวข้อและหัวข้อหน้าควบคุมเด่นชัด */
         .section-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary-pink);
-            margin-bottom: 18px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-fuchsia);
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 3px solid var(--primary-pink);
-            padding-bottom: 10px;
+            border-bottom: 3.5px solid var(--primary-fuchsia);
+            padding-bottom: 8px;
         }
 
-        /* รายการข้อมูลภายในแผงควบคุม */
+        /* รายการตารางข้อมูลฝั่งขวา-ซ้าย */
         .info-list li {
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px dashed var(--light-pink); /* เส้นประสีชมพูหวาน */
+            padding: 14px 0;
+            border-bottom: 1.5px dashed #FFCCD0; /* เส้นประสีบานเย็นอ่อนจาง */
             font-size: 0.95rem;
         }
         .info-list li:last-child { border-bottom: none; }
         .info-label { color: var(--text-muted); font-weight: 500; }
         .info-value { color: var(--text-dark); text-align: right; font-weight: 600; max-width: 60%; }
 
-        /* KPI Cards สไตล์เดียวกับการ์ดหลักในรูป */
+        /* แผงแสดงค่า KPIs (KPI Cards) ปรับสไตล์สีบานเย็นเด่นสะดุดตา */
         .kpi-card {
             text-align: center;
-            padding: 20px;
+            padding: 22px;
             background: #ffffff;
-            border-radius: 20px;
-            border: 2px solid var(--light-pink);
+            border-radius: 16px;
+            border: 2px solid var(--light-fuchsia);
             transition: all 0.2s ease;
         }
         .kpi-card:hover {
-            border-color: var(--primary-pink);
-            transform: scale(1.02);
+            border-color: var(--primary-fuchsia);
+            transform: scale(1.03);
         }
         .kpi-value {
-            font-size: 2.4rem;
+            font-size: 2.6rem;
             font-weight: 700;
-            color: var(--text-dark); /* ตัวเลขใหญ่สีเข้มตามสไตล์ในรูป */
-            line-height: 1.2;
+            color: var(--text-dark);
+            line-height: 1.1;
         }
         .kpi-label {
-            font-size: 0.85rem;
-            color: var(--primary-pink); /* หัวข้อ KPI ใช้สีชมพู */
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: var(--primary-fuchsia); 
+            font-weight: 700;
+            margin-bottom: 8px;
             letter-spacing: 0.5px;
         }
 
-        /* แถบ Gauge ความพึงพอใจ/สุขภาพครุภัณฑ์ */
+        /* หลอดเกจประเมินประสิทธิภาพครุภัณฑ์ */
         .gauge-bar-outer {
             width: 100%;
             height: 10px;
-            background: #F0F0F0;
+            background: #EAEAEA;
             border-radius: 6px;
             overflow: hidden;
-            margin-top: 10px;
+            margin-top: 12px;
         }
         .gauge-bar-inner {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #2ecc71, var(--primary-pink));
+            background: linear-gradient(90deg, #2ecc71, var(--primary-fuchsia));
         }
 
-        /* สไตล์กรอบรูปถ่ายครุภัณฑ์และ QR Code */
+        /* ดีไซน์รูปถ่ายและ QR Code ประจำตัวครุภัณฑ์ */
         .asset-media-box {
             display: flex;
-            gap: 16px;
+            gap: 18px;
             margin-bottom: 18px;
             align-items: center;
             flex-wrap: wrap;
         }
         .asset-image-frame, .qr-image-frame {
-            width: 125px;
-            height: 125px;
+            width: 130px;
+            height: 130px;
             background: #ffffff;
-            border-radius: 18px;
-            border: 2px solid var(--card-border);
+            border-radius: 16px;
+            border: 2.5px solid var(--card-border);
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            box-shadow: 0 4px 14px rgba(222, 27, 97, 0.1);
+            box-shadow: 0 4px 14px rgba(230, 0, 92, 0.15);
         }
         .asset-image-frame img, .qr-image-frame img {
             width: 100%;
@@ -284,7 +283,7 @@
             object-fit: cover;
         }
 
-        /* Timeline ประวัติการซ่อมบำรุงและเคลื่อนย้าย */
+        /* ดีไซน์เส้นประวัติการเคลื่อนย้ายและประวัติแจ้งซ่อม (Timeline) */
         .timeline {
             position: relative;
             padding-left: 24px;
@@ -296,15 +295,15 @@
             content: '';
             position: absolute;
             left: 0; top: 0; height: 100%; width: 3px;
-            background: var(--light-pink);
+            background: var(--light-fuchsia);
         }
         .timeline-item {
             position: relative;
             margin-bottom: 18px;
             background: #ffffff;
             padding: 14px 16px;
-            border-radius: 16px;
-            border: 1px solid var(--light-pink);
+            border-radius: 14px;
+            border: 1.5px solid var(--light-fuchsia);
         }
         .timeline-item::after {
             content: '';
@@ -312,24 +311,24 @@
             left: -29.5px; top: 18px;
             width: 14px; height: 14px;
             border-radius: 50%;
-            background: var(--primary-pink);
+            background: var(--primary-fuchsia);
             border: 3px solid #fff;
-            box-shadow: 0 0 0 2px var(--light-pink);
+            box-shadow: 0 0 0 2px var(--light-fuchsia);
         }
 
-        /* ป้ายกำกับ (Badges) */
+        /* ป้ายกำกับสไตล์เด่นสะดุดตา (Badges) */
         .badge {
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
             color: #fff;
-            background: var(--primary-pink);
+            background: var(--primary-fuchsia);
             display: inline-block;
-            box-shadow: 0 2px 6px rgba(222, 27, 97, 0.2);
+            box-shadow: 0 3px 8px rgba(230, 0, 92, 0.25);
         }
 
-        /* คลังภาพประวัติการซ่อม (Image Logs Gallery) */
+        /* รายละเอียดในภาพถ่ายและภาพบันทึกแกลลอรี่ */
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -337,27 +336,57 @@
             margin-top: 10px;
         }
         .gallery-item {
-            border-radius: 14px;
+            border-radius: 12px;
             overflow: hidden;
             cursor: pointer;
-            border: 2px solid var(--light-pink);
-            transition: all 0.3s ease;
+            border: 2.5px solid var(--light-fuchsia);
+            transition: all 0.2s ease;
             aspect-ratio: 1;
         }
         .gallery-item:hover {
-            border-color: var(--primary-pink);
-            transform: translateY(-4px) scale(1.03);
-            box-shadow: 0 8px 20px rgba(222, 27, 97, 0.25);
+            border-color: var(--primary-fuchsia);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(230, 0, 92, 0.3);
         }
 
-        /* Lightbox หน้าต่างขยายรูปภาพ */
+        /* การแสดงภาพถ่ายขยายผลลัพธ์ผ่านหน้าต่าง Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(5px);
+        }
         .lightbox img {
-            border: 4px solid var(--primary-pink);
+            max-width: 90%;
+            max-height: 80vh;
+            border: 4px solid var(--primary-fuchsia);
             border-radius: 16px;
             box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+            object-fit: contain;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 25px; right: 35px;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .lightbox-close:hover { color: var(--light-fuchsia); }
+        .lightbox-caption {
+            color: white;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: 300;
+            text-align: center;
         }
 
-        /* หน้าจอโหลดข้อมูล (Loading Screen) */
+        /* หน้าจอแสดงผลขณะกำลังโหลดฐานข้อมูล (Loading Screen) */
         #loadingScreen {
             display: flex;
             flex-direction: column;
@@ -365,14 +394,14 @@
             align-items: center;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--soft-bg);
+            background: #FFFFFF;
             z-index: 9999;
         }
         .spinner {
             width: 50px;
             height: 50px;
-            border: 5px solid var(--light-pink);
-            border-top: 5px solid var(--primary-pink);
+            border: 5px solid var(--light-fuchsia);
+            border-top: 5px solid var(--primary-fuchsia);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
@@ -382,59 +411,96 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ข้อความแจ้งเตือนป๊อปอัป (Toast Popup) */
+        /* สไตล์หน้าจอยินดีต้อนรับแจ้งเตือนแบบด่วน (Toast Popup) */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
         .toast {
             background: #ffffff;
-            border: 2px solid var(--primary-pink);
+            border: 2.5px solid var(--primary-fuchsia);
             border-radius: 14px;
-            box-shadow: 0 12px 36px rgba(222, 27, 97, 0.2);
+            box-shadow: 0 12px 36px rgba(230, 0, 92, 0.25);
             padding: 14px 24px;
             color: var(--text-dark);
             font-weight: 600;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        /* โหมดการพิมพ์เอกสาร (Print A4 Landscape) */
+        /* Responsive สำหรับปรับให้เหมาะสมกับ PC และ Smartphone */
+        @media (max-width: 1024px) {
+            .grid-4 { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+            .grid-3 { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+            .grid-2 { gap: 16px; }
+        }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 16px; }
+            .header-container { flex-direction: column; align-items: stretch; text-align: center; }
+            .brand-section { flex-direction: column; text-align: center; gap: 12px; }
+            .text-right { text-align: center !important; }
+            #currentDateTime { text-align: center !important; }
+            .action-buttons { justify-content: center; }
+            .asset-media-box { justify-content: center; text-align: center; }
+            .info-list li { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .info-value { text-align: left; max-width: 100%; }
+        }
+
+        /* โหมดการพิมพ์หน้าจอรายงานระบบ (Print A4 Landscape) */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             body { background: #fff; }
             .watermark { display: none; }
-            .glass-card, .header-card { 
+            .glass-card { 
                 box-shadow: none !important; 
-                border: 1px solid #DE1B61 !important; 
+                border: 2px solid #E6005C !important; 
                 background: #fff !important;
                 break-inside: avoid;
                 border-radius: 12px;
             }
+            .header-card {
+                background: #E6005C !important;
+                color: #fff !important;
+            }
             .action-buttons { display: none; }
         }
-</style>
+    </style>
 </head>
 <body>
 
-    <!-- ข้อความลายน้ำพื้นหลังระบบ -->
+    <!-- ข้อความลายน้ำพื้นหลังระบบของโรงพยาบาลอุดรธานี -->
     <div class="watermark">IT UDON HOSP</div>
 
     <!-- หน้าจอแสดงผลขณะกำลังโหลดข้อมูล -->
     <div id="loadingScreen">
         <div class="spinner"></div>
-        <h2 style="color: var(--primary-pink); font-weight: 600;">Loading Asset Information...</h2>
-        <p style="color: var(--text-muted); margin-top: 5px;">ระบบกำลังดึงข้อมูลจากฐานข้อมูล...</p>
+        <h2 style="color: var(--primary-fuchsia); font-weight: 700;">Loading Asset Information...</h2>
+        <p style="color: var(--text-muted); margin-top: 5px;">ระบบกำลังดึงข้อมูลจากฐานข้อมูลของโรงพยาบาลอุดรธานี...</p>
     </div>
 
     <!-- หน้าจอแสดงผลเมื่อเกิดข้อผิดพลาด / ไม่พบข้อมูล -->
     <div id="errorScreen" style="display: none; text-align: center; padding: 100px 20px;">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size: 5rem; color: var(--primary-pink); margin-bottom: 20px;"></i>
-        <h2 id="errorMsg" style="color: var(--text-dark); margin-bottom: 20px; font-weight: 600;">ไม่พบข้อมูลครุภัณฑ์ชิ้นนี้ในระบบ</h2>
-        <button class="btn" style="margin: 0 auto;" onclick="window.history.back()"><i class="fa-solid fa-arrow-left"></i> ย้อนกลับหน้าหลัก</button>
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 5rem; color: var(--primary-fuchsia); margin-bottom: 20px;"></i>
+        <h2 id="errorMsg" style="color: var(--text-dark); margin-bottom: 20px; font-weight: 700;">ไม่พบข้อมูลครุภัณฑ์ชิ้นนี้ในระบบ</h2>
+        <button class="btn" style="margin: 0 auto; border: 2px solid var(--primary-fuchsia);" onclick="window.history.back()"><i class="fa-solid fa-arrow-left"></i> ย้อนกลับหน้าหลัก</button>
     </div>
 
-    <!-- กล่องจัดการระบบแจ้งเตือนแอปพลิเคชัน -->
+    <!-- กล่องจัดการระบบแจ้งเตือนแอปพลิเคชัน (Toast Popup) -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- แผงหน้าปัดข้อมูลหลัก (Main Dashboard) -->
+    <!-- แผงหน้าปัดข้อมูลหลัก (Main Dashboard Container) -->
     <div class="container" id="mainDashboard" style="display: none;">
         
-        <!-- HEADER: ข้อมูลส่วนหัวไล่เฉดสไตล์ชมพู-ขาวตามภาพตัวอย่าง -->
+        <!-- HEADER: สวยเด่น พรีเมียม ปรับสีพื้นหลังเฉด ชมพูบานเย็น-ขาว บนลงล่าง คมชัดอย่างมีประสิทธิภาพสูงสุด -->
         <div class="glass-card header-card header-container">
             <div class="brand-section">
                 <div class="brand-logo">
@@ -447,7 +513,7 @@
                 </div>
             </div>
             <div class="text-right">
-                <p id="currentDateTime" style="color: var(--primary-pink); font-weight: 600; margin-bottom: 12px; text-align: right;"></p>
+                <p id="currentDateTime" style="color: var(--primary-fuchsia); font-weight: 600; margin-bottom: 12px; text-align: right;"></p>
                 <div class="action-buttons">
                     <button class="btn" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน A4</button>
                     <button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล</button>
@@ -488,13 +554,13 @@
                 <h3 class="section-title"><i class="fa-solid fa-boxes-stacked"></i> Asset Summary</h3>
                 <div class="asset-media-box">
                     <div class="asset-image-frame" id="photoFrame">
-                        <i class="fa-solid fa-image" style="font-size: 2.5rem; color: var(--light-pink);"></i>
+                        <i class="fa-solid fa-image" style="font-size: 2.5rem; color: var(--primary-fuchsia);"></i>
                     </div>
                     <div class="qr-image-frame" id="qrFrame">
-                        <i class="fa-solid fa-qrcode" style="font-size: 2.5rem; color: var(--light-pink);"></i>
+                        <i class="fa-solid fa-qrcode" style="font-size: 2.5rem; color: var(--primary-fuchsia);"></i>
                     </div>
                     <div>
-                        <h2 id="valAssetName" style="color: var(--primary-pink); font-weight: 700;">-</h2>
+                        <h2 id="valAssetName" style="color: var(--primary-fuchsia); font-weight: 700;">-</h2>
                         <p style="font-size: 1.15rem; font-weight: 600; margin-top: 2px;" id="valAssetID">-</p>
                         <div style="margin-top: 8px; display: flex; gap: 6px;">
                             <span class="badge" id="valMaStatus">สถานะการใช้งาน</span>
@@ -512,7 +578,7 @@
             <div class="glass-card">
                 <h3 class="section-title"><i class="fa-solid fa-location-dot"></i> Location Information</h3>
                 <ul class="info-list">
-                    <li><span class="info-label">สถานที่ติดตั้งปัจจุบัน:</span> <span class="info-value" id="valCurrentLoc" style="color: var(--primary-pink); font-weight: 700;">-</span></li>
+                    <li><span class="info-label">สถานที่ติดตั้งปัจจุบัน:</span> <span class="info-value" id="valCurrentLoc" style="color: var(--primary-fuchsia); font-weight: 700;">-</span></li>
                     <li><span class="info-label">หน่วยงานรับผิดชอบดั้งเดิม:</span> <span class="info-value" id="valInstallLoc">-</span></li>
                     <li><span class="info-label">รายละเอียดสถานที่ติดตั้งเดิม:</span> <span class="info-value" id="valInstallLocDesc">-</span></li>
                     <li><span class="info-label">รหัส NOUPID / NOID_2:</span> <span class="info-value" id="valNoupid">-</span></li>
@@ -594,43 +660,42 @@
 
     </div>
 
-    <!-- กล่องทำหน้าที่เป็น Lightbox แสดงรูปภาพขนาดใหญ่เต็มหน้าจอ -->
+    <!-- หน้าต่างแสดงผลรูปภาพ Lightbox (เมื่อคลิกที่รูปภาพแกลลอรี่) -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
         <img id="lightboxImg" src="" alt="ขยายภาพถ่ายครุภัณฑ์">
         <div id="lightboxCaption" class="lightbox-caption"></div>
     </div>
 
-
-    <!-- JavaScript Logic -->
+    <!-- JavaScript System Engine -->
     <script>
-        // URL ของ Google Apps Script Web App ของโรงพยาบาลอุดรธานี
+        // URL สำหรับเชื่อมต่อฐานข้อมูล Google Apps Script
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_mX0O7D3PAl4uitg3V5apUECjXUZZPB4sM_B_3Ca7HnBdgJl9jPRiWgWKePrGRNdAFA/exec";
 
         document.addEventListener('DOMContentLoaded', () => {
             startClock();
 
-            // 1. ดึง URL Parameters และรองรับ Case-insensitive/คีย์ยอดนิยมทั้งหมด
+            // 1. ดึงข้อมูล Parameter จากหน้า URL
             const urlParams = new URLSearchParams(window.location.search);
             let assetId = urlParams.get('AssetID') || urlParams.get('id') || urlParams.get('assetid');
 
-            // แก้ไขปัญหาหน้าพรีวิวไม่แสดงผล: หากไม่ระบุ Parameter (เช่นใน iframe preview) ให้โหลดข้อมูลตัวจริงเป็น default อัตโนมัติ
+            // ค่าเริ่มต้นเมื่อไม่มี Parameter ส่งมา (เช่นการโหลดหน้าพรีวิว)
             if (!assetId) {
-                assetId = "2-08-003-011-67-033"; 
+                assetId = "2-08-003-005-67-212"; 
             }
 
-            // 2. เรียกใช้งานข้อมูลสดจากฐานข้อมูล
+            // 2. ตรวจสอบการโหลดข้อมูลภายนอก / หรือรันใน Apps Script Environment
             if (typeof google !== 'undefined' && google.script) {
                 google.script.run
                     .withSuccessHandler(renderDashboard)
-                    .withFailureHandler((err) => showError("เกิดข้อผิดพลาดในการรับข้อมูลจาก API: " + err))
+                    .withFailureHandler((err) => showError("เกิดข้อผิดพลาดในการดึงข้อมูลสดจากระบบ API: " + err))
                     .getAssetDetailMaster(assetId); 
             } else {
                 fetchDataFromGAS(assetId);
             }
         });
 
-        // ดึงข้อมูลสดผ่าน HTTP Client Fetch (สำหรับรันนอกสภาพแวดล้อม iFrame เช่น บน GitHub Pages)
+        // ฟังก์ชันดึงข้อมูลจาก Apps Script Web App
         async function fetchDataFromGAS(assetId) {
             try {
                 const targetUrl = `${GAS_WEB_APP_URL}?action=getAsset&assetId=${encodeURIComponent(assetId)}`;
@@ -643,14 +708,14 @@
                 const result = await response.json();
                 renderDashboard(result);
             } catch (err) {
-                showError("ไม่สามารถเชื่อมต่อฐานข้อมูล Udon Thani Hospital ได้: " + err.message + " (กรุณาตรวจสอบสิทธิ์การติดตั้ง Web App หรือ CORS Policy)");
+                showError("ไม่สามารถเข้าถึงข้อมูลของโรงพยาบาลอุดรธานีได้: " + err.message + " (กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือ Apps Script Web App)");
             }
         }
 
-        // 3. ฟังก์ชันการนำข้อมูลสดจริงไปแสดงผลบน Dashboard (Strictly NO Mock Data)
+        // 3. นำข้อมูลสดมาแสดงผลบน Dashboard (Strictly Real Data)
         function renderDashboard(response) {
             if (!response || response.status === 'error' || !response.data) {
-                showError(response ? response.message : "ไม่พบชุดข้อมูลรหัสครุภัณฑ์นี้ในระบบฐานข้อมูลหลัก");
+                showError(response ? response.message : "ไม่พบชุดรหัสครุภัณฑ์ดังกล่าวในระบบฐานข้อมูล");
                 return;
             }
 
@@ -658,11 +723,11 @@
             const calc = response.data.calculations || {};
             const logs = response.data.logs || { move: [], ma: [], pm: [], images: [] };
 
-            // ปิดหน้าจอโหลดหลัก และเปิดเผยแดชบอร์ดจริง
+            // ควบคุมการเปลี่ยนหน้าโหลดข้อมูลและเปิดเผยแผงหน้าปัดข้อมูลหลัก
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'block';
 
-            // --- SECTION 1: Summary Mapping ---
+            // --- SUMMARY MAPPING ---
             safeSetText('valAssetID', asset['AssetID']);
             safeSetText('valAssetName', asset['ชื่อรายการครุภัณฑ์']);
             safeSetText('valCode', asset['รหัสครุภัณฑ์']);
@@ -670,42 +735,41 @@
             safeSetText('valMaStatus', asset['MaStatus'] || 'Active');
             safeSetText('valCoStatus', asset['CoStatus'] || 'Standby');
 
-            // --- MAIN PHOTO & QR CODE GENERATION ---
+            // --- PHOTO & QR CODE RENDERING ---
             const photoFrame = document.getElementById('photoFrame');
             if (asset['Ass_Img'] && asset['Ass_Img'] !== '-') {
                 const directImgUrl = convertDriveUrl(asset['Ass_Img']);
-                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="ครุภัณฑ์" style="width:100%; height:100%; object-fit:cover;" onerror="this.outerHTML='<i class=\'fa-solid fa-image\' style=\'font-size:2rem;color:#ccc;\'></i>'">`;
+                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" style="width:100%; height:100%; object-fit:cover;" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image&quot; style=&quot;font-size:2.5rem;color:var(--primary-fuchsia);&quot;></i>'">`;
             }
 
-            // QR Code สำหรับสแกนเข้าถึงลิงก์ Dashboard จริง
             const qrFrame = document.getElementById('qrFrame');
             qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}" alt="Scan QR Code" style="width:100%; height:100%; object-fit:contain;">`;
 
-            // --- SECTION 2: Basic Info ---
+            // --- BASIC INFO ---
             safeSetText('valCategory', asset['หมวดครุภัณฑ์']);
             safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Item_Type_ID'] || '-'}`);
             safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
             safeSetText('valOldCode', asset['รหัสครุภัณฑ์เดิม']);
 
-            // --- SECTION 3: Location Info ---
+            // --- LOCATION INFO ---
             safeSetText('valCurrentLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน']);
             safeSetText('valInstallLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']);
             safeSetText('valInstallLocDesc', asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']);
             safeSetText('valNoupid', `${asset['NOUPID'] || '-'} / ${asset['NOID_2'] || '-'}`);
 
-            // --- SECTION 4: Financial Info ---
+            // --- FINANCIAL INFO ---
             safeSetText('valReceiveDate', `${formatDate(asset['วันที่รับเข้า'])} (ปีที่รับเข้า: ${asset['ปีที่รับเข้า'] || '-'})`);
             safeSetText('valFund', asset['แหล่งเงินที่ใช้จัดซื้อ']);
             safeSetText('valPrice', asset['ราคา'] ? Number(asset['ราคา']).toLocaleString() + ' ฿' : '-');
-            safeSetText('valWarranty', asset['Varanty'] || '-'); // แสดงผลตามค่าที่บันทึกมาใน Sheet
+            safeSetText('valWarranty', asset['Varanty'] || '-'); 
 
-            // --- SECTION 5: Technical Details ---
+            // --- TECHNICAL INFO ---
             safeSetText('valTechIP', asset['IPAddress'] || '-');
             safeSetText('valTechMAC', asset['MACAddress'] || '-');
             safeSetText('valTechOS', asset['OS'] || '-');
             safeSetText('valTechSpecs', asset['CPU_RAM_Specs'] || '-');
 
-            // --- SECTION 11 & 12: Real calculations mapping (Strictly from database / backend) ---
+            // --- CALCULATIONS & STATS ---
             const health = calc.healthScore !== undefined ? calc.healthScore : 100;
             const risk = calc.riskScore !== undefined ? calc.riskScore : 0;
             const riskLvl = calc.riskLevel || 'Low';
@@ -728,8 +792,7 @@
                 }
             }
 
-            // [กฎเหล็กการ Mapping คอลัมน์ที่คำนวณมาแล้วจากชีตโดยตรง]
-            // ดึงค่า 'อายุการใช้งาน' และ 'ต่ำกว่าเกณฑ์' จากตัวแปร asset ตรงๆ โดยไม่ผ่านการประมวลผลเพิ่มใน frontend
+            // แสดงข้อมูลด้านอายุการทำงาน
             const ageVal = asset['อายุ'];
             const ageString = (ageVal !== undefined && ageVal !== null && ageVal !== '') ? (String(ageVal).includes('ปี') ? ageVal : ageVal + ' ปี') : '-';
             
@@ -740,203 +803,176 @@
             safeSetText('valAssetUnderStd', underStd);
             safeSetText('valRemainingLife', 'เกณฑ์ต่ำกว่ามาตรฐาน: ' + underStd);
 
-            // KPI ประวัติการซ่อมบำรุง
-            safeSetText('kpiMA', (logs.ma ? logs.ma.length : 0) + ' ครั้ง');
-            safeSetText('valTotalRepairCost', 'รวมค่าซ่อม: ' + (calc.totalRepairCost ? Number(calc.totalRepairCost).toLocaleString() + ' ฿' : '0 ฿'));
+            // คำนวณมูลค่าการซ่อมบำรุงสะสมในฝั่ง Client
+            const maRecords = logs.ma || [];
+            const totalRepairCost = maRecords.reduce((sum, item) => {
+                const costVal = Number(item.cost || item['ค่าใช้จ่าย'] || item['ราคา'] || 0);
+                return sum + (isNaN(costVal) ? 0 : costVal);
+            }, 0);
 
-            // --- SECTION 13: Notes & Attachments ---
+            // KPI ประวัติการซ่อมบำรุง
+            safeSetText('kpiMA', maRecords.length + ' ครั้ง');
+            safeSetText('valTotalRepairCost', 'มูลค่าซ่อมสะสม: ' + totalRepairCost.toLocaleString() + ' ฿');
+
+            // บันทึกและเอกสารแนบอื่น ๆ
             safeSetText('valNote2', asset['Note2'] || '-');
             safeSetText('valNote3', asset['Note3'] || '-');
 
-            // --- SECTION 7 & 8: Timelines ---
-            renderTimeline(logs.move, 'timelineMovement', 'move');
-            renderTimeline(logs.ma, 'timelineMA', 'ma');
+            // --- MOVEMENT TIMELINE RENDERING ---
+            const timelineMovement = document.getElementById('timelineMovement');
+            if (timelineMovement) {
+                if (logs.move && logs.move.length > 0) {
+                    timelineMovement.innerHTML = logs.move.map(item => `
+                        <div class="timeline-item">
+                            <span class="badge" style="margin-bottom: 6px;">${formatDate(item.date || item['วันที่ย้าย'])}</span>
+                            <div style="font-weight: 600; color: var(--text-dark); margin-bottom: 4px;">จากหน่วยงาน: ${item.fromLocation || item['จากหน่วยงาน'] || '-'} → ไปยัง: ${item.toLocation || item['ไปหน่วยงาน'] || '-'}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">ผู้ดำเนินการ: ${item.operator || item['ผู้บันทึก'] || '-'} ${item.note || item['หมายเหตุ'] ? `(${item.note || item['หมายเหตุ']})` : ''}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    timelineMovement.innerHTML = '<p style="color: var(--text-muted); font-size: 0.95rem;">ไม่มีประวัติการย้ายสถานที่สำหรับครุภัณฑ์ชิ้นนี้</p>';
+                }
+            }
 
-            // --- NEW SECTION: Image Gallery from Logs ---
-            renderGallery(logs.images);
-        }
+            // --- MAINTENANCE TIMELINE RENDERING ---
+            const timelineMA = document.getElementById('timelineMA');
+            if (timelineMA) {
+                const pmRecords = logs.pm || [];
+                const combinedMA = [
+                    ...maRecords.map(r => ({ ...r, logType: 'ซ่อมบำรุง' })),
+                    ...pmRecords.map(r => ({ ...r, logType: 'Preventive Maintenance (PM)' }))
+                ];
 
-        // ฟังก์ชันช่วยในการกำหนดข้อความอย่างปลอดภัย
-        function safeSetText(id, value) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.innerText = (value === undefined || value === null || value === '') ? '-' : value;
+                if (combinedMA.length > 0) {
+                    timelineMA.innerHTML = combinedMA.map(item => `
+                        <div class="timeline-item">
+                            <span class="badge" style="margin-bottom: 6px; background: ${item.logType === 'ซ่อมบำรุง' ? 'var(--color-orange)' : 'var(--color-green)'};">
+                                ${formatDate(item.date || item['วันที่ดำเนินการ'] || item['วันที่'])} [${item.logType}]
+                            </span>
+                            <div style="font-weight: 600; color: var(--text-dark); margin-bottom: 4px;">รายละเอียด: ${item.details || item['อาการที่แจ้ง'] || item['หมายเหตุ'] || '-'}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                ผู้ดำเนินการ: ${item.technician || item['ผู้ดำเนินการ'] || '-'} | ค่าใช้จ่าย: ${(Number(item.cost || item['ค่าใช้จ่าย'] || item['ราคา'] || 0)).toLocaleString()} ฿
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    timelineMA.innerHTML = '<p style="color: var(--text-muted); font-size: 0.95rem;">ไม่มีประวัติการซ่อมบำรุงหรือ PM สำหรับครุภัณฑ์ชิ้นนี้</p>';
+                }
+            }
+
+            // --- IMAGE LOGS GALLERY RENDERING ---
+            const galleryContainer = document.getElementById('galleryContainer');
+            if (galleryContainer) {
+                if (logs.images && logs.images.length > 0) {
+                    galleryContainer.innerHTML = logs.images.map((item, index) => {
+                        const directUrl = convertDriveUrl(item.IMAGE_URL || item.IMAGE_ID || item['IMAGE_URL']);
+                        return `
+                            <div class="gallery-item" onclick="openLightbox('${directUrl}', 'ภาพประวัติแนบเพิ่มเติมชิ้นที่ ${index + 1}')">
+                                <img src="${directUrl}" alt="Log Image" style="width:100%; height:100%; object-fit:cover;" onerror="this.outerHTML='<div style=&quot;display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);&quot;><i class=&quot;fa-solid fa-image-broken&quot;></i></div>'">
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    galleryContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.95rem; grid-column: 1/-1;">ไม่มีรูปภาพแนบประวัติเพิ่มเติมสำหรับครุภัณฑ์รหัสนี้</p>';
+                }
             }
         }
 
-        // แปลง Google Drive link เป็นลิ้งก์ที่แสดงผลภาพได้ตรง ๆ
+        // --- CORE HELPER FUNCTIONS ---
+        function safeSetText(id, value) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = (value !== undefined && value !== null && value !== '') ? value : '-';
+            }
+        }
+
         function convertDriveUrl(url) {
             if (!url) return '';
             if (url.includes('drive.google.com')) {
-                let id = '';
-                const parts = url.split('/');
-                for (let i = 0; i < parts.length; i++) {
-                    if (parts[i] === 'd') {
-                        id = parts[i + 1];
-                        break;
-                    }
-                }
-                if (!id) {
-                    try {
-                        const u = new URL(url);
-                        id = u.searchParams.get('id');
-                    } catch(e) {}
-                }
-                if (id) {
-                    return `https://lh3.googleusercontent.com/d/${id}`;
+                const parts = url.split(/id=|\/d\//);
+                if (parts.length > 1) {
+                    const id = parts[1].split(/[\/\?&]/)[0];
+                    return `https://docs.google.com/uc?export=view&id=${id}`;
                 }
             }
             return url;
         }
 
-        // แปลงรูปแบบวันที่เป็นภาษาไทย
-        function formatDate(dateVal) {
-            if (!dateVal || dateVal === '-') return '-';
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === '-') return '-';
             try {
-                const date = new Date(dateVal);
-                if (isNaN(date.getTime())) return dateVal;
-                return date.toLocaleDateString('th-TH', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return dateStr;
+                return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
             } catch (e) {
-                return dateVal;
+                return dateStr;
             }
         }
 
-        // แสดงเวลาปัจจุบันแบบเรียลไทม์
         function startClock() {
-            const updateClock = () => {
+            const el = document.getElementById('currentDateTime');
+            if (!el) return;
+            function update() {
                 const now = new Date();
-                const currentDateTimeEl = document.getElementById('currentDateTime');
-                if (currentDateTimeEl) {
-                    currentDateTimeEl.innerText = now.toLocaleString('th-TH', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit'
-                    });
-                }
-            };
-            updateClock();
-            setInterval(updateClock, 1000);
+                el.textContent = now.toLocaleDateString('th-TH', { 
+                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                }) + ' น.';
+            }
+            update();
+            setInterval(update, 1000);
         }
 
-        // คัดลอกลิงก์ข้อมูลของตัวครุภัณฑ์ปัจจุบัน
+        function showError(msg) {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainDashboard').style.display = 'none';
+            const errorScreen = document.getElementById('errorScreen');
+            if (errorScreen) {
+                errorScreen.style.display = 'block';
+                document.getElementById('errorMsg').textContent = msg;
+            }
+        }
+
         function copyAssetLink() {
-            const tempInput = document.createElement('input');
-            tempInput.value = window.location.href;
+            const textToCopy = window.location.href;
+            const tempInput = document.createElement("input");
+            tempInput.value = textToCopy;
             document.body.appendChild(tempInput);
             tempInput.select();
-            document.execCommand('copy');
+            try {
+                document.execCommand("copy");
+                showToast('คัดลอกลิงก์ข้อมูลครุภัณฑ์ไปยัง Clipboard สำเร็จ');
+            } catch (err) {
+                showToast('ไม่สามารถคัดลอกลิงก์ครุภัณฑ์ได้');
+            }
             document.body.removeChild(tempInput);
-            showToast('คัดลอกลิงก์สำหรับครุภัณฑ์นี้เรียบร้อยแล้ว!');
         }
 
-        // แสดง Toast Popup
-        function showToast(message) {
+        function showToast(msg) {
             const container = document.getElementById('toastContainer');
             if (!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast';
-            toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--primary-pink);"></i> <span>${message}</span>`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--primary-fuchsia);"></i> <span>${msg}</span>`;
             container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 100);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }, 3000);
+            setTimeout(() => { toast.remove(); }, 3000);
         }
 
-        // เรนเดอร์ข้อมูล Timeline (Movement / Maintenance)
-        function renderTimeline(list, containerId, type) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            if (!list || list.length === 0) {
-                container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">ไม่มีข้อมูลประวัติในส่วนนี้</p>`;
-                return;
-            }
-
-            container.innerHTML = list.map(item => {
-                let badgeClass = '';
-                if (type === 'move') {
-                    badgeClass = 'move-blue';
-                } else if (type === 'ma') {
-                    badgeClass = item['Status'] === 'เสร็จสิ้น' ? 'move-green' : 'move-orange';
-                }
-                
-                const date = formatDate(item['วันที่'] || item['Date'] || item['Timestamp']);
-                const detail = item['รายละเอียด'] || item['Detail'] || item['Action'] || '-';
-                const user = item['ผู้บันทึก'] || item['User'] || '';
-
-                return `
-                    <div class="timeline-item ${badgeClass}">
-                        <div class="timeline-date">${date} ${user ? '| โดย ' + user : ''}</div>
-                        <div class="timeline-content">${detail}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // เรนเดอร์ Image Gallery (รองรับ IMAGE_ID)
-        function renderGallery(images) {
-            const container = document.getElementById('galleryContainer');
-            if (!container) return;
-            if (!images || images.length === 0) {
-                container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1;">ไม่มีรูปภาพบันทึกสำหรับครุภัณฑ์รหัสนี้</p>`;
-                return;
-            }
-
-            container.innerHTML = images.map(img => {
-                let url = '';
-                // ตรวจสอบและดึงภาพผ่าน IMAGE_ID (Google Drive File ID) ตามโครงสร้าง backend ใหม่
-                if (img['IMAGE_ID']) {
-                    url = `https://lh3.googleusercontent.com/d/${img['IMAGE_ID']}`;
-                } else {
-                    url = convertDriveUrl(img['URL'] || img['Url'] || img['Ass_Img'] || '');
-                }
-                
-                const caption = img['คำอธิบาย'] || img['Description'] || img['Caption'] || 'รูปภาพครุภัณฑ์';
-                return `
-                    <div class="gallery-item" onclick="openLightbox('${url}', '${caption}')">
-                        <img src="${url}" alt="${caption}" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // เปิด/ปิด การซูมรูปภาพ (Lightbox)
+        // --- LIGHTBOX CONTROLLERS ---
         function openLightbox(src, caption) {
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImg = document.getElementById('lightboxImg');
-            const lightboxCaption = document.getElementById('lightboxCaption');
-            if (lightbox && lightboxImg && lightboxCaption) {
-                lightboxImg.src = src;
-                lightboxCaption.innerText = caption;
-                lightbox.classList.add('show');
+            const lb = document.getElementById('lightbox');
+            const lbImg = document.getElementById('lightboxImg');
+            const lbCap = document.getElementById('lightboxCaption');
+            if (lb && lbImg) {
+                lbImg.src = src;
+                if (lbCap) lbCap.textContent = caption;
+                lb.style.display = 'flex';
             }
         }
 
         function closeLightbox() {
-            const lightbox = document.getElementById('lightbox');
-            if (lightbox) {
-                lightbox.classList.remove('show');
-            }
-        }
-
-        // แสดงหน้าจอผิดพลาดเมื่อไม่พบข้อมูล
-        function showError(message) {
-            document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('mainDashboard').style.display = 'none';
-            const errScreen = document.getElementById('errorScreen');
-            const errMsg = document.getElementById('errorMsg');
-            if (errScreen && errMsg) {
-                errMsg.innerText = message;
-                errScreen.style.display = 'flex';
-            }
+            const lb = document.getElementById('lightbox');
+            if (lb) lb.style.display = 'none';
         }
     </script>
 </body>
