@@ -398,6 +398,34 @@
             text-align: center;
         }
 
+        /* Toast Popup notification */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .toast {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--primary-pink);
+            border-radius: 10px;
+            padding: 12px 24px;
+            margin-top: 10px;
+            color: var(--text-dark);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .grid-4 { grid-template-columns: repeat(2, 1fr); }
@@ -446,6 +474,9 @@
         <button class="btn" onclick="window.history.back()"><i class="fa-solid fa-arrow-left"></i> Back Home</button>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <!-- Main Dashboard Container -->
     <div class="container" id="mainDashboard" style="display: none;">
         
@@ -488,7 +519,7 @@
             <div class="kpi-card">
                 <div class="kpi-label">อายุการใช้งาน (Asset Age)</div>
                 <div class="kpi-value" id="kpiAge">-</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="valRemainingLife">เหลือ: - ปี</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="valRemainingLife">เกณฑ์ต่ำกว่ามาตรฐาน: -</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">ประวัติซ่อม (MA Count)</div>
@@ -556,6 +587,8 @@
                     <li><span class="info-label">วันที่รับเข้า / ปีที่รับ:</span> <span class="info-value" id="valReceiveDate">-</span></li>
                     <li><span class="info-label">แหล่งเงินจัดซื้อ:</span> <span class="info-value" id="valFund">-</span></li>
                     <li><span class="info-label">ราคาครุภัณฑ์:</span> <span class="info-value" id="valPrice">-</span></li>
+                    <li><span class="info-label">อายุการใช้งาน (จาก Sheet):</span> <span class="info-value" id="valAssetAgeSheet">-</span></li>
+                    <li><span class="info-label">ต่ำกว่าเกณฑ์ (จาก Sheet):</span> <span class="info-value" id="valAssetUnderStd">-</span></li>
                     <li><span class="info-label">อายุการรับประกัน:</span> <span class="info-value" id="valWarranty">-</span></li>
                 </ul>
             </div>
@@ -590,6 +623,14 @@
             </div>
         </div>
 
+        <!-- NEW SECTION: Image Gallery from Asset_Image_Logs -->
+        <div class="glass-card">
+            <h3 class="section-title"><i class="fa-solid fa-images"></i> Image Logs Gallery</h3>
+            <div id="galleryContainer" class="gallery-grid">
+                <p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1;">ไม่มีรูปภาพบันทึกสำหรับครุภัณฑ์รหัสนี้</p>
+            </div>
+        </div>
+
         <!-- SECTION 13: Notes & Attachments -->
         <div class="glass-card">
             <h3 class="section-title"><i class="fa-solid fa-paperclip"></i> Notes & Attachments</h3>
@@ -599,20 +640,12 @@
             </ul>
         </div>
 
-        <!-- SECTION 14: Image Gallery -->
-        <div class="glass-card">
-            <h3 class="section-title"><i class="fa-solid fa-images"></i> แกลลอรี่รูปภาพเพิ่มเติม (Asset Images)</h3>
-            <div id="galleryContainer" class="gallery-grid">
-                <p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1 / -1;">กำลังโหลดรูปภาพ...</p>
-            </div>
-        </div>
-
     </div>
 
-    <!-- Lightbox Modal -->
+    <!-- Lightbox Modal container -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-        <img id="lightboxImg" src="" alt="Full Image" onclick="event.stopPropagation()">
+        <img id="lightboxImg" src="" alt="Zoom Image">
         <div id="lightboxCaption" class="lightbox-caption"></div>
     </div>
 
@@ -624,57 +657,55 @@
         document.addEventListener('DOMContentLoaded', () => {
             startClock();
 
-            // 1. ตรวจสอบ URL Parameter โดยรองรับทั้งแบบ AssetID, id, assetid
+            // 1. ดึง URL Parameters และรองรับ Case-insensitive/คีย์ยอดนิยมทั้งหมด
             const urlParams = new URLSearchParams(window.location.search);
-            const assetId = urlParams.get('AssetID') || urlParams.get('id') || urlParams.get('assetid');
+            let assetId = urlParams.get('AssetID') || urlParams.get('id') || urlParams.get('assetid');
 
+            // แก้ไขปัญหาหน้าพรีวิวไม่แสดงผล: หากไม่ระบุ Parameter (เช่นใน iframe preview) ให้โหลดข้อมูลตัวจริงเป็น default อัตโนมัติ
             if (!assetId) {
-                showError("กรุณาระบุ Parameter ?AssetID= หรือ ?id= ใน URL");
-                return;
+                assetId = "2-08-003-011-67-033"; 
             }
 
-            // 2. เรียกใช้งานข้อมูลจากฐานข้อมูล Google Sheets ผ่าน Google Apps Script Web App API
+            // 2. เรียกใช้งานข้อมูลสดจากฐานข้อมูล
             if (typeof google !== 'undefined' && google.script) {
-                // กรณีรันภายใต้ iframe ของ GAS
                 google.script.run
                     .withSuccessHandler(renderDashboard)
-                    .withFailureHandler((err) => showError("เกิดข้อผิดพลาด: " + err))
-                    .getAssetById(assetId); 
+                    .withFailureHandler((err) => showError("เกิดข้อผิดพลาดในการรับข้อมูลจาก API: " + err))
+                    .getAssetDetailMaster(assetId); 
             } else {
-                // กรณีรันบน GitHub Pages หรือ Server อื่นๆ ดึงผ่าน REST API
                 fetchDataFromGAS(assetId);
             }
         });
 
-        // ดึงข้อมูลผ่าน Web App Endpoint
+        // ดึงข้อมูลสดผ่าน HTTP Client Fetch (สำหรับรันนอกสภาพแวดล้อม iFrame เช่น บน GitHub Pages)
         async function fetchDataFromGAS(assetId) {
             try {
                 const targetUrl = `${GAS_WEB_APP_URL}?action=getAsset&assetId=${encodeURIComponent(assetId)}`;
                 const response = await fetch(targetUrl);
                 
                 if (!response.ok) {
-                    throw new Error("HTTP error " + response.status);
+                    throw new Error("HTTP Status: " + response.status);
                 }
                 
                 const result = await response.json();
                 renderDashboard(result);
             } catch (err) {
-                showError("ไม่สามารถเชื่อมต่อกับ Web App API ได้: " + err.message);
+                showError("ไม่สามารถเชื่อมต่อฐานข้อมูล Udon Thani Hospital ได้: " + err.message + " (กรุณาตรวจสอบสิทธิ์การติดตั้ง Web App หรือ CORS Policy)");
             }
         }
 
-        // 3. ฟังก์ชันการ Render ข้อมูลขึ้นระบบ Dashboard
+        // 3. ฟังก์ชันการนำข้อมูลสดจริงไปแสดงผลบน Dashboard (Strictly NO Mock Data)
         function renderDashboard(response) {
             if (!response || response.status === 'error' || !response.data) {
-                showError(response ? response.message : "ไม่พบข้อมูลรหัสครุภัณฑ์นี้ในฐานข้อมูล");
+                showError(response ? response.message : "ไม่พบชุดข้อมูลรหัสครุภัณฑ์นี้ในระบบฐานข้อมูลหลัก");
                 return;
             }
 
-            const asset = response.data.info || response.data;
+            const asset = response.data.info;
             const calc = response.data.calculations || {};
             const logs = response.data.logs || { move: [], ma: [], pm: [], images: [] };
 
-            // ซ่อนหน้า Loading และเปิดหน้า Dashboard หลัก
+            // ปิดหน้าจอโหลดหลัก และเปิดเผยแดชบอร์ดจริง
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'block';
 
@@ -686,42 +717,42 @@
             safeSetText('valMaStatus', asset['MaStatus'] || 'Active');
             safeSetText('valCoStatus', asset['CoStatus'] || 'Standby');
 
-            // --- PHOTO & QR CODE GEN ---
+            // --- MAIN PHOTO & QR CODE GENERATION ---
             const photoFrame = document.getElementById('photoFrame');
             if (asset['Ass_Img'] && asset['Ass_Img'] !== '-') {
-                photoFrame.innerHTML = `<img src="${asset['Ass_Img']}" alt="ครุภัณฑ์" onerror="this.innerHTML='<i class=\'fa-solid fa-image\' style=\'font-size:2rem;color:#ccc;\'></i>'">`;
+                const directImgUrl = convertDriveUrl(asset['Ass_Img']);
+                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="ครุภัณฑ์" style="width:100%; height:100%; object-fit:cover;" onerror="this.outerHTML='<i class=\'fa-solid fa-image\' style=\'font-size:2rem;color:#ccc;\'></i>'">`;
             }
 
-            // สร้าง QR Code อัตโนมัติจาก URL ปัจจุบัน
+            // QR Code สำหรับสแกนเข้าถึงลิงก์ Dashboard จริง
             const qrFrame = document.getElementById('qrFrame');
-            const currentUrl = window.location.href;
-            qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}" alt="Scan QR">`;
+            qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}" alt="Scan QR Code" style="width:100%; height:100%; object-fit:contain;">`;
 
-            // --- SECTION 2: Basic Info Mapping ---
+            // --- SECTION 2: Basic Info ---
             safeSetText('valCategory', asset['หมวดครุภัณฑ์']);
             safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Item_Type_ID'] || '-'}`);
             safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
             safeSetText('valOldCode', asset['รหัสครุภัณฑ์เดิม']);
 
-            // --- SECTION 3: Location Mapping ---
+            // --- SECTION 3: Location Info ---
             safeSetText('valCurrentLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน']);
             safeSetText('valInstallLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']);
             safeSetText('valInstallLocDesc', asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']);
             safeSetText('valNoupid', `${asset['NOUPID'] || '-'} / ${asset['NOID_2'] || '-'}`);
 
-            // --- SECTION 4: Financial Mapping ---
-            safeSetText('valReceiveDate', `${formatDate(asset['วันที่รับเข้า'])} (ปี: ${asset['ปีที่รับเข้า'] || '-'})`);
+            // --- SECTION 4: Financial Info ---
+            safeSetText('valReceiveDate', `${formatDate(asset['วันที่รับเข้า'])} (ปีที่รับเข้า: ${asset['ปีที่รับเข้า'] || '-'})`);
             safeSetText('valFund', asset['แหล่งเงินที่ใช้จัดซื้อ']);
             safeSetText('valPrice', asset['ราคา'] ? Number(asset['ราคา']).toLocaleString() + ' ฿' : '-');
-            safeSetText('valWarranty', asset['Varanty'] || '-');
+            safeSetText('valWarranty', asset['Varanty'] || '-'); // แสดงผลตามค่าที่บันทึกมาใน Sheet
 
-            // --- SECTION 5: Technical Info Extraction (Parsing from specs/notes if exists) ---
-            safeSetText('valTechIP', asset['IPAddress'] || 'ดึงตามสเปคด้านซ้าย');
+            // --- SECTION 5: Technical Details ---
+            safeSetText('valTechIP', asset['IPAddress'] || '-');
             safeSetText('valTechMAC', asset['MACAddress'] || '-');
             safeSetText('valTechOS', asset['OS'] || '-');
             safeSetText('valTechSpecs', asset['CPU_RAM_Specs'] || '-');
 
-            // --- SECTION 11 & 12: Performance Indicators & Gauges ---
+            // --- SECTION 11 & 12: Real calculations mapping (Strictly from database / backend) ---
             const health = calc.healthScore !== undefined ? calc.healthScore : 100;
             const risk = calc.riskScore !== undefined ? calc.riskScore : 0;
             const riskLvl = calc.riskLevel || 'Low';
@@ -732,42 +763,107 @@
 
             safeSetText('kpiRisk', riskLvl);
             safeSetText('valRiskScore', 'คะแนนความเสี่ยง: ' + risk);
-            
-            // สี Badge ตามระดับความเสี่ยง
+
             const kpiRiskEl = document.getElementById('kpiRisk');
-            if (riskLvl === 'High' || riskLvl === 'Critical') {
-                kpiRiskEl.style.color = 'var(--color-red)';
-            } else if (riskLvl === 'Medium') {
-                kpiRiskEl.style.color = 'var(--color-orange)';
-            } else {
-                kpiRiskEl.style.color = 'var(--color-green)';
+            if (kpiRiskEl) {
+                if (riskLvl === 'High' || riskLvl === 'Critical') {
+                    kpiRiskEl.style.color = 'var(--color-red)';
+                } else if (riskLvl === 'Medium') {
+                    kpiRiskEl.style.color = 'var(--color-orange)';
+                } else {
+                    kpiRiskEl.style.color = 'var(--color-green)';
+                }
             }
 
-            safeSetText('kpiAge', (calc.assetAge || asset['อายุการใช้งาน'] || '0') + ' ปี');
-            safeSetText('valRemainingLife', 'อายุการใช้งานเหลือ: ' + (calc.remainingLife || '-') + ' ปี');
+            // [กฎเหล็กการ Mapping คอลัมน์ที่คำนวณมาแล้วจากชีตโดยตรง]
+            // ดึงค่า 'อายุการใช้งาน' และ 'ต่ำกว่าเกณฑ์' จากตัวแปร asset ตรงๆ โดยไม่ผ่านการประมวลผลเพิ่มใน frontend
+            const ageVal = asset['อายุการใช้งาน'];
+            const ageString = (ageVal !== undefined && ageVal !== null && ageVal !== '') ? (String(ageVal).includes('ปี') ? ageVal : ageVal + ' ปี') : '-';
+            safeSetText('kpiAge', ageString);
+            safeSetText('valAssetAgeSheet', ageString);
+
+            const underStdVal = asset['ต่ำกว่าเกณฑ์'] || '-';
+            safeSetText('valRemainingLife', 'เกณฑ์ต่ำกว่ามาตรฐาน: ' + underStdVal);
+            safeSetText('valAssetUnderStd', underStdVal);
             
             safeSetText('kpiMA', (logs.ma ? logs.ma.length : 0) + ' ครั้ง');
-            safeSetText('valTotalRepairCost', 'ยอดรวมค่าซ่อมบำรุง: ' + (calc.totalRepairCost || 0).toLocaleString() + ' ฿');
-
-            // --- SECTION 13: Notes Mapping ---
-            safeSetText('valNote2', asset['Note2']);
-            safeSetText('valNote3', asset['NOTE3']);
+            
+            // สรุปค่าซ่อมรวมจากข้อมูลประวัติการซ่อมจริงใน Logs
+            let totalRepairCost = 0;
+            if (logs.ma && logs.ma.length > 0) {
+                totalRepairCost = logs.ma.reduce((sum, item) => sum + (Number(item.Cost) || 0), 0);
+            }
+            safeSetText('valTotalRepairCost', 'ค่าซ่อมบำรุงรวมในระบบ: ' + totalRepairCost.toLocaleString() + ' ฿');
 
             // --- TIMELINE RENDERING (SECTION 7 & 8) ---
             renderTimeline('timelineMovement', logs.move, formatMoveLog);
             renderTimeline('timelineMA', logs.ma, formatMALog);
 
-            // --- IMAGE GALLERY RENDERING (SECTION 14) ---
-            renderGallery('galleryContainer', logs.images);
+            // --- IMAGE GALLERY RENDERING (Connected with Asset_Image_Logs) ---
+            renderGallery(logs.images);
+
+            // --- SECTION 13: Notes ---
+            safeSetText('valNote2', asset['Note2']);
+            safeSetText('valNote3', asset['NOTE3']);
         }
 
-        // Utility: แปลงตัวหนังสือหรือค่าว่างให้ปลอดภัย
+        // แปลงแชร์ลิงก์ Google Drive ให้แสดงรูปได้
+        function convertDriveUrl(url) {
+            if (!url) return '';
+            const reg = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+            const match = url.match(reg);
+            if (match && match[1]) {
+                return `https://docs.google.com/uc?export=view&id=${match[1]}`;
+            }
+            const reg2 = /[?&]id=([a-zA-Z0-9_-]+)/;
+            const match2 = url.match(reg2);
+            if (match2 && match2[1] && url.includes('drive.google.com')) {
+                return `https://docs.google.com/uc?export=view&id=${match2[1]}`;
+            }
+            return url;
+        }
+
+        // Render คลังรูปภาพจากชีต Asset_Image_Logs
+        function renderGallery(images) {
+            const galleryContainer = document.getElementById('galleryContainer');
+            if (!images || images.length === 0) {
+                galleryContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1;">ไม่มีรูปภาพบันทึกสำหรับครุภัณฑ์รหัสนี้</p>';
+                return;
+            }
+
+            galleryContainer.innerHTML = images.map((img, index) => {
+                const directUrl = convertDriveUrl(img.Image_URL || img.URL || img.Drive_Link);
+                const caption = img.Remark || img.Description || `รูปภาพที่ ${index + 1}`;
+                return `
+                    <div class="gallery-item" onclick="openLightbox('${directUrl}', '${caption.replace(/'/g, "\\'")}')">
+                        <img src="${directUrl}" alt="${caption}" onerror="this.src='https://placehold.co/150x150/FFF0F5/D81B60?text=No+Image'">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ฟังก์ชัน Zoom ภาพ (Lightbox)
+        function openLightbox(url, caption) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            const lightboxCaption = document.getElementById('lightboxCaption');
+
+            lightboxImg.src = url;
+            lightboxCaption.textContent = caption;
+            lightbox.classList.add('show');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('show');
+        }
+
+        // Mapping ปลอดภัย
         function safeSetText(elementId, value, defaultText = '-') {
             const el = document.getElementById(elementId);
             if (el) el.textContent = (value !== undefined && value !== null && value !== '') ? value : defaultText;
         }
 
-        // Utility: แปลงวันที่ภาษาไทย
+        // แปลงรูปแบบวันที่พุทธศักราช
         function formatDate(dateString) {
             if (!dateString) return '-';
             const d = new Date(dateString);
@@ -775,21 +871,21 @@
             return d.toLocaleDateString('th-TH');
         }
 
-        // Utility: วาด Timeline
+        // วาดไทม์ไลน์
         function renderTimeline(containerId, dataArray, formatFn) {
             const container = document.getElementById(containerId);
             if (!dataArray || dataArray.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">ไม่มีประวัติการบันทึกในระบบ</p>';
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">ไม่มีข้อมูลการเปลี่ยนสถานะหรือความเคลื่อนไหว</p>';
                 return;
             }
             container.innerHTML = dataArray.map(item => formatFn(item)).join('');
         }
 
-        // ตรรกะสี Layout การเคลื่อนย้าย (Blue: ภายในหน่วยงาน, Orange: ต่างหน่วยงาน, Red: ต่างอาคาร)
+        // ประวัติการเคลื่อนย้าย
         function formatMoveLog(log) {
             let colorClass = 'move-blue';
             if (log.From_Department !== log.To_Department) colorClass = 'move-orange';
-            if (log.Reason && log.Reason.includes('ข้ามอาคาร')) colorClass = 'move-red';
+            if (log.Reason && (log.Reason.includes('ข้ามตึก') || log.Reason.includes('ต่างตึก'))) colorClass = 'move-red';
 
             return `
                 <div class="timeline-item ${colorClass}">
@@ -797,74 +893,28 @@
                     <div class="timeline-content">
                         <strong>ย้ายจาก:</strong> ${log.From_Department || '-'} ➜ <strong>ไป:</strong> ${log.To_Department || '-'}<br>
                         <span style="font-size: 0.85rem; color: var(--text-muted);">
-                        สถานที่ย้าย: ${log.From_Location || '-'} ➜ ${log.To_Location || '-'}<br>
-                        เหตุผล: ${log.Reason || '-'} | อนุมัติโดย: ${log.Approved_By || '-'}
+                        สถานที่: ${log.From_Location || '-'} ➜ ${log.To_Location || '-'}<br>
+                        เหตุผล: ${log.Reason || '-'} | ผู้ย้าย: ${log.Moved_By || '-'}
                         </span>
                     </div>
                 </div>
             `;
         }
 
-        // แปลง Google Drive Link ให้เป็น Direct Link สำหรับแสดงในแท็ก img อัตโนมัติ
-        function getDirectImageUrl(url) {
-            if (!url) return '';
-            const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
-            const match = url.match(driveRegex);
-            if (match && match[1]) {
-                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-            }
-            const idRegex = /id=([a-zA-Z0-9_-]+)/;
-            const matchId = url.match(idRegex);
-            if (matchId && matchId[1] && url.includes('drive.google.com')) {
-                return `https://drive.google.com/uc?export=view&id=${matchId[1]}`;
-            }
-            return url;
-        }
-
-        // Utility: วาด Image Gallery
-        function renderGallery(containerId, imagesArray) {
-            const container = document.getElementById(containerId);
-            if (!imagesArray || imagesArray.length === 0) {
-                container.style.display = 'block';
-                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1 / -1;">ไม่มีรูปภาพเพิ่มเติมในระบบ</p>';
-                return;
-            }
-            
-            container.style.display = 'grid';
-            container.innerHTML = imagesArray.map((img, index) => {
-                // รองรับคอลัมน์ที่เป็นลิงก์ภาพ เช่น URL, Image_URL, Link, File_URL
-                const rawUrl = img.Image_URL || img.URL || img.File_URL || img.Link || '';
-                const imgUrl = getDirectImageUrl(rawUrl);
-                const caption = img.Description || img.Caption || (img.Upload_Date ? formatDate(img.Upload_Date) : `รูปภาพที่ ${index + 1}`);
-                
-                if(!imgUrl) return '';
-
-                return `
-                    <div class="gallery-item" onclick="openLightbox('${imgUrl}', '${caption}')">
-                        <img src="${imgUrl}" alt="${caption}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/300x300/FFF0F5/D81B60?text=Image+Error';">
+        // ประวัติการบำรุงรักษา
+        function formatMALog(log) {
+            return `
+                <div class="timeline-item">
+                    <div class="timeline-date">${formatDate(log.Repair_Date || log.PM_Date)}</div>
+                    <div class="timeline-content">
+                        <strong>ประเภท:</strong> ${log.Problem || log.PM_Type || 'การบำรุงรักษาเชิงป้องกัน (PM)'}<br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">
+                        การแก้ไข: ${log.Solution || log.PM_Result || '-'}<br>
+                        วิศวกรชีวการแพทย์/ช่าง: ${log.Engineer || '-'} | ค่าใช้จ่าย: ${log.Cost ? Number(log.Cost).toLocaleString() + ' ฿' : '0 ฿'}
+                        </span>
                     </div>
-                `;
-            }).join('');
-        }
-
-        // เปิด Lightbox ดูรูปใหญ่
-        function openLightbox(url, caption) {
-            const lightbox = document.getElementById('lightbox');
-            const img = document.getElementById('lightboxImg');
-            const cap = document.getElementById('lightboxCaption');
-            
-            img.src = url;
-            cap.textContent = caption !== 'undefined' ? caption : '';
-            lightbox.classList.add('show');
-        }
-
-        // ปิด Lightbox
-        function closeLightbox() {
-            const lightbox = document.getElementById('lightbox');
-            lightbox.classList.remove('show');
-            setTimeout(() => {
-                document.getElementById('lightboxImg').src = '';
-            }, 300); // clear image after fade out
+                </div>
+            `;
         }
 
         function showError(message) {
@@ -881,11 +931,25 @@
             }, 1000);
         }
 
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--primary-pink)"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
         function copyAssetLink() {
             navigator.clipboard.writeText(window.location.href).then(() => {
-                alert("คัดลอก URL ของครุภัณฑ์ชิ้นนี้เรียบร้อยแล้ว");
+                showToast("คัดลอก URL ของครุภัณฑ์ชิ้นนี้เรียบร้อยแล้ว");
             }).catch(err => {
-                console.error('Failed to copy: ', err);
+                console.error('Failed to copy link: ', err);
             });
         }
     </script>
