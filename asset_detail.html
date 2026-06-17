@@ -778,7 +778,7 @@
             // --- SECTION 2: Basic Info ---
             safeSetText('valCategory', asset['หมวดครุภัณฑ์']);
             safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Item_Type_ID'] || '-'}`);
-            safeSetText('valTypeName',`${asset['Asset_Type_Name'] || '-'} / ${asset['Asset_Item_Name'] || '-'}`);
+            safeSetText('valTypeName',`${asset['Asset_Type_Name'] || '-'} / ${asset['ชื่อรายการครุภัณฑ์'] || '-'}`);
             safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
             safeSetText('valOldCode', asset['AssetID']);
 
