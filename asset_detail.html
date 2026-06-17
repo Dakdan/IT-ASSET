@@ -571,8 +571,8 @@
                         <i class="fa-solid fa-qrcode" style="font-size: 2.5rem; color: var(--primary-pink);"></i>
                     </div>
                     <div>
-                        <h2 id="valAssetName" style="color: var(--primary-pink); font-weight: 700;">-</h2>
-                        <p style="font-size: 1.15rem; font-weight: 600; margin-top: 2px;" id="valAssetID">-</p>
+                        <h2 id="valAssetID" style="color: var(--primary-pink); font-weight: 700;">-</h2>
+                        <p style="font-size: 1.15rem; font-weight: 600; margin-top: 2px;" id="valAssetName">-</p>
                         <div style="margin-top: 8px; display: flex; gap: 6px;">
                             <span class="badge" id="valMaStatus">สถานะการใช้งาน</span>
                             <span class="badge" id="valCoStatus" style="background: var(--color-purple);">สถานะความครอบครอง</span>
@@ -580,7 +580,7 @@
                     </div>
                 </div>
                 <ul class="info-list">
-                    <li><span class="info-label">รหัสครุภัณฑ์:</span> <span class="info-value" id="valCode">-</span></li>
+                    <li><span class="info-label">รหัสครุภัณฑ์:</span> <span class="info-value" id="valOldCode">-</span></li>
                     <li><span class="info-label">Serial Number (S/N):</span> <span class="info-value" id="valSerial">-</span></li>
                 </ul>
             </div>
@@ -601,9 +601,9 @@
                 <h3 class="section-title"><i class="fa-solid fa-circle-info"></i> Basic Information</h3>
                 <ul class="info-list">
                     <li><span class="info-label">หมวดหมู่ครุภัณฑ์:</span> <span class="info-value" id="valCategory">-</span></li>
-                    <li><span class="info-label">ประเภท (Type ID):</span> <span class="info-value" id="valTypeID">-</span></li>
+                    <li><span class="info-label">ประเภท (Type ID):</span> <span class="info-value" id="valTypeName">-</span></li>
                     <li><span class="info-label">ยี่ห้อ / รุ่น / รูปลักษณ์:</span> <span class="info-value" id="valSpec">-</span></li>
-                    <li><span class="info-label">รหัสครุภัณฑ์ชุดเดิม:</span> <span class="info-value" id="valOldCode">-</span></li>
+                    <li><span class="info-label">รหัสออกโดย NexGov:</span> <span class="info-value" id="valCode">-</span></li>
                 </ul>
             </div>
 
@@ -692,7 +692,7 @@
 
             // แก้ไขปัญหาหน้าพรีวิวไม่แสดงผล: หากไม่ระบุ Parameter (เช่นใน iframe preview) ให้โหลดข้อมูลตัวจริงเป็น default อัตโนมัติ
             if (!assetId) {
-                assetId = "2-08-001-017-68-105"; 
+                assetId = "74400130003-008"; 
             }
 
             // 2. เรียกใช้งานข้อมูลสดจากฐานข้อมูล
@@ -778,8 +778,9 @@
             // --- SECTION 2: Basic Info ---
             safeSetText('valCategory', asset['หมวดครุภัณฑ์']);
             safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Item_Type_ID'] || '-'}`);
+            safeSetText('valTypeName',`${asset['Asset_Type_Name'] || '-'} / ${asset['Asset_Item_Name'] || '-'}`);
             safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
-            safeSetText('valOldCode', asset['รหัสครุภัณฑ์เดิม']);
+            safeSetText('valOldCode', asset['AssetID']);
 
             // --- SECTION 3: Location Info ---
             safeSetText('valCurrentLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน']);
