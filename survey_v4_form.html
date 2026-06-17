@@ -337,10 +337,50 @@
         </div>
     </div>
 
+    <!-- Modal: แสดงรายละเอียดที่บันทึกแล้ว -->
+    <div id="recordedDetailModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end">
+        <div class="w-full bg-white rounded-t-[2.5rem] max-h-[92vh] overflow-y-auto p-6 md:p-8 animate-in slide-in-from-bottom-full duration-300">
+            <div class="flex justify-between items-start mb-5">
+                <div>
+                    <p class="text-[9px] font-bold text-pink-500 tracking-widest uppercase mb-0.5">Asset Detail</p>
+                    <h3 class="text-lg font-bold text-slate-800 uppercase">รายละเอียดการตรวจสอบ</h3>
+                </div>
+                <button onclick="closeModal('recordedDetailModal')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-xs">❌</button>
+            </div>
+            <div class="space-y-4">
+                <div id="rd_img_container" class="w-full aspect-video bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center">
+                    <img id="rd_img" src="" class="w-full h-full object-cover">
+                </div>
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                    <div class="flex justify-between"><span class="text-[10px] text-slate-400 font-bold uppercase">รหัสครุภัณฑ์:</span> <p id="rd_asset_id" class="text-sm font-bold text-pink-500">--</p></div>
+                    <div><span class="text-[10px] text-slate-400 font-bold uppercase block mb-1">ชื่อครุภัณฑ์:</span> <p id="rd_asset_name" class="text-xs font-bold text-slate-800">--</p></div>
+                    <div class="flex justify-between"><span class="text-[10px] text-slate-400 font-bold uppercase">หน่วยงาน:</span> <p id="rd_dept" class="text-xs font-bold text-slate-700">--</p></div>
+                    <div class="flex justify-between"><span class="text-[10px] text-slate-400 font-bold uppercase">เวลาตรวจสอบ:</span> <p id="rd_timestamp" class="text-xs font-bold text-slate-700">--</p></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-4">
+                    <button onclick="closeModal('recordedDetailModal')" class="py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm active:bg-slate-200 transition-colors">ปิดหน้าต่าง</button>
+                    <button onclick="deleteRecordedLog()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-100 active:bg-red-600 transition-colors">🗑️ ลบข้อมูล</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="alertModal" class="fixed inset-0 bg-slate-900/40 z-[100] hidden flex items-center justify-center p-6">
         <div class="bg-white rounded-[2rem] w-full max-w-xs p-7 text-center shadow-2xl">
             <p id="alertMessage" class="text-xs font-bold text-slate-600 mb-6 leading-relaxed"></p>
             <button onclick="closeAlert()" class="w-full py-3.5 bg-pink-500 text-white font-bold rounded-xl text-xs active:bg-pink-600">ตกลง</button>
+        </div>
+    </div>
+
+    <div id="confirmDeleteModal" class="fixed inset-0 bg-slate-900/40 z-[100] hidden flex items-center justify-center p-6">
+        <div class="bg-white rounded-[2rem] w-full max-w-xs p-7 text-center shadow-2xl">
+            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3"><i data-lucide="trash-2" class="w-6 h-6"></i></div>
+            <p class="text-sm font-bold text-slate-800 mb-2">ยืนยันการลบ?</p>
+            <p class="text-[11px] text-slate-500 mb-6">คุณต้องการลบข้อมูลรายการนี้ใช่หรือไม่?</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal('confirmDeleteModal')" class="w-full py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs active:bg-slate-200 transition-colors">ยกเลิก</button>
+                <button onclick="executeDeleteLog()" class="w-full py-3 bg-red-500 text-white font-bold rounded-xl text-xs active:bg-red-600 transition-colors">ลบข้อมูล</button>
+            </div>
         </div>
     </div>
 
@@ -360,7 +400,7 @@
             โรงพยาบาลอุดรธานี • IT ASSET INVENTORY
         </p>
     </footer>
-    <script>
+  <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyUBcbxmj4ohkxLYv9oR8eX9rTP-xe-pkEV0I6XIRIXOJ9JAqK4PSqibGbuGM_jkX1SMg/exec";
     const DEPT_VIEW_URL = "https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=";
     const jobTypeId = document.getElementById('jobTypeId')?.value || "";
@@ -368,7 +408,9 @@
     let masterDeptList = [], configData = { priorities: [], assetTypes: [] }, auditQueue = [], currentAsset = null, signaturePad = null;
     let html5QrCode = null, currentBase64Image = "", submitMode = 'FINAL';
     let selectedJobTypeId = "";
-     window.onload = () => {
+    let currentRecordDetail = null; // เก็บข้อมูล Record ที่ถูกคลิกจากหน้ารายการ
+    
+    window.onload = () => {
         lucide.createIcons();
         initApp();
     
@@ -378,14 +420,14 @@
     
         loadGPS();
     };
-   let currentGps = "";
+    
+    let currentGps = "";
     let gpsReady = false;
     
     function setGpsStatus(status, text) {
         const dot = document.getElementById('gpsDot');
         const label = document.getElementById('gpsStatusText');
 
-        
         if (!dot || !label) return; 
 
         dot.className = "w-2 h-2 rounded-full";
@@ -399,7 +441,6 @@
 
     function loadGPS() {
         try {
-           
             if (!navigator || !navigator.geolocation) {
                 setGpsStatus("error", "อุปกรณ์ไม่รองรับ GPS");
                 return;
@@ -413,8 +454,6 @@
                     const lng = pos.coords.longitude;
                     currentGps = `${lat},${lng}`;
                     gpsReady = true;
-
-                  
                     setGpsStatus("success", "พร้อมใช้งาน");
                 },
                 (err) => {
@@ -434,10 +473,10 @@
                 }
             );
         } catch (e) {
-          
             console.error("GPS Logic Error: ", e.message);
         }
     }
+
     function handleResize() {
         if (document.getElementById('confirmModal').classList.contains('hidden')) return;
         const canvas = document.getElementById('signature-pad');
@@ -458,32 +497,38 @@
             masterDeptList = await resDept.json();
             populateSelects();
             const bSel = document.getElementById('selBuilding');
-            [...new Set(masterDeptList.map(i => i.BUILDING))].filter(Boolean).sort().forEach(b => bSel.add(new Option(b, b)));
-            document.getElementById('statusIndicator').innerText = "ONLINE";
-            document.getElementById('statusIndicator').classList.replace('text-pink-500', 'text-green-500');
+            if (bSel) {
+                [...new Set(masterDeptList.map(i => i.BUILDING))].filter(Boolean).sort().forEach(b => bSel.add(new Option(b, b)));
+            }
+            const statusInd = document.getElementById('statusIndicator');
+            if (statusInd) {
+                statusInd.innerText = "ONLINE";
+                statusInd.classList.replace('text-pink-500', 'text-green-500');
+            }
         } catch (e) { console.error(e); }
         finally { hideProcess(); }
     }
  
-async function handleImageSelection(input, previewId, placeholderId) {
-    const file = input.files[0];
-    if (!file) return;
+    async function handleImageSelection(input, previewId, placeholderId) {
+        const file = input.files[0];
+        if (!file) return;
 
-    const base64 = await compressImage(file);
-    currentBase64Image = base64;
+        const base64 = await compressImage(file);
+        currentBase64Image = base64;
 
-    const preview = document.getElementById(previewId);
-    const placeholder = document.getElementById(placeholderId);
+        const preview = document.getElementById(previewId);
+        const placeholder = document.getElementById(placeholderId);
 
-    if (preview && placeholder) {
-        preview.src = base64;
-        preview.classList.remove('hidden');    
-        placeholder.classList.add('hidden');   
-        console.log("แสดงรูปที่ ID:", previewId); 
-    } else {
-        console.error("หา ID ไม่เจอ:", previewId, placeholderId);
+        if (preview && placeholder) {
+            preview.src = base64;
+            preview.classList.remove('hidden');    
+            placeholder.classList.add('hidden');   
+            console.log("แสดงรูปที่ ID:", previewId); 
+        } else {
+            console.error("หา ID ไม่เจอ:", previewId, placeholderId);
+        }
     }
-}
+
     function populateSelects() {
         const types = [document.getElementById('assetTypeId'), document.getElementById('nr_asset_type_id')];
         const priors = [document.getElementById('priorityId'), document.getElementById('nr_priorityId')];
@@ -503,13 +548,17 @@ async function handleImageSelection(input, previewId, placeholderId) {
         const b = document.getElementById('selBuilding').value;
         const floors = [...new Set(masterDeptList.filter(i => i.BUILDING === b).map(i => i.FL))].sort((a,b)=>a-b);
         const fSel = document.getElementById('selFloor');
-        fSel.innerHTML = '<option value="" disabled selected>-- ชั้น --</option>';
-        floors.forEach(f => fSel.add(new Option(`ชั้น ${f}`, f)));
+        if (fSel) {
+            fSel.innerHTML = '<option value="" disabled selected>-- ชั้น --</option>';
+            floors.forEach(f => fSel.add(new Option(`ชั้น ${f}`, f)));
+        }
     }
 
     function renderDeptList() {
         const b = document.getElementById('selBuilding').value, f = document.getElementById('selFloor').value;
-        const container = document.getElementById('deptList'); container.innerHTML = '';
+        const container = document.getElementById('deptList'); 
+        if (!container) return;
+        container.innerHTML = '';
         masterDeptList.filter(d => d.BUILDING === b && String(d.FL) === String(f)).forEach(dept => {
             const card = document.createElement('div');
             card.className = "p-5 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm hover:border-pink-200 transition-all";
@@ -519,11 +568,11 @@ async function handleImageSelection(input, previewId, placeholderId) {
                 document.getElementById('locationPickerSection').classList.add('hidden');
                 document.getElementById('searchAreaSection').classList.remove('hidden');
                 document.getElementById('selectedDeptId').value = dept.DEP_ID;
-                selectedJobTypeId = dept.JOBE_SYSTEMP || "";
+                selectedJobTypeId = dept.JOBE_SYSTEMP || ""; // ผูกชนิดระบบงานหลักของแผนกเข้าตัวแปรส่วนกลาง
             };
             container.appendChild(card);
         });
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
     }
 
     function debouncedSearch() {
@@ -532,8 +581,11 @@ async function handleImageSelection(input, previewId, placeholderId) {
         if (q.length >= 1) { 
             window.sTimeout = setTimeout(searchAsset, 500);
         } else {
-            document.getElementById('resultsArea').classList.add('hidden');
-            document.getElementById('resultsArea').innerHTML = '';
+            const area = document.getElementById('resultsArea');
+            if (area) {
+                area.classList.add('hidden');
+                area.innerHTML = '';
+            }
         }
     }
 
@@ -543,17 +595,15 @@ async function handleImageSelection(input, previewId, placeholderId) {
         return String(fullText).replace(regex, '<span class="text-green-500 font-bold">$1</span>');
     }
 
-  async function searchAsset() {
+    async function searchAsset() {
         let q = document.getElementById('assetQuery').value.trim();
         const area = document.getElementById('resultsArea');
+        if (!area) return;
         
-   
-    
         area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto"></div></div>';
         area.classList.remove('hidden');
     
         try {
-          
             const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}&searchType=ID`);
             let data = await res.json(); 
             area.innerHTML = '';
@@ -563,7 +613,6 @@ async function handleImageSelection(input, previewId, placeholderId) {
                 return;
             }
     
-        
             data.sort((a, b) => {
                 const idA = String(a.AssetID || "");
                 const idB = String(b.AssetID || "");
@@ -586,7 +635,6 @@ async function handleImageSelection(input, previewId, placeholderId) {
                 const d = document.createElement('div');
                 d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all mb-2";
                 
-             
                 const highlightedID = typeof highlightText === 'function' ? highlightText(item.AssetID, q) : item.AssetID;
                 
                 d.innerHTML = `
@@ -611,7 +659,7 @@ async function handleImageSelection(input, previewId, placeholderId) {
         resetImage('imgPreview', 'imgPlaceholder', 'imgInput');
         document.getElementById('modalAssetName').innerText = currentAsset.FullDescription; 
         document.getElementById('detailAssetID').innerText = currentAsset.AssetID || '--';
-        document.getElementById('detailAssetAge').innerText = currentAsset.AgeInfo || '--';
+        document.getElementById('detailAssetAge').innerText = currentAsset.AgeInfo || '--'; // ดึงจากฐานข้อมูลตรงๆ ไม่คำนวณหน้าบ้านตามเงื่อนไขหลัก
         document.getElementById('auditFormModal').classList.remove('hidden');
     }
 
@@ -622,14 +670,19 @@ async function handleImageSelection(input, previewId, placeholderId) {
 
     function resetImage(pId, hId, iId) {
         currentBase64Image = "";
-        document.getElementById(pId).classList.add('hidden');
-        document.getElementById(hId).classList.remove('hidden');
-        document.getElementById(iId).value = "";
+        const preview = document.getElementById(pId);
+        const placeholder = document.getElementById(hId);
+        const input = document.getElementById(iId);
+        if (preview) preview.classList.add('hidden');
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (input) input.value = "";
     }
 
     function updateQueueUI() {
-        document.getElementById('auditCount').innerText = auditQueue.length;
+        const auditCountEl = document.getElementById('auditCount');
+        if (auditCountEl) auditCountEl.innerText = auditQueue.length;
         const list = document.getElementById('auditListItems');
+        if (!list) return;
         list.innerHTML = auditQueue.map((a, i) => `
             <div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center border border-gray-100">
                 <div class="flex items-center gap-3">
@@ -644,7 +697,7 @@ async function handleImageSelection(input, previewId, placeholderId) {
                 <button onclick="auditQueue.splice(${i},1);updateQueueUI();" class="text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
         `).join('');
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
     }
 
     function submitImmediately(mode) {
@@ -666,118 +719,119 @@ async function handleImageSelection(input, previewId, placeholderId) {
         executeSave(signaturePad.toDataURL());
     }
 
+   // 🟩 นำพิกัดจริงที่ได้จาก loadGPS มาประมวลผลส่งต่ออย่างถูกต้อง ป้องกันพิกัดกลายเป็น 0,0
+    async function submitAudit(type, event) {
+        if (event) event.preventDefault();
+        try {
+            showProcess("กำลังตรวจสอบข้อมูล...");
+            const isExisting = type === 'EXISTING';
+            const suffix = isExisting ? '' : 'nr_';      
+            const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
+            const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
+            if (!typeId || !priorityId) throw new Error("กรุณาเลือกประเภทและความสำคัญ");
+            if (!currentBase64Image) throw new Error("กรุณาถ่ายภาพก่อนบันทึก");
+            
+            const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
+            const shiftValues = Array.from(selectedShifts).map(input => {
+                const map = {"เช้า":"1", "บ่าย":"2", "ดึก":"3"};
+                return map[input.value] || "";
+            }).filter(Boolean).join(",") || "-";
 
-function getGPS() {
-  
-    return new Promise((resolve) => {
-        resolve({ lat: "0", lng: "0" });
-    });
-}
+            const deptId = document.getElementById('selectedDeptId')?.value || "-";
+            const finalGps = gpsReady && currentGps ? currentGps : "0,0";
 
+            // ปั้น Object ข้อมูลสำหรับส่งบันทึกตรงโครงสร้างหลังบ้าน
+            let itemData = {
+                Asset_Type_ID: typeId,
+                PIORITY_ID: priorityId,
+                ImageData: currentBase64Image,
+                gps: finalGps,
+                DEPT_ID: deptId, // 🟩 ส่งคีย์ DEPT_ID เข้าไปป้องกันใน Sheet เป็นเครื่องหมายขีดลบ
+                Jobe_Type_ID: selectedJobTypeId || "-", // 🟩 แก้ไขคีย์ให้ถูกต้องตรงตามโครงสร้างฐานข้อมูลหลักของระบบ
+                Note1: document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-",
+                ASS_ON_OUT: isExisting ? "1" : "0",
+                Note2: [
+                    document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
+                    document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
+                ].filter(Boolean).join(", ") || "-",
+                Shift_Work: shiftValues,
+                CoStatus: "COS-001", MAStatus: "-", Detail_ID: "-"
+            };
 
-async function submitAudit(type, event) {
-    if (event) event.preventDefault();
-    try {
-        showProcess("กำลังตรวจสอบข้อมูล...");
-        const isExisting = type === 'EXISTING';
-        const suffix = isExisting ? '' : 'nr_';      
-        const typeId = document.getElementById(isExisting ? 'assetTypeId' : 'nr_asset_type_id')?.value;
-        const priorityId = document.getElementById(isExisting ? 'priorityId' : 'nr_priorityId')?.value;
-        if (!typeId || !priorityId) throw new Error("กรุณาเลือกประเภทและความสำคัญ");
-        if (!currentBase64Image) throw new Error("กรุณาถ่ายภาพก่อนบันทึก");
-        const selectedShifts = document.querySelectorAll(`input[name="${suffix}shift_work"]:checked`);
-        const shiftValues = Array.from(selectedShifts).map(input => {
-            const map = {"เช้า":"1", "บ่าย":"2", "ดึก":"3"};
-            return map[input.value] || "";
-        }).filter(Boolean).join(",") || "-";
-
-        // ปั้น Object ข้อมูลสำหรับส่งบันทึก
-        let itemData = {
-            Asset_Type_ID: typeId,
-            PIORITY_ID: priorityId,
-            ImageData: currentBase64Image,
-            gps: "0,0",
-            Note1: document.getElementById(isExisting ? 'note1' : 'nr_note1')?.value || "-",
-            ASS_ON_OUT: isExisting ? "1" : "0",
-            Note2: [
-                document.getElementById(`${suffix}pac_toggle`)?.checked ? "PAC" : "",
-                document.getElementById(`${suffix}rent_toggle`)?.checked ? "Rent" : ""
-            ].filter(Boolean).join(", ") || "-",
-            Shift_Work: shiftValues,
-            CoStatus: "COS-001", MAStatus: "-", Detail_ID: "-"
-        };
-
-        if (isExisting) {
-            if (!currentAsset) throw new Error("ไม่พบข้อมูลทรัพย์สิน");
-            itemData.NoID = currentAsset.NoID || "-";
-            itemData.Asset_ID = currentAsset.AssetID;
-            itemData.AssetName = currentAsset.FullDescription;
-            itemData.Serial = currentAsset.Serial || "-";
-        } else {
-            const brandDetail = document.getElementById('nr_brand_detail')?.value;
-            if (!brandDetail) throw new Error("กรุณาระบุรายละเอียดนอกทะเบียน");
-            itemData.NoID = "NON-" + Date.now();
-            itemData.Asset_ID = document.getElementById('nr_asset_id')?.value || ("NR-" + Math.floor(Date.now()/1000));
-            itemData.Detail_ID = "[นอกทะเบียน] " + brandDetail;
-            itemData.Serial = document.getElementById('nr_serial')?.value || "-";
-        }
-
-        await executeSave(itemData);
-
-    } catch (err) {
-        hideProcess();
-        showAlert("ข้อมูลไม่ครบ/ผิดพลาด", err.message);
-    }
-}
-
-async function executeSave(preparedData) {
-    showProcess("กำลังบันทึกข้อมูล...");
-    try {
-        const deptId = document.getElementById('selectedDeptId')?.value || "-";
-        const payload = {
-            action: 'saveBulkSurvey',
-            data: {
-                items: [preparedData],
-                deptId: deptId,
-                gps: preparedData.gps,
-                activityId: "Ac-2569",
-                IT_User_Mail: "it_admin@udonhospital.com"
+            if (isExisting) {
+                if (!currentAsset) throw new Error("ไม่พบข้อมูลทรัพย์สิน");
+                itemData.NoID = currentAsset.NoID || "-";
+                itemData.Asset_ID = currentAsset.AssetID;
+                itemData.AssetName = currentAsset.FullDescription;
+                itemData.Serial = currentAsset.Serial || "-";
+                
+                // 🟩 ตรวจสอบ: ถ้าใน Asset เดิมไม่มีค่า ให้ใช้ค่าระบบงานหลักของแผนก (selectedJobTypeId) แทนการปล่อยว่าง
+                if (currentAsset.Jobe_Type_ID) {
+                    itemData.Jobe_Type_ID = currentAsset.Jobe_Type_ID;
+                }
+            } else {
+                const brandDetail = document.getElementById('nr_brand_detail')?.value;
+                if (!brandDetail) throw new Error("กรุณาระบุรายละเอียดนอกทะเบียน");
+                itemData.NoID = "NON-" + Date.now();
+                itemData.Asset_ID = document.getElementById('nr_asset_id')?.value || ("NR-" + Math.floor(Date.now()/1000));
+                itemData.Detail_ID = "[นอกทะเบียน] " + brandDetail;
+                itemData.Serial = document.getElementById('nr_serial')?.value || "-";
             }
-        };
 
-        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const result = await res.json();
+            await executeSave(itemData);
 
-        if (result.status === 'success') {
-            // ปิด Modal และล้างฟอร์ม
-            ['auditFormModal', 'nonRegisterModal', 'confirmModal'].forEach(id => {
-                document.getElementById(id)?.classList.add('hidden');
-            });
+        } catch (err) {
+            hideProcess();
+            showAlert("ข้อมูลไม่ครบ/ผิดพลาด", err.message);
+        }
+    }
 
-            // แสดงใบเสร็จ
-            if (typeof showReceipt === 'function') {
-                showReceipt({
-                    asset_id: preparedData.Asset_ID,
-                    asset_name: preparedData.AssetName || preparedData.Detail_ID,
-                    department: document.getElementById('displayDeptName')?.innerText || "IT Department",
-                    auditor_name: "IT Udon Hospital",
-                    timestamp: new Date().toLocaleString('th-TH')
+    async function executeSave(preparedData) {
+        showProcess("กำลังบันทึกข้อมูล...");
+        try {
+            const deptId = document.getElementById('selectedDeptId')?.value || "-";
+            const payload = {
+                action: 'saveBulkSurvey',
+                data: {
+                    items: [preparedData],
+                    deptId: deptId,
+                    gps: preparedData.gps,
+                    activityId: "Ac-2569",
+                    IT_User_Mail: "it_admin@udonhospital.com"
+                }
+            };
+
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                ['auditFormModal', 'nonRegisterModal', 'confirmModal'].forEach(id => {
+                    document.getElementById(id)?.classList.add('hidden');
                 });
-            }
 
-            // ล้างค่าทิ้งเพื่อเริ่มงานใหม่
-            if (typeof clearAuditForm === 'function') clearAuditForm();
-            currentBase64Image = null;
-            document.getElementById('assetQuery').value = "";
-        } else {
-            throw new Error(result.message);
+                if (typeof showReceipt === 'function') {
+                    showReceipt({
+                        asset_id: preparedData.Asset_ID,
+                        asset_name: preparedData.AssetName || preparedData.Detail_ID,
+                        department: document.getElementById('displayDeptName')?.innerText || "IT Department",
+                        auditor_name: "IT Udon Hospital",
+                        timestamp: new Date().toLocaleString('th-TH')
+                    });
+                }
+
+                clearAuditForm();
+                currentBase64Image = null;
+                const qInput = document.getElementById('assetQuery');
+                if (qInput) qInput.value = "";
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (e) {
+            showAlert("เกิดข้อผิดพลาด", e.message);
+        } finally {
+            hideProcess();
         }
-    } catch (e) {
-        showAlert("เกิดข้อผิดพลาด", e.message);
-    } finally {
-        hideProcess();
     }
-}
 // เพิ่มฟังก์ชันนี้ลงไปในไฟล์ survey_v4_form.html ของคุณ
 function showAlert(title, msg) {
     // ใน HTML ของคุณมีแค่ alertMessage 
@@ -885,7 +939,7 @@ function closeModal(id) {
         });
 
         // --- 2. จัดการ URL และ QR Code ให้แสดงผลได้แน่นอน ---
-        const baseUrl = typeof DEPT_VIEW_URL !== 'undefined' ? DEPT_VIEW_URL : "https://it.udh.go.th/survey/view?dept=";
+        const baseUrl = typeof DEPT_VIEW_URL !== 'undefined' ? DEPT_VIEW_URL : "https://dakdan.github.io/IT-ASSET/dept_detail.html?dept=";
         const targetUrl = deptId !== "-" ? baseUrl + encodeURIComponent(deptId) : "#";
         const qrImageUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8&chld=L|1`;
 
@@ -994,6 +1048,11 @@ function closeModal(id) {
             return;
         }
 
+        // --- เพิ่มส่วนนี้สำหรับเก็บข้อมูลรายการเพื่อใช้แสดง Detail ---
+        window.currentLoadedRecords = data;
+        data.forEach((item, idx) => item._originalIndex = idx);
+        // --------------------------------------------------------
+
         const deptMap = {};
         if (Array.isArray(masterDeptList)) {
             masterDeptList.forEach(d => { 
@@ -1050,7 +1109,7 @@ function closeModal(id) {
                         <p class="text-[10px] font-bold text-pink-400 mb-2 px-2 uppercase tracking-tighter">📌 ${typeName}</p>
                         <div class="space-y-2">
                             ${items.map(item => `
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-50">
+                                <div onclick="openRecordedDetail(${item._originalIndex})" class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-50 cursor-pointer active:scale-95 transition-transform hover:border-pink-200">
                                     <div class="overflow-hidden">
                                         <p class="text-[14px] font-bold text-gray-800 leading-tight truncate">${item.asset_name}</p>
                                         <p class="text-[10px] text-pink-500 font-bold mt-0.5">${item.asset_id}</p>
@@ -1072,6 +1131,82 @@ function closeModal(id) {
         container.innerHTML = `<div class="text-center py-10 text-red-400 text-xs font-bold bg-red-50 rounded-3xl mx-4">⚠️ ไม่สามารถโหลดข้อมูลได้</div>`;
     }
 }
+
+// --- ฟังก์ชันสำหรับการจัดการรายการที่บันทึกแล้ว ---
+function openRecordedDetail(index) {
+    currentRecordDetail = window.currentLoadedRecords[index];
+    if (!currentRecordDetail) return;
+    
+    const imgEl = document.getElementById('rd_img');
+    const imgContainer = document.getElementById('rd_img_container');
+    const imgUrl = currentRecordDetail.imageUrl || currentRecordDetail.ImageData || '';
+    
+    if (imgUrl) {
+        imgEl.src = imgUrl;
+        imgContainer.classList.remove('hidden');
+    } else {
+        imgContainer.classList.add('hidden');
+    }
+    
+    document.getElementById('rd_asset_id').innerText = currentRecordDetail.asset_id || currentRecordDetail.Asset_ID || '--';
+    document.getElementById('rd_asset_name').innerText = currentRecordDetail.asset_name || currentRecordDetail.AssetName || '--';
+    document.getElementById('rd_dept').innerText = currentRecordDetail.department || currentRecordDetail.DEPNAME || '--';
+    document.getElementById('rd_timestamp').innerText = currentRecordDetail.timestamp || '--';
+    
+    document.getElementById('recordedDetailModal').classList.remove('hidden');
+}
+
+async function deleteRecordedLog() {
+    if (!currentRecordDetail) return;
+    const modal = document.getElementById('confirmDeleteModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+    }
+}
+
+async function executeDeleteLog() {
+    closeModal('confirmDeleteModal');
+    showProcess("กำลังส่งคำสั่งลบข้อมูล...");
+    
+    try {
+        // ตรวจสอบว่ามีค่า ID หรือไม่ก่อนส่ง
+        if (!currentRecordDetail || !currentRecordDetail.NoID) {
+            throw new Error("ไม่พบข้อมูล ID ที่จะลบ");
+        }
+
+        const payload = {
+            action: 'deleteLog',
+            data: {
+                // ส่งชื่อให้ตรงกับที่ Code.gs ดึงค่า (data.logId)
+                logId: currentRecordDetail.NoID 
+            }
+        };
+        
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, // เพิ่ม Header เพื่อความปลอดภัย
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await res.json();
+        
+        if (result.status === 'success') {
+            hideProcess();
+            showAlert("สำเร็จ", "ลบข้อมูลเรียบร้อยแล้ว");
+            closeModal('recordedDetailModal');
+            loadRecordedData();
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error("Delete Error:", error);
+        hideProcess();
+        showAlert("เกิดข้อผิดพลาด", error.message);
+    }
+}
+// ---------------------------------------------
+
        // ==========================================
 // ส่วนที่ 2: ฟังก์ชันควบคุม UI และ Utility (ต้นฉบับของพี่)
 // ==========================================
@@ -1162,13 +1297,13 @@ function hideProcess() {
     const reportPage = document.getElementById('reportPage');
 
     if (page === 'survey') {
-        btnSurvey.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all bg-white shadow-sm text-pink-500";
-        btnReport.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all text-gray-400";
+        btnSurvey.className = "px-3 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-[11px] font-bold bg-white shadow-sm text-pink-600";
+        btnReport.className = "px-3 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-[11px] font-bold text-slate-400";
         surveyPage.classList.remove('hidden');
         reportPage.classList.add('hidden');
     } else {
-        btnReport.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all bg-white shadow-sm text-pink-500";
-        btnSurvey.className = "px-4 py-2 rounded-xl text-[10px] font-bold transition-all text-gray-400";
+        btnReport.className = "px-3 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-[11px] font-bold bg-white shadow-sm text-pink-600";
+        btnSurvey.className = "px-3 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-[11px] font-bold text-slate-400";
         reportPage.classList.remove('hidden');
         surveyPage.classList.add('hidden');
         loadRecordedData(); // โหลดข้อมูลรายการเมื่อเข้าหน้านี้
