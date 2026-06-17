@@ -730,7 +730,7 @@
             // --- SUMMARY MAPPING ---
             safeSetText('valAssetID', asset['AssetID']);
             safeSetText('valAssetName', asset['ชื่อรายการครุภัณฑ์']);
-            safeSetText('valCode', asset['รหัสครุภัณฑ์']);
+            safeSetText('valCode', asset['AssetID']);
             safeSetText('valSerial', asset['Searail']);
             safeSetText('valMaStatus', asset['MaStatus'] || 'Active');
             safeSetText('valCoStatus', asset['CoStatus'] || 'Standby');
@@ -747,7 +747,7 @@
 
             // --- BASIC INFO ---
             safeSetText('valCategory', asset['หมวดครุภัณฑ์']);
-            safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Type_Name'] || '-'}`);
+            safeSetText('valTypeID', `${asset['Asset_Type_Name'] || '-'} / ${asset['Asset_Type_Name'] || '-'}`);
             safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
             safeSetText('valOldCode', asset['AssetID']);
 
