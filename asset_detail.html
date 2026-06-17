@@ -747,9 +747,9 @@
 
             // --- BASIC INFO ---
             safeSetText('valCategory', asset['หมวดครุภัณฑ์']);
-            safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Item_Type_ID'] || '-'}`);
+            safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Type_Name'] || '-'}`);
             safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
-            safeSetText('valOldCode', asset['รหัสครุภัณฑ์เดิม']);
+            safeSetText('valOldCode', asset['AssetID']);
 
             // --- LOCATION INFO ---
             safeSetText('valCurrentLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน']);
