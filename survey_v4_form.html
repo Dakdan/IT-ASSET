@@ -1171,7 +1171,7 @@ async function executeDeleteLog() {
     
     try {
         // ตรวจสอบว่ามีค่า ID หรือไม่ก่อนส่ง
-        if (!currentRecordDetail || !currentRecordDetail.NoID) {
+        if (!currentRecordDetail || !currentRecordDetail.Asset_NO) {
             throw new Error("ไม่พบข้อมูล ID ที่จะลบ");
         }
 
@@ -1179,7 +1179,7 @@ async function executeDeleteLog() {
             action: 'deleteLog',
             data: {
                 // ส่งชื่อให้ตรงกับที่ Code.gs ดึงค่า (data.logId)
-                logId: currentRecordDetail.NoID 
+                logId: currentRecordDetail.Asset_NO
             }
         };
         
