@@ -55,7 +55,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Po_No <span class="text-red-500">*</span></label>
-                            <input type="text" id="Po_No" name="Po_No" required class="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="text" id="Po_No" name="Po_No" required readonly placeholder="กำลังสร้างเลข PO..." class="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-gray-100 font-bold text-indigo-700">
                         </div>
                         
                         <!-- เปลี่ยน Doc_ID เป็นแนบไฟล์ -->
@@ -295,8 +295,11 @@
         // 3. Initialization & Event Listeners
         // ---------------------------------------------------------
         
-        // เมื่อโหลดหน้าเว็บ ให้ดึงข้อมูล Asset_Type_DB ทันที
-        window.addEventListener('DOMContentLoaded', fetchAssetTypeDB);
+        // เมื่อโหลดหน้าเว็บ ให้ดึงข้อมูล Asset_Type_DB และสร้างเลข PO อัตโนมัติทันที
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchAssetTypeDB();
+            fetchAutoPoNo();
+        });
 
         // จัดการการดึงไฟล์เป็น Base64
         fileDocId.addEventListener('change', (e) => handleFileConvert(e, hiddenDocId, true));
@@ -358,6 +361,32 @@
             } catch (error) {
                 console.error("Network Error fetching DB:", error);
                 document.getElementById('dbStatus').innerText = "Network Error!";
+            }
+        }
+
+        // [New]: ขอเลข PO อัตโนมัติจาก Database
+        async function fetchAutoPoNo() {
+            try {
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "getAutoPoNo" })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    inputPoNo.value = result.poNo;
+                    // เมื่อได้เลขแล้ว สั่งเช็ค Duplicate ไว้ป้องกันกรณีชนกัน
+                    checkDuplicatePO();
+                } else {
+                    console.error("Auto PO Error:", result.message);
+                    inputPoNo.readOnly = false;
+                    inputPoNo.placeholder = "กรุณาระบุเลข PO ด้วยตนเอง";
+                }
+            } catch (error) {
+                console.error("Network Error fetching Auto PO:", error);
+                // หากพัง ให้ปลดล็อคเพื่อให้กรอกเองได้
+                inputPoNo.readOnly = false; 
+                inputPoNo.placeholder = "กรุณาระบุเลข PO ด้วยตนเอง";
             }
         }
 
