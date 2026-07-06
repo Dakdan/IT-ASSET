@@ -476,13 +476,31 @@
             }
         }
 
+        // [New]: แปลงวันที่ YYYY-MM-DD เป็น 'DD/MM/YYYY (พ.ศ.) แบบข้อความ
+        function formatAsTextDate(dateString) {
+            if (!dateString) return "";
+            const [year, month, day] = dateString.split('-');
+            if (year && month && day) {
+                const thaiYear = parseInt(year, 10) + 543;
+                // ใส่ ' นำหน้าเพื่อให้ Google Sheets บังคับเป็น Text ป้องกันการเปลี่ยน Format อัตโนมัติ
+                return `'${day}/${month}/${thaiYear}`;
+            }
+            return dateString;
+        }
+
         // [Workflow 3]: บันทึกข้อมูล PO
         async function submitPO() {
             const formData = new FormData(poForm);
             const poData = Object.fromEntries(formData.entries());
+            
+            // จัดการแปลง Format วันที่ให้เป็น Text (วว/ดด/ปปปป) ก่อนเก็บลง State
+            if (poData.Po_Datetime_Received) poData.Po_Datetime_Received = formatAsTextDate(poData.Po_Datetime_Received);
+            if (poData.Warranty_Start) poData.Warranty_Start = formatAsTextDate(poData.Warranty_Start);
+            if (poData.Warranty_End) poData.Warranty_End = formatAsTextDate(poData.Warranty_End);
+
             currentPOData = poData; 
 
-            showModal("กำลังบันทึกข้อมูล PO...");
+            showModal("กำลังบันทึกข้อมูล PO และอัปโหลดไฟล์...");
 
             try {
                 const payload = {
@@ -497,6 +515,12 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    
+                    // --- ส่วนที่เพิ่มเติม: นำลิงก์ Google Drive ที่ได้จาก Backend มาสลับแทนที่ Base64 ---
+                    if (result.docUrl) currentPOData.Doc_ID = result.docUrl;
+                    if (result.imgUrl) currentPOData.Asset_Po_Image = result.imgUrl;
+                    // -------------------------------------------------------------------------
+
                     hideModal();
                     document.getElementById('poFormSection').classList.add('hidden');
                     document.getElementById('generateSection').classList.remove('hidden');
