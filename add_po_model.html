@@ -39,7 +39,7 @@
                 </div>
             </div>
 
-            <!-- แจ้งเตือนเลขซ้ำ -->
+            <!-- แจ้งเตือนเลขซ้ำ (สำหรับ Po_No) -->
             <div id="duplicateAlert" class="hidden mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm flex items-center">
                 <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 <div>
@@ -69,10 +69,15 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">วันที่รับเข้า (Po_Datetime_Received)</label>
                             <input type="date" name="Po_Datetime_Received" class="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
+                        
+                        <!-- อัปเดต Po_ID เพื่อตรวจสอบการซ้ำซ้อน -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Po_ID</label>
-                            <input type="text" name="Po_ID" class="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="text" id="Po_ID" name="Po_ID" class="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                            <!-- ข้อความแจ้งเตือนซ้ำ จะโชว์เมื่อพิมพ์ Po_ID ซ้ำกับในระบบ -->
+                            <p id="poIdWarning" class="hidden text-xs text-yellow-600 mt-1 font-medium">⚠️ พบข้อมูลซ้ำ (ระบบจะถามยืนยันตอนบันทึก)</p>
                         </div>
+                        
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">บริษัทคู่สัญญา (Contracting_Company)</label>
                             <input type="text" name="Contracting_Company" class="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
@@ -269,6 +274,7 @@
         
         let currentPOData = null; 
         let assetTypeDatabase = []; // เก็บข้อมูล DB เพื่อทำ Dropdown
+        let isPoIdDuplicate = false; // ตัวแปรเก็บสถานะการซ้ำของ Po_ID
 
         // ---------------------------------------------------------
         // 2. DOM Elements
@@ -277,6 +283,9 @@
         const fileDocId = document.getElementById('Doc_ID_File');
         const hiddenDocId = document.getElementById('Doc_ID');
         
+        const inputPoId = document.getElementById('Po_ID');
+        const poIdWarning = document.getElementById('poIdWarning');
+
         const duplicateAlert = document.getElementById('duplicateAlert');
         const btnSavePO = document.getElementById('btnSavePO');
         const poForm = document.getElementById('poForm');
@@ -295,7 +304,6 @@
         // 3. Initialization & Event Listeners
         // ---------------------------------------------------------
         
-        // เมื่อโหลดหน้าเว็บ ให้ดึงข้อมูล Asset_Type_DB และสร้างเลข PO อัตโนมัติทันที
         window.addEventListener('DOMContentLoaded', () => {
             fetchAssetTypeDB();
             fetchAutoPoNo();
@@ -305,10 +313,11 @@
         fileDocId.addEventListener('change', (e) => handleFileConvert(e, hiddenDocId, true));
         document.getElementById('Asset_Po_Image_File').addEventListener('change', (e) => handleFileConvert(e, document.getElementById('Asset_Po_Image'), false));
         
-        // เมื่อพิมพ์ Po_No เสร็จ ให้ยิงเช็ค Duplicate ทันที (เช็คเฉพาะ Po_No เพราะ Doc_ID เป็นไฟล์แล้ว)
+        // เช็คการซ้ำซ้อน
         inputPoNo.addEventListener('blur', checkDuplicatePO);
+        inputPoId.addEventListener('blur', checkDuplicatePoID); // ผูก Event ตรวจสอบ Po_ID
         
-        // Cascading Dropdown Logic
+        // Cascading Dropdown
         selectAssetTypeName.addEventListener('change', populateSubCategories);
 
         // เมื่อกด Submit ฟอร์ม
@@ -326,27 +335,20 @@
         // 4. Core Functions
         // ---------------------------------------------------------
 
-        // [New]: โหลดข้อมูล Dropdown จาก Database
         async function fetchAssetTypeDB() {
             try {
-                const response = await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: "getAssetTypes" })
-                });
+                const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getAssetTypes" }) });
                 const result = await response.json();
                 
                 const statusEl = document.getElementById('dbStatus');
 
                 if (result.success) {
                     assetTypeDatabase = result.data;
-                    
-                    // ปรับสถานะ UI
                     statusEl.classList.replace('bg-yellow-100', 'bg-green-100');
                     statusEl.classList.replace('text-yellow-700', 'text-green-700');
                     statusEl.classList.replace('border-yellow-300', 'border-green-300');
                     statusEl.innerText = "เชื่อมต่อฐานข้อมูลแล้ว ✓";
 
-                    // นำข้อมูลลง Dropdown แรก
                     const uniqueNames = [...new Set(assetTypeDatabase.map(item => item.Asset_Type_Name))];
                     selectAssetTypeName.innerHTML = '<option value="">-- เลือกหมวดครุภัณฑ์ --</option>';
                     uniqueNames.forEach(name => {
@@ -364,100 +366,74 @@
             }
         }
 
-        // [New]: ขอเลข PO อัตโนมัติจาก Database
         async function fetchAutoPoNo() {
             try {
-                const response = await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: "getAutoPoNo" })
-                });
+                const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getAutoPoNo" }) });
                 const result = await response.json();
                 
                 if (result.success) {
                     inputPoNo.value = result.poNo;
-                    // เมื่อได้เลขแล้ว สั่งเช็ค Duplicate ไว้ป้องกันกรณีชนกัน
                     checkDuplicatePO();
                 } else {
-                    console.error("Auto PO Error:", result.message);
                     inputPoNo.readOnly = false;
                     inputPoNo.placeholder = "กรุณาระบุเลข PO ด้วยตนเอง";
                 }
             } catch (error) {
-                console.error("Network Error fetching Auto PO:", error);
-                // หากพัง ให้ปลดล็อคเพื่อให้กรอกเองได้
                 inputPoNo.readOnly = false; 
                 inputPoNo.placeholder = "กรุณาระบุเลข PO ด้วยตนเอง";
             }
         }
 
-        // [New]: กรองข้อมูล Dropdown เมื่อเลือกหมวดหลัก
         function populateSubCategories() {
             const selectedName = selectAssetTypeName.value;
-            
-            // รีเซ็ต Dropdown ย่อย
             selectAssetTypeID.innerHTML = '<option value="">-- อัตโนมัติ --</option>';
             selectTypeID.innerHTML = '<option value="">-- กรุณาเลือกชนิดครุภัณฑ์ --</option>';
 
             if (!selectedName) return;
 
-            // กรองเฉพาะข้อมูลที่ตรงกับ หมวด ที่เลือก
             const filteredData = assetTypeDatabase.filter(item => item.Asset_Type_Name === selectedName);
-
-            // 1. จัดการ Asset_Type_ID (ประเภทที่ 2) โดยปกติ 1 หมวด จะมี 1 ID
             const uniqueIDs = [...new Set(filteredData.map(item => item.Asset_Type_ID))];
-            uniqueIDs.forEach(id => {
-                if(id) selectAssetTypeID.innerHTML += `<option value="${id}">${id}</option>`;
-            });
-            // บังคับเลือก Auto ถ้ามีอันเดียว
+            
+            uniqueIDs.forEach(id => { if(id) selectAssetTypeID.innerHTML += `<option value="${id}">${id}</option>`; });
             if (uniqueIDs.length === 1) selectAssetTypeID.value = uniqueIDs[0];
 
-            // 2. จัดการ Type_ID (ชนิดย่อย)
             filteredData.forEach(item => {
                 if(item.Type_ID) {
-                    // กำหนด value เป็น Type_ID แต่ Text ให้โชว์ชื่อเพื่อให้คนอ่านง่าย
                     selectTypeID.innerHTML += `<option value="${item.Type_ID}">${item.Type_ID} : ${item.Type_Name}</option>`;
                 }
             });
         }
 
-        // [New]: แปลงไฟล์เป็น Base64
         function handleFileConvert(event, hiddenInputElement, triggerCheck = false) {
             const file = event.target.files[0];
             if (!file) {
                 hiddenInputElement.value = "";
                 return;
             }
-
             const reader = new FileReader();
             reader.onload = function(e) {
-                // เก็บค่า Base64 string ยาวๆ ลงใน input hidden ที่ผูกชื่อ Name ไว้
                 hiddenInputElement.value = e.target.result;
-                
-                // หากเป็นไฟล์ Doc_ID ให้ลองเช็ค Duplicate ด้วย
                 if(triggerCheck) checkDuplicatePO();
             };
             reader.readAsDataURL(file);
         }
 
-        // [Workflow 2]: Duplicate Check
+       // [Workflow 2]: Duplicate Check สำหรับ Po_No
         async function checkDuplicatePO() {
             const poNo = inputPoNo.value.trim();
-            // เนื่องจาก Doc_ID เปลี่ยนเป็นแนบไฟล์แล้ว การส่งไปเช็คซ้ำอาจจะไม่มีผลเหมือนเก่า
-            // แต่ระบบยังคงส่งไปตามโครงสร้าง API ของคุณ
-            const docId = hiddenDocId.value ? "FILE_ATTACHED" : ""; 
-
-            if (!poNo) return;
+            const docId = hiddenDocId.value; // เอาค่าตรงๆ ไม่ต้องใส่ "FILE_ATTACHED"
+            
+            // ถ้าเลข PO ว่าง หรือ ยังไม่ได้แนบไฟล์ ให้ข้ามการเช็คซ้ำ (ป้องกันการเด้งเตือนตอนเริ่มต้น)
+            if (!poNo || !docId) {
+                duplicateAlert.classList.add('hidden');
+                btnSavePO.disabled = false;
+                btnSavePO.classList.replace('bg-gray-400', 'bg-indigo-600');
+                return;
+            }
 
             try {
-                const payload = {
-                    action: "checkDuplicatePO",
-                    data: { Po_No: poNo, Doc_ID: docId } // ฝั่ง GAS น่าจะโฟกัสเช็คที่ Po_No เป็นหลัก
-                };
-
-                const response = await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                const payload = { action: "checkDuplicatePO", data: { Po_No: poNo, Doc_ID: docId } };
+                const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await response.json();
 
                 if (result.isDuplicate) {
@@ -476,17 +452,37 @@
             }
         }
 
-        // [New]: แปลงวันที่ YYYY-MM-DD เป็น 'DD/MM/YYYY (พ.ศ.) แบบข้อความ
+        // [Workflow 2.1]: ตรวจสอบการซ้ำของ Po_ID โดยเฉพาะ
+        async function checkDuplicatePoID() {
+            const poId = inputPoId.value.trim();
+            if (!poId) {
+                isPoIdDuplicate = false;
+                poIdWarning.classList.add('hidden');
+                return;
+            }
+            try {
+                const payload = { action: "checkDuplicatePoID", data: { Po_ID: poId } };
+                const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await response.json();
+                
+                if (result.isDuplicate) {
+                    isPoIdDuplicate = true;
+                    poIdWarning.classList.remove('hidden'); // แสดงคำเตือนตัวอักษรสีเหลือง
+                } else {
+                    isPoIdDuplicate = false;
+                    poIdWarning.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error("Check Po_ID Error:", error);
+            }
+        }
+
         function formatAsTextDate(dateString) {
             if (!dateString) return "";
             const [year, month, day] = dateString.split('-');
             if (year && month && day) {
                 let parsedYear = parseInt(year, 10);
-                
-                // เช็คว่าถ้าปีมากกว่า 2500 แสดงว่าเป็น พ.ศ. อยู่แล้ว ไม่ต้องบวกเพิ่ม
                 let thaiYear = parsedYear < 2500 ? parsedYear + 543 : parsedYear;
-                
-                // ใส่ ' นำหน้าเพื่อให้ Google Sheets บังคับเป็น Text ป้องกันการเปลี่ยน Format อัตโนมัติ
                 return `'${day}/${month}/${thaiYear}`;
             }
             return dateString;
@@ -497,33 +493,28 @@
             const formData = new FormData(poForm);
             const poData = Object.fromEntries(formData.entries());
             
-            // จัดการแปลง Format วันที่ให้เป็น Text (วว/ดด/ปปปป) ก่อนเก็บลง State
+            // ตรวจสอบยืนยันอีกครั้ง หากพบ Po_ID ซ้ำ
+            if (isPoIdDuplicate) {
+                const confirmSave = confirm(`ตรวจพบข้อมูล Po_ID: ${poData.Po_ID} ซ้ำในระบบ!\n\nคุณต้องการยืนยันที่จะบันทึกข้อมูลนี้ต่อไปหรือไม่?`);
+                if (!confirmSave) return; // หากกดยกเลิก ให้หยุดการทำงาน
+            }
+            
             if (poData.Po_Datetime_Received) poData.Po_Datetime_Received = formatAsTextDate(poData.Po_Datetime_Received);
             if (poData.Warranty_Start) poData.Warranty_Start = formatAsTextDate(poData.Warranty_Start);
             if (poData.Warranty_End) poData.Warranty_End = formatAsTextDate(poData.Warranty_End);
 
             currentPOData = poData; 
 
-            showModal("กำลังบันทึกข้อมูล PO และอัปโหลดไฟล์...");
+            showModal("กำลังบันทึกข้อมูล PO และอัปโหลดไฟล์ (อาจใช้เวลาสักครู่)...");
 
             try {
-                const payload = {
-                    action: "savePO",
-                    data: poData
-                };
-
-                const response = await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                const payload = { action: "savePO", data: poData };
+                const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await response.json();
 
                 if (result.success) {
-                    
-                    // --- ส่วนที่เพิ่มเติม: นำลิงก์ Google Drive ที่ได้จาก Backend มาสลับแทนที่ Base64 ---
                     if (result.docUrl) currentPOData.Doc_ID = result.docUrl;
                     if (result.imgUrl) currentPOData.Asset_Po_Image = result.imgUrl;
-                    // -------------------------------------------------------------------------
 
                     hideModal();
                     document.getElementById('poFormSection').classList.add('hidden');
@@ -573,19 +564,10 @@
                 loadingText.innerText = `กำลังสร้างรายการที่ ${currentItem}/${totalAssets}...`;
                 progressBar.style.width = `${(currentItem / totalAssets) * 100}%`;
 
-                const assetPayload = {
-                    action: "saveAsset",
-                    data: {
-                        ...currentPOData, 
-                        AssetID: fullAssetID 
-                    }
-                };
+                const assetPayload = { action: "saveAsset", data: { ...currentPOData, AssetID: fullAssetID } };
 
                 try {
-                    const response = await fetch(GAS_API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify(assetPayload)
-                    });
+                    const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(assetPayload) });
                     const result = await response.json();
                     if(result.success) successCount++;
                 } catch (error) {
