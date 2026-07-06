@@ -421,10 +421,10 @@
        // [Workflow 2]: Duplicate Check สำหรับ Po_No
         async function checkDuplicatePO() {
             const poNo = inputPoNo.value.trim();
-            const docId = hiddenDocId.value; // เอาค่าตรงๆ ไม่ต้องใส่ "FILE_ATTACHED"
+          
             
             // ถ้าเลข PO ว่าง หรือ ยังไม่ได้แนบไฟล์ ให้ข้ามการเช็คซ้ำ (ป้องกันการเด้งเตือนตอนเริ่มต้น)
-            if (!poNo || !docId) {
+            if (!poNo ) {
                 duplicateAlert.classList.add('hidden');
                 btnSavePO.disabled = false;
                 btnSavePO.classList.replace('bg-gray-400', 'bg-indigo-600');
@@ -432,7 +432,7 @@
             }
 
             try {
-                const payload = { action: "checkDuplicatePO", data: { Po_No: poNo, Doc_ID: docId } };
+                const payload = { action: "checkDuplicatePO", data: { Po_No: poNo} };
                 const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await response.json();
 
