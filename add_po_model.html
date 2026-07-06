@@ -481,7 +481,11 @@
             if (!dateString) return "";
             const [year, month, day] = dateString.split('-');
             if (year && month && day) {
-                const thaiYear = parseInt(year, 10) + 543;
+                let parsedYear = parseInt(year, 10);
+                
+                // เช็คว่าถ้าปีมากกว่า 2500 แสดงว่าเป็น พ.ศ. อยู่แล้ว ไม่ต้องบวกเพิ่ม
+                let thaiYear = parsedYear < 2500 ? parsedYear + 543 : parsedYear;
+                
                 // ใส่ ' นำหน้าเพื่อให้ Google Sheets บังคับเป็น Text ป้องกันการเปลี่ยน Format อัตโนมัติ
                 return `'${day}/${month}/${thaiYear}`;
             }
