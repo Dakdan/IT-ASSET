@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>IT Asset Dashboard V2 - Udon Thani Hospital</title>
+    <title>IT Asset Detail - Udon Thani Hospital</title>
     <!-- Fonts: Kanit -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icons: FontAwesome 6.4.0 -->
@@ -724,7 +724,7 @@
             if (galleryContainer) {
                 if (logs.images && logs.images.length > 0) {
                     galleryContainer.innerHTML = logs.images.map((item, index) => {
-                        const directUrl = convertDriveUrl(item.IMAGE_URL || item.IMAGE_ID || item['IMAGE_URL']);
+                        const directUrl = convertDriveUrl(item.IMAGE_URL || item.IMAGE_ID || item['IMAGE_ID']);
                         return `
                             <div class="aspect-square rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-brand-400 shadow-sm transition-all hover:scale-105" onclick="openLightbox('${directUrl}', 'ภาพประวัติแนบเพิ่มเติมชิ้นที่ ${index + 1}')">
                                 <img src="${directUrl}" alt="Log Image" class="w-full h-full object-cover" onerror="this.outerHTML='<div class=&quot;w-full h-full bg-slate-100 flex items-center justify-center text-slate-400&quot;><i class=&quot;fa-solid fa-image-broken&quot;></i></div>'">
