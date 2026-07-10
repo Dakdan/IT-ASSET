@@ -207,7 +207,7 @@
                     <!-- โชว์รหัสตัวใหญ่ (Highlight Code) -->
                     <div class="bg-slate-800 text-white rounded-xl p-4 md:min-w-[250px] shadow-lg border border-slate-700 text-center md:text-right">
                         <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-barcode"></i> รหัสครุภัณฑ์ (Asset_ID)</p>
-                        <p id="valAssetID" class="text-xl md:text-2xl font-bold text-accent-500">-</p>
+                        <p id="valCode" class="text-xl md:text-2xl font-bold text-accent-500">-</p>
                     </div>
                 </div>
 
@@ -576,7 +576,7 @@
             // --- SUMMARY MAPPING ---
             safeSetText('valAssetID', asset['AssetID']);
             safeSetText('valAssetName', asset['ชื่อรายการครุภัณฑ์']);
-            safeSetText('valCode', asset['รหัสครุภัณฑ์']);
+            safeSetText('valCode', asset['AssetID']);
             safeSetText('valSerial', asset['Searail']);
             safeSetText('valMaStatus', asset['MaStatus'] || '-');
             safeSetText('valCoStatus', asset['CoStatus'] || '-');
@@ -604,7 +604,7 @@
 
             // --- BASIC INFO ---
             safeSetText('valCategory', asset['ชื่อรายการครุภัณฑ์']);
-            safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Item_Type_ID'] || '-'}`);
+            safeSetText('valTypeID', `${asset['Asset_Type_Name'] || '-'} / ${asset['Asset_Item_Name'] || '-'}`);
             safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
             safeSetText('valOldCode', asset['รหัสครุภัณฑ์เดิม']);
 
