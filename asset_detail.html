@@ -575,8 +575,7 @@
 
             // --- SUMMARY MAPPING ---
             safeSetText('valAssetID', asset['AssetID']);
-            safeSetText('valAssetName', asset['Asset_Type_Name'] ||asset['หมวดครุภัณฑ์']);
-            safeSetText('valAssetNameGroup', asset['ชื่อรายการครุภัณฑ์']);
+            safeSetText('valAssetName', asset['ชื่อรายการครุภัณฑ์']);
             safeSetText('valCode', asset['รหัสครุภัณฑ์']);
             safeSetText('valSerial', asset['Searail']);
             safeSetText('valMaStatus', asset['MaStatus'] || '-');
@@ -584,9 +583,18 @@
 
             // --- PHOTO & QR CODE RENDERING ---
             const photoFrame = document.getElementById('photoFrame');
-            if (asset['IMAGE_ID'] && asset['Ass_Img'] !== '-') {
-                const directImgUrl = convertDriveUrl(asset['IMAGE_ID']);
-                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" class="w-full h-full object-cover" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;></i>'">`;
+            
+            // ดึงรูปภาพหลักจาก Asset_Image_Logs (รูปแรก) โดยใช้ IMAGE_URL ที่พร้อมใช้งาน
+            if (logs.images && logs.images.length > 0 && logs.images[0].IMAGE_URL) {
+                const directImgUrl = logs.images[0].IMAGE_URL;
+                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" class="w-full h-full object-cover" onclick="openLightbox('${directImgUrl}', 'ภาพครุภัณฑ์หลัก')" style="cursor: pointer;" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;></i>'">`;
+            } 
+            // Fallback เผื่อไว้กรณีไม่มีใน Image Logs แต่มีในฐานข้อมูลหลัก (Ass_Img)
+            else if (asset['Ass_Img'] && asset['Ass_Img'] !== '-') {
+                const directImgUrl = convertDriveUrl(asset['Ass_Img']);
+                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" class="w-full h-full object-cover" onclick="openLightbox('${directImgUrl}', 'ภาพครุภัณฑ์หลัก')" style="cursor: pointer;" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;></i>'">`;
+            } else {
+                photoFrame.innerHTML = `<i class="fa-solid fa-image text-4xl text-slate-300"></i>`;
             }
 
             // อัปเดตขนาดภาพและเพิ่มคำสั่ง onclick เพื่อเปิด Lightbox
@@ -621,7 +629,12 @@
             // --- CALCULATIONS & STATS ---
             const health = calc.healthScore !== undefined ? calc.healthScore : 100;
             const risk = calc.riskScore !== undefined ? calc.riskScore : 0;
-            const riskLvl = calc.riskLevel || 'Low';
+            
+            // Backend (code.gs) ประมวลผลมาแค่ riskScore จึงใช้ Frontend คำนวณหา riskLevel
+            let riskLvl = 'Low';
+            if (risk >= 70) riskLvl = 'Critical';
+            else if (risk >= 40) riskLvl = 'High';
+            else if (risk >= 20) riskLvl = 'Medium';
 
             safeSetText('kpiHealth', health + '%');
             const healthBar = document.getElementById('kpiHealthBar');
@@ -659,8 +672,9 @@
                 return sum + (isNaN(costVal) ? 0 : costVal);
             }, 0);
 
-            // KPI ประวัติการซ่อมบำรุง
-            safeSetText('kpiMA', maRecords.length + ' ครั้ง');
+            // KPI ประวัติการซ่อมบำรุง (แมปปิ้งตรงจาก calc.totalMA ที่ code.gs สรุปมาให้)
+            const totalMACount = calc.totalMA !== undefined ? calc.totalMA : maRecords.length;
+            safeSetText('kpiMA', totalMACount + ' ครั้ง');
             safeSetText('valTotalRepairCost', 'มูลค่าซ่อมสะสม: ' + totalRepairCost.toLocaleString() + ' ฿');
 
             // --- NOTES & GPS MAPPING ---
@@ -724,7 +738,8 @@
             if (galleryContainer) {
                 if (logs.images && logs.images.length > 0) {
                     galleryContainer.innerHTML = logs.images.map((item, index) => {
-                        const directUrl = convertDriveUrl(item.IMAGE_URL || item.IMAGE_ID || item['IMAGE_URL']);
+                        // ดึง IMAGE_URL ที่ประมวลผลเป็น Thumbnail จาก backend (code.gs) มาใช้โดยตรง
+                        const directUrl = item.IMAGE_URL || convertDriveUrl(item.IMAGE_ID);
                         return `
                             <div class="aspect-square rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-brand-400 shadow-sm transition-all hover:scale-105" onclick="openLightbox('${directUrl}', 'ภาพประวัติแนบเพิ่มเติมชิ้นที่ ${index + 1}')">
                                 <img src="${directUrl}" alt="Log Image" class="w-full h-full object-cover" onerror="this.outerHTML='<div class=&quot;w-full h-full bg-slate-100 flex items-center justify-center text-slate-400&quot;><i class=&quot;fa-solid fa-image-broken&quot;></i></div>'">
