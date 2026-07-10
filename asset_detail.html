@@ -2,7 +2,9 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>IT Asset Dashboard V2 - Udon Thani Hospital</title>
     <!-- Fonts: Kanit -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -44,6 +46,7 @@
             background-color: #f8fafc;
             color: #334155;
             overflow-x: hidden;
+            overscroll-behavior: none;
         }
 
         /* ลายน้ำพื้นหลัง (Watermark) */
@@ -143,14 +146,15 @@
     <div id="mainDashboard" class="hidden max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8">
         
         <!-- HEADER (Top Navigation Bar Style) -->
-        <header class="bg-white rounded-2xl shadow-soft p-5 md:p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-brand-600">
+        <header class="sticky top-0 z-50 w-full bg-white rounded-b-2xl shadow-soft p-5 md:p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-brand-600">
             <div class="flex items-center gap-4">
                 <div class="w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center border border-brand-100 shadow-sm p-1">
                     <img src="https://img2.pic.in.th/-227e4f6f84f29f020.png" alt="Logo" class="w-full h-full object-contain rounded-full">
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold text-slate-800 leading-tight">โรงพยาบาลอุดรธานี</h1>
-                    <p class="text-brand-600 font-medium text-sm md:text-base">ระบบจัดการครุภัณฑ์เทคโนโลยีสารสนเทศ (IT Asset Management)</p>
+                    <p class="text-brand-600 font-medium text-sm md:text-base">รายละเอียดครุภัณฑ์คอมพิวเตอร์</p>
+                    <p id="valAssetID" class="text-sm md:text-xl font-medium text-accent-500">-</p>
                 </div>
             </div>
             
@@ -202,7 +206,7 @@
                     
                     <!-- โชว์รหัสตัวใหญ่ (Highlight Code) -->
                     <div class="bg-slate-800 text-white rounded-xl p-4 md:min-w-[250px] shadow-lg border border-slate-700 text-center md:text-right">
-                        <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-barcode"></i> รหัสครุภัณฑ์ (Asset Code)</p>
+                        <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-barcode"></i> รหัสครุภัณฑ์ (Asset_ID)</p>
                         <p id="valCode" class="text-xl md:text-2xl font-bold text-accent-500">-</p>
                     </div>
                 </div>
