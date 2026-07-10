@@ -200,8 +200,8 @@
                         <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-50 text-brand-700 rounded-lg font-semibold text-sm mb-3">
                             <i class="fa-solid fa-microchip"></i> <span id="valCategory">กำลังโหลด...</span>
                         </div>
-                        <h2 id="valAssetName" class="text-2xl md:text-3xl font-bold text-slate-800 mb-2 leading-tight">กำลังโหลดข้อมูล...</h2>
-                        <p id="valAssetNameGroup" class="text-slate-500 font-medium text-lg">-</p>
+                        <h2 id="valAssetNameGroup" class="text-2xl md:text-3xl font-bold text-slate-800 mb-2 leading-tight">กำลังโหลดข้อมูล...</h2>
+                        <p id="valAssetName" class="text-slate-500 font-medium text-lg">-</p>
                     </div>
                     
                     <!-- โชว์รหัสตัวใหญ่ (Highlight Code) -->
@@ -575,7 +575,8 @@
 
             // --- SUMMARY MAPPING ---
             safeSetText('valAssetID', asset['AssetID']);
-            safeSetText('valAssetName', asset['ชื่อรายการครุภัณฑ์']);
+            safeSetText('valAssetName', asset['หมวดครุภัณฑ์']);
+            safeSetText('valAssetNameGroup', `${asset['Asset_Type_Name'] || '-'} / ${asset['Asset_Item_Name'] || asset['ชื่อรายการครุภัณฑ์']}`);
             safeSetText('valCode', asset['AssetID']);
             safeSetText('valSerial', asset['Searail']);
             safeSetText('valMaStatus', asset['MaStatus'] || '-');
@@ -638,13 +639,30 @@
 
             safeSetText('kpiHealth', health + '%');
             const healthBar = document.getElementById('kpiHealthBar');
-            if (healthBar) healthBar.style.width = health + '%';
+            const kpiHealthEl = document.getElementById('kpiHealth');
+
+            if (healthBar) {
+                healthBar.style.width = health + '%';
+                
+                // อัปเดตสีหลอด Health และตัวเลข (สุขภาพดี = เขียว, ปานกลาง = เหลือง, แย่ = แดง)
+                if (health >= 80) {
+                    healthBar.style.background = '#10b981'; // สีเขียว (Emerald)
+                    if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-bold text-emerald-500';
+                } else if (health >= 50) {
+                    healthBar.style.background = '#f59e0b'; // สีเหลือง/ส้ม (Amber)
+                    if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-bold text-amber-500';
+                } else {
+                    healthBar.style.background = '#ef4444'; // สีแดง (Red)
+                    if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-bold text-red-500';
+                }
+            }
 
             safeSetText('kpiRisk', riskLvl);
             safeSetText('valRiskScore', 'คะแนนความเสี่ยง: ' + risk);
 
             const kpiRiskEl = document.getElementById('kpiRisk');
             if (kpiRiskEl) {
+                // อัปเดตสี Risk Level (เสี่ยงสูง = แดง, เสี่ยงกลาง = เหลือง, เสี่ยงต่ำ = เขียว)
                 if (riskLvl === 'High' || riskLvl === 'Critical') {
                     kpiRiskEl.className = 'text-3xl font-bold text-red-500';
                 } else if (riskLvl === 'Medium') {
