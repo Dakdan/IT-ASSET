@@ -584,8 +584,8 @@
 
             // --- PHOTO & QR CODE RENDERING ---
             const photoFrame = document.getElementById('photoFrame');
-            if (asset['Ass_Img'] && asset['Ass_Img'] !== '-') {
-                const directImgUrl = convertDriveUrl(asset['Ass_Img']);
+            if (asset['IMAGE_ID'] && asset['Ass_Img'] !== '-') {
+                const directImgUrl = convertDriveUrl(asset['IMAGE_ID']);
                 photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" class="w-full h-full object-cover" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;></i>'">`;
             }
 
