@@ -573,14 +573,27 @@
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'block';
 
+            // --- ระบบตัวช่วยดึงข้อมูลสำรอง (Fallback Data Helper) ---
+            // เช็คว่าถ้าฐานข้อมูลหลัก (mainKey) ว่างเปล่าหรือเป็น '-' ให้ไปดึงจากฐานข้อมูลรอง (fallbackKey) แทน
+            const getVal = (mainKey, fallbackKey) => {
+                const mainVal = asset[mainKey];
+                if (mainVal !== undefined && mainVal !== null && String(mainVal).trim() !== '' && String(mainVal).trim() !== '-') {
+                    return mainVal;
+                }
+                const fallbackVal = asset[fallbackKey];
+                if (fallbackVal !== undefined && fallbackVal !== null && String(fallbackVal).trim() !== '' && String(fallbackVal).trim() !== '-') {
+                    return fallbackVal;
+                }
+                return '-';
+            };
+
             // --- SUMMARY MAPPING ---
-            safeSetText('valAssetID', asset['AssetID']);
-            safeSetText('valAssetName', asset['หมวดครุภัณฑ์']);
-            safeSetText('valAssetNameGroup', `${asset['Asset_Type_Name'] || '-'} / ${asset['Asset_Item_Name'] || asset['ชื่อรายการครุภัณฑ์']}`);
-            safeSetText('valCode', asset['AssetID']);
-            safeSetText('valSerial', asset['Searail']);
-            safeSetText('valMaStatus', asset['MaStatus'] || '-');
-            safeSetText('valCoStatus', asset['CoStatus'] || '-');
+            safeSetText('valAssetID', getVal('AssetID', 'AssetID')); 
+            safeSetText('valAssetName', getVal('ชื่อรายการครุภัณฑ์', 'Asset_Group'));
+            safeSetText('valCode', getVal('รหัสครุภัณฑ์', 'AssetID'));
+            safeSetText('valSerial', getVal('Searail', 'Serial'));
+            safeSetText('valMaStatus', getVal('MaStatus', 'MaStatus')); 
+            safeSetText('valCoStatus', getVal('CoStatus', 'CoStatus')); 
 
             // --- PHOTO & QR CODE RENDERING ---
             const photoFrame = document.getElementById('photoFrame');
@@ -600,25 +613,27 @@
 
             // อัปเดตขนาดภาพและเพิ่มคำสั่ง onclick เพื่อเปิด Lightbox
             const qrFrame = document.getElementById('qrFrame');
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href)}`;
-            qrFrame.innerHTML = `<img src="${qrUrl}" alt="Scan QR Code" class="w-full h-full object-contain" onclick="openLightbox('${qrUrl}', 'QR Code สำหรับเข้าถึงข้อมูลครุภัณฑ์นี้')">`;
+            qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href)}" alt="Scan QR Code" class="w-full h-full object-contain cursor-pointer hover:scale-105 transition-transform" onclick="openLightbox('https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href)}', 'QR Code สำหรับเข้าถึงข้อมูลครุภัณฑ์นี้')" title="คลิกเพื่อขยาย QR Code">`;
 
             // --- BASIC INFO ---
-            safeSetText('valCategory', asset['ชื่อรายการครุภัณฑ์']);
-            safeSetText('valTypeID', `${asset['Asset_Type_Name'] || '-'} / ${asset['Asset_Item_Name'] || '-'}`);
-            safeSetText('valSpec', asset['รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์']);
-            safeSetText('valOldCode', asset['รหัสครุภัณฑ์เดิม']);
+            safeSetText('valCategory', getVal('หมวดครุภัณฑ์', 'Asset_Group'));
+            safeSetText('valTypeID', `${asset['Asset_Type_ID'] || '-'} / ${asset['Asset_Item_Type_ID'] || '-'}`);
+            safeSetText('valSpec', getVal('รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์', 'Detail'));
+            safeSetText('valOldCode', getVal('รหัสครุภัณฑ์เดิม', 'NO'));
 
             // --- LOCATION INFO ---
-            safeSetText('valCurrentLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน']);
-            safeSetText('valInstallLoc', asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']);
-            safeSetText('valInstallLocDesc', asset['หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง']);
-            safeSetText('valNoupid', `${asset['NOUPID'] || '-'} / ${asset['NOID_2'] || '-'}`);
+            safeSetText('valCurrentLoc', getVal('หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน', 'Dept_ID'));
+            safeSetText('valInstallLoc', getVal('หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง', 'Dept_ID'));
+            safeSetText('valInstallLocDesc', getVal('หน่วยงานที่รับผิดชอบ/สถานที่ติดตั้ง', 'Dept_ID'));
+            safeSetText('valNoupid', `${getVal('NOUPID', 'NO')} / ${getVal('NOID_2', 'NOID')}`);
 
             // --- FINANCIAL INFO ---
-            safeSetText('valReceiveDate', `${formatDate(asset['วันที่รับเข้า'])} (ปี: ${asset['ปีที่รับเข้า'] || '-'})`);
-            safeSetText('valFund', asset['แหล่งเงินที่ใช้จัดซื้อ']);
-            safeSetText('valPrice', asset['ราคา'] ? Number(asset['ราคา']).toLocaleString() + ' ฿' : '-');
+            safeSetText('valReceiveDate', `${formatDate(getVal('วันที่รับเข้า', 'Date_In'))} (ปี: ${getVal('ปีที่รับเข้า', 'Year_In')})`);
+            safeSetText('valFund', asset['แหล่งเงินที่ใช้จัดซื้อ'] || '-');
+            
+            const finalPrice = getVal('ราคา', 'Pric');
+            safeSetText('valPrice', finalPrice !== '-' ? Number(finalPrice).toLocaleString() + ' ฿' : '-');
+            
             safeSetText('valWarranty', asset['Varanty'] || '-'); 
 
             // --- TECHNICAL INFO ---
@@ -662,7 +677,6 @@
 
             const kpiRiskEl = document.getElementById('kpiRisk');
             if (kpiRiskEl) {
-                // อัปเดตสี Risk Level (เสี่ยงสูง = แดง, เสี่ยงกลาง = เหลือง, เสี่ยงต่ำ = เขียว)
                 if (riskLvl === 'High' || riskLvl === 'Critical') {
                     kpiRiskEl.className = 'text-3xl font-bold text-red-500';
                 } else if (riskLvl === 'Medium') {
@@ -673,8 +687,8 @@
             }
 
             // แสดงข้อมูลด้านอายุการทำงาน
-            const ageVal = asset['อายุ'];
-            const ageString = (ageVal !== undefined && ageVal !== null && ageVal !== '') ? (String(ageVal).includes('ปี') ? ageVal : ageVal + ' ปี') : '-';
+            const ageVal = getVal('อายุ', 'อายุ');
+            const ageString = (ageVal !== '-') ? (String(ageVal).includes('ปี') ? ageVal : ageVal + ' ปี') : '-';
             
             safeSetText('kpiAge', ageString);
             safeSetText('valAssetAgeSheet', ageString);
@@ -690,23 +704,22 @@
                 return sum + (isNaN(costVal) ? 0 : costVal);
             }, 0);
 
-            // KPI ประวัติการซ่อมบำรุง (แมปปิ้งตรงจาก calc.totalMA ที่ code.gs สรุปมาให้)
-            const totalMACount = calc.totalMA !== undefined ? calc.totalMA : maRecords.length;
-            safeSetText('kpiMA', totalMACount + ' ครั้ง');
+            // KPI ประวัติการซ่อมบำรุง
+            safeSetText('kpiMA', maRecords.length + ' ครั้ง');
             safeSetText('valTotalRepairCost', 'มูลค่าซ่อมสะสม: ' + totalRepairCost.toLocaleString() + ' ฿');
 
             // --- NOTES & GPS MAPPING ---
-            const note2Val = asset['Note2'];
+            const note2Val = getVal('Note2', 'GPS');
             const note2El = document.getElementById('valNote2');
             if (note2El) {
-                if (note2Val && note2Val !== '-') {
-                    // แปลงค่า GPS เป็นปุ่มลิงก์เปิดแผนที่ Google Maps โดยตรง (สไตล์ปุ่ม Tailwind)
+                if (note2Val !== '-') {
+                    // แปลงค่า GPS เป็นปุ่มลิงก์เปิดแผนที่ Google Maps โดยตรง
                     note2El.innerHTML = `<a href="https://maps.google.com/?q=${encodeURIComponent(note2Val.trim())}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg font-medium hover:bg-indigo-100 transition-colors border border-indigo-100"><i class="fa-solid fa-map-location-dot"></i> ดูพิกัดบนแผนที่</a>`;
                 } else {
                     note2El.textContent = '-';
                 }
             }
-            safeSetText('valNote3', asset['Note3'] || '-');
+            safeSetText('valNote3', getVal('Note3', 'Note4'));
 
             // --- MOVEMENT TIMELINE RENDERING ---
             const timelineMovement = document.getElementById('timelineMovement');
