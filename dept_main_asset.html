@@ -1329,7 +1329,7 @@
         const mMoreBtn = document.getElementById('btnMoreAssetInfo');
         if (mMoreBtn) {
             const actualAssetId = item.Asset_ID || item.ASSET_ID || '';
-            mMoreBtn.href = `https://dakdan.github.io/IT-ASSET/asset_detail.html?AssetID=${encodeURIComponent(actualAssetId)}`;
+            mMoreBtn.href = `https://dakdan.github.io/it-technician-support/asset_detail.html?AssetID=${encodeURIComponent(actualAssetId)}`;
         }
 
         const dept = state.allDepts.find(d => String(getDeptIdVal(d)) === String(deptId));
