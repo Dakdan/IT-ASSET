@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <link class="no-print" rel="icon" type="image/png" href="favicon.png">
+    <link class="no-print" rel="icon" type="image/png" href="logo003v1.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Asset Inspection Check System</title>
+    <title>IT Asset UDH - Inventory Check & Reports</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -169,16 +169,6 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        .asset-category-header {
-            padding: 1rem 0;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #f1f5f9;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
         .multi-select-chip {
             cursor: pointer;
             transition: all 0.2s;
@@ -216,13 +206,6 @@
             font-weight: 800;
             color: #334155;
             border-bottom: 2px solid #cbd5e1;
-        }
-
-        .row-type-header {
-            background: #fff1f2;
-            font-weight: 700;
-            color: #ec4899;
-            font-size: 12px;
         }
 
         .dash-filter-card {
@@ -283,7 +266,6 @@
 </head>
 
 <body class="text-slate-700">
-    <!-- Loading Overlay -->
     <div id="loaderModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-sm hidden no-print">
         <div class="text-center">
             <div class="inline-block w-12 h-12 border-4 border-pink-100 border-t-pink-600 rounded-full animate-spin mb-3"></div>
@@ -295,10 +277,10 @@
     <div class="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl overflow-hidden shadow-md border border-slate-100 flex items-center justify-center bg-white">
-                <img src="./favicon.png" alt="Logo" class="h-12">
+                <img src="./logo005v1.png" alt="Logo" class="h-12" onerror="this.onerror=null;this.src='https://placehold.co/100x100/ec4899/ffffff?text=UDH'">
             </div>
             <div>
-                <h1 class="text-xl font-black text-slate-800 leading-none">It Asset Inspection<span class="text-pink-500"> CHECK</span></h1>
+                <h1 class="text-xl font-black text-slate-800 leading-none">IT ASSET INVENTORY<span class="text-pink-500"> CHECK</span></h1>
                 <p class="text-[10px] text-slate-400 font-bold tracking-widest mt-1 uppercase">IT Udonthani Hospital</p>
             </div>
         </div>
@@ -331,8 +313,6 @@
 </nav>
 
 <main class="max-w-[1440px] mx-auto px-6 pt-10 pb-20 no-print">
-    
-    <!-- Header Title Section -->
     <div class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 tracking-tight text-center md:text-left uppercase">ตรวจสอบครุภัณฑ์ประจำปี <span class="text-pink-500">2569</span></h2>
@@ -409,7 +389,6 @@
                         <p id="statDepts" class="text-2xl font-black text-slate-800 leading-tight">-</p>
                     </div>                      
                 </div>
-                <span class="text-[10px] font-bold text-blue-300 uppercase italic"></span> 
             </div> 
             <div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
                 <div class="flex items-center gap-4">
@@ -435,7 +414,7 @@
         <div class="p-6 md:p-8 border-b-2 border-slate-200 flex justify-between items-center bg-white sticky top-0 z-10">
             <div class="flex items-center gap-6">
                 <div class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-100 flex-shrink-0">
-                    <img id="mDeptPic" src="" class="w-full h-full object-cover">
+                    <img id="mDeptPic" src="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/100x100/ec4899/ffffff?text=UDH'">
                 </div>
                 <div>
                     <h3 id="mDeptName" class="text-xl md:text-2xl font-black text-slate-800"></h3>
@@ -454,7 +433,8 @@
         <div id="mAssetGroupContainer" class="p-4 md:p-8 overflow-y-auto flex-1 bg-slate-50/30 custom-scroll"></div>
     </div>
 </div>
-<!-- Modal: Asset Detail -->
+
+<!-- Modal: Asset Detail (Read Only + ลิงก์รายละเอียด) -->
 <div id="modalAssetDetail" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md hidden items-center justify-center z-[250] p-4 no-print" onclick="closeAssetDetailModal()">
     <div class="bg-white w-full max-w-3xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()">
         <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
@@ -473,67 +453,57 @@
         </div>
         
         <div class="p-6 md:p-8 overflow-y-auto flex-1 bg-slate-50/30 custom-scroll">
-            <form id="editAssetForm" onsubmit="event.preventDefault();">
-                <input type="hidden" id="editDeptId">
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Left Column -->
-                    <div class="space-y-4">
-                        <div class="w-full aspect-video md:aspect-square rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-300 relative group flex items-center justify-center shadow-inner">
-                            <img id="editAssetPic" src="" class="w-full h-full object-cover">
-                        </div>
-                    </div>
-
-                    <!-- Right Column -->
-                    <div class="space-y-4 flex flex-col justify-between">
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">หน่วยงาน / แผนก</label>
-                                <input id="editAssetDeptName" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
-                            </div>
-
-                            <div>
-                                <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">รหัสครุภัณฑ์ (Asset ID)</label>
-                                <input id="editAssetId" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
-                            </div>
-
-                            <div>
-                                <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">รายละเอียดรุ่น (Model / Detail)</label>
-                                <input id="editDetailId" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-700 outline-none cursor-not-allowed">
-                            </div>
-
-                            <div>
-                                <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">หมายเลขซีเรียล (Serial Number / NOID)</label>
-                                <input id="editNoid" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">กลุ่มผู้ใช้งาน(การใช้งาน)</label>
-                                    <select id="selectPriority" disabled class="w-full px-3 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed appearance-none">
-                                        <option value="ตรวจรักษา (แพทย์)">ตรวจรักษา (แพทย์)</option>
-                                        <option value="ข้อมูลผู้ป่วย (พยาบาล)">ข้อมูลผู้ป่วย (พยาบาล)</option>
-                                        <option value="บริการ/การเงิน/ห้องบัตร/ห้องยา/Lab">บริการ/การเงิน/ห้องบัตร/ห้องยา/Lab</option>
-                                        <option value="งานเอกสาร/ธุรการ">งานเอกสาร/ธุรการ</option>
-                                        <option value="บริการทั่วไป/ซ่อมบำรุง/ช่างต่างๆ/โรงรถ">บริการทั่วไป/ซ่อมบำรุง/ช่างต่างๆ/โรงรถ</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">อายุการใช้งาน (ปี)</label>
-                                    <input id="editDbAge" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons (🛠️ ปรับปรุงเป็นลิงก์ "ดูข้อมูลเพิ่มเติม" ปลายทางเว็บภายนอกตามใบสั่งของพี่ช่าง) -->
-                        <div class="pt-6 border-t-2 border-slate-200 flex gap-3">
-                            <a id="btnMoreAssetInfo" href="#" target="_blank" class="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-pink-100 text-center">
-                                <i class="fas fa-external-link-alt"></i> ดูข้อมูลเพิ่มเติม
-                            </a>
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                    <div class="w-full aspect-video md:aspect-square rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-300 flex items-center justify-center shadow-inner">
+                        <img id="editAssetPic" src="" class="w-full h-full object-cover">
                     </div>
                 </div>
-            </form>
+
+                <!-- Right Column -->
+                <div class="space-y-4 flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">หน่วยงาน / แผนก</label>
+                            <input id="editAssetDeptName" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">รหัสครุภัณฑ์ (Asset ID)</label>
+                            <input id="editAssetId" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">รายละเอียดรุ่น (Model / Detail)</label>
+                            <input id="editDetailId" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">หมายเลขซีเรียล (Serial Number / NOID)</label>
+                            <input id="editNoid" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">กลุ่มผู้ใช้งาน</label>
+                                <input id="selectPriority" readonly class="w-full px-3 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">อายุการใช้งาน (ปี)</label>
+                                <input id="editDbAge" readonly class="w-full px-4 py-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 outline-none cursor-not-allowed">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 📌 ปุ่มเปิดลิงก์รายละเอียดเพิ่มเติม -->
+                    <div class="pt-6 border-t-2 border-slate-200">
+                        <a id="btnMoreDetail" href="#" target="_blank" class="w-full py-3 bg-pink-500 text-white rounded-xl font-bold text-xs hover:bg-pink-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-pink-100">
+                            <i class="fas fa-external-link-alt"></i> ดูรายละเอียดเพิ่มเติม
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -595,36 +565,30 @@
     </div>
 </div>
 
+<footer class="mt-8 text-center p-6 no-print border-t border-slate-100 bg-slate-50/50">
+    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter tracking-widest leading-loose">
+        &copy;พัฒนาโดย ทีม 👷 ช่างไอที กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์<br>
+        โรงพยาบาลอุดรธานี • IT ASSET SYSTEMS
+    </p>
+</footer>
+
 <script>
-    // URL ของ Web App Google Apps Script
     const APP_URL = "https://script.google.com/macros/s/AKfycbznFwIHQsiqqydWSyR7eweKVsfchRyWtbQPZ_ogHma4ZL2X9QnHFb6sqVXvEeXJqwTx/exec";
 
-    // ข้อมูลระบบหลัก
-    let state = {
-        allDepts: [],
-        globalLogs: [],
-        currentDeptLogs: [], // ตัวแปรเก็บข้อมูลครุภัณฑ์แผนกปัจจุบันที่ดึงมาล่าสุด (มีลิงก์รูปครบถ้วน)
-        priorities: {
-            "PIO-001": "ตรวจรักษา (แพทย์)",
-            "PIO-002": "ข้อมูลผู้ป่วย (พยาบาล)",
-            "PIO-003": "บริการ/การเงิน/ห้องบัตร/ห้องยา/Lab",
-            "PIO-004": "งานเอกสาร/ธุรการ",
-            "PIO-005": "บริการทั่วไป/ซ่อมบำรุง/ช่างต่างๆ/โรงรถ"
-        },
-        assetTypes: {
-            "COM-001-0001": "เครื่องคอมพิวเตอร์ (All In One)",
-            "COM-001-0002": "เครื่องคอมพิวเตอร์ (Case)",
-            "COM-001-0003": "จอรับภาพ (Monitor)",
-            "UPS-002-0004": "เครื่องสำรองไฟ (UPS)",
-            "PRI-003-0005": "เครื่องปริ้นเตอร์ (Printer Lasers)",
-            "SCA-004-0006": "เครื่องแสกนเนอร์",
-            "CAR-005-0007": "เครื่องอ่านบัตรประชาชน",
-            "PRI-003-0008": "เครื่องปริ้นเตอร์ (Thermal)"
-        },
-        currentView: 'grid',
-        filters: { search: '', building: 'ALL', floor: 'ALL', dept: 'ALL', types: [], priorities: [], ages: [] },
-        reportFilters: { building: 'ALL', floor: 'ALL', dept: 'ALL', types: [], priorities: [], ages: [] }
-    };
+    function getDeptIdVal(dept) {
+        if (!dept || Object.keys(dept).length === 0) return '';
+        return dept['DEP_ID'] || dept['DEPID'] || dept['DEPT_ID'] || Object.keys(dept)[0] || '';
+    }
+
+    function getDeptNameVal(dept) {
+        if (!dept || Object.keys(dept).length === 0) return '';
+        return dept['DEPNAME'] || dept['DEPARTMENT'] || dept[Object.keys(dept)[2]] || '';
+    }
+
+    function getDeptNameLocVal(dept) {
+        if (!dept || Object.keys(dept).length === 0) return '';
+        return dept['DEP_NAME_LOC'] || dept['DEPNAME'] || dept['DEPARTMENT'] || '';
+    }
 
     function getBuildingVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
@@ -632,7 +596,6 @@
         return key ? String(dept[key] || '').trim() : '';
     }
 
-    // แก้ไขขัดจังหวะการดึงข้อมูลชั้นให้ออกมาปลอดภัยเสถียร 100%
     function getFloorVal(dept) {
         if (!dept || Object.keys(dept).length === 0) return '';
         const key = Object.keys(dept)[5];
@@ -645,31 +608,83 @@
         return key ? String(dept[key] || '').trim() : '';
     }
 
-    function getDeptIdVal(dept) {
-        if (!dept || Object.keys(dept).length === 0) return '';
-        return dept['DEP_ID'] || dept['DEPID'] || dept['DEPT_ID'] || Object.keys(dept)[0];
+    function cleanStr(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[^a-zA-Z0-9ก-ฮ]/g, '').toUpperCase();
     }
 
-    function getDeptNameVal(dept) {
-        if (!dept || Object.keys(dept).length === 0) return '';
-        return dept['DEPNAME'] || dept['DEPARTMENT'] || dept[Object.keys(dept)[2]] || '';
+    function isAssetMatch(id1, id2) {
+        const c1 = cleanStr(id1);
+        const c2 = cleanStr(id2);
+        if (!c1 || !c2) return false;
+        return c1 === c2 || c1.includes(c2) || c2.includes(c1);
     }
 
-    // ฟังก์ชันเริ่มต้นของระบบ ดึงข้อมูลภาพรวมทันที ป้องกัน Error เมื่อเรียกไม่สำเร็จ
+    function getImageUrl(picId) {
+        if (!picId) return 'https://placehold.co/100x100/ec4899/ffffff?text=UDH';
+        const str = String(picId).trim();
+        if (str.startsWith('http')) return str;
+        if (str.length > 10) return `https://drive.google.com/thumbnail?id=${str}&sz=w600`;
+        return 'https://placehold.co/100x100/ec4899/ffffff?text=UDH';
+    }
+
+    function getAssetPhotoUrl(item) {
+        if (!item) return 'https://placehold.co/100x100/ec4899/ffffff?text=UDH';
+        if (Array.isArray(item.Images) && item.Images.length > 0 && item.Images[0]) {
+            return getImageUrl(item.Images[0]);
+        }
+        return getImageUrl(item.Asset_Photo || item.PhotoUrl || item.IMAGE_ID);
+    }
+
+    // 📌 ระบบ Smart Cross-Check อายุ (ดึงจากทุกคีย์ที่อาจเป็นไปได้และเทียบข้ามกับ Global Logs)
+    function getAssetAge(item) {
+        if (!item) return '-';
+        const keys = ["อายุ", "อายุ(ปี)", "อายุ (ปี)", "อายุการใช้งาน", "DB_Age", "Age", "asset_age", "AGE"];
+        for (let k of keys) {
+            if (item[k] !== undefined && item[k] !== null) {
+                const val = String(item[k]).trim();
+                if (val !== '' && val !== 'ไม่มีบันทึก' && val !== 'null' && val !== 'undefined') {
+                    return val;
+                }
+            }
+        }
+        return 'ไม่มีบันทึก';
+    }
+
+    let state = {
+        allDepts: [],
+        globalLogs: [],
+        currentDeptLogs: [],
+        priorities: {
+            "PIO-001": "ตรวจรักษา (แพทย์)",
+            "PIO-002": "ข้อมูลผู้ป่วย (พยาบาล)",
+            "PIO-003": "บริการ/การเงิน/ห้องบัตร/ห้องยา/Lab",
+            "PIO-004": "งานเอกสาร/ธุรการ",
+            "PIO-005": "บริการทั่วไป/ซ่อมบำรุง/ช่างต่างๆ/โรงรถ"
+        },
+        assetTypes: {
+            "COM-001-0001": "เครื่องคอมพิวเตอร์ (All In One)",
+            "COM-001-0002": "เครื่องคอมพิวเตอร์ (Case)",
+            "COM-001-0003": "จอรับภาพ (Monitor)*ส่วนประกอบ",
+            "UPS-002-0004": "เครื่องสำรองไฟ (UPS)",
+            "PRI-003-0005": "เครื่องปริ้นเตอร์ (Printer Lasers)",
+            "SCA-004-0006": "เครื่องแสกนเนอร์",
+            "CAR-005-0007": "เครื่องอ่านบัตรประชาชน",
+            "PRI-003-0008": "เครื่องปริ้นเตอร์ (Thermal)"
+        },
+        currentView: 'grid',
+        filters: { search: '', building: 'ALL', floor: 'ALL', dept: 'ALL', types: [], priorities: [], ages: [] },
+        reportFilters: { building: 'ALL', floor: 'ALL', dept: 'ALL', types: [], priorities: [], ages: [] }
+    };
+
     async function init() {
         showLoader(true);
         const icon = document.getElementById('refreshIcon');
         if (icon) icon.classList.add('animate-spin');
 
         try {
-            const deptsPromise = fetch(`${APP_URL}?action=getDeptList`).then(r => {
-                if(!r.ok) throw new Error("Network Error");
-                return r.json();
-            });
-            const logsPromise = fetch(`${APP_URL}?action=getGlobalDashboard`).then(r => {
-                if(!r.ok) throw new Error("Network Error");
-                return r.json();
-            });
+            const deptsPromise = fetch(`${APP_URL}?action=getDeptList`).then(r => r.json());
+            const logsPromise = fetch(`${APP_URL}?action=getGlobalDashboard`).then(r => r.json());
             
             const [depts, logs] = await Promise.all([deptsPromise, logsPromise]);
             
@@ -689,7 +704,7 @@
             console.error("Initialization Error: ", err);
             const p = document.getElementById('lastUpdate');
             if (p) {
-                p.innerText = "เกิดข้อผิดพลาด! กรุณาตรวจสอบการตั้งค่า Deploy ของ Google Apps Script (สิทธิ์ Anyone)";
+                p.innerText = "เกิดข้อผิดพลาดในการโหลดข้อมูล! กรุณาตรวจสอบการเชื่อมต่อ API";
                 p.className = "text-[10px] font-bold text-red-500 mt-1 uppercase tracking-[0.3em]";
             }
         } finally {
@@ -935,12 +950,19 @@
         }
     }
 
-    function getImageUrl(picId) {
-        if (!picId) return 'https://img2.pic.in.th/-227e4f6f84f29f020.png';
-        const str = String(picId).trim();
-        if (str.startsWith('http')) return str;
-        if (str.length > 10) return `https://drive.google.com/thumbnail?id=${str}&sz=w600`;
-        return 'https://img2.pic.in.th/-227e4f6f84f29f020.png';
+    function filterLogsByAges(logs, ageFilters) {
+        if (!ageFilters || ageFilters.length === 0) return logs;
+        return logs.filter(l => {
+            const ageVal = getAssetAge(l);
+            const ageNum = parseFloat(ageVal) || 0;
+            return ageFilters.some(range => {
+                if (range === 'low') return ageNum < 4;
+                if (range === 'mid') return ageNum >= 4 && ageNum < 7;
+                if (range === 'high') return ageNum >= 7 && ageNum < 10;
+                if (range === 'old') return ageNum >= 10;
+                return false;
+            });
+        });
     }
 
     function renderDashboard() {
@@ -958,18 +980,7 @@
             if (state.filters.priorities.length > 0) {
                 logs = logs.filter(l => state.filters.priorities.includes(l.Priority));
             }
-            if (state.filters.ages.length > 0) {
-                logs = logs.filter(l => {
-                    const age = parseFloat(l.Age || l.DB_Age) || 0;
-                    return state.filters.ages.some(range => {
-                        if (range === 'low') return age < 4;
-                        if (range === 'mid') return age >= 4 && age < 7;
-                        if (range === 'high') return age >= 7 && age < 10;
-                        if (range === 'old') return age >= 10;
-                        return false;
-                    });
-                });
-            }
+            logs = filterLogsByAges(logs, state.filters.ages);
             
             if (logs.length === 0) return false;
 
@@ -996,24 +1007,9 @@
         activeDepts.forEach(d => {
             const deptId = getDeptIdVal(d);
             let logs = state.globalLogs.filter(l => String(l.DEPT_ID) === String(deptId));
-            if (state.filters.types.length > 0) {
-                logs = logs.filter(l => state.filters.types.includes(l.Asset_Type));
-            }
-            if (state.filters.priorities.length > 0) {
-                logs = logs.filter(l => state.filters.priorities.includes(l.Priority));
-            }
-            if (state.filters.ages.length > 0) {
-                logs = logs.filter(l => {
-                    const age = parseFloat(l.Age || l.DB_Age) || 0;
-                    return state.filters.ages.some(range => {
-                        if (range === 'low') return age < 4;
-                        if (range === 'mid') return age >= 4 && age < 7;
-                        if (range === 'high') return age >= 7 && age < 10;
-                        if (range === 'old') return age >= 10;
-                        return false;
-                    });
-                });
-            }
+            if (state.filters.types.length > 0) logs = logs.filter(l => state.filters.types.includes(l.Asset_Type));
+            if (state.filters.priorities.length > 0) logs = logs.filter(l => state.filters.priorities.includes(l.Priority));
+            logs = filterLogsByAges(logs, state.filters.ages);
             totalMatchedAssets += logs.length;
         });
         document.getElementById('statAssets').innerText = totalMatchedAssets + " ชิ้น";
@@ -1080,24 +1076,13 @@
                     let dLogs = state.globalLogs.filter(l => String(l.DEPT_ID) === String(dId));
                     if (state.filters.types.length > 0) dLogs = dLogs.filter(l => state.filters.types.includes(l.Asset_Type));
                     if (state.filters.priorities.length > 0) dLogs = dLogs.filter(l => state.filters.priorities.includes(l.Priority));
-                    if (state.filters.ages.length > 0) {
-                        dLogs = dLogs.filter(l => {
-                            const age = parseFloat(l.Age || l.DB_Age) || 0;
-                            return state.filters.ages.some(range => {
-                                if (range === 'low') return age < 4;
-                                if (range === 'mid') return age >= 4 && age <7;
-                                if (range === 'high') return age >= 7 && age <10;
-                                if (range === 'old') return age >= 10;
-                                return false;
-                            });
-                        });
-                    }
+                    dLogs = filterLogsByAges(dLogs, state.filters.ages);
                     const count = dLogs.length;
 
                     buildingHtml += `
                     <div onclick="openDeptDetailModal('${dId}')" class="dept-card border-slate-100 p-5 flex items-center gap-4 hover:border-pink-500">
                         <div class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
-                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.src='https://img2.pic.in.th/-227e4f6f84f29f020.png'">
+                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/100x100/ec4899/ffffff?text=UDH'">
                         </div>
                         <div class="flex-1 min-w-0">
                             <h4 class="font-bold text-slate-800 text-sm truncate">${dName}</h4>
@@ -1139,7 +1124,7 @@
             sortedFloors.forEach(fName => {
                 const displayFloorName = String(fName).includes("ชั้น") ? fName : `ชั้น ${fName}`;
                 tblHtml += `
-                <div class="table-floor-header" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-bottom: 2px solid #cbd5e1;"><i class="fas fa-layer-group text-pink-500 mr-2"></i>${displayFloorName}</div>
+                <div class="table-floor-header"><i class="fas fa-layer-group text-pink-500 mr-2"></i>${displayFloorName}</div>
                 <table class="main-table">
                     <thead>
                         <tr>
@@ -1162,25 +1147,14 @@
                     let dLogs = state.globalLogs.filter(l => String(l.DEPT_ID) === String(dId));
                     if (state.filters.types.length > 0) dLogs = dLogs.filter(l => state.filters.types.includes(l.Asset_Type));
                     if (state.filters.priorities.length > 0) dLogs = dLogs.filter(l => state.filters.priorities.includes(l.Priority));
-                    if (state.filters.ages.length > 0) {
-                        dLogs = dLogs.filter(l => {
-                            const age = parseFloat(l.Age || l.DB_Age) || 0;
-                            return state.filters.ages.some(range => {
-                                if (range === 'low') return age < 4;
-                                if (range === 'mid') return age >= 4 && age <7;
-                                if (range === 'high') return age >= 7 && age <10;
-                                if (range === 'old') return age >= 10;
-                                return false;
-                            });
-                        });
-                    }
+                    dLogs = filterLogsByAges(dLogs, state.filters.ages);
                     const count = dLogs.length;
 
                     tblHtml += `
                     <tr onclick="openDeptDetailModal('${dId}')" class="dept-row cursor-pointer">
                         <td class="font-bold text-slate-800 text-sm flex items-center gap-3">
                             <div class="w-8 h-8 rounded-lg overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
-                                <img src="${photo}" class="w-full h-full object-cover" onerror="this.src='https://img2.pic.in.th/-227e4f6f84f29f020.png'">
+                                <img src="${photo}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/100x100/ec4899/ffffff?text=UDH'">
                             </div>
                             <span>${dName}</span>
                         </td>
@@ -1199,7 +1173,7 @@
         }
     }
 
-     async function openDeptDetailModal(deptId) {
+    async function openDeptDetailModal(deptId) {
         const mDept = document.getElementById('modalDept');
         if (mDept) mDept.classList.replace('hidden', 'flex');
         
@@ -1226,20 +1200,11 @@
                 if (mLoc) mLoc.innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ${bName} • ชั้น ${fName}`;
                 
                 const mDetailBtn = document.getElementById('mDeptDetailBtn');
-                if (mDetailBtn) mDetailBtn.href = `https://dakdan.github.io/IT-ASSET/dept_detail.html?DEP_ID=${deptId}`;
-            } else {
-                const mPic = document.getElementById('mDeptPic');
-                if (mPic) mPic.src = 'https://img2.pic.in.th/-227e4f6f84f29f020.png';
-                
-                const mName = document.getElementById('mDeptName');
-                if (mName) mName.innerText = 'ไม่พบข้อมูลหน่วยงาน';
-                
-                const mLoc = document.getElementById('mDeptLoc');
-                if (mLoc) mLoc.innerHTML = `<i class="fas fa-map-marker-alt text-pink-500"></i> ไม่ระบุอาคาร • ไม่ระบุชั้น`;
+                if (mDetailBtn) mDetailBtn.href = `https://dakdan.github.io/it-technician-support/dept_detail.html?DEP_ID=${deptId}`;
             }
 
             let logs = res.auditLogs || [];
-            state.currentDeptLogs = logs; // 🛠️ เพิ่ม: บันทึกข้อมูลที่ดึงมาใหม่ลง state เพื่อใช้ดึงรูปใน Modal Asset Detail
+            state.currentDeptLogs = logs;
             if (logs.length === 0) {
                 container.innerHTML = `<div class="py-20 text-center"><i class="fas fa-search text-6xl text-slate-200 mb-4"></i><p class="text-slate-400 font-bold">ยังไม่มีข้อมูลครุภัณฑ์ในหน่วยงานนี้</p></div>`;
                 return;
@@ -1262,11 +1227,20 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
                 
                 grouped[t].forEach(item => {
-                    let photo = getImageUrl(item.Asset_Photo);
-                    const pStyle = 'bg-slate-100 text-slate-600 border-slate-300';
+                    let photo = getAssetPhotoUrl(item);
                     const safeAssetId = item.Asset_ID || item.ASSET_ID || '';
+                    const detailText = item["Asset_Name & Detail"] || item.Detail_ID || item.Detail || 'ไม่ระบุรุ่นครุภัณฑ์';
+                    
+                    // 📌 Smart Cross-Check อายุ: เช็คจาก item แผนกก่อน ถ้าไม่มีให้ดึงข้ามจาก globalLogs มาสำรอง
+                    let ageText = getAssetAge(item);
+                    if (ageText === 'ไม่มีบันทึก') {
+                        const globalMatch = state.globalLogs.find(g => isAssetMatch(g.Asset_ID || g.ASSET_ID, safeAssetId));
+                        if (globalMatch) {
+                            ageText = getAssetAge(globalMatch);
+                        }
+                    }
+                    const displayAge = (ageText !== 'ไม่มีบันทึก') ? `${ageText} ปี` : 'ไม่มีบันทึก';
 
-                    // 🛠️ เพิ่มเงื่อนไขตรวจสอบสถานะทะเบียนเพื่อแสดงสีส้มสำหรับ "นอกทะเบียน"
                     const regStatus = item.RegStatus || 'มีทะเบียน';
                     const isUnregistered = regStatus.includes('นอกทะเบียน');
                     const regColorClass = isUnregistered ? 'text-orange-600 bg-orange-50 border-orange-200' : 'text-emerald-600 bg-emerald-50 border-emerald-200';
@@ -1276,19 +1250,19 @@
                     <div onclick="openAssetDetailModal('${safeAssetId}', '${deptId}')" class="asset-detail-card p-5 rounded-3xl border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-pink-300 transition-all flex flex-col justify-between cursor-pointer">
                         <div class="flex gap-4 items-start">
                             <div class="w-20 h-20 rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 flex-shrink-0 shadow-inner">
-                                <img src="${photo}" class="w-full h-full object-cover" onerror="this.src='https://img2.pic.in.th/-227e4f6f84f29f020.png'">
+                                <img src="${photo}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/100x100/ec4899/ffffff?text=UDH'">
                             </div>
                             <div class="flex-1 min-w-0 font-medium">
                                 <div class="flex justify-between items-center mb-1.5 gap-2">
-                                    <span class="text-[16px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700 truncate max-w-[200px] shadow-sm">${item.Asset_ID  || '-'}</span>
+                                    <span class="text-[16px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700 truncate max-w-[200px] shadow-sm">${item.Asset_ID || '-'}</span>
                                 </div>
-                                <h5 class="text-sm font-black text-slate-800 leading-snug truncate" title="${item.Detail_ID || ''}">${item.Detail_ID || 'ไม่ระบุรุ่นครุภัณฑ์'}</h5>
-                                <p class="text-[12px] text-slate-500 truncate mt-1">S/N: <span class="font-extrabold text-slate-700">${item.NOID || '-'}</span></p>
+                                <h5 class="text-sm font-black text-slate-800 leading-snug truncate" title="${detailText}">${detailText}</h5>
+                                <p class="text-[12px] text-slate-500 truncate mt-1">S/N: <span class="font-extrabold text-slate-700">${item.NOID || item.Serial_Number || '-'}</span></p>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-slate-200/60 font-bold">
-                            <span class="text-[11px] px-2.5 py-1 rounded-lg border ${pStyle}"><i class="fas fa-flag mr-1 text-pink-500"></i>${item.Priority || 'ไม่ระบุ'}</span>
-                            <span class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 text-slate-600 border-slate-300"><i class="fas fa-clock mr-1 text-blue-500"></i>${item.DB_Age || '-'} ปี</span>
+                            <span class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-100 text-slate-600 border-slate-300"><i class="fas fa-flag mr-1 text-pink-500"></i>${item.Priority || 'ไม่ระบุ'}</span>
+                            <span class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 text-slate-600 border-slate-300"><i class="fas fa-clock mr-1 text-blue-500"></i>${displayAge}</span>
                             <span class="text-[11px] ${regColorClass} border px-2.5 py-0.5 rounded-full whitespace-nowrap flex items-center"><i class="fas ${regIconClass} mr-1"></i>${regStatus}</span>
                         </div>
                     </div>`;
@@ -1298,7 +1272,7 @@
             container.innerHTML = html;
 
         } catch (err) {
-            container.innerHTML = `<div class="py-20 text-center"><i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-4"></i><p class="text-slate-600 font-bold">เกิดข้อผิดพลาดในการดึงข้อมูล</p><p class="text-xs text-slate-400 mt-2">${err.message}</p></div>`;
+            container.innerHTML = `<div class="py-20 text-center"><i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-4"></i><p class="text-slate-600 font-bold">เกิดข้อผิดพลาดในการดึงข้อมูล</p></div>`;
         }
     }
 
@@ -1307,32 +1281,48 @@
         if (mDept) mDept.classList.replace('flex', 'hidden');
     }
 
-    let currentAssetData = null;
-
     function openAssetDetailModal(assetId, deptId) {
-        // ค้นหาข้อมูลจาก currentDeptLogs ก่อน เพราะมีฟิลด์ Asset_Photo ครบถ้วน (หากไม่พบจึงหาจาก globalLogs)
-        const item = state.currentDeptLogs.find(l => String(l.Asset_ID || l.ASSET_ID) === String(assetId)) || state.globalLogs.find(l => String(l.Asset_ID || l.ASSET_ID) === String(assetId));
+        const item = state.currentDeptLogs.find(l => isAssetMatch(l.Asset_ID || l.ASSET_ID, assetId)) 
+                  || state.globalLogs.find(l => isAssetMatch(l.Asset_ID || l.ASSET_ID, assetId));
+                  
         if (!item) return;
-        currentAssetData = item;
 
-        document.getElementById('editDeptId').value = deptId;
-        document.getElementById('editAssetId').value = item.Asset_ID || item.ASSET_ID || '';
-        document.getElementById('editDetailId').value = item.Detail || item.Detail_ID || '';
-        document.getElementById('editNoid').value = item.NOID || item.SN || item.S_N || '';
-        document.getElementById('selectPriority').value = item.Priority || item.PRIORITY || 'งานเอกสาร/ธุรการ';
-        document.getElementById('editDbAge').value = item.Age || item.DB_Age || '0';
+        const rawAssetId = item.Asset_ID || item.ASSET_ID || '-';
+        const detailText = item["Asset_Name & Detail"] || item.Detail_ID || item.Detail || 'ไม่ระบุรายละเอียด';
         
-        // 🛠️ ลบโค้ด inputAssetPhoto ที่ตกค้างอยู่ออก ป้องกัน JavaScript พัง เพื่อให้ Modal เด้งโชว์ตามปกติ
-        document.getElementById('editAssetPic').src = getImageUrl(item.Asset_Photo);
+        // Smart Cross-Check อายุใน Asset Modal
+        let ageText = getAssetAge(item);
+        if (ageText === 'ไม่มีบันทึก') {
+            const globalMatch = state.globalLogs.find(g => isAssetMatch(g.Asset_ID || g.ASSET_ID, rawAssetId));
+            if (globalMatch) {
+                ageText = getAssetAge(globalMatch);
+            }
+        }
+        
+        const photoUrl = getAssetPhotoUrl(item);
 
-        // 🛠️ อัปเดตลิงก์ปลายทางของปุ่ม "ดูข้อมูลเพิ่มเติม" ชี้ไปยัง URL ปลายทางพร้อมแนบรหัส Asset_ID จริง
-        const mMoreBtn = document.getElementById('btnMoreAssetInfo');
-        if (mMoreBtn) {
-            const actualAssetId = item.Asset_ID || item.ASSET_ID || '';
-            mMoreBtn.href = `https://dakdan.github.io/it-technician-support/asset_detail.html?Asset_ID=${encodeURIComponent(actualAssetId)}`;
+        document.getElementById('editAssetId').value = rawAssetId;
+        document.getElementById('editDetailId').value = detailText;
+        document.getElementById('editNoid').value = item.NOID || item.Serial_Number || '-';
+        document.getElementById('selectPriority').value = item.Priority || 'ไม่ระบุ';
+        
+        document.getElementById('editDbAge').value = (ageText !== 'ไม่มีบันทึก') ? `${ageText} ปี` : 'ไม่มีบันทึก';
+
+        const btnMore = document.getElementById('btnMoreDetail');
+        if (btnMore) {
+            btnMore.href = `https://dakdan.github.io/it-technician-support/asset_detail.html?Asset_ID=${encodeURIComponent(rawAssetId)}`;
         }
 
-        const dept = state.allDepts.find(d => String(getDeptIdVal(d)) === String(deptId));
+        const imgEl = document.getElementById('editAssetPic');
+        if (imgEl) {
+            imgEl.onerror = function() {
+                this.onerror = null;
+                this.src = 'https://placehold.co/300x300/ec4899/ffffff?text=UDH';
+            };
+            imgEl.src = photoUrl;
+        }
+
+        const dept = state.allDepts.find(d => isAssetMatch(getDeptIdVal(d), deptId));
         const deptName = dept ? getDeptNameVal(dept) : 'ไม่ระบุหน่วยงาน';
         const building = dept ? getBuildingVal(dept) : '';
         const floor = dept ? getFloorVal(dept) : '';
@@ -1347,19 +1337,6 @@
     function closeAssetDetailModal() {
         const modal = document.getElementById('modalAssetDetail');
         if (modal) modal.classList.replace('flex', 'hidden');
-        currentAssetData = null;
-    }
-
-    // 🛠️ คืนค่าฟังก์ชันให้อ่านได้อย่างเดียวเสมอเพราะไม่จำเป็นต้องมีสถานะ Edit Mode อีกต่อไปแล้ว
-    function enableEditMode(edit) {
-        // คงสภาพการจำกัดสิทธิ์อ่านอย่างเดียวไว้ตามกฎโครงสร้างระบบ
-        const detailInput = document.getElementById('editDetailId');
-        const noidInput = document.getElementById('editNoid');
-        const prioritySelect = document.getElementById('selectPriority');
-        
-        detailInput.setAttribute('readonly', true);
-        noidInput.setAttribute('readonly', true);
-        prioritySelect.setAttribute('disabled', true);
     }
 
     function toggleDashFilter(btn, type, val) {
@@ -1478,13 +1455,12 @@
             return;
         }
 
-        // --- เริ่มการคำนวณและรวบรวมข้อมูลเพื่อทำส่วน "สรุปจำนวนรวมตามประเภท" ให้ตรงกับ Filter ---
         let allFilteredLogs = [];
         const deptsWithLogs = [];
 
         matchedDepts.forEach(dept => {
             const deptId = getDeptIdVal(dept);
-            const dName = getDeptNameVal(dept) || 'ไม่ระบุแผนก';
+            const dName = getDeptNameLocVal(dept) || 'ไม่ระบุแผนก';
             
             const deptLogs = state.globalLogs.filter(l => String(l.DEPT_ID) === String(deptId));
 
@@ -1493,20 +1469,9 @@
                 filteredLogs = filteredLogs.filter(l => state.reportFilters.types.includes(l.Asset_Type));
             }
             if (state.reportFilters.priorities && state.reportFilters.priorities.length > 0) {
-                filteredLogs = filteredLogs.filter(l => state.reportFilters.priorities.includes(l.Priority || l.PRIORITY));
+                filteredLogs = filteredLogs.filter(l => state.reportFilters.priorities.includes(l.Priority));
             }
-            if (state.reportFilters.ages && state.reportFilters.ages.length > 0) {
-                filteredLogs = filteredLogs.filter(l => {
-                    const age = parseFloat(l.Age || l.DB_Age) || 0;
-                    return state.reportFilters.ages.some(range => {
-                        if (range === 'low') return age < 4;
-                        if (range === 'mid') return age >= 4 && age < 7;
-                        if (range === 'high') return age >= 7 && age < 10;
-                        if (range === 'old') return age >= 10;
-                        return false;
-                    });
-                });
-            }
+            filteredLogs = filterLogsByAges(filteredLogs, state.reportFilters.ages);
 
             if (filteredLogs.length > 0) {
                 allFilteredLogs.push(...filteredLogs);
@@ -1517,14 +1482,12 @@
             }
         });
 
-        // สรุปยอดตามประเภท (Group By Asset_Type)
         const summaryByType = {};
         allFilteredLogs.forEach(log => {
-            const type = log.Asset_Type || log.ASSET_TYPE || 'ไม่ระบุประเภท';
+            const type = log.Asset_Type || 'ไม่ระบุประเภท';
             summaryByType[type] = (summaryByType[type] || 0) + 1;
         });
 
-        // สร้าง HTML แผงสรุปยอด
         let summaryHtml = `<div class="flex flex-wrap justify-center gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200">`;
         if (Object.keys(summaryByType).length > 0) {
             for (const [type, count] of Object.entries(summaryByType)) {
@@ -1544,7 +1507,6 @@
             return;
         }
         summaryHtml += `</div>`;
-        // --- สิ้นสุดส่วนคำนวณสรุปยอด ---
 
         let reportHtml = `
         <div class="text-center mb-6">
@@ -1573,10 +1535,10 @@
             d.logs.forEach(item => {
                 const assetId = item.Asset_ID || item.ASSET_ID || '-';
                 const assetType = item.Asset_Type || item.ASSET_TYPE || '-';
-                const detail = item.Detail || item.Detail_ID || 'ไม่ระบุรุ่น';
-                const serialNo = item.NOID || item.SN || item.S_N || '-';
-                const priorityText = item.Priority || item.PRIORITY || 'ไม่ระบุระดับความสำคัญ';
-                const ageVal = item.Age || item.DB_Age || '-';
+                const detail = item["Asset_Name & Detail"] || item.Detail_ID || item.Detail || 'ไม่ระบุรุ่น';
+                const serialNo = item.NOID || item.Serial_Number || '-';
+                const priorityText = item.Priority || 'ไม่ระบุระดับความสำคัญ';
+                const ageVal = getAssetAge(item);
 
                 reportHtml += `
                 <tr>
@@ -1587,7 +1549,7 @@
                         <div class="text-[10px] text-slate-400">S/N: ${serialNo}</div>
                     </td>
                     <td class="text-xs font-semibold text-slate-600">${priorityText}</td>
-                    <td class="text-xs font-bold text-slate-700 text-center">${ageVal}</td>
+                    <td class="text-xs font-bold text-slate-700 text-center">${ageVal !== 'ไม่มีบันทึก' ? ageVal : '-'}</td>
                 </tr>`;
             });
         });
