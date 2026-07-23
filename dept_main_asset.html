@@ -1262,7 +1262,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
                 
                 grouped[t].forEach(item => {
-                    let photo = getImageUrl(item.Asset_ID);
+                    let photo = getImageUrl(item.Asset_Photo);
                     const pStyle = 'bg-slate-100 text-slate-600 border-slate-300';
                     const safeAssetId = item.Asset_ID || item.ASSET_ID || '';
 
