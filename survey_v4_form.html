@@ -131,7 +131,7 @@
                     </div>
                     <div>
                         <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">อายุการใช้งาน</p>
-                        <p id="detailAssetAge" class="text-sm font-bold text-pink-500">--</p>                     
+                        <p id="detailAssetAge" class="text-sm font-bold text-pink-500">--</p>                      
                     </div>  
                 </div>
                 <button onclick="closeModal('auditFormModal')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-xs">✕</button>
@@ -151,7 +151,7 @@
                             <p class="text-[10px] font-bold text-slate-400">แตะเพื่อถ่ายรูป</p>
                         </div>
                         <img id="imgPreview" class="hidden w-full h-full object-cover">
-                    </div>                 
+                    </div>                  
                     <input type="file" id="imgInput" accept="image/*" capture="environment" onchange="handleImageSelection(this, 'imgPreview', 'imgPlaceholder')" class="hidden">
                 </div>
 
@@ -201,7 +201,7 @@
                 </div>
                 <button onclick="closeModal('nonRegisterModal')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-xs">❌</button>
             </div>
-    
+        
             <div class="space-y-4">
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">📸 รูปภาพ</label>
@@ -211,10 +211,10 @@
                             <p class="text-[10px] font-bold text-slate-400 uppercase">ถ่ายรูปภาพ</p>
                         </div>
                         <img id="nr_imgPreview" class="hidden w-full h-full object-cover">
-                    </div>                 
+                    </div>                  
                     <input type="file" id="nr_imgInput" accept="image/*" capture="environment" onchange="handleImageSelection(this, 'nr_imgPreview', 'nr_imgPlaceholder')" class="hidden">
                 </div>
-    
+        
                 <div class="grid grid-cols-1 gap-3">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -235,7 +235,7 @@
                         <input type="text" id="nr_brand_detail" placeholder="ระบุยี่ห้อ รุ่น และสเปค..." class="w-full p-3.5 bg-slate-50 rounded-xl text-sm font-bold border-none outline-none focus:ring-2 focus:ring-orange-500/20">
                     </div>
                 </div>
-    
+        
                 <div class="grid grid-cols-1 gap-4">
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">ประเภทอุปกรณ์</label>
@@ -252,7 +252,7 @@
                         <select id="nr_priorityId" class="w-full p-3.5 bg-slate-50 rounded-xl text-sm font-bold text-slate-600 outline-none"></select>
                     </div>
                 </div>
-    
+        
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">ช่วงเวลาทำงาน (Shift)</label>
                     <div class="grid grid-cols-3 gap-2">
@@ -264,7 +264,7 @@
                         <label for="nr_shift_n" class="block text-center py-3 rounded-xl border border-slate-100 bg-slate-50 text-xs font-bold text-slate-500 cursor-pointer active:scale-95 transition-all">ดึก</label>
                     </div>
                 </div>                
-    
+        
                 <div class="grid grid-cols-2 gap-3 pt-2">
                     <button onclick="closeModal('nonRegisterModal')" class="py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm">❌ ยกเลิก</button>
                     <button onclick="submitAudit('NON_REGISTER')" class="py-4 bg-orange-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-orange-100 active:bg-orange-600 transition-colors">💾 บันทึก</button>
@@ -589,8 +589,17 @@
         }
     }
 
+    // ฟังก์ชันลบเครื่องหมาย - และช่องว่าง เพื่อใช้นำมาเปรียบเทียบข้อมูล
+    function normalizeText(str) {
+        if (!str) return "";
+        return String(str).replace(/[-/_\s]/g, "").toUpperCase();
+    }
+
     function highlightText(fullText, query) {
         if (!query || !fullText) return fullText || "";
+        const cleanQuery = normalizeText(query);
+        if (!cleanQuery) return fullText;
+        
         const regex = new RegExp(`(${query})`, 'gi');
         return String(fullText).replace(regex, '<span class="text-green-500 font-bold">$1</span>');
     }
@@ -602,7 +611,7 @@
         
         area.innerHTML = '<div class="col-span-full p-8 text-center"><div class="spinner mx-auto"></div></div>';
         area.classList.remove('hidden');
-    
+
         try {
             const res = await fetch(`${API_URL}?action=searchAsset&query=${encodeURIComponent(q)}&searchType=ID`);
             let data = await res.json(); 
@@ -612,42 +621,42 @@
                 area.innerHTML = '<p class="col-span-full text-center p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">ไม่พบรหัสครุภัณฑ์นี้</p>';
                 return;
             }
-    
-            // ปรับการ Sort ของ Frontend ให้เช็คจาก Serial ด้วย เพื่อให้เรียงลำดับได้ถูกต้องเมื่อค้นด้วย Serial
-            data.sort((a, b) => {
-                const idA = String(a.AssetID || "");
-                const serialA = String(a.Serial || "");
-                const idB = String(b.AssetID || "");
-                const serialB = String(b.Serial || "");
 
-                const getSuffix = (id, query) => {
+            const cleanQ = normalizeText(q);
+
+            // ปรับการ Sort ของ Frontend ให้เช็คจาก Serial ด้วย โดยลบเครื่องหมายขีดออกในการเปรียบเทียบ
+            data.sort((a, b) => {
+                const idA = normalizeText(a.AssetID);
+                const serialA = normalizeText(a.Serial);
+                const idB = normalizeText(b.AssetID);
+                const serialB = normalizeText(b.Serial);
+
+                const getSuffix = (str, query) => {
                     let count = 0;
-                    const revId = id.split('').reverse();
+                    const revStr = str.split('').reverse();
                     const revQ = query.split('').reverse();
-                    for (let i = 0; i < Math.min(revId.length, revQ.length); i++) {
-                        if (revId[i] === revQ[i]) count++; else break;
+                    for (let i = 0; i < Math.min(revStr.length, revQ.length); i++) {
+                        if (revStr[i] === revQ[i]) count++; else break;
                     }
                     return count;
                 };
 
                 // นำคะแนนที่ตรงที่สุดระหว่าง AssetID กับ Serial มาใช้
-                const scoreA = Math.max(getSuffix(idA, q), getSuffix(serialA, q));
-                const scoreB = Math.max(getSuffix(idB, q), getSuffix(serialB, q));
+                const scoreA = Math.max(getSuffix(idA, cleanQ), getSuffix(serialA, cleanQ));
+                const scoreB = Math.max(getSuffix(idB, cleanQ), getSuffix(serialB, cleanQ));
 
                 if (scoreB !== scoreA) return scoreB - scoreA;
                 
-                const lenA = scoreA === getSuffix(idA, q) ? idA.length : serialA.length;
-                const lenB = scoreB === getSuffix(idB, q) ? idB.length : serialB.length;
+                const lenA = scoreA === getSuffix(idA, cleanQ) ? idA.length : serialA.length;
+                const lenB = scoreB === getSuffix(idB, cleanQ) ? idB.length : serialB.length;
                 return lenA - lenB;
             });
-    
+
             data.forEach(item => {
                 const d = document.createElement('div');
                 d.className = "p-4 bg-white rounded-[2rem] border border-gray-100 flex justify-between items-center cursor-pointer shadow-sm active:scale-[0.98] hover:border-pink-200 transition-all mb-2";
                 
                 const highlightedID = typeof highlightText === 'function' ? highlightText(item.AssetID, q) : item.AssetID;
-                
-                // นำ Serial มาทำ Highlight Text ด้วย (ถ้ามีฟังก์ชัน)
                 const serialText = item.Serial ? String(item.Serial) : "-";
                 const highlightedSerial = typeof highlightText === 'function' && serialText !== "-" 
                     ? highlightText(serialText, q) 
@@ -1330,7 +1339,7 @@ function hideProcess() {
  function goToMainPage() {
     // ปิดหน้าปัจจุบันและเปิดหน้า dept_main_asset.html (แทนที่ในหน้าต่างเดิม)
     window.location.replace("dept_main_asset.html");
-}       
+}        
 function setGpsStatus(status) {
     const gpsElem = document.getElementById('gpsIcon'); // เปลี่ยน 'gpsIcon' เป็น ID ที่คุณใช้จริงในบรรทัด 446
     if (gpsElem) {
