@@ -966,7 +966,7 @@ function closeModal(id) {
         });
 
         // --- 2. จัดการ URL และ QR Code ให้แสดงผลได้แน่นอน ---
-        const baseUrl = typeof DEPT_VIEW_URL !== 'undefined' ? DEPT_VIEW_URL : "https://dakdan.github.io/IT-ASSET/dept_detail.html?dept=";
+        const baseUrl = typeof DEPT_VIEW_URL !== 'undefined' ? DEPT_VIEW_URL : "https://dakdan.github.io/it-technician-support/dept_detail.html?dept=";
         const targetUrl = deptId !== "-" ? baseUrl + encodeURIComponent(deptId) : "#";
         const qrImageUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(targetUrl)}&choe=UTF-8&chld=L|1`;
 
