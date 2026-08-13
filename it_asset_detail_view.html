@@ -541,19 +541,49 @@
                 safeSetText('valInspDate', latestInsp.inspectionDate || '-');
                 safeSetText('valInspDept', latestInsp.deptName || '-');
                 
-                const gpsVal = latestInsp.gps;
+                // --- แก้ไขการแสดงผล GPS เป็น Embed Google Maps ---
+                const gpsVal = latestInsp.gps || (latestInsp.raw && latestInsp.raw['Asset_Gps']);
                 const gpsEl = document.getElementById('valInspGps');
                 if (gpsEl) {
                     if (gpsVal && gpsVal !== '-' && gpsVal.trim() !== '') {
-                        gpsEl.innerHTML = `<a href="https://maps.google.com/?q=${encodeURIComponent(gpsVal.trim())}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg font-medium hover:bg-indigo-100 transition-colors border border-indigo-100 text-xs"><i class="fa-solid fa-location-dot"></i> ดูแผนที่ (${gpsVal})</a>`;
+                        const cleanGps = encodeURIComponent(gpsVal.trim());
+                        gpsEl.innerHTML = `
+                            <div class="w-full h-32 rounded-xl overflow-hidden border border-slate-200 mt-1 shadow-sm">
+                                <iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" 
+                                    src="https://maps.google.com/maps?q=${cleanGps}&t=&z=16&ie=UTF8&iwloc=&output=embed">
+                                </iframe>
+                            </div>
+                            <a href="https://maps.google.com/?q=${cleanGps}" target="_blank" class="inline-block mt-1.5 text-[11px] text-indigo-600 hover:text-indigo-800 font-bold">
+                                <i class="fa-solid fa-map-location-dot"></i> เปิดแอปแผนที่
+                            </a>
+                        `;
                     } else {
                         gpsEl.textContent = '-';
                     }
                 }
 
-                safeSetText('valUsageJob', latestInsp.jobType || '-');
-                safeSetText('valUsagePriority', latestInsp.priorityName || '-');
-                safeSetText('valUsageShift', latestInsp.shiftName || '-');
+                // --- แก้ไข Mapping Shift_Work และ Priority ที่ฝั่ง Frontend (ดักจับเผื่อ Backend ส่งค่าดิบมา) ---
+                const shiftMap = {
+                    "1": "เช้า",
+                    "2": "บ่าย",
+                    "3": "ดึก"
+                };
+
+                const priorityMap = {
+                    "PIO-001": "ตรวจรักษา (แพทย์)",
+                    "PIO-002": "ข้อมูลผู้ป่วย (พยาบาล)",
+                    "PIO-003": "บริการ/การเงิน/ห้องบัตร/ห้องยา/Lab",
+                    "PIO-004": "งานเอกสาร/ธุรการ",
+                    "PIO-005": "บริการทั่วไป/ซ่อมบำรุง/ช่างต่างๆ/โรงรถ"
+                };
+
+                let pVal = latestInsp.priorityName || latestInsp.priorityId || (latestInsp.raw && latestInsp.raw['PIORITY_ID']) || '-';
+                let sVal = latestInsp.shiftName || latestInsp.shiftId || (latestInsp.raw && latestInsp.raw['Shift_Work']) || '-';
+                let jVal = latestInsp.jobType || (latestInsp.raw && latestInsp.raw['Jobe_Type_ID']) || '-';
+
+                safeSetText('valUsageJob', jVal);
+                safeSetText('valUsagePriority', priorityMap[pVal] || pVal);
+                safeSetText('valUsageShift', shiftMap[sVal] || sVal);
             } else {
                 safeSetText('valInspYear', '-');
                 safeSetText('valInspDate', '-');
