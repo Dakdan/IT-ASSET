@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>IT Asset Detail - Udon Thani Hospital (Preview)</title>
-    
+    <link class="no-print" rel="icon" type="image/png" href="logo003v1.png">
+    <title>IT Asset Detail - Udon Thani Hospital</title>
     <!-- Fonts: Kanit -->
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icons: FontAwesome 6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS -->
@@ -21,9 +21,16 @@
                     fontFamily: { sans: ['Kanit', 'sans-serif'] },
                     colors: {
                         brand: {
-                            50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a',
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
                         },
-                        accent: { 500: '#0ea5e9', }
+                        accent: {
+                            500: '#0ea5e9',
+                        }
                     },
                     boxShadow: {
                         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
@@ -42,13 +49,9 @@
             overscroll-behavior: none;
         }
 
-        /* Udon Thani Pink Accent */
         .border-t-udon { border-top-color: #ff1493 !important; }
         .border-b-udon { border-bottom-color: #ff1493 !important; }
-        .text-udon { color: #ff1493 !important; }
-        .bg-udon-50 { background-color: #fdf2f8 !important; }
 
-        /* Watermark */
         .watermark-bg {
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%) rotate(-20deg);
@@ -57,14 +60,12 @@
             white-space: nowrap; z-index: -1; pointer-events: none;
         }
 
-        /* Progress Bar */
         .gauge-bar-outer { width: 100%; height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-top: 12px; }
         .gauge-bar-inner { height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #3b82f6); border-radius: 99px; transition: width 1s ease-out; }
 
-        /* Timeline */
         .timeline { position: relative; padding-left: 24px; margin-top: 16px; max-height: 350px; overflow-y: auto; }
         .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
-        .timeline-item { position: relative; margin-bottom: 20px; background: #ffffff; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; transition: all 0.2s; }
+        .timeline-item { position: relative; margin-bottom: 20px; background: #ffffff; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; }
         .timeline-item:hover { border-color: #93c5fd; transform: translateX(4px); box-shadow: 0 4px 12px rgba(37,99,235,0.05); }
         .timeline-item::after {
             content: ''; position: absolute; left: -22.5px; top: 20px;
@@ -73,14 +74,12 @@
         
         .badge { padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; color: #fff; background: #3b82f6; display: inline-block; }
 
-        /* Lightbox */
-        .lightbox { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(4px); }
+        .lightbox { display: none; position: fixed; z-index: 50; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(4px); }
         .lightbox img { max-width: 90%; max-height: 80vh; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); object-fit: contain; }
         .lightbox-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 2.5rem; cursor: pointer; transition: color 0.2s; }
         .lightbox-close:hover { color: #3b82f6; }
         .lightbox-caption { color: white; margin-top: 16px; font-size: 1.1rem; }
 
-        /* Spinner */
         .spinner {
             width: 50px; height: 50px;
             border: 4px solid #dbeafe; border-top: 4px solid #2563eb;
@@ -88,7 +87,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Toast */
         .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
         .toast { background: #1e3a8a; color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); margin-top: 10px; display: flex; align-items: center; gap: 12px; font-weight: 500; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -97,7 +95,6 @@
             body { background: white; }
             .no-print { display: none !important; }
             .shadow-soft, .shadow-floating { box-shadow: none !important; border: 1px solid #cbd5e1; }
-            .border-t-udon { border-top-color: #cbd5e1 !important; }
         }
         
         ::-webkit-scrollbar { width: 6px; }
@@ -113,37 +110,30 @@
     <div id="loadingScreen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
         <div class="spinner mb-6"></div>
         <h2 class="text-2xl font-bold text-brand-700">Loading Data...</h2>
-        <p class="text-slate-500 mt-2">กำลังเชื่อมต่อฐานข้อมูล / เตรียมหน้าตัวอย่าง</p>
+        <p class="text-slate-500 mt-2">กำลังเชื่อมต่อฐานข้อมูลโรงพยาบาลอุดรธานี</p>
     </div>
 
-    <div id="errorScreen" class="hidden flex-col items-center justify-center min-h-screen text-center px-4 max-w-xl mx-auto">
+    <div id="errorScreen" class="hidden flex-col items-center justify-center min-h-screen text-center px-4">
         <div class="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-6 text-5xl">
             <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
-        <h2 id="errorMsg" class="text-2xl font-bold text-slate-800 mb-3">ไม่พบข้อมูลครุภัณฑ์ชิ้นนี้</h2>
-        <p id="errorDetail" class="text-xs text-slate-500 mb-6 bg-slate-100 p-3 rounded-xl border border-slate-200 font-mono text-left w-full overflow-x-auto">-</p>
-        <div class="flex gap-3 justify-center">
-            <button class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300 transition shadow-sm" onclick="window.history.back()">
-                <i class="fa-solid fa-arrow-left mr-2"></i> ย้อนกลับ
-            </button>
-            <button class="px-6 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition shadow-lg" onclick="location.reload()">
-                <i class="fa-solid fa-rotate-right mr-2"></i> ลองใหม่อีกครั้ง
-            </button>
-        </div>
+        <h2 id="errorMsg" class="text-2xl font-bold text-slate-800 mb-6">ไม่พบข้อมูลครุภัณฑ์ชิ้นนี้</h2>
+        <button class="px-6 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition shadow-lg" onclick="window.history.back()">
+            <i class="fa-solid fa-arrow-left mr-2"></i> ย้อนกลับหน้าหลัก
+        </button>
     </div>
 
     <div id="toastContainer" class="toast-container"></div>
 
     <div id="mainDashboard" class="hidden w-full">
-        
         <header class="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md shadow-sm p-4 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-b-udon">
             <div class="flex items-center gap-4 w-full md:w-auto">
                 <div class="w-14 h-14 md:w-16 md:h-16 bg-brand-50 rounded-2xl flex items-center justify-center border border-brand-100 shadow-sm p-1 overflow-hidden shrink-0">
-                    <img src="https://placehold.co/100x100/eff6ff/2563eb?text=UDH" alt="Logo" class="w-full h-full object-contain rounded-xl">
+                    <img src="./logo003v1.png" alt="Logo" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/100x100/eff6ff/3b82f6?text=UDON'">
                 </div>
                 <div>
                     <h1 class="text-lg md:text-2xl font-extrabold text-slate-800 leading-tight tracking-tight">โรงพยาบาลอุดรธานี</h1>
-                    <p class="text-udon font-bold text-xs md:text-sm tracking-wide">กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</p>
+                    <p class="text-[#E6005C] font-bold text-xs md:text-sm tracking-wide">กลุ่มงานเทคโนโลยีสารสนเทศทางการแพทย์</p>
                     <p id="valAssetID" class="text-sm md:text-xl font-medium text-accent-500">-</p>
                 </div>
             </div>
@@ -170,7 +160,7 @@
         <div class="max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8 w-full overflow-x-hidden">
             
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-                
+                <!-- รูปภาพ & QR -->
                 <div class="lg:col-span-3 bg-white rounded-2xl shadow-sm p-4 sm:p-5 flex flex-row lg:flex-col items-center justify-center gap-4 lg:gap-6 relative border border-slate-100 border-t-4 border-t-udon overflow-hidden">
                     <div class="absolute top-0 w-full h-24 bg-gradient-to-b from-pink-50 to-white opacity-50 z-0"></div>
                     
@@ -186,8 +176,8 @@
                     </div>
                 </div>
 
+                <!-- ข้อมูลระบุตัวตน -->
                 <div class="lg:col-span-9 bg-white rounded-2xl shadow-sm p-6 md:p-8 flex flex-col justify-center border border-slate-100 border-t-4 border-t-udon relative overflow-hidden">
-                    
                     <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6 w-full">
                         <div class="w-full md:flex-1 min-w-0">
                             <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-50 text-brand-700 rounded-lg font-bold text-xs mb-3 border border-brand-100 shadow-sm">
@@ -226,7 +216,7 @@
                 <div class="bg-white rounded-2xl shadow-sm p-4 md:p-5 border border-slate-100 border-t-4 border-t-udon flex flex-col hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-xs md:text-sm font-extrabold text-slate-500 uppercase tracking-wide">Health Score</h3>
-                        <i class="fa-solid fa-heart-pulse text-udon bg-udon-50 p-2 rounded-xl"></i>
+                        <i class="fa-solid fa-heart-pulse text-[#E6005C] bg-pink-50 p-2 rounded-xl"></i>
                     </div>
                     <div id="kpiHealth" class="text-2xl md:text-3xl font-extrabold text-slate-800">-</div>
                     <div class="gauge-bar-outer mt-auto">
@@ -262,52 +252,68 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm p-5 md:p-6 border border-slate-100 border-t-4 border-t-udon mb-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-udon-50 text-udon flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-clipboard-list"></i>
-                        </div>
-                        <h3 class="text-base md:text-lg font-extrabold text-slate-800 tracking-wide">ประวัติการตรวจสอบสภาพครุภัณฑ์ (Asset Inspection & Usage Logs)</h3>
-                    </div>
-                    <div class="text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                        รวม <span id="valTotalInspectionList" class="text-brand-600 font-extrabold text-base">0</span> รายการ
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 
-                <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                    <table class="w-full text-left border-collapse min-w-[950px]">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
-                                <th class="py-3 px-4 font-bold">1. Physical Asset Inspection (ตรวจครุภัณฑ์ประจำปี)</th>
-                                <th class="py-3 px-4 font-bold">2. ข้อมูลการใช้งาน</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableInspection" class="divide-y divide-slate-100 text-sm bg-white">
-                            <tr><td colspan="2" class="py-6 text-center text-slate-400 italic">กำลังดึงข้อมูลประวัติ...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                
+                <!-- แทนที่ Location & Basic Info ด้วย Asset Inspection & Usage Logs -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 border-t-4 border-t-udon overflow-hidden flex flex-col">
                     <div class="bg-slate-50 px-4 md:px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-udon-50 text-udon flex items-center justify-center shrink-0"><i class="fa-solid fa-laptop-code"></i></div>
+                        <div class="w-8 h-8 rounded-xl bg-pink-50 text-[#E6005C] flex items-center justify-center shrink-0"><i class="fa-solid fa-clipboard-check"></i></div>
+                        <h3 class="font-extrabold text-slate-800 text-sm md:text-base tracking-wide">Asset Inspection & Usage Logs</h3>
+                    </div>
+                    <div class="p-4 md:p-5 flex flex-col flex-1">
+                        
+                        <!-- 1. Physical Asset Inspection -->
+                        <div class="mb-5">
+                            <h4 class="text-sm font-extrabold text-brand-600 mb-3 border-b border-slate-100 pb-2"><i class="fa-solid fa-magnifying-glass-chart mr-1"></i> 1. ตรวจครุภัณฑ์ประจำปี</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">ปีที่ตรวจสอบ</p>
+                                    <p id="valInspYear" class="text-slate-700 font-bold text-sm bg-slate-50 px-2 py-1 rounded inline-block">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">วัน/เวลา ที่ตรวจสอบ</p>
+                                    <p id="valInspDate" class="text-slate-700 font-semibold text-sm">-</p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">หน่วยงาน/กลุ่มงาน/สถานที่</p>
+                                    <p id="valInspDept" class="text-slate-800 font-bold text-sm bg-blue-50 border border-blue-100 px-3 py-2 rounded-xl">-</p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">ตำแหน่ง GPS</p>
+                                    <div id="valInspGps" class="text-sm">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. ข้อมูลการใช้งาน -->
+                        <div class="mt-auto">
+                            <h4 class="text-sm font-extrabold text-emerald-600 mb-3 border-b border-slate-100 pb-2"><i class="fa-solid fa-users-gear mr-1"></i> 2. ข้อมูลการใช้งาน</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="col-span-1 sm:col-span-2">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">การใช้งาน (Job Type)</p>
+                                    <p id="valUsageJob" class="text-slate-700 font-semibold text-sm">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">กลุ่มผู้ใช้งาน</p>
+                                    <p id="valUsagePriority" class="text-slate-700 font-semibold text-sm">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">ช่วงเวลาที่ใช้งาน</p>
+                                    <p id="valUsageShift" class="text-slate-700 font-semibold text-sm">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <!-- ข้อมูลด้านสเปกและเทคนิค -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 border-t-4 border-t-udon overflow-hidden flex flex-col">
+                    <div class="bg-slate-50 px-4 md:px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-pink-50 text-[#E6005C] flex items-center justify-center shrink-0"><i class="fa-solid fa-laptop-code"></i></div>
                         <h3 class="font-extrabold text-slate-800 text-sm md:text-base tracking-wide">Technical Specifications</h3>
                     </div>
                     <div class="p-4 md:p-5 flex flex-col gap-5 flex-1">
-                        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                            <div class="overflow-hidden">
-                                <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase tracking-wider"><i class="fa-solid fa-barcode mr-1"></i> รหัสออกโดย NexGov</p>
-                                <p id="valOldCode" class="text-slate-800 font-bold text-sm truncate">-</p>
-                            </div>
-                            <div class="overflow-hidden">
-                                <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase tracking-wider"><i class="fa-solid fa-layer-group mr-1"></i> Type ID</p>
-                                <p id="valTypeID" class="text-slate-800 font-bold text-sm truncate">-</p>
-                            </div>
-                        </div>
                         <div>
                             <p class="text-xs text-slate-400 font-bold mb-1.5 uppercase tracking-wider">ยี่ห้อ / รุ่น / รูปลักษณ์</p>
                             <p id="valSpec" class="text-slate-700 font-semibold text-sm line-clamp-3">-</p>
@@ -333,10 +339,10 @@
                     </div>
                 </div>
 
-                <!-- Financial Information -->
+                <!-- ข้อมูลการจัดซื้อ -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 border-t-4 border-t-udon overflow-hidden flex flex-col">
                     <div class="bg-slate-50 px-4 md:px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-udon-50 text-udon flex items-center justify-center shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div class="w-8 h-8 rounded-xl bg-pink-50 text-[#E6005C] flex items-center justify-center shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                         <h3 class="font-extrabold text-slate-800 text-sm md:text-base tracking-wide">Financial & Contract</h3>
                     </div>
                     <div class="p-4 md:p-5 flex flex-col gap-5 flex-1">
@@ -373,25 +379,22 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                
                 <!-- History Section -->
                 <div class="bg-white rounded-2xl shadow-sm p-5 md:p-6 border border-slate-100 border-t-4 border-t-udon">
                     <div class="flex items-center gap-3 mb-6">
-                        <div class="w-8 h-8 rounded-xl bg-udon-50 text-udon flex items-center justify-center shrink-0">
+                        <div class="w-8 h-8 rounded-xl bg-pink-50 text-[#E6005C] flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-clock-rotate-left"></i>
                         </div>
                         <h3 class="text-base md:text-lg font-extrabold text-slate-800 tracking-wide">Movement & Maintenance</h3>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Movement -->
                         <div class="w-full overflow-hidden">
                             <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-solid fa-truck-fast"></i> ประวัติเคลื่อนย้าย</h4>
                             <div id="timelineMovement" class="timeline">
                                 <p class="text-sm text-slate-400 italic">กำลังดึงข้อมูลประวัติ...</p>
                             </div>
                         </div>
-                        <!-- MA/PM -->
                         <div class="w-full overflow-hidden">
                             <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-solid fa-wrench"></i> ประวัติซ่อมบำรุง</h4>
                             <div id="timelineMA" class="timeline">
@@ -403,18 +406,16 @@
 
                 <!-- Notes & Gallery Section -->
                 <div class="flex flex-col gap-6 w-full overflow-hidden">
-                    
-                    <!-- Notes -->
                     <div class="bg-white rounded-2xl shadow-sm p-5 md:p-6 border border-slate-100 border-t-4 border-t-udon">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="w-8 h-8 rounded-xl bg-udon-50 text-udon flex items-center justify-center shrink-0">
+                            <div class="w-8 h-8 rounded-xl bg-pink-50 text-[#E6005C] flex items-center justify-center shrink-0">
                                 <i class="fa-solid fa-paperclip"></i>
                             </div>
-                            <h3 class="text-base md:text-lg font-extrabold text-slate-800 tracking-wide">Notes & Location</h3>
+                            <h3 class="text-base md:text-lg font-extrabold text-slate-800 tracking-wide">Notes & Attachments</h3>
                         </div>
                         <div class="space-y-5">
                             <div>
-                                <p class="text-xs text-slate-400 font-bold mb-1.5 uppercase tracking-wider">สถานที่ติดตั้ง / พิกัด GPS</p>
+                                <p class="text-xs text-slate-400 font-bold mb-1.5 uppercase tracking-wider">พิกัดตำแหน่ง GPS</p>
                                 <div id="valNote2" class="text-sm">-</div>
                             </div>
                             <div>
@@ -424,10 +425,9 @@
                         </div>
                     </div>
 
-                    <!-- Gallery -->
                     <div class="bg-white rounded-2xl shadow-sm p-5 md:p-6 border border-slate-100 border-t-4 border-t-udon flex-1">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="w-8 h-8 rounded-xl bg-udon-50 text-udon flex items-center justify-center shrink-0">
+                            <div class="w-8 h-8 rounded-xl bg-pink-50 text-[#E6005C] flex items-center justify-center shrink-0">
                                 <i class="fa-solid fa-images"></i>
                             </div>
                             <h3 class="text-base md:text-lg font-extrabold text-slate-800 tracking-wide">Image Logs Gallery</h3>
@@ -437,11 +437,10 @@
                         </div>
                     </div>
                 </div>
-                
             </div>
-
-        </div> 
-    </div> 
+            
+        </div>
+    </div>
 
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
@@ -450,190 +449,139 @@
     </div>
 
     <script>
-        // กำหนด URL ของ Google Apps Script ที่เชื่อมต่อจริง
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_mX0O7D3PAl4uitg3V5apUECjXUZZPB4sM_B_3Ca7HnBdgJl9jPRiWgWKePrGRNdAFA/exec";
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            let assetId = urlParams.get('Asset_ID') || urlParams.get('id') || urlParams.get('code');
+            const assetId = urlParams.get('Asset_ID');
 
-            if (!assetId) {
-                assetId = "UDH-IT-2026-001";
+            if (assetId) {
+                fetchDataFromGAS(assetId);
+            } else {
+                showError("ไม่พบรหัสครุภัณฑ์ใน URL กรุณาระบุ Asset_ID");
             }
-
             startClock();
-            fetchDataFromGAS(assetId);
         });
 
         async function fetchDataFromGAS(assetId) {
             try {
                 const targetUrl = `${GAS_WEB_APP_URL}?action=getAsset&Asset_ID=${encodeURIComponent(assetId)}`;
                 const response = await fetch(targetUrl, { method: 'GET', redirect: 'follow' });
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP Error Status: ${response.status} ${response.statusText}`);
-                }
-                
-                const textResult = await response.text();
-                let result = JSON.parse(textResult);
-
+                const result = await response.json();
                 renderDashboard(result);
-                
             } catch (err) {
                 console.error("Fetch Error:", err);
-                showError("ไม่สามารถเชื่อมต่อฐานข้อมูลได้", err.message);
+                showError("ดึงข้อมูลไม่สำเร็จ: ไม่สามารถเชื่อมต่อกับฐานข้อมูลได้");
             }
         }
 
-        function renderDashboard(dataObj) {
-            if (!dataObj || (!dataObj.success && !dataObj.data)) {
-                showError("ไม่พบข้อมูลครุภัณฑ์ในฐานข้อมูล", dataObj && dataObj.message ? dataObj.message : "ตรวจสอบรหัสครุภัณฑ์ (Asset_ID) ว่ามีอยู่จริงใน Google Sheets หรือไม่");
+        function renderDashboard(response) {
+            if (!response || response.status === 'error' || !response.data) {
+                showError(response ? response.message : "ไม่พบชุดรหัสครุภัณฑ์ดังกล่าวในระบบฐานข้อมูล");
                 return;
             }
 
+            const asset = response.data.info;
+            const calc = response.data.calculations || {};
+            const logs = response.data.logs || { move: [], ma: [], pm: [], images: [], inspection: [] };
+
             document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('mainDashboard').classList.remove('hidden');
+            document.getElementById('mainDashboard').style.display = 'block';
 
-            const item = dataObj.data || dataObj.item || dataObj || {};
-            const logs = dataObj.logs || {};
-            const calc = dataObj.calculated || {};
-
-            const getVal = (...keys) => {
-                for (let key of keys) {
-                    if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
-                        return item[key];
-                    }
+            const getVal = (mainKey, fallbackKey) => {
+                const mainVal = asset[mainKey];
+                if (mainVal !== undefined && mainVal !== null && String(mainVal).trim() !== '' && String(mainVal).trim() !== '-') {
+                    return mainVal;
+                }
+                const fallbackVal = asset[fallbackKey];
+                if (fallbackVal !== undefined && fallbackVal !== null && String(fallbackVal).trim() !== '' && String(fallbackVal).trim() !== '-') {
+                    return fallbackVal;
                 }
                 return '-';
             };
 
-            const assetCode = getVal('Asset_ID', 'รหัสครุภัณฑ์', 'code');
-            safeSetText('valAssetID', assetCode);
-            safeSetText('valCode', assetCode);
-            safeSetText('valCategory', getVal('ประเภทครุภัณฑ์', 'Category', 'type'));
-            safeSetText('valAssetNameGroup', getVal('ชื่อครุภัณฑ์', 'AssetName', 'name'));
-            safeSetText('valAssetName', getVal('รายละเอียดครุภัณฑ์', 'Description', 'desc'));
-            safeSetText('valSerial', getVal('SerialNumber', 'Serial_No', 'serial'));
-            
-            const maStatus = getVal('สถานะการใช้งาน', 'MA_Status');
-            const coStatus = getVal('สถานะครอบครอง', 'CO_Status');
-            safeSetText('valMaStatus', maStatus);
-            safeSetText('valCoStatus', coStatus);
+            // --- SUMMARY MAPPING ---
+            safeSetText('valAssetID', getVal('AssetID', 'AssetID')); 
+            safeSetText('valAssetNameGroup', getVal('ชื่อรายการครุภัณฑ์', 'Asset_Group')); 
+            safeSetText('valAssetName', getVal('รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์', 'Detail'));
+            safeSetText('valCode', getVal('AssetID', 'AssetID'));
+            safeSetText('valSerial', getVal('Searail', 'Serial'));
+            safeSetText('valMaStatus', getVal('MaStatus', 'MaStatus')); 
+            safeSetText('valCoStatus', getVal('CoStatus', 'CoStatus')); 
 
-            safeSetText('valOldCode', getVal('รหัสเดิม/เลขเดิม', 'Old_Code'));
-            safeSetText('valTypeID', getVal('Type_ID', 'TypeID'));
-            safeSetText('valSpec', getVal('Spec', 'รายละเอียดครุภัณฑ์'));
-
-            const photoUrl = getVal('Image_URL', 'Photo', 'IMAGE_URL', 'image');
+            // --- PHOTO & QR CODE RENDERING ---
             const photoFrame = document.getElementById('photoFrame');
-            if (photoFrame && photoUrl && photoUrl !== '-') {
-                const directPhotoUrl = convertDriveUrl(photoUrl);
-                photoFrame.innerHTML = `<img src="${directPhotoUrl}" alt="Asset Photo" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox('${directPhotoUrl}', 'รูปภาพครุภัณฑ์')" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;>'">`;
+            if (logs.images && logs.images.length > 0 && logs.images[0].IMAGE_URL) {
+                const directImgUrl = logs.images[0].IMAGE_URL;
+                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" class="w-full h-full object-cover" onclick="openLightbox('${directImgUrl}', 'ภาพครุภัณฑ์หลัก')" style="cursor: pointer;" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;></i>'">`;
+            } 
+            else if (asset['Ass_Img'] && asset['Ass_Img'] !== '-') {
+                const directImgUrl = convertDriveUrl(asset['Ass_Img']);
+                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" class="w-full h-full object-cover" onclick="openLightbox('${directImgUrl}', 'ภาพครุภัณฑ์หลัก')" style="cursor: pointer;" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;></i>'">`;
+            } else {
+                photoFrame.innerHTML = `<i class="fa-solid fa-image text-4xl text-slate-300"></i>`;
             }
 
             const qrFrame = document.getElementById('qrFrame');
-            if (qrFrame) {
-                const qrText = encodeURIComponent(window.location.href);
-                qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrText}" alt="QR Code" class="w-full h-full object-contain cursor-pointer" onclick="openLightbox('https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${qrText}', 'QR Code ครุภัณฑ์')">`;
-            }
+            const currentUrl = window.location.href;
+            qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(currentUrl)}" alt="Scan QR Code" class="w-full h-full object-contain cursor-pointer hover:scale-105 transition-transform" onclick="openLightbox('https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(currentUrl)}', 'QR Code สำหรับเข้าถึงข้อมูลครุภัณฑ์นี้')" title="คลิกเพื่อขยาย QR Code">`;
 
-            const inspectionLogs = logs.inspection || logs.inspections || [];
-            animateNumber('valTotalInspection', inspectionLogs.length);
-            safeSetText('valTotalInspectionList', inspectionLogs.length);
+            // --- BASIC INFO ---
+            safeSetText('valCategory', getVal('หมวดครุภัณฑ์', 'Asset_Group'));
+            safeSetText('valSpec', getVal('รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์', 'Detail'));
 
-            const prioritiesMap = {
-                "PIO-001": "ตรวจรักษา (แพทย์)",
-                "PIO-002": "ข้อมูลผู้ป่วย (พยาบาล)",
-                "PIO-003": "บริการ/การเงิน/ห้องบัตร/ห้องยา/Lab",
-                "PIO-004": "งานเอกสาร/ธุรการ",
-                "PIO-005": "บริการทั่วไป/ซ่อมบำรุง/ช่างต่างๆ/โรงรถ"
-            };
-
-            const shiftsMap = { "1": "เช้า", "2": "บ่าย", "3": "ดึก" };
-
-            const formatInspectDate = (dateStr) => {
-                if (!dateStr || dateStr === '-') return '-';
-                try {
-                    let d = new Date(dateStr);
-                    if (isNaN(d.getTime())) return dateStr;
-                    let day = String(d.getDate()).padStart(2, '0');
-                    let month = String(d.getMonth() + 1).padStart(2, '0');
-                    let year = d.getFullYear();
-                    let hours = String(d.getHours()).padStart(2, '0');
-                    let mins = String(d.getMinutes()).padStart(2, '0');
-                    return `${day}/${month}/${year} ${hours}:${mins} น.`;
-                } catch (e) { return dateStr; }
-            };
-
-            const tableInspection = document.getElementById('tableInspection');
-            if (tableInspection) {
-                if (inspectionLogs.length > 0) {
-                    tableInspection.innerHTML = inspectionLogs.map(item => {
-                        const note1 = item.Note1 !== undefined ? item.Note1 : '-';
-                        const timeStamp = formatInspectDate(item.Time_Stamp || item.date || item.formattedDate);
-                        const deptNameLoc = item.DEPT_NAME_LOC || item.DEPT_ID || '-';
-                        
-                        let gpsContent = '<span class="text-slate-300">-</span>';
-                        const gpsVal = item.Asset_Gps || item.gps || item.GPS || '';
-                        if (gpsVal && gpsVal !== '-' && gpsVal.trim() !== '') {
-                            gpsContent = `<a href="https://maps.google.com/?q=${encodeURIComponent(gpsVal)}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors text-xs font-semibold shadow-sm mt-1"><i class="fa-solid fa-location-dot"></i> ดูแผนที่ GPS</a>`;
-                        }
-
-                        const jobType = item.Jobe_Type_ID || item.jobType || '-';
-                        const rawPriority = item.PIORITY_ID || item.priority || '';
-                        const priorityText = prioritiesMap[rawPriority] || rawPriority || '-';
-                        const rawShift = String(item.Shift_Work || item.shift || '');
-                        const shiftText = shiftsMap[rawShift] || rawShift || '-';
-
-                        return `
-                            <tr class="hover:bg-slate-50/80 transition-colors">
-                                <td class="py-4 px-4 align-top w-1/2 border-r border-slate-100">
-                                    <div class="space-y-1.5">
-                                        <div class="flex items-center gap-2">
-                                            <span class="px-2 py-0.5 bg-brand-50 text-brand-700 rounded text-[11px] font-bold">ปีที่ตรวจสอบ: ${note1}</span>
-                                            <span class="text-xs font-medium text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${timeStamp}</span>
-                                        </div>
-                                        <div class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-building-user text-udon mr-1"></i> ${deptNameLoc}</div>
-                                        <div class="text-xs text-slate-600 flex items-center gap-1">
-                                            <span class="font-semibold text-slate-400">พิกัด GPS:</span> <span class="font-mono text-slate-700">${gpsVal}</span>
-                                        </div>
-                                        <div>${gpsContent}</div>
-                                    </div>
-                                </td>
-                                <td class="py-4 px-4 align-top w-1/2">
-                                    <div class="space-y-1.5">
-                                        <div class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-screwdriver-wrench text-amber-600 mr-1"></i> การใช้งาน: <span class="text-slate-700 font-normal">${jobType}</span></div>
-                                        <div>
-                                            <span class="text-xs text-slate-400 font-semibold block mb-0.5">กลุ่มผู้ใช้งาน (Priority):</span>
-                                            <span class="px-2.5 py-1 bg-pink-50 text-pink-700 border border-pink-100 rounded-md text-xs font-semibold inline-block">${priorityText}</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-xs text-slate-400 font-semibold block mb-0.5">ช่วงเวลาที่ใช้งาน (Shift):</span>
-                                            <span class="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-md text-xs font-semibold inline-block">${shiftText}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('');
-                } else {
-                    tableInspection.innerHTML = '<tr><td colspan="2" class="py-8 text-center text-slate-400 italic">ไม่มีประวัติการตรวจสอบสภาพครุภัณฑ์ในระบบ</td></tr>';
+            // --- INSPECTION & USAGE LOGS (NEW SECTION) ---
+            if (logs.inspection && logs.inspection.length > 0) {
+                // สมมติฐานว่า backend เรียงจากล่าสุดมาแล้ว ใช้ index [0]
+                const latestInsp = logs.inspection[0]; 
+                
+                safeSetText('valInspYear', latestInsp.inspectionYear || '-');
+                safeSetText('valInspDate', latestInsp.inspectionDate || '-');
+                safeSetText('valInspDept', latestInsp.deptName || '-');
+                
+                const gpsVal = latestInsp.gps;
+                const gpsEl = document.getElementById('valInspGps');
+                if (gpsEl) {
+                    if (gpsVal && gpsVal !== '-' && gpsVal.trim() !== '') {
+                        gpsEl.innerHTML = `<a href="https://maps.google.com/?q=${encodeURIComponent(gpsVal.trim())}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg font-medium hover:bg-indigo-100 transition-colors border border-indigo-100 text-xs"><i class="fa-solid fa-location-dot"></i> ดูแผนที่ (${gpsVal})</a>`;
+                    } else {
+                        gpsEl.textContent = '-';
+                    }
                 }
+
+                safeSetText('valUsageJob', latestInsp.jobType || '-');
+                safeSetText('valUsagePriority', latestInsp.priorityName || '-');
+                safeSetText('valUsageShift', latestInsp.shiftName || '-');
+            } else {
+                safeSetText('valInspYear', '-');
+                safeSetText('valInspDate', '-');
+                safeSetText('valInspDept', '-');
+                safeSetText('valUsageJob', '-');
+                safeSetText('valUsagePriority', '-');
+                safeSetText('valUsageShift', '-');
+                const gpsEl = document.getElementById('valInspGps');
+                if (gpsEl) gpsEl.textContent = '-';
             }
 
-            safeSetText('valReceiveDate', `${formatDate(getVal('วันที่รับเข้า'))} (ปี: ${getVal('ปีที่รับเข้า')})`);
-            safeSetText('valFund', getVal('แหล่งเงินที่ใช้จัดซื้อ'));
-            const finalPrice = getVal('ราคา');
+            // --- FINANCIAL INFO ---
+            safeSetText('valReceiveDate', `${formatDate(getVal('วันที่รับเข้า', 'Date_In'))} (ปี: ${getVal('ปีที่รับเข้า', 'Year_In')})`);
+            safeSetText('valFund', asset['แหล่งเงินที่ใช้จัดซื้อ'] || '-');
+            const finalPrice = getVal('ราคา', 'Pric');
             safeSetText('valPrice', finalPrice !== '-' ? Number(finalPrice).toLocaleString() + ' ฿' : '-');
-            safeSetText('valWarranty', getVal('Varanty', 'Warranty')); 
+            safeSetText('valWarranty', asset['Varanty'] || '-'); 
 
-            safeSetText('valTechIP', getVal('IPAddress'));
-            safeSetText('valTechMAC', getVal('MACAddress'));
-            safeSetText('valTechOS', getVal('OS'));
-            safeSetText('valTechSpecs', getVal('CPU_RAM_Specs'));
+            // --- TECHNICAL INFO ---
+            safeSetText('valTechIP', asset['IPAddress'] || '-');
+            safeSetText('valTechMAC', asset['MACAddress'] || '-');
+            safeSetText('valTechOS', asset['OS'] || '-');
+            safeSetText('valTechSpecs', asset['CPU_RAM_Specs'] || '-');
 
+            // --- CALCULATIONS & STATS ---
             const health = calc.healthScore !== undefined ? calc.healthScore : 100;
             const risk = calc.riskScore !== undefined ? calc.riskScore : 0;
+            
             let riskLvl = 'Low';
             if (risk >= 70) riskLvl = 'Critical';
             else if (risk >= 40) riskLvl = 'High';
@@ -645,43 +593,64 @@
 
             if (healthBar) {
                 healthBar.style.width = health + '%';
-                if (health >= 80) { healthBar.style.background = '#10b981'; if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-extrabold text-emerald-500'; }
-                else if (health >= 50) { healthBar.style.background = '#f59e0b'; if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-extrabold text-amber-500'; }
-                else { healthBar.style.background = '#ef4444'; if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-extrabold text-red-500'; }
+                if (health >= 80) {
+                    healthBar.style.background = '#10b981'; 
+                    if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-bold text-emerald-500';
+                } else if (health >= 50) {
+                    healthBar.style.background = '#f59e0b'; 
+                    if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-bold text-amber-500';
+                } else {
+                    healthBar.style.background = '#ef4444'; 
+                    if (kpiHealthEl) kpiHealthEl.className = 'text-3xl font-bold text-red-500';
+                }
             }
 
             safeSetText('kpiRisk', riskLvl);
             safeSetText('valRiskScore', 'คะแนนความเสี่ยง: ' + risk);
 
-            const ageVal = getVal('อายุ');
+            const kpiRiskEl = document.getElementById('kpiRisk');
+            if (kpiRiskEl) {
+                if (riskLvl === 'High' || riskLvl === 'Critical') {
+                    kpiRiskEl.className = 'text-3xl font-bold text-red-500';
+                } else if (riskLvl === 'Medium') {
+                    kpiRiskEl.className = 'text-3xl font-bold text-amber-500';
+                } else {
+                    kpiRiskEl.className = 'text-3xl font-bold text-emerald-500';
+                }
+            }
+
+            const ageVal = getVal('อายุ', 'อายุ');
             const ageString = (ageVal !== '-') ? (String(ageVal).includes('ปี') ? ageVal : ageVal + ' ปี') : '-';
             safeSetText('kpiAge', ageString);
             safeSetText('valAssetAgeSheet', ageString);
-            safeSetText('valAssetUnderStd', getVal('ต่ำกว่าเกณฑ์'));
-            safeSetText('valRemainingLife', 'เกณฑ์ต่ำกว่ามาตรฐาน: ' + getVal('ต่ำกว่าเกณฑ์'));
+
+            const underStd = asset['ต่ำกว่าเกณฑ์'] || '-';
+            safeSetText('valAssetUnderStd', underStd);
+            safeSetText('valRemainingLife', 'เกณฑ์ต่ำกว่ามาตรฐาน: ' + underStd);
 
             const maRecords = logs.ma || [];
             const totalRepairCost = maRecords.reduce((sum, item) => {
-                const costVal = item.cost !== undefined ? item.cost : item['ค่าใช้จ่าย'];
-                return sum + (isNaN(Number(costVal)) ? 0 : Number(costVal));
+                const costVal = Number(item.cost || item['ค่าใช้จ่าย'] || item['ราคา'] || 0);
+                return sum + (isNaN(costVal) ? 0 : costVal);
             }, 0);
 
-            safeSetText('kpiMA', (calc.totalMA !== undefined ? calc.totalMA : maRecords.length) + ' ครั้ง');
+            const maCount = calc.totalMA !== undefined ? calc.totalMA : maRecords.length;
+            safeSetText('kpiMA', maCount + ' ครั้ง');
             safeSetText('valTotalRepairCost', 'มูลค่าซ่อมสะสม: ' + totalRepairCost.toLocaleString() + ' ฿');
 
-            const locName = getVal('หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน');
-            const note2Val = getVal('Note2');
+            // --- NOTES & GPS MAPPING ---
+            const note2Val = getVal('Note2', 'GPS');
             const note2El = document.getElementById('valNote2');
-            
-            let locHtml = `<div class="mb-2 font-bold text-brand-600">${locName}</div>`;
             if (note2El) {
                 if (note2Val !== '-') {
-                    locHtml += `<a href="https://maps.google.com/?q=${encodeURIComponent(note2Val.trim())}" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg font-medium hover:bg-indigo-100 transition-colors border border-indigo-100 text-xs"><i class="fa-solid fa-map-location-dot"></i> ดูพิกัดบนแผนที่</a>`;
+                    note2El.innerHTML = `<a href="https://maps.google.com/?q=${encodeURIComponent(note2Val.trim())}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg font-medium hover:bg-indigo-100 transition-colors border border-indigo-100"><i class="fa-solid fa-map-location-dot"></i> ดูพิกัดบนแผนที่</a>`;
+                } else {
+                    note2El.textContent = '-';
                 }
-                note2El.innerHTML = locHtml;
             }
-            safeSetText('valNote3', getVal('Note3'));
+            safeSetText('valNote3', getVal('Note3', 'Note4'));
 
+            // --- TIMELINE MOVEMENT ---
             const timelineMovement = document.getElementById('timelineMovement');
             if (timelineMovement) {
                 if (logs.move && logs.move.length > 0) {
@@ -689,59 +658,64 @@
                         <div class="timeline-item">
                             <span class="badge mb-2 bg-slate-600">${formatDate(item.date || item['วันที่ย้าย'])}</span>
                             <div class="font-semibold text-slate-700 mb-1 text-sm">จาก: ${item.fromLocation || item['จากหน่วยงาน'] || '-'} <br><span class="text-brand-600">ไปยัง: ${item.toLocation || item['ไปหน่วยงาน'] || '-'}</span></div>
-                            <div class="text-xs text-slate-500">ผู้ดำเนินการ: ${item.operator || item['ผู้บันทึก'] || '-'}</div>
+                            <div class="text-xs text-slate-500">ผู้ดำเนินการ: ${item.operator || item['ผู้บันทึก'] || '-'} ${item.note || item['หมายเหตุ'] ? `<br><span class="italic text-slate-400">(${item.note || item['หมายเหตุ']})</span>` : ''}</div>
                         </div>
                     `).join('');
-                } else { timelineMovement.innerHTML = '<p class="text-sm text-slate-400 italic">ไม่มีประวัติการย้ายสถานที่</p>'; }
+                } else {
+                    timelineMovement.innerHTML = '<p class="text-sm text-slate-400 italic">ไม่มีประวัติการย้ายสถานที่</p>';
+                }
             }
 
+            // --- TIMELINE MA ---
             const timelineMA = document.getElementById('timelineMA');
             if (timelineMA) {
+                const pmRecords = logs.pm || [];
                 const combinedMA = [
                     ...maRecords.map(r => ({ ...r, logType: 'ซ่อมบำรุง', color: 'bg-amber-500' })),
-                    ...(logs.pm || []).map(r => ({ ...r, logType: 'PM', color: 'bg-emerald-500' }))
+                    ...pmRecords.map(r => ({ ...r, logType: 'PM', color: 'bg-emerald-500' }))
                 ];
+
                 if (combinedMA.length > 0) {
                     timelineMA.innerHTML = combinedMA.map(item => `
                         <div class="timeline-item">
-                            <span class="badge mb-2 ${item.color}">${formatDate(item.date || item['วันที่ดำเนินการ'] || item['วันที่'])} [${item.logType}]</span>
-                            <div class="font-semibold text-slate-700 mb-1 text-sm line-clamp-2">${item.details || item['อาการที่แจ้ง'] || '-'}</div>
-                            <div class="text-xs text-slate-500">ผู้ดำเนินการ: ${item.technician || item['ผู้ดำเนินการ'] || '-'} <br>ค่าใช้จ่าย: ${(Number(item.cost || item['ค่าใช้จ่าย'] || 0)).toLocaleString()} ฿</div>
+                            <span class="badge mb-2 ${item.color}">
+                                ${formatDate(item.date || item['วันที่ดำเนินการ'] || item['วันที่'])} [${item.logType}]
+                            </span>
+                            <div class="font-semibold text-slate-700 mb-1 text-sm line-clamp-2" title="${item.details || item['อาการที่แจ้ง'] || item['หมายเหตุ'] || '-'}">${item.details || item['อาการที่แจ้ง'] || item['หมายเหตุ'] || '-'}</div>
+                            <div class="text-xs text-slate-500">
+                                ผู้ดำเนินการ: ${item.technician || item['ผู้ดำเนินการ'] || '-'} <br>
+                                ค่าใช้จ่าย: <span class="font-medium text-slate-700">${(Number(item.cost || item['ค่าใช้จ่าย'] || item['ราคา'] || 0)).toLocaleString()} ฿</span>
+                            </div>
                         </div>
                     `).join('');
-                } else { timelineMA.innerHTML = '<p class="text-sm text-slate-400 italic">ไม่มีประวัติซ่อมบำรุง</p>'; }
+                } else {
+                    timelineMA.innerHTML = '<p class="text-sm text-slate-400 italic">ไม่มีประวัติซ่อมบำรุงหรือ PM</p>';
+                }
             }
 
+            // --- IMAGE LOGS GALLERY ---
             const galleryContainer = document.getElementById('galleryContainer');
             if (galleryContainer) {
                 if (logs.images && logs.images.length > 0) {
                     galleryContainer.innerHTML = logs.images.map((item, index) => {
                         const directUrl = item.IMAGE_URL || convertDriveUrl(item.IMAGE_ID);
                         return `
-                            <div class="aspect-square rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-brand-400 shadow-sm transition-all hover:scale-105" onclick="openLightbox('${directUrl}', 'ภาพชิ้นที่ ${index + 1}')">
+                            <div class="aspect-square rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-brand-400 shadow-sm transition-all hover:scale-105" onclick="openLightbox('${directUrl}', 'ภาพประวัติแนบเพิ่มเติมชิ้นที่ ${index + 1}')">
                                 <img src="${directUrl}" alt="Log Image" class="w-full h-full object-cover" onerror="this.outerHTML='<div class=&quot;w-full h-full bg-slate-100 flex items-center justify-center text-slate-400&quot;><i class=&quot;fa-solid fa-image-broken&quot;></i></div>'">
                             </div>
                         `;
                     }).join('');
-                } else { galleryContainer.innerHTML = '<p class="text-sm text-slate-400 italic col-span-full">ไม่มีรูปภาพเพิ่มเติม</p>'; }
+                } else {
+                    galleryContainer.innerHTML = '<p class="text-sm text-slate-400 italic col-span-full">ไม่มีรูปภาพแนบประวัติเพิ่มเติม</p>';
+                }
             }
         }
 
         function safeSetText(id, value) {
             const el = document.getElementById(id);
-            if (el) el.textContent = (value !== undefined && value !== null && value !== '') ? value : '-';
-        }
-
-        function animateNumber(id, target) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            let current = 0;
-            const increment = Math.max(1, Math.floor(target / 20));
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) { current = target; clearInterval(timer); }
-                el.textContent = current;
-            }, 30);
+            if (el) {
+                el.textContent = (value !== undefined && value !== null && value !== '') ? value : '-';
+            }
         }
 
         function convertDriveUrl(url) {
@@ -762,7 +736,9 @@
                 const d = new Date(dateStr);
                 if (isNaN(d.getTime())) return dateStr;
                 return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-            } catch (e) { return dateStr; }
+            } catch (e) {
+                return dateStr;
+            }
         }
 
         function startClock() {
@@ -770,12 +746,16 @@
             if (!el) return;
             function update() {
                 const now = new Date();
-                el.textContent = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.';
+                el.textContent = now.toLocaleDateString('th-TH', { 
+                    day: 'numeric', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                }) + ' น.';
             }
-            update(); setInterval(update, 1000);
+            update();
+            setInterval(update, 1000);
         }
 
-        function showError(msg, detail = "") {
+        function showError(msg) {
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'none';
             const errorScreen = document.getElementById('errorScreen');
@@ -783,16 +763,21 @@
                 errorScreen.classList.remove('hidden');
                 errorScreen.classList.add('flex');
                 document.getElementById('errorMsg').textContent = msg;
-                document.getElementById('errorDetail').textContent = detail || "โปรดตรวจสอบลิงก์ Google Apps Script ว่ามีการ Deploy สิทธิ์เข้าถึงเป็น 'Anyone' หรือยัง";
             }
         }
 
         function copyAssetLink() {
+            const textToCopy = window.location.href;
             const tempInput = document.createElement("input");
-            tempInput.value = window.location.href;
+            tempInput.value = textToCopy;
             document.body.appendChild(tempInput);
             tempInput.select();
-            try { document.execCommand("copy"); showToast('คัดลอกลิงก์เรียบร้อยแล้ว'); } catch (err) { showToast('ไม่สามารถคัดลอกได้'); }
+            try {
+                document.execCommand("copy");
+                showToast('คัดลอกลิงก์เรียบร้อยแล้ว');
+            } catch (err) {
+                showToast('ไม่สามารถคัดลอกได้');
+            }
             document.body.removeChild(tempInput);
         }
 
@@ -808,8 +793,15 @@
 
         function openLightbox(src, caption) {
             const lb = document.getElementById('lightbox');
-            if (lb) { document.getElementById('lightboxImg').src = src; document.getElementById('lightboxCaption').textContent = caption; lb.style.display = 'flex'; }
+            const lbImg = document.getElementById('lightboxImg');
+            const lbCap = document.getElementById('lightboxCaption');
+            if (lb && lbImg) {
+                lbImg.src = src;
+                if (lbCap) lbCap.textContent = caption;
+                lb.style.display = 'flex';
+            }
         }
+
         function closeLightbox() {
             const lb = document.getElementById('lightbox');
             if (lb) lb.style.display = 'none';
