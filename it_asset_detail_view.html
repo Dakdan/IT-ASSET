@@ -581,9 +581,13 @@
                 let sVal = latestInsp.shiftName || latestInsp.shiftId || (latestInsp.raw && latestInsp.raw['Shift_Work']) || '-';
                 let jVal = latestInsp.jobType || (latestInsp.raw && latestInsp.raw['Jobe_Type_ID']) || '-';
 
+                // ประมวลผลกรณีที่มีหลายค่า (เช่น "1,2,3" หรือ "PIO-001,PIO-002") โดยแยกด้วยลูกน้ำ แล้วแปลทีละค่า
+                let mappedPriority = pVal !== '-' ? String(pVal).split(',').map(item => priorityMap[item.trim()] || item.trim()).join(', ') : '-';
+                let mappedShift = sVal !== '-' ? String(sVal).split(',').map(item => shiftMap[item.trim()] || item.trim()).join(', ') : '-';
+
                 safeSetText('valUsageJob', jVal);
-                safeSetText('valUsagePriority', priorityMap[pVal] || pVal);
-                safeSetText('valUsageShift', shiftMap[sVal] || sVal);
+                safeSetText('valUsagePriority', mappedPriority);
+                safeSetText('valUsageShift', mappedShift);
             } else {
                 safeSetText('valInspYear', '-');
                 safeSetText('valInspDate', '-');
