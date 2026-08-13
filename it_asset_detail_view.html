@@ -262,7 +262,7 @@
                         <div class="w-8 h-8 rounded-xl bg-udon-50 text-udon flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-clipboard-list"></i>
                         </div>
-                        <h3 class="text-base md:text-lg font-extrabold text-slate-800 tracking-wide">ประวัติการตรวจสอบสภาพ (Inspection Logs)</h3>
+                        <h3 class="text-base md:text-lg font-extrabold text-slate-800 tracking-wide">ประวัติการตรวจสอบสภาพครุภัณฑ์ (Asset Inspection & Usage Logs)</h3>
                     </div>
                     <div class="text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
                         รวม <span id="valTotalInspectionList" class="text-brand-600 font-extrabold text-base">0</span> รายการ
@@ -270,19 +270,15 @@
                 </div>
                 
                 <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                    <table class="w-full text-left border-collapse min-w-[900px]">
+                    <table class="w-full text-left border-collapse min-w-[950px]">
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
-                                <th class="py-3 px-4 font-bold">วันที่ / ปีที่ตรวจ</th>
-                                <th class="py-3 px-4 font-bold">หน่วยงาน (Dept Name)</th>
-                                <th class="py-3 px-4 font-bold">ลักษณะการใช้งาน</th>
-                                <th class="py-3 px-4 font-bold">กลุ่มผู้ใช้งาน (Priority)</th>
-                                <th class="py-3 px-4 font-bold">ช่วงเวลา (Shift)</th>
-                                <th class="py-3 px-4 font-bold text-center">พิกัด GPS</th>
+                                <th class="py-3 px-4 font-bold">1. Physical Asset Inspection (ตรวจครุภัณฑ์ประจำปี)</th>
+                                <th class="py-3 px-4 font-bold">2. ข้อมูลการใช้งาน</th>
                             </tr>
                         </thead>
                         <tbody id="tableInspection" class="divide-y divide-slate-100 text-sm bg-white">
-                            <tr><td colspan="6" class="py-6 text-center text-slate-400 italic">กำลังดึงข้อมูลประวัติการตรวจสอบ...</td></tr>
+                            <tr><td colspan="2" class="py-6 text-center text-slate-400 italic">กำลังดึงข้อมูลประวัติ...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -482,94 +478,144 @@
             }
         }
 
-        function renderDashboard(response) {
-            // ตรวจสอบความถูกต้องของโครงสร้าง JSON ที่ตอบกลับมาจาก code.gs
-            if (!response || response.status === 'error' || !response.data) {
-                showError(response ? response.message : "ไม่พบชุดรหัสครุภัณฑ์ดังกล่าวในระบบฐานข้อมูล");
+        function renderDashboard(dataObj) {
+            if (!dataObj || !dataObj.success) {
+                showError(dataObj && dataObj.message ? dataObj.message : "ไม่พบข้อมูลครุภัณฑ์ในฐานข้อมูล");
                 return;
             }
 
-            const asset = response.data.info || {};
-            const calc = response.data.calculations || {};
-            const logs = response.data.logs || { move: [], ma: [], pm: [], images: [], inspection: [] };
-
             document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('mainDashboard').style.display = 'block';
+            document.getElementById('mainDashboard').classList.remove('hidden');
 
-            // Mapping คีย์ข้อมูลให้ตรงกับ Column Headers ใน Google Sheets / code.gs โดยตรง
-            const getVal = (key) => {
-                const val = asset[key];
-                if (val !== undefined && val !== null && String(val).trim() !== '' && String(val).trim() !== '-') {
-                    return val;
-                }
-                return '-';
-            };
+            const item = dataObj.data || {};
+            const logs = dataObj.logs || {};
+            const calc = dataObj.calculated || {};
 
-            // ส่วนหัวหลักและรหัสครุภัณฑ์
-            safeSetText('valAssetID', getVal('AssetID')); 
-            safeSetText('valAssetNameGroup', getVal('ชื่อรายการครุภัณฑ์')); 
-            safeSetText('valAssetName', getVal('รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์'));
-            safeSetText('valCode', getVal('AssetID'));
-            safeSetText('valSerial', getVal('Searail'));
-            safeSetText('valMaStatus', getVal('MaStatus')); 
-            safeSetText('valCoStatus', getVal('CoStatus')); 
+            const getVal = (key) => item[key] !== undefined && item[key] !== null && item[key] !== '' ? item[key] : '-';
 
-            // รูปภาพหลัก (Ass_Img) และ QR Code
+            // Header & Basic Info
+            const assetCode = getVal('Asset_ID') !== '-' ? getVal('Asset_ID') : (getVal('รหัสครุภัณฑ์') !== '-' ? getVal('รหัสครุภัณฑ์') : '-');
+            safeSetText('valAssetID', assetCode);
+            safeSetText('valCode', assetCode);
+            safeSetText('valCategory', getVal('ประเภทครุภัณฑ์') !== '-' ? getVal('ประเภทครุภัณฑ์') : getVal('Category'));
+            safeSetText('valAssetNameGroup', getVal('ชื่อครุภัณฑ์') !== '-' ? getVal('ชื่อครุภัณฑ์') : getVal('AssetName'));
+            safeSetText('valAssetName', getVal('รายละเอียดครุภัณฑ์') !== '-' ? getVal('รายละเอียดครุภัณฑ์') : getVal('Description'));
+            safeSetText('valSerial', getVal('SerialNumber') !== '-' ? getVal('SerialNumber') : getVal('Serial_No'));
+            
+            const maStatus = getVal('สถานะการใช้งาน') !== '-' ? getVal('สถานะการใช้งาน') : getVal('MA_Status');
+            const coStatus = getVal('สถานะครอบครอง') !== '-' ? getVal('สถานะครอบครอง') : getVal('CO_Status');
+            safeSetText('valMaStatus', maStatus);
+            safeSetText('valCoStatus', coStatus);
+
+            // Tech Specifications & Old Codes
+            safeSetText('valOldCode', getVal('รหัสเดิม/เลขเดิม'));
+            safeSetText('valTypeID', getVal('Type_ID'));
+            safeSetText('valSpec', getVal('Spec') !== '-' ? getVal('Spec') : getVal('รายละเอียดครุภัณฑ์'));
+
+            // Photo & QR Frame
+            const photoUrl = item.Image_URL || item.Photo || item.IMAGE_URL;
             const photoFrame = document.getElementById('photoFrame');
-            if (logs.images && logs.images.length > 0 && logs.images[0].IMAGE_URL) {
-                const directImgUrl = logs.images[0].IMAGE_URL;
-                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" class="w-full h-full object-cover" onclick="openLightbox('${directImgUrl}', 'ภาพครุภัณฑ์หลัก')" style="cursor: pointer;" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;></i>'">`;
-            } else if (asset['Ass_Img'] && asset['Ass_Img'] !== '-') {
-                const directImgUrl = convertDriveUrl(asset['Ass_Img']);
-                photoFrame.innerHTML = `<img src="${directImgUrl}" alt="รูปครุภัณฑ์" class="w-full h-full object-cover" onclick="openLightbox('${directImgUrl}', 'ภาพครุภัณฑ์หลัก')" style="cursor: pointer;" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;></i>'">`;
-            } else {
-                photoFrame.innerHTML = `<i class="fa-solid fa-image text-4xl text-slate-300"></i>`;
+            if (photoFrame && photoUrl) {
+                const directPhotoUrl = convertDriveUrl(photoUrl);
+                photoFrame.innerHTML = `<img src="${directPhotoUrl}" alt="Asset Photo" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox('${directPhotoUrl}', 'รูปภาพครุภัณฑ์')" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;>'">`;
             }
 
             const qrFrame = document.getElementById('qrFrame');
-            qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href)}" alt="Scan QR Code" class="w-full h-full object-contain cursor-pointer hover:scale-105 transition-transform" onclick="openLightbox('https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href)}', 'QR Code สำหรับเข้าถึงข้อมูลครุภัณฑ์นี้')" title="คลิกเพื่อขยาย QR Code">`;
+            if (qrFrame) {
+                const qrText = encodeURIComponent(window.location.href);
+                qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrText}" alt="QR Code" class="w-full h-full object-contain cursor-pointer" onclick="openLightbox('https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${qrText}', 'QR Code ครุภัณฑ์')">`;
+            }
 
-            // ข้อมูลจำแนกหมวดหมู่ Technical & Specifications
-            safeSetText('valCategory', getVal('หมวดครุภัณฑ์'));
-            safeSetText('valTypeID', `${getVal('Asset_Type_ID')} / ${getVal('Asset_Item_Type_ID')}`);
-            safeSetText('valSpec', getVal('รายละเอียด สเปค ยี่ห้อ ขนาด รูปลักษณ์'));
-            safeSetText('valOldCode', getVal('รหัสครุภัณฑ์'));
-
-            // Mapping ข้อมูลตารางประวัติการตรวจสอบสภาพ (inspection logs จาก code.gs)
+            // Mapping ตารางประวัติการตรวจสอบสภาพ (Physical Asset Inspection & ข้อมูลการใช้งาน จาก ASSET_LOGS)
             const inspectionLogs = logs.inspection || [];
             animateNumber('valTotalInspection', inspectionLogs.length);
             safeSetText('valTotalInspectionList', inspectionLogs.length);
+
+            // Priority and Shift Maps as specified
+            const prioritiesMap = {
+                "PIO-001": "ตรวจรักษา (แพทย์)",
+                "PIO-002": "ข้อมูลผู้ป่วย (พยาบาล)",
+                "PIO-003": "บริการ/การเงิน/ห้องบัตร/ห้องยา/Lab",
+                "PIO-004": "งานเอกสาร/ธุรการ",
+                "PIO-005": "บริการทั่วไป/ซ่อมบำรุง/ช่างต่างๆ/โรงรถ"
+            };
+
+            const shiftsMap = {
+                "1": "เช้า",
+                "2": "บ่าย",
+                "3": "ดึก"
+            };
+
+            const formatInspectDate = (dateStr) => {
+                if (!dateStr || dateStr === '-') return '-';
+                try {
+                    let d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    let day = String(d.getDate()).padStart(2, '0');
+                    let month = String(d.getMonth() + 1).padStart(2, '0');
+                    let year = d.getFullYear(); // ค.ศ.
+                    let hours = String(d.getHours()).padStart(2, '0');
+                    let mins = String(d.getMinutes()).padStart(2, '0');
+                    return `${day}/${month}/${year} ${hours}:${mins} น.`;
+                } catch (e) { return dateStr; }
+            };
 
             const tableInspection = document.getElementById('tableInspection');
             if (tableInspection) {
                 if (inspectionLogs.length > 0) {
                     tableInspection.innerHTML = inspectionLogs.map(item => {
-                        let gpsLink = '<span class="text-slate-300">-</span>';
-                        const gpsVal = item.gps || item.GPS || '';
-                        if (gpsVal && gpsVal !== '-' && gpsVal.trim() !== '') {
-                            gpsLink = `<a href="https://maps.google.com/?q=${encodeURIComponent(gpsVal)}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors text-xs font-semibold shadow-sm"><i class="fa-solid fa-location-dot"></i> ดูแผนที่</a>`;
-                        }
+                        // 1. Physical Asset Inspection
+                        const note1 = item.Note1 !== undefined && item.Note1 !== null ? item.Note1 : '-';
+                        const timeStamp = formatInspectDate(item.Time_Stamp || item.date || item.formattedDate);
+                        const deptNameLoc = item.DEPT_NAME_LOC || item.DEPT_ID || '-';
                         
+                        let gpsContent = '<span class="text-slate-300">-</span>';
+                        const gpsVal = item.Asset_Gps || item.gps || item.GPS || '';
+                        if (gpsVal && gpsVal !== '-' && gpsVal.trim() !== '') {
+                            gpsContent = `<a href="https://maps.google.com/?q=${encodeURIComponent(gpsVal)}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors text-xs font-semibold shadow-sm mt-1"><i class="fa-solid fa-location-dot"></i> ดูแผนที่ GPS</a>`;
+                        }
+
+                        // 2. ข้อมูลการใช้งาน
+                        const jobType = item.Jobe_Type_ID || item.jobType || '-';
+                        const rawPriority = item.PIORITY_ID || item.priority || '';
+                        const priorityText = prioritiesMap[rawPriority] || rawPriority || '-';
+                        
+                        const rawShift = String(item.Shift_Work || item.shift || '');
+                        const shiftText = shiftsMap[rawShift] || rawShift || '-';
+
                         return `
                             <tr class="hover:bg-slate-50/80 transition-colors">
-                                <td class="py-3 px-4">
-                                    <div class="font-bold text-slate-700">${item.inspectionDate || item.date || '-'}</div>
-                                    <div class="text-[11px] font-semibold text-slate-400 mt-0.5">ปีงบฯ: <span class="text-brand-600">${item.inspectionYear || item.year || '-'}</span></div>
+                                <td class="py-4 px-4 align-top w-1/2 border-r border-slate-100">
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 bg-brand-50 text-brand-700 rounded text-[11px] font-bold">ปีที่ตรวจสอบ: ${note1}</span>
+                                            <span class="text-xs font-medium text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${timeStamp}</span>
+                                        </div>
+                                        <div class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-building-user text-udon mr-1"></i> ${deptNameLoc}</div>
+                                        <div class="text-xs text-slate-600 flex items-center gap-1">
+                                            <span class="font-semibold text-slate-400">พิกัด GPS:</span> <span class="font-mono text-slate-700">${gpsVal}</span>
+                                        </div>
+                                        <div>${gpsContent}</div>
+                                    </div>
                                 </td>
-                                <td class="py-3 px-4 font-medium text-slate-800">${item.deptName || item.department || '-'}</td>
-                                <td class="py-3 px-4 text-slate-600 text-sm">${item.jobType || item.description || '-'}</td>
-                                <td class="py-3 px-4">
-                                    <span class="px-2.5 py-1 bg-pink-50 text-pink-700 border border-pink-100 rounded-md text-xs font-semibold whitespace-nowrap">${item.priorityName || item.priority || '-'}</span>
+                                <td class="py-4 px-4 align-top w-1/2">
+                                    <div class="space-y-1.5">
+                                        <div class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-screwdriver-wrench text-amber-600 mr-1"></i> การใช้งาน: <span class="text-slate-700 font-normal">${jobType}</span></div>
+                                        <div>
+                                            <span class="text-xs text-slate-400 font-semibold block mb-0.5">กลุ่มผู้ใช้งาน (Priority):</span>
+                                            <span class="px-2.5 py-1 bg-pink-50 text-pink-700 border border-pink-100 rounded-md text-xs font-semibold inline-block">${priorityText}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-xs text-slate-400 font-semibold block mb-0.5">ช่วงเวลาที่ใช้งาน (Shift):</span>
+                                            <span class="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-md text-xs font-semibold inline-block">${shiftText}</span>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td class="py-3 px-4">
-                                    <span class="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-md text-xs font-semibold whitespace-nowrap">${item.shiftName || item.shift || '-'}</span>
-                                </td>
-                                <td class="py-3 px-4 text-center">${gpsLink}</td>
                             </tr>
                         `;
                     }).join('');
                 } else {
-                    tableInspection.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400 italic">ไม่มีประวัติการตรวจสอบสภาพครุภัณฑ์ในระบบ</td></tr>';
+                    tableInspection.innerHTML = '<tr><td colspan="2" class="py-8 text-center text-slate-400 italic">ไม่มีประวัติการตรวจสอบสภาพครุภัณฑ์ในระบบ</td></tr>';
                 }
             }
 
