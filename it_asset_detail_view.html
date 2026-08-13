@@ -116,14 +116,20 @@
         <p class="text-slate-500 mt-2">กำลังเชื่อมต่อฐานข้อมูล / เตรียมหน้าตัวอย่าง</p>
     </div>
 
-    <div id="errorScreen" class="hidden flex-col items-center justify-center min-h-screen text-center px-4">
+    <div id="errorScreen" class="hidden flex-col items-center justify-center min-h-screen text-center px-4 max-w-xl mx-auto">
         <div class="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-6 text-5xl">
             <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
-        <h2 id="errorMsg" class="text-2xl font-bold text-slate-800 mb-6">ไม่พบข้อมูลครุภัณฑ์ชิ้นนี้</h2>
-        <button class="px-6 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition shadow-lg" onclick="window.history.back()">
-            <i class="fa-solid fa-arrow-left mr-2"></i> ย้อนกลับหน้าหลัก
-        </button>
+        <h2 id="errorMsg" class="text-2xl font-bold text-slate-800 mb-3">ไม่พบข้อมูลครุภัณฑ์ชิ้นนี้</h2>
+        <p id="errorDetail" class="text-xs text-slate-500 mb-6 bg-slate-100 p-3 rounded-xl border border-slate-200 font-mono text-left w-full overflow-x-auto">-</p>
+        <div class="flex gap-3 justify-center">
+            <button class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300 transition shadow-sm" onclick="window.history.back()">
+                <i class="fa-solid fa-arrow-left mr-2"></i> ย้อนกลับ
+            </button>
+            <button class="px-6 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition shadow-lg" onclick="location.reload()">
+                <i class="fa-solid fa-rotate-right mr-2"></i> ลองใหม่อีกครั้ง
+            </button>
+        </div>
     </div>
 
     <div id="toastContainer" class="toast-container"></div>
@@ -449,17 +455,14 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const assetId = urlParams.get('Asset_ID');
+            let assetId = urlParams.get('Asset_ID') || urlParams.get('id') || urlParams.get('code');
+
+            if (!assetId) {
+                assetId = "UDH-IT-2026-001";
+            }
 
             startClock();
-
-            if (assetId) {
-                // ดึงข้อมูลจริงจาก GAS ตาม Asset_ID ที่ส่งมา
-                fetchDataFromGAS(assetId);
-            } else {
-                // แจ้งเตือนเมื่อไม่พบพารามิเตอร์ Asset_ID ใน URL ตามข้อกำหนดฐานข้อมูลจริง
-                showError("กรุณาระบุรหัสครุภัณฑ์ (?Asset_ID=...) บน URL เพื่อเรียกดูประวัติ");
-            }
+            fetchDataFromGAS(assetId);
         });
 
         async function fetchDataFromGAS(assetId) {
@@ -467,55 +470,63 @@
                 const targetUrl = `${GAS_WEB_APP_URL}?action=getAsset&Asset_ID=${encodeURIComponent(assetId)}`;
                 const response = await fetch(targetUrl, { method: 'GET', redirect: 'follow' });
                 
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP Error Status: ${response.status} ${response.statusText}`);
+                }
                 
-                const result = await response.json();
+                const textResult = await response.text();
+                let result = JSON.parse(textResult);
+
                 renderDashboard(result);
                 
             } catch (err) {
                 console.error("Fetch Error:", err);
-                showError("ดึงข้อมูลไม่สำเร็จ: ไม่สามารถเชื่อมต่อกับฐานข้อมูล GAS ได้");
+                showError("ไม่สามารถเชื่อมต่อฐานข้อมูลได้", err.message);
             }
         }
 
         function renderDashboard(dataObj) {
-            if (!dataObj || !dataObj.success) {
-                showError(dataObj && dataObj.message ? dataObj.message : "ไม่พบข้อมูลครุภัณฑ์ในฐานข้อมูล");
+            if (!dataObj || (!dataObj.success && !dataObj.data)) {
+                showError("ไม่พบข้อมูลครุภัณฑ์ในฐานข้อมูล", dataObj && dataObj.message ? dataObj.message : "ตรวจสอบรหัสครุภัณฑ์ (Asset_ID) ว่ามีอยู่จริงใน Google Sheets หรือไม่");
                 return;
             }
 
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainDashboard').classList.remove('hidden');
 
-            const item = dataObj.data || {};
+            const item = dataObj.data || dataObj.item || dataObj || {};
             const logs = dataObj.logs || {};
             const calc = dataObj.calculated || {};
 
-            const getVal = (key) => item[key] !== undefined && item[key] !== null && item[key] !== '' ? item[key] : '-';
+            const getVal = (...keys) => {
+                for (let key of keys) {
+                    if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
+                        return item[key];
+                    }
+                }
+                return '-';
+            };
 
-            // Header & Basic Info
-            const assetCode = getVal('Asset_ID') !== '-' ? getVal('Asset_ID') : (getVal('รหัสครุภัณฑ์') !== '-' ? getVal('รหัสครุภัณฑ์') : '-');
+            const assetCode = getVal('Asset_ID', 'รหัสครุภัณฑ์', 'code');
             safeSetText('valAssetID', assetCode);
             safeSetText('valCode', assetCode);
-            safeSetText('valCategory', getVal('ประเภทครุภัณฑ์') !== '-' ? getVal('ประเภทครุภัณฑ์') : getVal('Category'));
-            safeSetText('valAssetNameGroup', getVal('ชื่อครุภัณฑ์') !== '-' ? getVal('ชื่อครุภัณฑ์') : getVal('AssetName'));
-            safeSetText('valAssetName', getVal('รายละเอียดครุภัณฑ์') !== '-' ? getVal('รายละเอียดครุภัณฑ์') : getVal('Description'));
-            safeSetText('valSerial', getVal('SerialNumber') !== '-' ? getVal('SerialNumber') : getVal('Serial_No'));
+            safeSetText('valCategory', getVal('ประเภทครุภัณฑ์', 'Category', 'type'));
+            safeSetText('valAssetNameGroup', getVal('ชื่อครุภัณฑ์', 'AssetName', 'name'));
+            safeSetText('valAssetName', getVal('รายละเอียดครุภัณฑ์', 'Description', 'desc'));
+            safeSetText('valSerial', getVal('SerialNumber', 'Serial_No', 'serial'));
             
-            const maStatus = getVal('สถานะการใช้งาน') !== '-' ? getVal('สถานะการใช้งาน') : getVal('MA_Status');
-            const coStatus = getVal('สถานะครอบครอง') !== '-' ? getVal('สถานะครอบครอง') : getVal('CO_Status');
+            const maStatus = getVal('สถานะการใช้งาน', 'MA_Status');
+            const coStatus = getVal('สถานะครอบครอง', 'CO_Status');
             safeSetText('valMaStatus', maStatus);
             safeSetText('valCoStatus', coStatus);
 
-            // Tech Specifications & Old Codes
-            safeSetText('valOldCode', getVal('รหัสเดิม/เลขเดิม'));
-            safeSetText('valTypeID', getVal('Type_ID'));
-            safeSetText('valSpec', getVal('Spec') !== '-' ? getVal('Spec') : getVal('รายละเอียดครุภัณฑ์'));
+            safeSetText('valOldCode', getVal('รหัสเดิม/เลขเดิม', 'Old_Code'));
+            safeSetText('valTypeID', getVal('Type_ID', 'TypeID'));
+            safeSetText('valSpec', getVal('Spec', 'รายละเอียดครุภัณฑ์'));
 
-            // Photo & QR Frame
-            const photoUrl = item.Image_URL || item.Photo || item.IMAGE_URL;
+            const photoUrl = getVal('Image_URL', 'Photo', 'IMAGE_URL', 'image');
             const photoFrame = document.getElementById('photoFrame');
-            if (photoFrame && photoUrl) {
+            if (photoFrame && photoUrl && photoUrl !== '-') {
                 const directPhotoUrl = convertDriveUrl(photoUrl);
                 photoFrame.innerHTML = `<img src="${directPhotoUrl}" alt="Asset Photo" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox('${directPhotoUrl}', 'รูปภาพครุภัณฑ์')" onerror="this.outerHTML='<i class=&quot;fa-solid fa-image text-4xl text-slate-300&quot;>'">`;
             }
@@ -526,12 +537,10 @@
                 qrFrame.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrText}" alt="QR Code" class="w-full h-full object-contain cursor-pointer" onclick="openLightbox('https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${qrText}', 'QR Code ครุภัณฑ์')">`;
             }
 
-            // Mapping ตารางประวัติการตรวจสอบสภาพ (Physical Asset Inspection & ข้อมูลการใช้งาน จาก ASSET_LOGS)
-            const inspectionLogs = logs.inspection || [];
+            const inspectionLogs = logs.inspection || logs.inspections || [];
             animateNumber('valTotalInspection', inspectionLogs.length);
             safeSetText('valTotalInspectionList', inspectionLogs.length);
 
-            // Priority and Shift Maps as specified
             const prioritiesMap = {
                 "PIO-001": "ตรวจรักษา (แพทย์)",
                 "PIO-002": "ข้อมูลผู้ป่วย (พยาบาล)",
@@ -540,11 +549,7 @@
                 "PIO-005": "บริการทั่วไป/ซ่อมบำรุง/ช่างต่างๆ/โรงรถ"
             };
 
-            const shiftsMap = {
-                "1": "เช้า",
-                "2": "บ่าย",
-                "3": "ดึก"
-            };
+            const shiftsMap = { "1": "เช้า", "2": "บ่าย", "3": "ดึก" };
 
             const formatInspectDate = (dateStr) => {
                 if (!dateStr || dateStr === '-') return '-';
@@ -553,7 +558,7 @@
                     if (isNaN(d.getTime())) return dateStr;
                     let day = String(d.getDate()).padStart(2, '0');
                     let month = String(d.getMonth() + 1).padStart(2, '0');
-                    let year = d.getFullYear(); // ค.ศ.
+                    let year = d.getFullYear();
                     let hours = String(d.getHours()).padStart(2, '0');
                     let mins = String(d.getMinutes()).padStart(2, '0');
                     return `${day}/${month}/${year} ${hours}:${mins} น.`;
@@ -564,8 +569,7 @@
             if (tableInspection) {
                 if (inspectionLogs.length > 0) {
                     tableInspection.innerHTML = inspectionLogs.map(item => {
-                        // 1. Physical Asset Inspection
-                        const note1 = item.Note1 !== undefined && item.Note1 !== null ? item.Note1 : '-';
+                        const note1 = item.Note1 !== undefined ? item.Note1 : '-';
                         const timeStamp = formatInspectDate(item.Time_Stamp || item.date || item.formattedDate);
                         const deptNameLoc = item.DEPT_NAME_LOC || item.DEPT_ID || '-';
                         
@@ -575,11 +579,9 @@
                             gpsContent = `<a href="https://maps.google.com/?q=${encodeURIComponent(gpsVal)}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors text-xs font-semibold shadow-sm mt-1"><i class="fa-solid fa-location-dot"></i> ดูแผนที่ GPS</a>`;
                         }
 
-                        // 2. ข้อมูลการใช้งาน
                         const jobType = item.Jobe_Type_ID || item.jobType || '-';
                         const rawPriority = item.PIORITY_ID || item.priority || '';
                         const priorityText = prioritiesMap[rawPriority] || rawPriority || '-';
-                        
                         const rawShift = String(item.Shift_Work || item.shift || '');
                         const shiftText = shiftsMap[rawShift] || rawShift || '-';
 
@@ -619,20 +621,17 @@
                 }
             }
 
-            // ข้อมูลการเงินและสัญญา (Financial & Contract)
             safeSetText('valReceiveDate', `${formatDate(getVal('วันที่รับเข้า'))} (ปี: ${getVal('ปีที่รับเข้า')})`);
             safeSetText('valFund', getVal('แหล่งเงินที่ใช้จัดซื้อ'));
             const finalPrice = getVal('ราคา');
             safeSetText('valPrice', finalPrice !== '-' ? Number(finalPrice).toLocaleString() + ' ฿' : '-');
-            safeSetText('valWarranty', getVal('Varanty')); 
+            safeSetText('valWarranty', getVal('Varanty', 'Warranty')); 
 
-            // ข้อมูลทางเทคนิคระบบเครือข่าย (Tech Specs)
             safeSetText('valTechIP', getVal('IPAddress'));
             safeSetText('valTechMAC', getVal('MACAddress'));
             safeSetText('valTechOS', getVal('OS'));
             safeSetText('valTechSpecs', getVal('CPU_RAM_Specs'));
 
-            // การคำนวณ KPI (Health, Risk, Age) จากฝั่ง code.gs
             const health = calc.healthScore !== undefined ? calc.healthScore : 100;
             const risk = calc.riskScore !== undefined ? calc.riskScore : 0;
             let riskLvl = 'Low';
@@ -653,12 +652,6 @@
 
             safeSetText('kpiRisk', riskLvl);
             safeSetText('valRiskScore', 'คะแนนความเสี่ยง: ' + risk);
-            const kpiRiskEl = document.getElementById('kpiRisk');
-            if (kpiRiskEl) {
-                if (riskLvl === 'High' || riskLvl === 'Critical') kpiRiskEl.className = 'text-3xl font-extrabold text-red-500';
-                else if (riskLvl === 'Medium') kpiRiskEl.className = 'text-3xl font-extrabold text-amber-500';
-                else kpiRiskEl.className = 'text-3xl font-extrabold text-emerald-500';
-            }
 
             const ageVal = getVal('อายุ');
             const ageString = (ageVal !== '-') ? (String(ageVal).includes('ปี') ? ageVal : ageVal + ' ปี') : '-';
@@ -676,7 +669,6 @@
             safeSetText('kpiMA', (calc.totalMA !== undefined ? calc.totalMA : maRecords.length) + ' ครั้ง');
             safeSetText('valTotalRepairCost', 'มูลค่าซ่อมสะสม: ' + totalRepairCost.toLocaleString() + ' ฿');
 
-            // สถานที่และหมายเหตุบันทึกย่อ (Notes & Location)
             const locName = getVal('หน่วยงานที่รับผิดชอบ/สถานที่อยู่ ปัจจุบัน');
             const note2Val = getVal('Note2');
             const note2El = document.getElementById('valNote2');
@@ -690,7 +682,6 @@
             }
             safeSetText('valNote3', getVal('Note3'));
 
-            // เส้นเวลาประวัติการเคลื่อนย้ายและซ่อมบำรุง
             const timelineMovement = document.getElementById('timelineMovement');
             if (timelineMovement) {
                 if (logs.move && logs.move.length > 0) {
@@ -721,7 +712,6 @@
                 } else { timelineMA.innerHTML = '<p class="text-sm text-slate-400 italic">ไม่มีประวัติซ่อมบำรุง</p>'; }
             }
 
-            // แกลเลอรีรูปภาพประวัติการดำเนินงาน
             const galleryContainer = document.getElementById('galleryContainer');
             if (galleryContainer) {
                 if (logs.images && logs.images.length > 0) {
@@ -749,10 +739,7 @@
             const increment = Math.max(1, Math.floor(target / 20));
             const timer = setInterval(() => {
                 current += increment;
-                if (current >= target) {
-                    current = target;
-                    clearInterval(timer);
-                }
+                if (current >= target) { current = target; clearInterval(timer); }
                 el.textContent = current;
             }, 30);
         }
@@ -788,7 +775,7 @@
             update(); setInterval(update, 1000);
         }
 
-        function showError(msg) {
+        function showError(msg, detail = "") {
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'none';
             const errorScreen = document.getElementById('errorScreen');
@@ -796,6 +783,7 @@
                 errorScreen.classList.remove('hidden');
                 errorScreen.classList.add('flex');
                 document.getElementById('errorMsg').textContent = msg;
+                document.getElementById('errorDetail').textContent = detail || "โปรดตรวจสอบลิงก์ Google Apps Script ว่ามีการ Deploy สิทธิ์เข้าถึงเป็น 'Anyone' หรือยัง";
             }
         }
 
